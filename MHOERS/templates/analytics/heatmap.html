@@ -1,0 +1,82 @@
+{% extends 'base.html' %} {% load static %} {% block content %}
+
+<link rel="stylesheet" href="{% static 'css/admin_dashboard.css' %}" />
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+/>
+
+<!-- Navbar Include -->
+{% include 'components/navbar.html' %}
+
+<!-- Disease Heat Map Section -->
+<div class="row mt-4">
+  <div class="col-12">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body p-4">
+        <h4 class="text-primary mb-0">New Corella Disease Heat Map</h4>
+
+        <!-- Disease Filter -->
+        <div class="disease-filter">
+          <h6 class="mb-3">Filter by Disease:</h6>
+          <div class="d-flex flex-wrap">
+            <span class="disease-badge flu active" data-disease="flu">Flu</span>
+            <span class="disease-badge cold" data-disease="cold"
+              >Common Cold</span
+            >
+            <span class="disease-badge respiratory" data-disease="respiratory"
+              >Respiratory Issue</span
+            >
+            <span
+              class="disease-badge gastrointestinal"
+              data-disease="gastrointestinal"
+              >Gastrointestinal Issue</span
+            >
+          </div>
+        </div>
+        <div class="disease-filter">
+          <h6 class="mb-3">Prediction Month:</h6>
+          <div class="d-flex flex-wrap" id="month-container">
+            <!-- Month badges will be dynamically generated here -->
+          </div>
+        </div>
+
+        <div id="map" style="height: 400px"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% block script %}
+<script src="{% static 'js/line_chart.js' %}"></script>
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+<script src="{% static 'js/heatdisease_map.js' %}"></script>
+
+<!-- Pass current user context to JavaScript via data attributes -->
+<div id="js-context"
+     data-current-user-id="{{ request.user.id }}"
+     hidden></div>
+
+<script src="{% static 'js/calendar.js' %}"></script>
+
+<script>
+  // Notification check function
+  function checkNotifications() {
+    fetch("/notifications/check/")
+      .then((response) => response.json())
+      .then((data) => {
+        const notifBadge = document.getElementById("notif-count");
+        if (data.unseen_count > 0) {
+          notifBadge.innerText = data.unseen_count;
+          notifBadge.style.display = "inline";
+        } else {
+          notifBadge.style.display = "none";
+        }
+      });
+  }
+
+  setInterval(checkNotifications, 5000); // Check every 5 seconds
+  window.onload = checkNotifications;
+</script>
+{% endblock script %} {% endblock %}

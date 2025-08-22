@@ -1,0 +1,133 @@
+<!-- Facility Edit Modal -->
+<div class="modal fade" id="editFacilityModal" tabindex="-1" role="dialog" aria-labelledby="editFacilityModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <form method="POST" action="{% url 'facilities:update_facility' %}" id="editFacilityForm">
+        {% csrf_token %}
+        <input type="hidden" id="editFacilityId" name="facility_id">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editFacilityModalLabel">Edit Facility</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body">
+          {% if messages %}
+            <div class="alert alert-danger text-center py-2 w-100">
+              {% for message in messages %}
+                <p>{{ message }}</p>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <div class="form-group mb-3">
+            <label for="editFacilityName">Facility Name</label>
+            <input type="text" class="form-control" id="editFacilityName" name="facility_name" required>
+          </div>
+
+          <div class="form-group mb-3">
+            <label for="editFirstName">First Name</label>
+            <input type="text" class="form-control" id="editFirstName" name="first_name" required>
+          </div>
+
+          <div class="form-group mb-3">
+            <label for="editLastName">Last Name</label>
+            <input type="text" class="form-control" id="editLastName" name="last_name" required>
+          </div>
+
+          <div class="form-group mb-3">
+            <label for="editPassword1">New Password (leave blank to keep current)</label>
+            <input type="password" class="form-control" id="editPassword1" name="password1">
+          </div>
+
+          <div class="form-group mb-3">
+            <label for="editPassword2">Confirm New Password</label>
+            <input type="password" class="form-control" id="editPassword2" name="password2">
+          </div>
+
+          <div class="form-group">
+            <label for="editLocationMap">Location</label>
+            <div id="editMap" style="height: 300px; width: 100%; margin-bottom: 15px;"></div>
+            <input type="hidden" id="editLatitude" name="latitude" required>
+            <input type="hidden" id="editLongitude" name="longitude" required>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+let editMap;
+let editMarker;
+
+function initializeEditMap(lat, lng) {
+  if (editMap) {
+    editMap.remove();
+  }
+
+  editMap = L.map('editMap').setView([lat || 7.587429855100546, lng || 125.82881651697123], 13);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  }).addTo(editMap);
+
+  if (lat && lng) {
+    editMarker = L.marker([lat, lng]).addTo(editMap);
+  }
+
+  editMap.on('click', function(e) {
+    const lat = e.latlng.lat;
+    const lng = e.latlng.lng;
+    document.getElementById('editLatitude').value = lat;
+    document.getElementById('editLongitude').value = lng;
+    if (editMarker) {
+      editMarker.setLatLng([lat, lng]);
+    } else {
+      editMarker = L.marker([lat, lng]).addTo(editMap);
+    }
+  });
+
+  setTimeout(() => {
+    editMap.invalidateSize();
+  }, 100);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const editModal = document.getElementById('editFacilityModal');
+  
+  editModal.addEventListener('shown.bs.modal', function(event) {
+    const button = event.relatedTarget;
+    const row = button.closest('tr');
+    const facilityId = row.dataset.id;
+    const facilityName = row.dataset.facility;
+    const latitude = parseFloat(row.dataset.latitude);
+    const longitude = parseFloat(row.dataset.longitude);
+    const firstName = row.dataset.firstName;
+    const lastName = row.dataset.lastName;
+
+    document.getElementById('editFacilityId').value = facilityId;
+    document.getElementById('editFacilityName').value = facilityName;
+    document.getElementById('editFirstName').value = firstName;
+    document.getElementById('editLastName').value = lastName;
+    document.getElementById('editLatitude').value = latitude;
+    document.getElementById('editLongitude').value = longitude;
+
+    initializeEditMap(latitude, longitude);
+  });
+
+  editModal.addEventListener('hidden.bs.modal', function() {
+    if (editMap) {
+      editMap.remove();
+      editMap = null;
+    }
+    if (editMarker) {
+      editMarker = null;
+    }
+  });
+});
+</script>  

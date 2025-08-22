@@ -1,0 +1,417 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+{% block content %}
+
+<link rel="stylesheet" href="{% static 'css/admin_dashboard.css' %}" />
+
+<!-- Navbar Include --> 
+{% include 'components/navbar.html' %}
+{% include 'components/referral/referral_modal.html' %}
+{% include 'components/tabbar/tabbar.html' with tab1_name="Active Referral" tab2_name="Referred" tab3_name="All Patients" %}
+
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm rounded-lg">
+        <div class="card-body p-4">
+          <div class="tab-content" id="dashboardTabContent">
+
+            <!-- Active Referral Tab -->
+            <div class="tab-pane fade {% if active_tab == 'tab1' %}show active{% endif %}" id="tab1" role="tabpanel">
+              <div class="table-responsive">
+                <table id="activeTable" class="table table-hover align-middle">
+                  <thead class="bg-light">
+                    <tr>
+                      <th>Patient Name</th>
+                      <th>Facility</th>
+                      <th>Location</th>
+                      <th>Urgency Level</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for r in active_referrals %}
+                    <tr data-id="{{ r.referral_id }}" class="align-middle">
+                      <td>
+                        <div class="d-flex align-items-center">
+                          <div class="avatar-circle bg-success-soft me-3">
+                            <i class="bi bi-person-circle text-success fs-4"></i>
+                          </div>
+                          <div>
+                            <h6 class="mb-1 text-dark">{{ r.patient.first_name }} {{ r.patient.middle_name }} {{ r.patient.last_name }}</h6>
+                            <span class="badge badge-pill badge-light">ID: #{{ r.referral_id }}</span>
+                          </div>
+                        </div>
+                      </td>
+                      
+                      <td><i class="bi bi-hospital text-primary me-2"></i>{{ r.patient.facility.name }}</td>
+                      <td><i class="bi bi-geo-alt-fill text-danger me-2"></i>{{ r.patient.p_address }}</td>
+                      <td>
+                        <span class="badge badge-pill text-dark badge-warning">Severe</span>
+                      </td>
+                      <td><span class="badge badge-pill badge-success">Active</span>
+                        {% if r.status == 'in-progress' %}
+                          <br>
+                          <small class="text-muted">
+                            <i class="bi bi-clock-history me-1"></i>
+                            Est. completion: {{ predictions|dict_get:r.referral_id|default:'0'|last|floatformat:0 }} mins
+                          </small>
+                        {% endif %}
+                      </td>
+                      <td>
+                        <button class="btn btn-outline-warning btn-sm rounded-pill edit-button me-2"
+                          data-id="{{ r.referral_id }}"
+                          data-patient="{{ r.patient.first_name }} {{ r.patient.middle_name }} {{ r.patient.last_name }}"
+                          data-sex ="{{ r.patient.sex }}"
+                          data-date="{{ r.created_at|date:'Y-m-d H:i' }}"
+                          data-from="{{ r.patient.facility.name }}"
+                          data-to="Municipal Health Office"
+                          data-status="{{ r.status }}"
+                          data-notes="{{ r.chief_complaint }}"
+                          data-symptoms="{{ r.symptoms }}"
+                          data-workUp="{{ r.work_up_details }}"
+                          data-height= "{{ r.height }}"
+                          data-weight = "{{ r.weight }}"
+                          data-systolic = "{{ r.bp_systolic }}/{{ r.bp_diastolic }}"
+                          data-diastolic = "{{ r.bp_diastolic }}"
+                          data-pulserate = "{{ r.pulse_rate}}"
+                          data-respiratory = "{{ r.respiratory_rate }}"
+                          data-temperature = "{{r.temperature }}"
+                          data-oxygen = "{{r.oxygen_saturation}}"
+                          data-disease="{{ predictions|dict_get:r.referral_id|default:'No prediction available'|first }}"
+                          data-toggle="modal"
+                          data-target="#editReferralModal">
+                          <i class="bi bi-pencil-square me-1"></i> Edit
+                        </button>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Referred Tab -->
+            <div class="tab-pane fade {% if active_tab == 'tab2' %}show active{% endif %}" id="tab2" role="tabpanel">
+              <div class="table-responsive">
+                <table id="referredTable" class="table table-hover align-middle">
+                  <thead class="bg-light">
+                    <tr>
+                      <th>Patient Name</th>
+                      <th>Facility</th>
+                      <th>Location</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for r in referred_referrals %}
+                    <tr data-id="{{ r.referral_id }}" class="align-middle">
+                      <td>
+                        <div class="d-flex align-items-center">
+                          <div class="avatar-circle bg-info-soft me-3">
+                            <i class="bi bi-person-circle text-info fs-4"></i>
+                          </div>
+                          <div>
+                            <h6 class="mb-1 text-dark">{{ r.patient.first_name }} {{ r.patient.middle_name }} {{ r.patient.last_name }}</h6>
+                            <span class="badge badge-pill badge-light">ID: #{{ r.referral_id }}</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td><i class="bi bi-hospital text-primary me-2"></i>{{ r.patient.facility.name }}</td>
+                      <td><i class="bi bi-geo-alt-fill text-danger me-2"></i>{{ r.patient.p_address }}</td>
+                      <td><span class="badge badge-pill badge-info">Referred</span>
+                        {% if r.status == 'completed' %}
+                          <br>
+                          <small class="text-muted">
+                            <i class="bi bi-check-circle me-1"></i>
+                            Completed in: {{ predictions|dict_get:r.referral_id|default:'0'|last|floatformat:0 }} mins
+                          </small>
+                        {% endif %}
+                      </td>
+                      <td>
+                        <button class="btn btn-outline-primary btn-sm rounded-pill view-button"
+                          data-id="{{ r.referral_id }}"
+                          data-patient="{{ r.patient.first_name }} {{ r.patient.middle_name }} {{ r.patient.last_name }}"
+                          data-sex ="{{ r.patient.sex }}"
+                          data-date="{{ r.created_at|date:'Y-m-d H:i' }}"
+                          data-from="{{ r.patient.facility.name }}"
+                          data-to="Municipal Health Office"
+                          data-status="{{ r.status }}"
+                          data-notes="{{ r.chief_complaint }}"
+                          data-symptoms="{{ r.symptoms }}"
+                          data-workUp="{{ r.work_up_details }}"
+                          data-height= "{{ r.height }}"
+                          data-weight = "{{ r.weight }}"
+                          data-systolic = "{{ r.bp_systolic }}"
+                          data-diastolic = "{{ r.bp_diastolic }}"
+                          data-pulserate = "{{ r.pulse_rate}}"
+                          data-respiratory = "{{ r.respiratory_rate }}"
+                          data-temperature = "{{r.temperature }}"
+                          data-oxygen = "{{r.oxygen_saturation}}"
+                          data-disease="{{ predictions|dict_get:r.referral_id|default:'No prediction available'|first }}"
+                          data-toggle="modal"
+                          data-target="#viewReferralModal">
+                          <i class="bi bi-eye me-1"></i> View
+                        </button>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- All Patients Tab -->
+            <div class="tab-pane fade {% if active_tab == 'tab5' %}show active{% endif %}" id="tab3" role="tabpanel">
+              <div class="row">
+                <!-- Patient List Column -->
+                <div class="col-md-6">
+                  <div class="table-responsive">
+                    <table id="allTable" class="table table-hover align-middle">
+                      <thead class="bg-light">
+                        <tr>
+                          <th>Patient Name</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% for r in patients %}
+                        <tr data-id="{{ r.patients_id }}" class="align-middle patient-row" style="cursor: pointer;">
+                          <td>
+                            <div class="d-flex align-items-center">
+                              <div class="avatar-circle bg-primary-soft me-3">
+                                <i class="bi bi-person-circle text-primary fs-4"></i>
+                              </div>
+                              <div>
+                                <h6 class="mb-1 text-dark">{{ r.first_name }} {{ r.middle_name }} {{ r.last_name }}</h6>
+                                <span class="badge badge-pill badge-light">ID: #{{ r.patients_id }}</span>
+                              </div>
+                            </div>
+                          </td>
+                          <td>
+                            <button class="btn btn-outline-danger btn-sm rounded-pill delete-button"
+                              data-id="{{ r.patients_id }}"
+                              data-patient="{{ r.first_name }} {{ r.middle_name }} {{ r.last_name }}"
+                              data-toggle="modal"
+                              data-target="#deleteReferralModal">
+                              <i class="bi bi-trash me-1"></i> Delete
+                            </button>
+                          </td>
+                        </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <!-- Patient Details Column -->
+                <div class="col-md-6">
+                  <div id="patientDetails" class="card border-0 shadow-sm h-100">
+                    <div class="card-body p-4">
+                      <div class="text-center mb-4" id="noPatientSelected">
+                        <i class="bi bi-person-circle text-muted" style="font-size: 4rem;"></i>
+                        <h5 class="mt-3 text-muted">Select a patient to view details</h5>
+                      </div>
+                      <div id="patientInfo" style="display: none;">
+                        <h4 class="mb-4 text-primary">Patient Information</h4>
+                        <div class="row mb-3">
+                          <div class="col-md-6">
+                            <label class="font-weight-bold text-muted">Full Name</label>
+                            <p id="detailName" class="mb-0"></p>
+                          </div>
+                          <div class="col-md-6">
+                            <label class="font-weight-bold text-muted">Patient ID</label>
+                            <p id="detailId" class="mb-0"></p>
+                          </div>
+                        </div>
+                        <div class="row mb-3">
+                          <div class="col-md-6">
+                            <label class="font-weight-bold text-muted">Date of Birth</label>
+                            <p id="detailBirth" class="mb-0"></p>
+                          </div>
+                          <div class="col-md-6">
+                            <label class="font-weight-bold text-muted">Sex</label>
+                            <p id="detailSex" class="mb-0"></p>
+                          </div>
+                        </div>
+                        <div class="row mb-3">
+                          <div class="col-md-6">
+                            <label class="font-weight-bold text-muted">Address</label>
+                            <p id="detailAddress" class="mb-0"></p>
+                          </div>
+                          <div class="col-md-6">
+                            <label class="font-weight-bold text-muted">Phone Number</label>
+                            <p id="detailPhone" class="mb-0"></p>
+                          </div>
+                        </div>
+                        <div class="row mb-3">
+                          <div class="col-md-6">
+                            <label class="font-weight-bold text-muted">Facility</label>
+                            <p id="detailFacility" class="mb-0"></p>
+                          </div>
+                          <div class="col-md-6">
+                            <label class="font-weight-bold text-muted">Referral Count</label>
+                            <p id="detailReferralCount" class="mb-0"></p>
+                          </div>
+                        </div>
+                        <div class="row">
+                          <div class="col-12">
+                            <label class="font-weight-bold text-muted">Predicted Disease</label>
+                            <p id="detailDisease" class="mb-0"></p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- End of All Patients Tab -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Success Modal for Referral Completion -->
+<div class="modal fade" id="referralSuccessModal" tabindex="-1" role="dialog" aria-labelledby="referralSuccessModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title" id="referralSuccessModalLabel">
+          <i class="bi bi-check-circle"></i> Referral Completed Successfully
+        </h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="text-center mb-3">
+          <i class="bi bi-check-circle text-success" style="font-size: 3rem;"></i>
+        </div>
+        <h6 class="text-center mb-3">Patient referral has been successfully completed!</h6>
+        <p class="text-muted text-center mb-0">
+          The patient has been referred to the appropriate healthcare facility. 
+          Medical history has been updated with the findings and recommendations.
+        </p>
+      </div>
+      <div class="modal-footer justify-content-center">
+        <button type="button" class="btn btn-success" data-dismiss="modal">
+          <i class="bi bi-check-lg"></i> Continue
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% block script %}
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{% static 'js/patient_list_admin.js' %}"></script>
+
+<script>
+$(document).ready(function() {
+  // Initialize DataTable only if it hasn't been initialized
+  if (!$.fn.DataTable.isDataTable('#allTable')) {
+    const tableConfig = {
+      responsive: true,
+      dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+           '<"row"<"col-sm-12"tr>>' +
+           '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+      language: {
+        search: "_INPUT_",
+        searchPlaceholder: "Search patient records..."
+      },
+      pageLength: 10,
+      order: [[0, 'asc']],
+      columnDefs: [
+        { targets: -1, orderable: false }
+      ] 
+    };
+
+    $('#allTable').DataTable(tableConfig);
+  }
+
+  // Handle patient row click
+  $(document).on('click', '.patient-row', function() {
+    const row = $(this);
+    const patientId = row.data('id');
+    
+    // Remove active class from all rows
+    $('.patient-row').removeClass('table-primary');
+    // Add active class to clicked row
+    row.addClass('table-primary');
+
+    // Show patient info and hide no selection message
+    $('#noPatientSelected').hide();
+    $('#patientInfo').show();
+
+    // Update patient details
+    $('#detailName').text(row.find('h6').text());
+    $('#detailId').text('ID: #' + patientId);
+    $('#detailBirth').text(row.find('.view-button').data('birth'));
+    $('#detailSex').text(row.find('.view-button').data('sex'));
+    $('#detailAddress').text(row.find('.view-button').data('address'));
+    $('#detailPhone').text(row.find('.view-button').data('phone'));
+    $('#detailFacility').text(row.find('.view-button').data('facility'));
+    $('#detailReferralCount').text(row.find('.view-button').data('referral-count'));
+    $('#detailDisease').text(row.find('.view-button').data('disease'));
+  });
+
+  // Handle delete button click
+  $(document).on('click', '.delete-button', function(e) {
+    e.stopPropagation(); // Prevent row click when clicking delete button
+    const button = $(this);
+    const patientName = button.data('patient');
+    $('#deletePatientId').val(button.data('id'));
+    $('#delete-confirmation').text(`Are you sure you want to delete ${patientName}'s record?`);
+  });
+
+  // Show success modal after referral completion
+  // This will be triggered when the page loads with a success parameter
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('referral_success') === 'true') {
+    $('#referralSuccessModal').modal('show');
+  }
+
+  // Handle form submission for referral completion
+  $(document).on('submit', '#editReferralForm', function(e) {
+    const form = $(this);
+    const formData = new FormData(this);
+    
+    $.ajax({
+      url: form.attr('action'),
+      method: 'POST',
+      data: formData,
+      processData: false,
+      contentType: false,
+      success: function(response) {
+        // Close the edit modal first
+        $('#editReferralModal').modal('hide');
+        
+        // Show success modal
+        $('#referralSuccessModal').modal('show');
+        
+        // Reload the page after a short delay to update the data
+        setTimeout(function() {
+          location.reload();
+        }, 2000);
+      },
+      error: function(xhr, status, error) {
+        console.error('Error completing referral:', error);
+        alert('There was an error completing the referral. Please try again.');
+      }
+    });
+    
+    e.preventDefault(); // Prevent default form submission
+  });
+});
+</script>
+{% endblock %}
+
+{% endblock %}

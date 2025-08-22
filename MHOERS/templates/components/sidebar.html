@@ -1,0 +1,81 @@
+{% load static %}
+
+    <aside class="sidebar">
+      <header class="sidebar-header">
+  <div class="header-content">
+    <a href="#" class="header-logo">
+      <img src="{% static 'images/newcorellalogo.png' %}" alt="Logo" />
+    </a>
+    <span class="username">{{ request.user.username }}</span>
+  </div>
+</header>
+
+      <nav class="sidebar-nav">
+        <ul class="nav-list primary-nav">
+          <li class="nav-item">
+            <a
+              href="{% url 'home' %}"
+              class="nav-link {% if active_page == 'home' %}active{% endif %}"
+            >
+              <i class="bi bi-speedometer"></i>
+              <span class="nav-label">Dashboard</span>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a href="{% url 'referrals:assessment' %}" class="nav-link {% if active_page == 'assessment' %}active{% endif %}">
+    <i class="bi bi-menu-button-wide"></i>
+    <span class="nav-label">Assessment</span>
+</a>
+
+          </li>
+          <li class="nav-item">
+            <a
+              href="{% url 'referrals:referral_list' %}"
+              class="nav-link {% if active_page == 'referral_list' %}active{% endif %}"
+            >
+              <i class="bi bi-person-add"></i>
+              <span class="nav-label">Referral</span>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a
+              href="{% url 'patients:barangayPatients' %}"
+              class="nav-link {% if active_page == 'barangayPatients' %}active{% endif %}"
+            >
+              <i class="bi bi-list-ul"></i>
+              <span class="nav-label">Patients</span>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a
+              href="{% url 'user_report' %}"
+              class="nav-link {% if active_page == 'user_report' %}active{% endif %}"
+            >
+              <i class="bi bi-newspaper"></i>
+              <span class="nav-label">Report</span>
+            </a>
+          </li>
+
+          
+
+        <ul class="nav-list secondary-nav">
+          <li class="nav-item">
+            <a href="{% url 'profile' %}" class="nav-link {% if active_page == 'profile' %}active{% endif %}">
+              <i class="bi bi-person-circle"></i>
+              <span class="nav-label">Profile</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="{% url 'logout' %}" class="nav-link">
+              <i class="bi bi-box-arrow-left"></i>
+              <span class="nav-label">Logout</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </aside>
+
+ 

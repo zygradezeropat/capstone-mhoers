@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<link rel="stylesheet" href="{% static 'css/admin_dashboard.css' %}" />
+
+<!-- Navbar Include -->
+{% include 'components/navbar.html' %}
+
+<div class="container-fluid py-4">
+  <div class="row mb-4">
+    <div class="col-12">
+      <h4 class="text-primary mb-0">Analytics Dashboard</h4>
+      <p class="text-muted">Monitor and analyze healthcare metrics and performance</p>
+    </div>
+  </div>
+
+  <!-- Tab Navigation -->
+  <div class="card border-0 shadow-sm rounded-lg mb-4">
+    <div class="card-body">
+      <ul class="nav nav-pills nav-fill" id="dashboardTab" role="tablist">
+        <li class="nav-item">
+          <a class="nav-link active" id="tab1-tab" data-toggle="tab" href="#tab1" role="tab">
+            <i class="bi bi-graph-up"></i>
+            <span class="ms-2">Referral Statistics</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" id="tab2-tab" data-toggle="tab" href="#tab2" role="tab">
+            <i class="bi bi-clipboard2-pulse"></i>
+            <span class="ms-2">Common Diagnoses</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" id="tab3-tab" data-toggle="tab" href="#tab3" role="tab">
+            <i class="bi bi-bar-chart"></i>
+            <span class="ms-2">Barangay Performance</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" id="tab4-tab" data-toggle="tab" href="#tab4" role="tab">
+            <i class="bi bi-activity"></i>
+            <span class="ms-2">System Usage</span>
+          </a>
+        </li>
+
+      </ul>
+    </div>
+  </div>
+
+  <!-- Tab Content -->
+  <div class="tab-content" id="dashboardTabContent">
+    <!-- Tab 1: Referral Statistics -->
+    <div class="tab-pane fade show active" id="tab1" role="tabpanel">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <div class="row align-items-center mb-4">
+            <div class="col-md-6">
+              <select id="reportViewFilter" class="w-50" style="display: block; width: 100%; padding: 0.375rem 2.25rem 0.375rem 0.75rem; font-size: 1rem; font-weight: 400; line-height: 1.5; color: #212529; background-color: #fff; background-image: url('data:image/svg+xml,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3e%3cpath fill=%27none%27 stroke=%27%23343a40%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27 stroke-width=%272%27 d=%27m2 5 6 6 6-6%27/%3e%3c/svg%3e'); background-repeat: no-repeat; background-position: right 0.75rem center; background-size: 16px 12px; border: 1px solid #ced4da; border-radius: 0.375rem; transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out; -webkit-appearance: none; -moz-appearance: none; appearance: none;">
+                <option value="monthly" selected>Monthly View</option>
+                <option value="yearly">Yearly View</option>
+              </select>
+            </div>
+            <div class="col-md-6 text-right">
+              <button id="printReferralStatsBtn" class="btn btn-outline-primary">
+                <i class="bi bi-printer"></i> Print This Report
+              </button>
+            </div>
+          </div>
+          <h5 class="card-title mb-4">Monthly Referral Analytics</h5>
+          <canvas id="monthlyReportChart" height="100"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 2: Common Diagnoses -->
+    <div class="tab-pane fade" id="tab2" role="tabpanel">
+      <div class="row mb-3">
+        <div class="col-md-3">
+          <select id="diagnosisYearFilter" class="form-control"></select>
+        </div>
+        <div class="col-md-3">
+          <select id="diagnosisMonthFilter" class="form-control">
+            <option value="">All Months</option>
+            <option value="1">January</option>
+            <option value="2">February</option>
+            <option value="3">March</option>
+            <option value="4">April</option>
+            <option value="5">May</option>
+            <option value="6">June</option>
+            <option value="7">July</option>
+            <option value="8">August</option>
+            <option value="9">September</option>
+            <option value="10">October</option>
+            <option value="11">November</option>
+            <option value="12">December</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <button id="printDiagnosesBtn" class="btn btn-outline-primary">
+            <i class="bi bi-printer"></i> Print This Report
+          </button>
+        </div>
+      </div>
+      
+      <div class="row g-4">
+        <div class="col-md-6">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-4">
+              <h5 class="card-title mb-4">Top Diagnosed Cases</h5>
+              <div style="height: 300px;">
+                <canvas id="topDiagnosedChart" style="max-height: 100%; width: 100%;"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-4">
+              <h5 class="card-title mb-4">Diagnosis Trends</h5>
+              <div style="height: 300px;">
+                <canvas id="topTrendsDiagnosed" style="max-height: 100%; width: 100%;"></canvas>
+              </div>
+            </div>
+          </div>
+          
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 3: Barangay Performance -->
+    <div class="tab-pane fade" id="tab3" role="tabpanel">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <div class="d-flex justify-content-end mb-3">
+            <button id="printBarangayBtn" class="btn btn-outline-primary">
+              <i class="bi bi-printer"></i> Print This Report
+            </button>
+          </div>
+          <h5 class="card-title mb-4">Barangay Performance Analytics</h5>
+          
+          <div class="row mb-4">
+            <div class="col-md-6 mb-4">
+              <h6 class="text-muted mb-3">Referral Status Overview</h6>
+              <canvas id="stackedBarangayChart" height="200"></canvas>
+            </div>
+          </div>
+    
+          <div class="row">
+            <div class="col-md-12">
+              <h6 class="text-muted mb-3">Completion Rate Analysis</h6>
+              <canvas id="groupedBarangayChart" height="200"></canvas>
+            </div>
+          </div>
+    
+        </div>
+      </div>
+    </div>
+    
+
+    <!-- Tab 4: System Usage -->
+    <div class="tab-pane fade" id="tab4" role="tabpanel">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <div class="d-flex justify-content-end mb-3">
+            <button id="printSystemUsageBtn" class="btn btn-outline-primary">
+              <i class="bi bi-printer"></i> Print This Report
+            </button>
+          </div>
+          <h5 class="card-title mb-4">System Usage Analytics</h5>
+          <canvas id="systemUsageLogsChart" height="100"></canvas>
+        </div>
+      </div>
+    </div>
+
+  
+
+  </div>
+</div>
+
+{% block script %}
+<script src="{% static 'js/line_chart.js' %}"></script>
+<script src="{% static 'js/topDiagnosedPie_chart.js' %}"></script>
+<script src="{% static 'js/barangay_performance.js' %}"></script>
+<script src="{% static 'js/system_usage.js' %}"></script>
+<script src="{% static 'js/print_report.js' %}"></script>
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.6.0/js/bootstrap.min.js"></script>
+<script>
+
+
+</script>
+{% endblock script %}
+
+{% endblock %}

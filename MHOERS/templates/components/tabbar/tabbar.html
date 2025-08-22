@@ -1,0 +1,98 @@
+<!-- Modern Tabbed Navigation -->
+<style>
+  .nav-tabs {
+    border: none;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background: #f8f9fa;
+    border-radius: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .nav-tabs .nav-item {
+    margin: 0;
+  }
+
+  .nav-tabs .nav-link {
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    color: #6c757d;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .nav-tabs .nav-link:hover {
+    color: #0d6efd;
+    background: rgba(13, 110, 253, 0.05);
+  }
+
+  .nav-tabs .nav-link.active {
+    color: #0d6efd;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+
+  .nav-tabs .nav-link.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20px;
+    height: 3px;
+    background: #0d6efd;
+    border-radius: 3px;
+  }
+
+  .nav-tabs .nav-link i {
+    font-size: 1.1rem;
+  }
+</style>
+
+<ul class="nav nav-tabs" id="dashboardTab" role="tablist">
+  {% if tab1_name %}
+  <li class="nav-item" role="presentation">
+    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab1" type="button" role="tab">
+      <i class="bi bi-clock-history"></i>
+      {{ tab1_name }}
+    </button>
+  </li>
+  {% endif %}
+  {% if tab2_name %}
+  <li class="nav-item" role="presentation">
+    <button class="nav-link {% if active_tab == 'tab2' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab2" type="button" role="tab">
+      <i class="bi bi-check-circle"></i>
+      {{ tab2_name }}
+    </button>
+  </li>
+  {% endif %}
+  {% if tab3_name %}
+  <li class="nav-item" role="presentation">
+    <button class="nav-link {% if active_tab == 'tab3' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab3" type="button" role="tab">
+      <i class="bi bi-arrow-right-circle"></i>
+      {{ tab3_name }}
+    </button>
+  </li>
+  {% endif %}
+  {% if tab4_name %}
+  <li class="nav-item" role="presentation">
+    <button class="nav-link {% if active_tab == 'tab4' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab4" type="button" role="tab">
+      <i class="bi bi-archive"></i>
+      {{ tab4_name }}
+    </button>
+  </li>
+  {% endif %}
+  {% if tab5_name %}
+  <li class="nav-item" role="presentation">
+    <button class="nav-link {% if active_tab == 'tab5' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab5" type="button" role="tab">
+      <i class="bi bi-trash"></i>
+      {{ tab5_name }}
+    </button>
+  </li>
+  {% endif %}
+</ul>

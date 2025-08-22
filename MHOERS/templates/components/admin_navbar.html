@@ -1,0 +1,121 @@
+<style>
+  .avatar {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  .dropdown-menu {
+    width: 400px;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+  .notification-btn {
+    border: none;
+    background: transparent;
+    transition: all 0.2s ease;
+  }
+  .notification-btn:hover {
+    transform: scale(1.1);
+  }
+  .navbar {
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    background: linear-gradient(to right, #28a745, #20c997) !important;
+  }
+  .navbar-brand {
+    color: #fff !important;
+    font-weight: 600;
+    font-size: 1.3rem;
+  }
+  .navbar .d-flex.align-items-center {
+    gap: 20px;
+  }
+  .dropdown-item {
+    white-space: normal;
+    padding: 0.75rem 1rem;
+    border-left: 4px solid transparent;
+    transition: all 0.2s ease;
+  }
+  .dropdown-item:hover {
+    background-color: #f8f9fa;
+    border-left-color: #28a745;
+  }
+  .notification-icon {
+    font-size: 1.5rem;
+    color: #fff;
+  }
+  .username-text {
+    color: #fff;
+    font-weight: 500;
+  }
+  .health-icon {
+    margin-right: 10px;
+    color: #fff;
+  }
+</style>
+
+<nav class="navbar navbar-expand-lg px-3">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="#">
+      <i class="bi bi-hospital health-icon"></i>
+      New Corella E-Referral System
+    </a>
+
+    <div class="d-flex align-items-center gap-3">
+      <!-- Dropdown for Notifications -->
+      <div class="dropdown">
+        <button class="notification-btn dropdown-toggle position-relative" id="notificationDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          <i class="bi bi-bell notification-icon"></i>
+          {% if unread_count > 0 %}
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+              {{ unread_count }}
+              <span class="sr-only">unread messages</span>
+            </span>
+          {% endif %}
+        </button>
+        <div class="dropdown-menu dropdown-menu-right shadow" aria-labelledby="notificationDropdown">
+          <h6 class="dropdown-header">Notifications</h6>
+          <li>
+            <a class="dropdown-item d-flex justify-content-between align-items-start" href="#">
+              <div>
+                <i class="bi bi-capsule text-primary me-2"></i> New patient referral from Barangay Health Center
+              </div>
+              <small class="text-muted">5 mins ago</small>
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item d-flex justify-content-between align-items-start" href="#">
+              <div>
+                <i class="bi bi-heart-pulse text-success me-2"></i> Updated vital signs for Patient #1234
+              </div>
+              <small class="text-muted">10 mins ago</small>
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item d-flex justify-content-between align-items-start" href="#">
+              <div>
+                <i class="bi bi-file-medical text-warning me-2"></i> Lab results available for review
+              </div>
+              <small class="text-muted">1 hour ago</small>
+            </a>
+          </li>
+          <li><hr class="dropdown-divider"></li>
+          <li>
+            <a class="dropdown-item text-center text-primary" href="#">View all notifications</a>
+          </li>
+        </div>
+      </div>
+
+      <!-- Username -->
+      <div class="d-flex align-items-center">
+        <a href="#" class="text-decoration-none username-text">
+          <i class="bi bi-person-circle me-2"></i>
+          {{ request.user.username }}
+        </a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>

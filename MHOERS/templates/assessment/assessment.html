@@ -1,0 +1,369 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}" />
+{% include 'components/navbar.html' %}
+{% include 'components/tabbar/tabbar.html' with tab1_name="Gen. Patient Info" tab2_name="Vital Signs" tab3_name="Chief Complaint" tab4_name="Work Up Done" %}
+{% include 'components/patients/addpatients.html' %}
+
+<style>
+  /* Only disable the top navigation tabs */
+ul#dashboardTab.nav .nav-link {
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+</style>
+
+<div class="bg-light py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4 mr-3">
+        <h4 class="mb-0 text-primary"></h4>
+        <button class="btn btn-success shadow-sm" data-toggle="modal" data-target="#registerModal">
+          <i class="bi bi-person-plus-fill"></i>
+          <span class="ml-2">Add Patient</span>
+        </button>
+      </div>
+
+  <form id="referralForm" method="POST" action="{% url 'referrals:create_referral' %}" class="needs-validation" novalidate>
+    {% csrf_token %}
+    <div class="container"> 
+      <div class="tab-content shadow-sm bg-white rounded p-4" id="assessmentTabContent">
+        
+        <!-- Tab 1: General Info with Searchable Dropdown -->
+<div class="tab-pane show active" id="tab1" role="tabpanel">
+  
+  <div class="row mb-4">
+    <div class="col-md-8 mx-auto">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title text-primary mb-4"><i class="bi bi-person-lines-fill"></i> Patient Selection</h5>
+          <div class="form-group">
+            <select class="form-control form-control-lg" required name="patient" id="patientSelect" style="width: 100%;">
+              <option value="" disabled selected>Select Patient</option>
+              {% for patient in patients%}
+                <option value="{{ patient.patients_id }}">
+                  {{ patient.first_name }} {{ patient.middle_name }} {{ patient.last_name }}
+                </option>
+              {% empty %}
+                <option disabled>No patients found.</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+        <!-- Tab 2: Vital Signs -->
+        <div class="tab-pane fade" id="tab2" role="tabpanel">
+          <h5 class="text-primary mb-4"><i class="bi bi-heart-pulse"></i> Patient Vital Signs</h5>
+          <div class="row mb-4">
+            <div class="col-md-3">
+              <div class="card border-0 bg-light h-100">
+                <div class="card-body">
+                  <label class="form-label text-muted">Weight (kg)</label>
+                  <input type="number" class="form-control form-control-lg" step="0.1" min="0" required name="weight" placeholder="" />
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card border-0 bg-light h-100">
+                <div class="card-body">
+                  <label class="form-label text-muted">Height (cm)</label>
+                  <input type="number" class="form-control form-control-lg" step="0.1" min="0" required name="height" placeholder="" />
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="card border-0 bg-light h-100">
+                <div class="card-body">
+                  <label class="form-label text-muted">Blood Pressure</label>
+                  <div class="input-group">
+                    <input type="number" class="form-control form-control-lg" step="1" min="0" required name="bp_systolic" placeholder="Systolic" />
+                    <div class="input-group-append input-group-prepend">
+                      <span class="input-group-text">/</span>
+                    </div>
+                    <input type="number" class="form-control form-control-lg" step="1" min="0" required name="bp_diastolic" placeholder="Diastolic" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-3">
+              <div class="card border-0 bg-light h-100">
+                <div class="card-body">
+                  <label class="form-label text-muted">Pulse Rate (bpm)</label>
+                  <input type="number" class="form-control form-control-lg" step="1" min="0" max="150" required name="pulse_rate" placeholder="" />
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card border-0 bg-light h-100">
+                <div class="card-body">
+                  <label class="form-label text-muted">Respiratory Rate</label>
+                  <input type="number" class="form-control form-control-lg" step="1" min="0" required name="respiratory_rate" placeholder="" />
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card border-0 bg-light h-100">
+                <div class="card-body">
+                  <label class="form-label text-muted">Temperature (°C)</label>
+                  <input type="number" class="form-control form-control-lg" step="0.1" min="30" max="45" required name="temperature" placeholder="" />
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card border-0 bg-light h-100">
+                <div class="card-body">
+                  <label class="form-label text-muted">O2 Saturation (%)</label>
+                  <input type="number" class="form-control form-control-lg" step="1" min="0" max="100" required name="oxygen_saturation" placeholder="" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 3: Chief Complaint -->
+        <div class="tab-pane fade" id="tab3" role="tabpanel">
+          <h5 class="text-primary mb-4"><i class="bi bi-clipboard2-pulse"></i> Patient Complaints</h5>
+          <div class="card border-0 bg-light mb-4">
+            <div class="card-body">
+              <label class="form-label text-muted">Chief Complaint</label>
+              <textarea class="form-control" name="chief_complaint" rows="3" required placeholder="Enter the main complaint"></textarea>
+            </div>
+          </div>
+          <div class="card border-0 bg-light">
+            <div class="card-body">
+              <label class="form-label text-muted">Detailed Symptoms</label>
+              <textarea class="form-control" name="symptoms" rows="4" placeholder="Enter detailed symptoms"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 4: Work Up Done -->
+        <div class="tab-pane fade" id="tab4" role="tabpanel">
+          <h5 class="text-primary mb-4"><i class="bi bi-journal-medical"></i> Medical Procedures</h5>
+          <div class="card border-0 bg-light">
+            <div class="card-body">
+              <label class="form-label text-muted">Work Up Procedures Done</label>
+              <textarea class="form-control" name="work_up_details" rows="4" placeholder="Enter work up procedures performed"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation Buttons -->
+      <div class="d-flex justify-content-between mt-4">
+        <button class="btn btn-outline-secondary btn-lg px-4" id="prevBtn" type="button">
+          <i class="bi bi-arrow-left"></i> Previous
+        </button>
+        <button class="btn btn-primary btn-lg px-4" id="nextBtn" type="button">
+          Next <i class="bi bi-arrow-right"></i>
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<!-- Modal for Incomplete Form -->
+<div class="modal fade" id="incompleteFormModal" tabindex="-1" role="dialog" aria-labelledby="incompleteFormModalLabel" aria-hidden="true" >
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-warning text-white">
+        <h5 class="modal-title" id="incompleteFormModalLabel">
+          <i class="bi bi-exclamation-triangle"></i> Incomplete Form
+        </h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-0">Please complete all required fields in the current tab before proceeding.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal for Referral Confirmation -->
+<div class="modal fade" id="referralConfirmationModal" tabindex="-1" role="dialog" aria-labelledby="referralConfirmationModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title" id="referralConfirmationModalLabel">
+          <i class="bi bi-check-circle"></i> Referral Submitted Successfully
+        </h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="text-center mb-3">
+          <i class="bi bi-check-circle text-success" style="font-size: 3rem;"></i>
+        </div>
+        <h6 class="text-center mb-3">Your referral has been successfully submitted!</h6>
+        <p class="text-muted text-center mb-0">
+          The referral has been sent to the appropriate healthcare facility. 
+          You will receive a confirmation notification shortly.
+        </p>
+      </div>
+      <div class="modal-footer justify-content-center">
+        <button type="button" class="btn btn-success" data-dismiss="modal" onclick="redirectToReferrals()">
+          <i class="bi bi-list-ul"></i> View All Referrals
+        </button>
+        <button type="button" class="btn btn-outline-secondary" data-dismiss="modal" onclick="resetForm()">
+          <i class="bi bi-plus-circle"></i> Create New Referral
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% block script %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const tabs = [...document.querySelectorAll(".tab-pane")];
+    const nextBtn = document.getElementById("nextBtn");
+    const prevBtn = document.getElementById("prevBtn");
+    const form = document.getElementById("referralForm");
+    const incompleteModal = new bootstrap.Modal(document.getElementById("incompleteFormModal"));
+    const confirmationModal = new bootstrap.Modal(document.getElementById("referralConfirmationModal"));
+    const navLinks = document.querySelectorAll("#dashboardTab .nav-link");
+
+    let currentTab = 0;
+
+    // Make sure jQuery and Select2 are loaded before initializing
+    if (typeof $ !== 'undefined' && typeof $.fn.select2 !== 'undefined') {
+      $('#patientSelect').select2({
+        placeholder: "Select Patient",
+        allowClear: true,
+        theme: "bootstrap4"
+      });
+    } else {
+      console.error("jQuery or Select2 not loaded");
+    }
+
+    function showTab(index) {
+      tabs.forEach((tab, i) => {
+        tab.classList.remove("show", "active");
+        if (i === index) {
+          tab.classList.add("show", "active");
+        }
+      });
+
+      // Update navigation links
+      if (navLinks && navLinks.length > 0) {
+        navLinks.forEach((link, i) => {
+          link.classList.toggle("active", i === index);
+        });
+      }
+
+      prevBtn.style.display = index === 0 ? "none" : "inline-block";
+      nextBtn.innerHTML = index === tabs.length - 1 ? 'Submit <i class="bi bi-check-lg"></i>' : 'Next <i class="bi bi-arrow-right"></i>';
+    }
+
+    function isTabValid(index) {
+      const fields = tabs[index].querySelectorAll("input, select, textarea");
+      let valid = true;
+      
+      for (let field of fields) {
+        if (field.required) {
+          if (!field.value || field.value.trim() === "") {
+            field.classList.add('is-invalid');
+            valid = false;
+          } else {
+            field.classList.remove('is-invalid');
+          }
+        }
+      }
+      return valid;
+    }
+
+    // Initialize first tab
+    showTab(currentTab);
+
+    nextBtn.addEventListener("click", () => {
+      if (!isTabValid(currentTab)) {
+        incompleteModal.show();
+        return;
+      }
+
+      if (currentTab < tabs.length - 1) {
+        currentTab++;
+        showTab(currentTab);
+      } else {
+        // Add form validation before submit
+        if (form.checkValidity()) {
+          // Submit form via AJAX to show confirmation modal
+          submitFormWithConfirmation();
+        } else {
+          incompleteModal.show();
+        }
+      }
+    });
+
+    // Function to submit form and show confirmation modal
+    function submitFormWithConfirmation() {
+      const formData = new FormData(form);
+      
+      fetch(form.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+      })
+      .then(response => {
+        if (response.ok) {
+          // Show confirmation modal
+          confirmationModal.show();
+        } else {
+          // Handle error
+          alert('There was an error submitting the referral. Please try again.');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('There was an error submitting the referral. Please try again.');
+      });
+    }
+
+    prevBtn.addEventListener("click", () => {
+      if (currentTab > 0) {
+        currentTab--;
+        showTab(currentTab);
+      }
+    });
+
+    // Global functions for modal buttons
+    window.redirectToReferrals = function() {
+      window.location.href = "{% url 'referrals:referral_list' %}";
+    };
+
+    window.resetForm = function() {
+      // Reset form to initial state
+      form.reset();
+      currentTab = 0;
+      showTab(currentTab);
+      
+      // Reset Select2 if it exists
+      if (typeof $ !== 'undefined' && typeof $.fn.select2 !== 'undefined') {
+        $('#patientSelect').val(null).trigger('change');
+      }
+      
+      // Remove any validation classes
+      form.querySelectorAll('.is-invalid').forEach(field => {
+        field.classList.remove('is-invalid');
+      });
+    };
+  });
+</script>
+{% endblock script %}
+{% endblock %}

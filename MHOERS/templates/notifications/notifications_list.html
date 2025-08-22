@@ -1,0 +1,259 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+{% block content %}
+
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}" />
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.1/css/dataTables.bootstrap4.min.css">
+
+{% include 'components/navbar.html' %}
+
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="mb-0 text-primary">Notifications</h4>
+            </div>
+
+            <!-- Admin Notifications Section -->
+            {% if request.user.is_staff or request.user.is_superuser %}
+            <div class="card border-0 shadow-sm rounded-lg mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Admin Notifications</h5>
+                </div>
+                <div class="card-body p-4">
+                    {% if admin_notif %}
+                    <div class="table-responsive">
+                        <table id="adminNotificationTable" class="table table-hover">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Message</th>
+                                    <th>Date</th>
+                                    <th>Recipient</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for notification in admin_notif %}
+                                <tr class="{% if not notification.is_read %}table-active{% endif %}">
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-circle bg-primary-soft me-3">
+                                                <i class="bi bi-bell-fill text-primary fs-4"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-1">{{ notification.title }}</h6>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>{{ notification.message }}</td>
+                                    <td>
+                                        <i class="bi bi-calendar3 text-muted me-2"></i>
+                                        {{ notification.created_at|date:"M d, Y h:i A" }}
+                                    </td>
+                                    <td>{{ notification.recipient.get_full_name|default:notification.recipient.username }}</td>
+                                    <td>
+                                        {% if notification.is_read %}
+                                            <span class="badge badge-success">Read</span>
+                                        {% else %}
+                                            <span class="badge badge-warning">Unread</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="d-flex gap-2">
+                                            <button class="btn btn-sm btn-info view-notification" 
+                                                data-notification-id="{{ notification.notification_id }}"
+                                                data-prediction="{% if predictions|dict_get:notification.notification_id %}{{ predictions|dict_get:notification.notification_id|first }}{% else %}No prediction available{% endif %}">
+                                                <i class="bi bi-eye"></i> View
+                                            </button>
+                                            {% if not notification.is_read %}
+                                            <a href="{% url 'notifications:mark_notification_read' notification.notification_id %}" class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-check2-circle"></i> Mark as Read
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info" role="alert">
+                        <i class="bi bi-info-circle mr-2"></i>No admin notifications found.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- User Notifications Section -->
+            <div class="card border-0 shadow-sm rounded-lg">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Your Notifications</h5>
+                </div>
+                <div class="card-body p-4">
+                    {% if notifications %}
+                    <div class="table-responsive">
+                        <table id="notificationTable" class="table table-hover">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Message</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for notification in notifications %}
+                                <tr class="{% if not notification.is_read %}table-active{% endif %}">
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-circle bg-primary-soft me-3">
+                                                <i class="bi bi-bell-fill text-primary fs-4"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-1">{{ notification.title }}</h6>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>{{ notification.message }}</td>
+                                    <td>
+                                        <i class="bi bi-calendar3 text-muted me-2"></i>
+                                        {{ notification.created_at|date:"M d, Y h:i A" }}
+                                    </td>
+                                    <td>
+                                        {% if notification.is_read %}
+                                            <span class="badge badge-success">Read</span>
+                                        {% else %}
+                                            <span class="badge badge-warning">Unread</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="d-flex gap-2">
+                                            <button class="btn btn-sm btn-info view-notification" 
+                                                data-notification-id="{{ notification.notification_id }}"
+                                                data-prediction="{% if predictions|dict_get:notification.notification_id %}{{ predictions|dict_get:notification.notification_id|first }}{% else %}No prediction available{% endif %}">
+                                                <i class="bi bi-eye"></i> View
+                                            </button>
+                                            {% if not notification.is_read %}
+                                            <a href="{% url 'notifications:mark_notification_read' notification.notification_id %}" class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-check2-circle"></i> Mark as Read
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info" role="alert">
+                        <i class="bi bi-info-circle mr-2"></i>No notifications found.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Notification Details Modal -->
+<div class="modal fade" id="notificationModal" tabindex="-1" aria-labelledby="notificationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="notificationModalLabel">Notification Details</h5>
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="notification-details">
+                    <div class="mb-3">
+                        <label class="fw-bold">Title:</label>
+                        <p id="modalTitle" class="mb-0"></p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="fw-bold">Message:</label>
+                        <p id="modalMessage" class="mb-0"></p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="fw-bold">Date:</label>
+                        <p id="modalDate" class="mb-0"></p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="fw-bold">Status:</label>
+                        <p id="modalStatus" class="mb-0"></p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="fw-bold">Possible Disease:</label>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text"><i class="bi bi-virus2"></i></span>
+                            </div>
+                            <input type="text" class="form-control bg-light" id="modalPrediction" disabled>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block script %}
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.1/js/dataTables.bootstrap4.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    // Initialize DataTables for both tables
+    $('#notificationTable, #adminNotificationTable').DataTable({
+        "order": [[2, "desc"]], // Sort by date column descending
+        "pageLength": 10,
+        "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+        "language": {
+            "search": "Search:",
+            "lengthMenu": "Show _MENU_ entries",
+            "info": "Showing _START_ to _END_ of _TOTAL_ entries",
+            "infoEmpty": "Showing 0 to 0 of 0 entries",
+            "infoFiltered": "(filtered from _MAX_ total entries)",
+            "paginate": {
+                "first": "First",
+                "last": "Last",
+                "next": "Next",
+                "previous": "Previous"
+            }
+        }
+    });
+
+    // Handle view notification button click
+    $('.view-notification').click(function() {
+        const button = $(this);
+        const notificationId = button.data('notification-id');
+        const prediction = button.data('prediction');
+        
+        // Fetch notification details
+        $.get(`/notifications/get_details/${notificationId}/`, function(data) {
+            $('#modalTitle').text(data.title);
+            $('#modalMessage').text(data.message);
+            $('#modalDate').text(data.created_at);
+            $('#modalStatus').text(data.is_read ? 'Read' : 'Unread');
+            $('#modalPrediction').val(prediction || 'No prediction available');
+            // Show the modal
+            $('#notificationModal').modal('show');
+        });
+    });
+});
+</script>
+{% endblock script %}
+{% endblock content %}

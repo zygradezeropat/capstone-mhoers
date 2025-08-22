@@ -1,0 +1,96 @@
+
+{% load static %}
+
+    <aside class="sidebar">
+      <header class="sidebar-header">
+  <div class="header-content">
+    <a href="#" class="header-logo">
+      <img src="{% static 'images/newcorellalogo.png' %}" alt="Logo" />
+    </a>
+    <span class="username">{{ request.user.username }}</span>
+  </div>
+</header>
+
+
+      <nav class="sidebar-nav">
+        <ul class="nav-list primary-nav">
+          <li class="nav-item">
+            <a
+              href="{% url 'admin_dashboard' %}"
+              class="nav-link {% if active_page == 'admin_dashboard' %}active{% endif %}"
+            >
+              <i class="bi bi-speedometer"></i>
+              <span class="nav-label">Dashboard</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="{% url 'heatmap' %}" class="nav-link {% if active_page == 'heatmap' %}active{% endif %}">
+              <i class="bi bi-map"></i>
+              <span class="nav-label">Heatmap</span>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a href="{% url 'referrals:patient_list' %}" class="nav-link {% if active_page == 'patient_list' %}active{% endif %}">
+              <i class="bi bi-menu-button-wide"></i>
+              <span class="nav-label">Patients Referral</span>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a
+              href="{% url 'phistory' %}"
+              class="nav-link {% if active_page == 'phistory' %}active{% endif %}"
+            >
+              <i class="bi bi-clock-history"></i>
+              <span class="nav-label">Patients/History</span>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a
+              href="{% url 'health_facilities' %}"
+              class="nav-link {% if active_page == 'health_facilities' %}active{% endif %}"
+            >
+              <i class="bi bi-person-add"></i>
+              <span class="nav-label">Health Facilities</span>
+            </a>
+          </li>
+          
+          <li class="nav-item">
+            <a href="{% url 'report_analytics' %}" class="nav-link {% if active_page == 'report_analytics' %}active{% endif %}">
+              <i class="bi bi-newspaper"></i>
+              <span class="nav-label">Report & Analytics</span>
+            </a>
+          </li>
+
+           <li class="nav-item">
+            <a href="{% url 'user_management' %}" class="nav-link {% if active_page == 'user_management' %}active{% endif %}">
+              <i class="bi bi-person"></i>
+              <span class="nav-label">User Management</span>
+            </a>
+          </li>
+   
+          
+  
+         
+        </ul>
+        
+        
+
+        <ul class="nav-list secondary-nav">
+          <li class="nav-item">
+            <a href="{% url 'profile' %}" class="nav-link {% if active_page == 'profile' %}active{% endif %}">
+              <i class="bi bi-person-circle"></i>
+              <span class="nav-label">Profile</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="{% url 'logout' %}" class="nav-link">
+              <i class="bi bi-box-arrow-left"></i>
+              <span class="nav-label">Logout</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </aside>

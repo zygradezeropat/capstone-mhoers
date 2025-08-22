@@ -1,0 +1,188 @@
+<div
+  class="modal fade"
+  id="registerModal"
+  tabindex="-1"
+  role="dialog"
+  aria-labelledby="registerModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content shadow-lg border-0">
+      <form
+        id="addPatientForm" 
+        method="POST"
+        action="{% url 'patients:addPatient' %}"
+        class="needs-validation"
+        novalidate
+      >
+        {% csrf_token %}
+        <div class="modal-header bg-success text-white">
+          <h5 class="modal-title" id="registerModalLabel">
+            <i class="bi bi-person-plus mr-2"></i>Add New Patient
+          </h5>
+          <button
+            type="button"
+            class="close text-white"
+            data-dismiss="modal"
+            aria-label="Close"
+          >
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="form-row">
+            <div class="form-group col-md-4">
+              <label for="first_name" class="font-weight-bold">First Name</label>
+              <input
+                type="text"
+                class="form-control rounded-pill"
+                id="first_name"
+                name="first_name"
+                required
+                placeholder="Enter first name"
+              />
+              {% if form.first_name.errors %}
+              <div class="alert alert-danger mt-2 rounded-pill">
+                {% for error in form.first_name.errors %}
+                <p class="mb-0">{{ error }}</p>
+                {% endfor %}
+              </div>
+              {% endif %}
+            </div>
+            <div class="form-group col-md-4">
+              <label for="middle_name" class="font-weight-bold">Middle Name</label>
+              <input
+                type="text"
+                class="form-control rounded-pill"
+                id="middle_name"
+                name="middle_name"
+                placeholder="Enter middle name"
+              />
+              {% if form.middle_name.errors %}
+              <div class="alert alert-danger mt-2 rounded-pill">
+                {% for error in form.middle_name.errors %}
+                <p class="mb-0">{{ error }}</p>
+                {% endfor %}
+              </div>
+              {% endif %}
+            </div>
+            <div class="form-group col-md-4">
+              <label for="last_name" class="font-weight-bold">Last Name</label>
+              <input
+                type="text"
+                class="form-control rounded-pill"
+                id="last_name"
+                name="last_name"
+                required
+                placeholder="Enter last name"
+              />
+              {% if form.last_name.errors %}
+              <div class="alert alert-danger mt-2 rounded-pill">
+                {% for error in form.last_name.errors %}
+                <p class="mb-0">{{ error }}</p>
+                {% endfor %}
+              </div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label for="p_address" class="font-weight-bold">Address</label>
+              <select class="form-control rounded-pill" id="p_address" name="p_address" required>
+                <option value="">Select Address</option>
+                {% if 'NewCortez' in request.user.username %}
+                  <option value="Prk 1, Central, New Cortez, New Corella">Prk 1, Central, New Cortez, New Corella</option>
+                  <option value="Prk 2, Matin Ao, New Cortez, New Corella">Prk 2, Matin Ao, New Cortez, New Corella</option>
+                  <option value="Prk 3, Kauswagan, New Cortez, New Corella">Prk 3, Kauswagan, New Cortez, New Corella</option>
+                  <option value="Prk 4, Anaman, New Cortez, New Corella">Prk 4, Anaman, New Cortez, New Corella</option>
+                  <option value="Prk 5, Kasilak, New Cortez, New Corella">Prk 5, Kasilak, New Cortez, New Corella</option>
+                  <option value="Prk 6, San Roque, New Cortez, New Corella">Prk 6, San Roque, New Cortez, New Corella</option>
+                {% elif 'Carcor' in request.user.username %}
+                  <option value="Prk 1, Carcor">Prk 1, Carcor</option>
+                  <option value="Prk 2, Carcor">Prk 2, Carcor</option>
+                  <option value="Prk 3, Carcor">Prk 3, Carcor</option>
+               
+                {% elif 'Mesaoy ' in request.user.username %}
+                <option value="Prk 1, Carcor">Prk 1, Mesaoy</option>
+                  <option value="Prk 2, Carcor">Prk 2, Mesaoy</option>
+                  <option value="Prk 3, Carcor">Prk 3, Mesaoy</option>
+                   {% endif %}
+              </select>
+              {% if form.p_address.errors %}
+              <div class="alert alert-danger mt-2 rounded-pill">
+                {% for error in form.p_address.errors %}
+                <p class="mb-0">{{ error }}</p>
+                {% endfor %}
+              </div>
+              {% endif %}
+            </div>
+            <div class="form-group col-md-6">
+              <label for="p_number" class="font-weight-bold">Phone Number</label>
+              <input
+                type="number"
+                class="form-control rounded-pill"
+                id="p_number"
+                name="p_number"
+                pattern="[0-9]{11}"
+                required
+                placeholder="Enter 11-digit phone number"
+              />
+              {% if form.p_number.errors %}
+              <div class="alert alert-danger mt-2 rounded-pill">
+                {% for error in form.p_number.errors %}
+                <p class="mb-0">{{ error }}</p>
+                {% endfor %}
+              </div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label for="date_of_birth" class="font-weight-bold">Date of Birth</label>
+              <input
+                type="date"
+                class="form-control rounded-pill"
+                id="date_of_birth"
+                name="date_of_birth"
+                required
+              />
+              {% if form.date_of_birth.errors %}
+              <div class="alert alert-danger mt-2 rounded-pill">
+                {% for error in form.date_of_birth.errors %}
+                <p class="mb-0">{{ error }}</p>
+                {% endfor %}
+              </div>
+              {% endif %}
+            </div>
+            <div class="form-group col-md-6">
+              <label for="sex" class="font-weight-bold">Sex</label>
+              <select class="form-control rounded-pill" id="sex" name="sex" required>
+                <option value="">Select Gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+              </select>
+              {% if form.sex.errors %}
+              <div class="alert alert-danger mt-2 rounded-pill">
+                {% for error in form.sex.errors %}
+                <p class="mb-0">{{ error }}</p>
+                {% endfor %}
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer bg-light">
+          <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-dismiss="modal">
+            <i class="bi bi-x-circle mr-2"></i>Cancel
+          </button>
+          <button type="submit" class="btn btn-success rounded-pill px-4">
+            <i class="bi bi-check-circle mr-2"></i>Save Patient
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

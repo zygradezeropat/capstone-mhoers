@@ -1,0 +1,477 @@
+<!-- Delete Referral Modal -->
+<div class="modal fade" id="deleteReferralModal" tabindex="-1" role="dialog" aria-labelledby="deleteReferralLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+    <div class="modal-content shadow-lg border-0">
+      <!-- Modal Header -->
+      <div class="modal-header bg-danger text-white py-3">
+        <h5 class="modal-title mb-0" id="deleteReferralLabel">
+          <i class="bi bi-trash mr-2"></i>Delete Referral
+        </h5>
+        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body p-4">
+        <form method="POST" id="deleteReferralForm" action="{% url 'referrals:delete_referral' %}">
+          {% csrf_token %}
+          <input type="hidden" name="referral_del" id="referral-id-del">
+          <p id="delete-confirm-text" class="text-muted mb-4"></p>
+          <div class="d-flex justify-content-between">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">
+              <i class="bi bi-x-circle mr-2"></i>Cancel
+            </button>
+            <button type="submit" class="btn btn-danger">
+              <i class="bi bi-trash mr-2"></i>Delete
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- End of Delete Referral Modal -->
+
+<!-- View Referral Modal -->
+<div class="modal fade" id="viewReferralModal" tabindex="-1" role="dialog" aria-labelledby="viewReferralLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+    <div class="modal-content shadow-xl border-0">
+      <!-- Modal Header -->
+      <div class="modal-header bg-success text-white py-3">
+        <h5 class="modal-title mb-0" id="viewReferralLabel">
+          <i class="bi bi-person-lines-fill mr-2"></i>View Referral Details
+        </h5>
+        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <!-- Modal Body -->
+      <div class="modal-body p-4">
+        <div class="row mb-12">
+          <div class="col-md-4">
+            <label class="font-weight-bold text-muted" for="viewPatientName">Patient Name</label>
+            <div class="input-group">
+              <div class="input-group-prepend">
+                <span class="input-group-text"><i class="bi bi-person"></i></span>
+              </div>
+              <input type="text" class="form-control bg-light" id="viewPatientName" disabled value="{{ patients.patient_id }}">
+            </div>
+          </div>
+          <div class="col-md-4">
+            <label class="font-weight-bold text-muted" for="viewReferralDate">Referral Date</label>
+            <div class="input-group">
+              <div class="input-group-prepend">
+                <span class="input-group-text"><i class="bi bi-calendar"></i></span>
+              </div>
+              <input type="text" class="form-control bg-light" id="viewReferralDate" disabled>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <label class="font-weight-bold text-muted" for="viewStatus">Referral Status</label>
+            <div class="input-group">
+              <div class="input-group-prepend">
+                <span class="input-group-text"><i class="bi bi-info-circle"></i></span>
+              </div>
+              <input type="text" class="form-control bg-light" id="viewStatus" disabled>
+            </div>
+          </div>
+
+        </div>
+
+        
+        <div class="row mb-12">
+          <div class="col-md-4">
+            <label class="font-weight-bold text-muted" for="viewReferFrom">Refer From</label>
+            <div class="input-group">
+              <div class="input-group-prepend">
+                <span class="input-group-text"><i class="bi bi-arrow-left"></i></span>
+              </div>
+              <input type="text" class="form-control bg-light" id="viewReferFrom" disabled>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <label class="font-weight-bold text-muted" for="viewReferTo">Refer To</label>
+            <div class="input-group">
+              <div class="input-group-prepend">
+                <span class="input-group-text"><i class="bi bi-arrow-right"></i></span>
+              </div>
+              <input type="text" class="form-control bg-light" id="viewReferTo" disabled>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <label class="font-weight-bold text-muted" for="viewSex">Sex</label>
+            <div class="input-group">
+              <div class="input-group-prepend">
+                <span class="input-group-text"><i class="bi bi-person"></i></span>
+              </div>
+              <input type="text" class="form-control bg-light" id="viewSex" disabled>
+            </div>
+          </div>
+
+        </div>
+        <div class="row mb-12">
+          <div class="col-md-4">
+            <label class="font-weight-bold text-muted" for="viewHeight">Height by CM</label>
+            <div class="input-group">
+              <div class="input-group-prepend">
+                <span class="input-group-text"><i class="bi bi-info-circle"></i></span>
+              </div>
+              <input type="text" class="form-control bg-light" id="viewheight" disabled>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <label class="font-weight-bold text-muted" for="viewHeight">Weight by KG</label>
+            <div class="input-group">
+              <div class="input-group-prepend">
+                <span class="input-group-text"><i class="bi bi-info-circle"></i></span>
+              </div>
+              <input type="text" class="form-control bg-light" id="viewWeight" disabled>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <label class="font-weight-bold text-muted" for="viewHeight">Temperature by Celcius</label>
+            <div class="input-group">
+              <div class="input-group-prepend">
+                <span class="input-group-text"><i class="bi bi-info-circle"></i></span>
+              </div>
+              <input type="text" class="form-control bg-light" id="viewtemperature" disabled>
+            </div>
+          </div>
+        </div>
+
+        <div class="row mb-12">
+          <div class="col-md-4">
+            <label class="font-weight-bold text-muted" for="viewSystolic">BP Systolic</label>
+            <div class="input-group">
+              <div class="input-group-prepend">
+                <span class="input-group-text"><i class="bi bi-info-circle"></i></span>
+              </div>
+              <input type="text" class="form-control bg-light" id="viewbpsystolic" disabled>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <label class="font-weight-bold text-muted" for="viewDiastolic">BP Diastolic</label>
+            <div class="input-group">
+              <div class="input-group-prepend">
+                <span class="input-group-text"><i class="bi bi-info-circle"></i></span>
+              </div>
+              <input type="text" class="form-control bg-light" id="viewbpdiastolic" disabled>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <label class="font-weight-bold text-muted" for="viewRespiratory">Respiratory Rate</label>
+            <div class="input-group">
+              <div class="input-group-prepend">
+                <span class="input-group-text"><i class="bi bi-info-circle"></i></span>
+              </div>
+              <input type="text" class="form-control bg-light" id="viewrespiratory" disabled>
+            </div>
+          </div>
+        </div>
+
+        <div class="row mb-12">
+          <div class="col-md-4">
+            <label class="font-weight-bold text-muted" for="viewcomplaint">Complaint</label>
+            <div class="input-group">
+              <div class="input-group-prepend">
+                <span class="input-group-text"><i class="bi bi-clipboard-pulse"></i></span>
+              </div>
+              <textarea class="form-control bg-light" id="viewNotes" rows="3" disabled></textarea>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <label class="font-weight-bold text-muted" for="viewsymptoms">Symptoms</label>
+            <div class="input-group">
+              <div class="input-group-prepend">
+                <span class="input-group-text"><i class="bi bi-clipboard-check"></i></span>
+              </div>
+              <textarea class="form-control bg-light" id="viewSymptoms" rows="3" disabled></textarea>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <label class="font-weight-bold text-muted" for="workUp">Work Up</label>
+            <div class="input-group">
+              <div class="input-group-prepend">
+                <span class="input-group-text"><i class="bi bi-clipboard-pulse"></i></span>
+              </div>
+              <textarea class="form-control bg-light" id="viewWorkUp" rows="3" disabled></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="row mb-12">
+          <div class="col-md-12">
+            <label class="font-weight-bold text-muted" for="viewdisease">Possible Disease</label>
+            <div class="input-group">
+              <div class="input-group-prepend">
+                <span class="input-group-text"><i class="bi bi-info-circle"></i></span>
+              </div>
+              <input type="text" class="form-control bg-light" id="viewdisease" disabled>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <!-- Modal Footer -->
+      <div class="modal-footer bg-light py-3">
+        <form method="POST" action="{% url 'referrals:update_referral_status' %}">
+          {% csrf_token %}
+          <input type="hidden" name="referral_id" id="referral-id-input">
+          <button type="submit" class="btn btn-success">
+            <i class="bi bi-check-circle mr-2"></i>Referred
+          </button>
+        </form>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+          <i class="bi bi-arrow-left mr-2"></i>Close
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- End of View Referral Modal -->
+
+
+
+<!-- Edit Referral Modal -->
+<div class="modal fade" id="editReferralModal" tabindex="-1" role="dialog" aria-labelledby="editReferralLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+    <div class="modal-content shadow-xl border-0">
+      <!-- Modal Header -->
+      <div class="modal-header bg-primary text-white py-3">
+        <h5 class="modal-title mb-0" id="editReferralLabel">
+          <i class="bi bi-pencil-square mr-2"></i>Referral Active
+        </h5>
+        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <!-- Modal Body -->
+      <div class="modal-body p-4">
+        <form id="editReferralForm" method="POST" action="{% url 'referrals:referred_referral_status' %}">
+          {% csrf_token %}
+          <div class="row mb-12">
+            <div class="col-md-4">
+              <label class="font-weight-bold text-muted" for="editPatientName">Patient Name</label>
+              <div class="input-group">
+                <div class="input-group-prepend">
+                  <span class="input-group-text"><i class="bi bi-person"></i></span>
+                </div>
+                <input type="text" class="form-control bg-light" id="editPatientName" value="{{ patients.patient_id }}" disabled>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <label class="font-weight-bold text-muted" for="editReferralDate">Referral Date</label>
+              <div class="input-group">
+                <div class="input-group-prepend">
+                  <span class="input-group-text"><i class="bi bi-calendar"></i></span>
+                </div>
+                <input type="datetime-local" class="form-control bg-light" id="editReferralDate" disabled>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <label class="font-weight-bold text-muted" for="editReferFrom">Refer From</label>
+              <div class="input-group">
+                <div class="input-group-prepend">
+                  <span class="input-group-text"><i class="bi bi-arrow-left"></i></span>
+                </div>
+                <input type="text" class="form-control bg-light" id="editReferFrom" disabled>
+              </div>
+            </div>
+          </div>
+
+          <div class="row mb-12">
+            <div class="col-md-4">
+              <label class="font-weight-bold text-muted" for="editSex">Sex</label>
+              <div class="input-group">
+                <div class="input-group-prepend">
+                  <span class="input-group-text"><i class="bi bi-person"></i></span>
+                </div>
+                <input type="text" class="form-control bg-light" id="editSex" disabled>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <label class="font-weight-bold text-muted" for="editHeight">Height by CM</label>
+              <div class="input-group">
+                <div class="input-group-prepend">
+                  <span class="input-group-text"><i class="bi bi-info-circle"></i></span>
+                </div>
+                <input type="text" class="form-control bg-light" id="editHeight" disabled>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <label class="font-weight-bold text-muted" for="editWeight">Weight by KG</label>
+              <div class="input-group">
+                <div class="input-group-prepend">
+                  <span class="input-group-text"><i class="bi bi-info-circle"></i></span>
+                </div>
+                <input type="text" class="form-control bg-light" id="editWeight" disabled>
+              </div>
+            </div>
+          </div>
+
+          <div class="row mb-12">
+            <div class="col-md-4">
+              <label class="font-weight-bold text-muted" for="editTemperature">Temperature by Celcius</label>
+              <div class="input-group">
+                <div class="input-group-prepend">
+                  <span class="input-group-text"><i class="bi bi-info-circle"></i></span>
+                </div>
+                <input type="text" class="form-control bg-light" id="editTemperature" disabled>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <label class="font-weight-bold text-muted" for="editBpSystolic">Blood Pressure</label>
+              <div class="input-group">
+                <div class="input-group-prepend">
+                  <span class="input-group-text"><i class="bi bi-info-circle"></i></span>
+                </div>
+                <input type="text" class="form-control bg-light" id="editBpSystolic" disabled>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <label class="font-weight-bold text-muted" for="editRespiratory">Respiratory Rate</label>
+              <div class="input-group">
+                <div class="input-group-prepend">
+                  <span class="input-group-text"><i class="bi bi-info-circle"></i></span>
+                </div>
+                <input type="text" class="form-control bg-light" id="editRespiratory" disabled>
+              </div>
+            </div>
+          </div>
+
+          <div class="row mb-12">
+            <div class="col-md-4">
+              <label class="font-weight-bold text-muted" for="editComplaint">Complaint</label>
+              <div class="input-group">
+                <div class="input-group-prepend">
+                  <span class="input-group-text"><i class="bi bi-clipboard-pulse"></i></span>
+                </div>
+                <textarea class="form-control bg-light" id="editNotes" rows="3"></textarea>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <label class="font-weight-bold text-muted" for="editSymptoms">Symptoms</label>
+              <div class="input-group">
+                <div class="input-group-prepend">
+                  <span class="input-group-text"><i class="bi bi-clipboard-check"></i></span>
+                </div>
+                <textarea class="form-control bg-light" id="editSymptoms" rows="3" disabled></textarea>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <label class="font-weight-bold text-muted" for="editworkUp">Work Up</label>
+              <div class="input-group">
+                <div class="input-group-prepend">
+                  <span class="input-group-text"><i class="bi bi-clipboard-pulse"></i></span>
+                </div>
+                <textarea class="form-control bg-light" id="editworkUp" rows="3" disabled></textarea>
+              </div>
+            </div>
+          </div>
+
+          <div class="row mb-12 mt-4">
+
+            <div class="col-md-4">
+              <label class="font-weight-bold text-muted" for="editMhoNote">Findings</label>
+              <div class="input-group">
+                <div class="input-group-prepend">
+                  <span class="input-group-text"><i class="bi bi-journal-text"></i></span>
+                </div>
+                <textarea for="note" class="form-control bg-light" id="editMhoFindings" name="editMhoFindings" rows="3" placeholder="Type here.." ></textarea>
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <label class="font-weight-bold text-muted" for="editMhoNote">MHO Note / Actions</label>
+              <div class="input-group">
+                <div class="input-group-prepend">
+                  <span class="input-group-text"><i class="bi bi-journal-text"></i></span>
+                </div>
+                <textarea for="note" class="form-control bg-light" id="editMhoNote" name="editMhoNote" rows="3" placeholder="Type here.." ></textarea>
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <label class="font-weight-bold text-muted" for="editMhoAdvice">Advice</label>
+              <div class="input-group">
+                <div class="input-group-prepend">
+                  <span class="input-group-text"><i class="bi bi-journal-text"></i></span>
+                </div>
+                <textarea for="advice" class="form-control bg-light" id="editMhoAdvice" name="editMhoAdvice" rows="3" placeholder="Type here.." ></textarea>
+              </div>
+            </div>
+            <div class="col-md-12">
+              <label class="font-weight-bold text-muted" for="editFollowup">Follow Up Date (if applicable)</label>
+              <div class="input-group">
+                <div class="input-group-prepend">
+                  <span class="input-group-text"><i class="bi bi-calendar"></i></span>
+                </div>
+                <input type="date" class="form-control bg-light" id="editFollowup" name="editFollowup" placeholder="Select follow-up date">
+              </div>
+            </div>
+          </div>          
+      </div>
+
+      
+
+      <!-- Modal Footer -->
+      <div class="modal-footer bg-light py-3">
+        <input type="hidden" name="referral_id_r" id="referral-id-edit-input">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+          <i class="bi bi-x-circle mr-2"></i>Cancel
+        </button>
+        <button type="submit" class="btn btn-success">
+          <i class="bi bi-check-circle mr-2"></i>Done Referred
+        </button>
+      </div>
+    </form>
+    </div>
+  </div>
+</div>
+
+<!-- End of Edit Referral Modal -->
+
+<!-- Reject Referral Modal -->
+<div class="modal fade" id="rejectReferralModal" tabindex="-1" role="dialog" aria-labelledby="rejectReferralLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+    <div class="modal-content shadow-lg border-0">
+      <!-- Modal Header -->
+      <div class="modal-header bg-warning text-white py-3">
+        <h5 class="modal-title mb-0" id="rejectReferralLabel">
+          <i class="bi bi-x-circle mr-2"></i>Reject Referral
+        </h5>
+        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <!-- Modal Body -->
+      <div class="modal-body p-4">
+        <form method="POST" id="rejectReferralForm" action="{% url 'referrals:reject_referral' %}">
+          {% csrf_token %}
+          <input type="hidden" name="referral_id" id="referral-id-reject">
+          <div class="form-group">
+            <label class="font-weight-bold text-muted" for="rejection_reason">Reason for Rejection</label>
+            <textarea class="form-control" id="rejection_reason" name="rejection_reason" rows="4" required></textarea>
+          </div>
+          <div class="d-flex justify-content-between">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">
+              <i class="bi bi-x-circle mr-2"></i>Cancel
+            </button>
+            <button type="submit" class="btn btn-warning">
+              <i class="bi bi-x-circle mr-2"></i>Reject Referral
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- End of Reject Referral Modal -->

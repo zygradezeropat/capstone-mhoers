@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css">
+
+<!-- Navbar Include -->
+{% include 'components/navbar.html' %}
+
+<div class="container-fluid mt-4">
+      <div class="row mt-3">
+        <!-- Map Section -->
+        <div class="col-md-8">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+              <h4 class="text-primary mb-0">New Corella Disease Heat Map</h4>
+              
+              <!-- Disease Filter -->
+              <div class="disease-filter">
+                <h6 class="mb-3">Filter by Disease:</h6>
+                <div class="d-flex flex-wrap">
+                  <span class="disease-badge flu active" data-disease="flu">Flu</span>
+                  <span class="disease-badge cold" data-disease="cold">Common Cold</span>
+                  <span class="disease-badge respiratory" data-disease="respiratory">Respiratory Issue</span>
+                  <span class="disease-badge gastrointestinal" data-disease="gastrointestinal">Gastrointestinal Issue</span>
+                </div>
+              </div>
+              <div id="map" style="height: 500px; border-radius: 10px;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Legend Section -->
+        <div class="col-md-4">
+          <div class="legend-table">
+            <h4>Legend</h4>
+            <table class="table table-bordered">
+              <thead>
+                <tr>
+                  <th>Facility Type</th>
+                  <th>Color Code</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Main Facility</td>
+                  <td>
+                    <span style="background-color: green; width: 20px; height: 20px; display: inline-block;"></span> Green
+                  </td>
+                </tr>
+                <tr>
+                  <td>BHC Facility</td>
+                  <td>
+                    <span style="background-color: red; width: 20px; height: 20px; display: inline-block;"></span> Red
+                  </td>
+                </tr>
+                <tr>
+                  <td>Your Facility</td>
+                  <td>
+                    <span style="background-color: blue; width: 20px; height: 20px; display: inline-block;"></span> Blue
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+{% block script %}
+<!-- Scripts -->
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+<script src="{% static 'js/heatdisease_map.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+<script>
+  $(document).ready(function () {
+    $('#activeTable').DataTable();
+  });
+
+  // Notification check function
+  function checkNotifications() {
+    fetch('/notifications/check/')
+      .then(response => response.json())
+      .then(data => {
+        const notifBadge = document.getElementById('notif-count');
+        if (data.unseen_count > 0) {
+          notifBadge.innerText = data.unseen_count;
+          notifBadge.style.display = 'inline';
+        } else {
+          notifBadge.style.display = 'none';
+        }
+      });
+  }
+
+  setInterval(checkNotifications, 5000); // Check every 5 seconds
+  window.onload = checkNotifications;
+</script>
+{% endblock script %}
+{% endblock %}

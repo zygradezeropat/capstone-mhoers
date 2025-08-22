@@ -1,0 +1,356 @@
+Referral_ID,Symptoms,Urgency_Level,Barangay,Age,Illness_Suspected,Sent_Time,Catered_Time
+R001,"Fever, Cough",High,Barangay A,4,Pneumonia,24/06/2025 8:00,24/06/2025 14:00
+R002,Headache,Moderate,Barangay B,60,Stroke,24/06/2025 10:00,24/06/2025 11:00
+R003,"Vomiting, Rash",Low,Barangay A,10,Dengue,24/06/2025 9:00,25/06/2025 9:00
+R004,Chest Pain,Critical,Barangay C,55,Heart Attack,24/06/2025 7:30,24/06/2025 7:50
+R005,"Dizziness, Weakness",High,Barangay B,45,Hypertension,24/06/2025 8:15,24/06/2025 10:15
+R006,"Sore Throat, Fever",Moderate,Barangay D,20,Flu,24/06/2025 9:45,24/06/2025 15:45
+R007,Seizure,Critical,Barangay C,5,Epilepsy,24/06/2025 8:10,24/06/2025 8:30
+R008,Abdominal Pain,Moderate,Barangay D,32,Appendicitis,24/06/2025 12:00,24/06/2025 16:00
+R009,High Fever,High,Barangay A,12,Typhoid,24/06/2025 14:30,25/06/2025 8:30
+R010,Fatigue,Low,Barangay B,40,Anemia,24/06/2025 11:00,26/06/2025 11:00
+R011,"Shortness of Breath, Cough",Critical,Barangay C,65,COPD,24/06/2025 6:45,24/06/2025 7:15
+R012,"Nausea, Diarrhea",Moderate,Barangay A,28,Food Poisoning,24/06/2025 13:00,24/06/2025 17:00
+R013,"Blurred Vision, Headache",High,Barangay B,50,Migraine,24/06/2025 8:45,24/06/2025 11:00
+R014,Skin Rash,Low,Barangay D,7,Measles,24/06/2025 10:20,25/06/2025 10:20
+R015,"Fever, Muscle Pain",Moderate,Barangay A,22,Chikungunya,24/06/2025 14:10,24/06/2025 20:10
+R016,Unconsciousness,Critical,Barangay C,70,Stroke,24/06/2025 7:10,24/06/2025 7:30
+R017,"Joint Pain, Fatigue",Low,Barangay D,35,Arthritis,24/06/2025 9:30,25/06/2025 9:30
+R018,"Fever, Nausea",High,Barangay B,8,Dengue,24/06/2025 15:00,25/06/2025 1:00
+R019,"Cough, Chest Tightness",Moderate,Barangay A,38,Bronchitis,24/06/2025 13:20,24/06/2025 19:20
+R020,Head Trauma,Critical,Barangay C,18,Concussion,24/06/2025 6:30,24/06/2025 6:50
+R021,"Severe Headache, Vomiting",Critical,Barangay D,30,Meningitis,24/06/2025 6:10,24/06/2025 6:40
+R022,"Nasal Congestion, Fever",Low,Barangay B,25,Common Cold,24/06/2025 13:30,25/06/2025 13:30
+R023,"Skin Lesions, Itchiness",Moderate,Barangay A,16,Chickenpox,24/06/2025 9:00,24/06/2025 13:00
+R024,"Back Pain, Numbness",High,Barangay C,47,Slipped Disc,24/06/2025 10:40,24/06/2025 13:40
+R025,"Leg Swelling, Pain",Moderate,Barangay D,58,Deep Vein Thrombosis,24/06/2025 12:45,24/06/2025 16:45
+R026,"Difficulty Speaking, Weakness",Critical,Barangay C,62,Stroke,24/06/2025 8:00,24/06/2025 8:25
+R027,Coughing Blood,High,Barangay B,36,Tuberculosis,24/06/2025 7:15,24/06/2025 9:45
+R028,"Burning Sensation, Urination Pain",Moderate,Barangay A,29,UTI,24/06/2025 14:30,24/06/2025 18:30
+R029,"Loss of Appetite, Fatigue",Low,Barangay D,33,Hepatitis,24/06/2025 11:50,26/06/2025 11:50
+R030,"Slurred Speech, Confusion",Critical,Barangay C,59,TIA (Mini-Stroke),24/06/2025 6:55,24/06/2025 7:10
+R031,"Fever, Stiff Neck",Critical,Barangay A,15,Meningitis,24/06/2025 7:00,24/06/2025 7:20
+R032,Loss of Consciousness,Critical,Barangay B,65,Cardiac Arrest,24/06/2025 6:20,24/06/2025 6:35
+R033,"Dry Cough, Sore Throat",Moderate,Barangay C,27,COVID-19,24/06/2025 10:00,24/06/2025 14:00
+R034,"Ear Pain, Swelling",Low,Barangay D,9,Ear Infection,24/06/2025 11:15,25/06/2025 11:15
+R035,"Bloody Stool, Cramps",High,Barangay A,40,Gastroenteritis,24/06/2025 13:10,24/06/2025 15:30
+R036,"Anxiety, Rapid Heartbeat",Moderate,Barangay B,21,Panic Attack,24/06/2025 9:20,24/06/2025 13:20
+R037,Difficulty Breathing,Critical,Barangay C,33,Asthma Attack,24/06/2025 7:25,24/06/2025 7:45
+R038,"Itchy Eyes, Sneezing",Low,Barangay D,19,Allergic Rhinitis,24/06/2025 10:30,25/06/2025 10:30
+R039,"Swollen Gums, Tooth Pain",Moderate,Barangay A,34,Gingivitis,24/06/2025 12:00,24/06/2025 15:00
+R040,"Joint Swelling, Redness",High,Barangay B,48,Gout,24/06/2025 8:30,24/06/2025 11:30
+R041,"High Fever, Chills",High,Barangay A,11,Malaria,24/06/2025 14:00,25/06/2025 6:00
+R042,Numbness in Limbs,Critical,Barangay C,52,Spinal Cord Injury,24/06/2025 6:10,24/06/2025 6:30
+R043,"Red Eyes, Watery Discharge",Moderate,Barangay D,23,Conjunctivitis,24/06/2025 9:00,24/06/2025 12:00
+R044,"Difficulty Swallowing, Fever",High,Barangay B,18,Tonsillitis,24/06/2025 8:40,24/06/2025 11:00
+R045,"Rapid Pulse, Dizziness",Critical,Barangay C,43,Shock,24/06/2025 7:05,24/06/2025 7:25
+R046,"Swollen Lymph Nodes, Fatigue",Moderate,Barangay A,36,Mononucleosis,24/06/2025 13:15,24/06/2025 17:15
+R047,"Skin Peeling, Fever",High,Barangay D,6,"Hand, Foot, and Mouth Disease",24/06/2025 10:50,24/06/2025 14:50
+R048,"Difficulty Urinating, Lower Back Pain",Moderate,Barangay B,55,Prostatitis,24/06/2025 12:20,24/06/2025 16:20
+R049,"Tremors, Confusion",Critical,Barangay C,68,Parkinson’s Complication,24/06/2025 6:45,24/06/2025 7:05
+R050,"Fever, Yellow Skin",High,Barangay A,31,Hepatitis A,24/06/2025 14:25,25/06/2025 6:25
+R051,"Swollen Joints, Morning Stiffness",Moderate,Barangay D,42,Rheumatoid Arthritis,24/06/2025 9:10,24/06/2025 13:10
+R052,"Fever, Neck Swelling",High,Barangay B,26,Mumps,24/06/2025 12:45,24/06/2025 18:45
+R053,"Rapid Breathing, Cyanosis",Critical,Barangay C,2,Neonatal Pneumonia,24/06/2025 6:00,24/06/2025 6:20
+R054,"Itchy Rash, Swelling",Moderate,Barangay A,20,Allergic Reaction,24/06/2025 10:00,24/06/2025 13:00
+R055,"Loss of Balance, Nausea",High,Barangay D,39,Vertigo,24/06/2025 7:30,24/06/2025 10:00
+R056,"Persistent Cough, Night Sweats",Moderate,Barangay B,46,Tuberculosis,24/06/2025 8:10,24/06/2025 12:10
+R057,"Fever, Bruising Easily",Critical,Barangay A,9,Leukemia,24/06/2025 6:50,24/06/2025 7:10
+R058,"Frequent Urination, Thirst",High,Barangay C,51,Diabetes,24/06/2025 11:45,24/06/2025 15:45
+R059,"Skin Redness, Warmth",Moderate,Barangay D,44,Cellulitis,24/06/2025 10:30,24/06/2025 14:30
+R060,Severe Abdominal Cramps,High,Barangay B,17,Appendicitis,24/06/2025 7:00,24/06/2025 9:00
+R061,"Fatigue, Cold Intolerance",Moderate,Barangay A,37,Hypothyroidism,24/06/2025 9:45,24/06/2025 13:45
+R062,"Confusion, Slurred Speech",Critical,Barangay B,72,Stroke,24/06/2025 6:25,24/06/2025 6:45
+R063,"Painful Urination, Fever",Moderate,Barangay C,29,UTI,24/06/2025 11:20,24/06/2025 15:20
+R064,"Swollen Face, Breathing Difficulty",Critical,Barangay D,22,Anaphylaxis,24/06/2025 6:50,24/06/2025 7:05
+R065,"Skin Discoloration, Abdominal Pain",High,Barangay A,41,Cirrhosis,24/06/2025 13:00,24/06/2025 18:00
+R066,"Chest Tightness, Wheezing",Critical,Barangay B,19,Asthma Attack,24/06/2025 7:10,24/06/2025 7:30
+R067,"Irregular Heartbeat, Fatigue",High,Barangay C,56,Arrhythmia,24/06/2025 8:20,24/06/2025 10:50
+R068,"Night Fever, Weight Loss",Moderate,Barangay D,35,Tuberculosis,24/06/2025 10:30,24/06/2025 14:30
+R069,"Blisters, Itchy Skin",Low,Barangay A,12,Scabies,24/06/2025 12:15,25/06/2025 12:15
+R070,"Stomach Bloating, Constipation",Low,Barangay B,30,IBS,24/06/2025 13:10,26/06/2025 13:10
+R071,"Frequent Nosebleeds, Fatigue",High,Barangay C,13,Leukemia,24/06/2025 7:50,24/06/2025 10:00
+R072,"Sore Throat, White Patches",Moderate,Barangay D,26,Tonsillitis,24/06/2025 11:00,24/06/2025 15:00
+R073,"Weakness, Paleness",High,Barangay B,47,Anemia,24/06/2025 8:10,24/06/2025 11:10
+R074,"Rash, Fever, Cough",Moderate,Barangay A,8,Measles,24/06/2025 9:30,24/06/2025 13:30
+R075,"Stiff Jaw, Muscle Spasms",Critical,Barangay C,31,Tetanus,24/06/2025 6:40,24/06/2025 7:00
+R076,"Sharp Chest Pain, Nausea",High,Barangay B,58,Angina,24/06/2025 7:15,24/06/2025 9:15
+R077,"Difficulty Walking, Numb Feet",Moderate,Barangay D,61,Neuropathy,24/06/2025 10:10,24/06/2025 14:10
+R078,"Eye Pain, Vision Loss",Critical,Barangay A,64,Glaucoma,24/06/2025 6:30,24/06/2025 6:50
+R079,"Swollen Abdomen, Jaundice",High,Barangay C,33,Hepatitis B,24/06/2025 13:45,24/06/2025 17:45
+R080,"Dry Skin, Excessive Thirst",Moderate,Barangay B,45,Diabetes,24/06/2025 12:30,24/06/2025 16:30
+R081,"Persistent Diarrhea, Dehydration",Critical,Barangay D,4,Cholera,24/06/2025 6:15,24/06/2025 6:35
+R082,"Burning Sensation, Chest Pain",High,Barangay C,49,GERD,24/06/2025 8:30,24/06/2025 10:30
+R083,"Skin Sores, Fever",Moderate,Barangay A,11,Impétigo,24/06/2025 9:10,24/06/2025 13:10
+R084,"Facial Drooping, Numbness",Critical,Barangay B,67,Stroke,24/06/2025 7:00,24/06/2025 7:20
+R085,"Itching, Swelling after Eating",Critical,Barangay D,25,Severe Allergy,24/06/2025 6:45,24/06/2025 7:00
+R086,"Low Back Pain, Fatigue",Moderate,Barangay C,53,Kidney Infection,24/06/2025 11:00,24/06/2025 15:00
+R087,"Headache, Sensitivity to Light",High,Barangay A,19,Migraine,24/06/2025 10:10,24/06/2025 12:30
+R088,"Persistent Cough, Fever",Moderate,Barangay B,33,Pneumonia,24/06/2025 12:00,24/06/2025 16:00
+R089,"Abdominal Pain, Diarrhea",High,Barangay C,38,Salmonella,24/06/2025 13:15,24/06/2025 17:15
+R090,"Swollen Tonsils, Bad Breath",Moderate,Barangay D,14,Tonsillitis,24/06/2025 8:00,24/06/2025 12:00
+R091,"Coughing, Chest Pain",Critical,Barangay A,60,Tuberculosis,24/06/2025 6:35,24/06/2025 6:55
+R092,"Red Eyes, Fever",Moderate,Barangay B,6,Measles,24/06/2025 9:45,24/06/2025 13:45
+R093,"Leg Weakness, Urinary Problems",High,Barangay C,45,Multiple Sclerosis,24/06/2025 8:20,24/06/2025 11:20
+R094,"Shivering, High Fever",Critical,Barangay D,32,Malaria,24/06/2025 7:30,24/06/2025 7:50
+R095,"Severe Joint Pain, Swelling",High,Barangay A,29,Gout,24/06/2025 10:30,24/06/2025 13:30
+R096,"Yellow Skin, Nausea",Moderate,Barangay B,41,Hepatitis C,24/06/2025 11:30,24/06/2025 15:30
+R097,"Tremors, Memory Loss",High,Barangay C,70,Alzheimer’s Disease,24/06/2025 9:20,24/06/2025 11:50
+R098,"Persistent Headache, Eye Pressure",Moderate,Barangay D,48,Glaucoma,24/06/2025 10:00,24/06/2025 14:00
+R099,"Numbness, Foot Pain",Low,Barangay A,55,Peripheral Neuropathy,24/06/2025 13:00,25/06/2025 13:00
+R100,"Swollen Glands, Fatigue",Low,Barangay B,24,Mononucleosis,24/06/2025 12:20,26/06/2025 12:20
+R101,"Fever, Joint Pain",High,Barangay C,34,Dengue,24/06/2025 14:15,24/06/2025 20:15
+R102,"Nausea, Yellowing of Eyes",Moderate,Barangay A,43,Hepatitis A,24/06/2025 10:40,24/06/2025 14:40
+R103,"Shortness of Breath, Swelling Legs",Critical,Barangay D,66,Congestive Heart Failure,24/06/2025 6:25,24/06/2025 6:50
+R104,"Fatigue, Cold Hands",Moderate,Barangay B,29,Iron Deficiency Anemia,24/06/2025 11:10,24/06/2025 15:10
+R105,"Chest Pain, Dizziness",High,Barangay C,52,Angina,24/06/2025 8:05,24/06/2025 10:35
+R106,"Headache, Stiff Neck",Critical,Barangay A,18,Meningitis,24/06/2025 6:45,24/06/2025 7:05
+R107,"Rash, Muscle Pain",Moderate,Barangay D,12,Chikungunya,24/06/2025 9:20,24/06/2025 13:20
+R108,"Loss of Smell, Cough",Moderate,Barangay B,26,COVID-19,24/06/2025 12:00,24/06/2025 16:00
+R109,"Severe Headache, Light Sensitivity",High,Barangay C,22,Migraine,24/06/2025 10:00,24/06/2025 13:00
+R110,"Numbness in Fingers, Vision Blurring",Critical,Barangay A,50,Multiple Sclerosis,24/06/2025 6:10,24/06/2025 6:35
+R111,"Dry Cough, Breathing Difficulty",High,Barangay D,58,Pneumonia,24/06/2025 7:20,24/06/2025 9:30
+R112,"Stomach Pain, Vomiting",Moderate,Barangay B,31,Gastroenteritis,24/06/2025 9:30,24/06/2025 13:30
+R113,"Itchy Skin, Redness",Low,Barangay A,17,Eczema,24/06/2025 11:45,25/06/2025 11:45
+R114,"Frequent Fainting, Fatigue",High,Barangay C,60,Hypoglycemia,24/06/2025 8:50,24/06/2025 11:20
+R115,"Difficulty Concentrating, Restlessness",Moderate,Barangay D,10,ADHD,24/06/2025 13:30,24/06/2025 17:30
+R116,"Back Pain, Painful Urination",High,Barangay B,40,Kidney Stones,24/06/2025 10:15,24/06/2025 12:45
+R117,"High Fever, Cough, Rash",Moderate,Barangay A,5,Measles,24/06/2025 9:00,24/06/2025 13:00
+R118,"Slow Wound Healing, Frequent Infections",High,Barangay C,55,Diabetes Mellitus,24/06/2025 8:40,24/06/2025 11:40
+R119,"Swollen Neck, Hoarseness",Moderate,Barangay D,37,Thyroiditis,24/06/2025 11:30,24/06/2025 15:30
+R120,"Sudden Weight Loss, Excessive Sweating",High,Barangay B,44,Tuberculosis,24/06/2025 13:00,24/06/2025 16:00
+R121,"Rapid Weight Loss, Fatigue",High,Barangay C,39,Diabetes Type 1,24/06/2025 9:30,24/06/2025 12:30
+R122,"Difficulty Breathing, Bluish Lips",Critical,Barangay A,3,Bronchiolitis,24/06/2025 6:15,24/06/2025 6:30
+R123,"Frequent Infections, Swollen Nodes",Moderate,Barangay D,49,Lymphoma,24/06/2025 10:00,24/06/2025 14:00
+R124,"Itchy Scalp, Hair Loss",Low,Barangay B,21,Fungal Infection,24/06/2025 12:20,25/06/2025 12:20
+R125,"Tingling Hands, Leg Pain",Moderate,Barangay C,56,Peripheral Neuropathy,24/06/2025 11:00,24/06/2025 15:00
+R126,"Swollen Eyes, Fever",High,Barangay A,7,Orbital Cellulitis,24/06/2025 7:45,24/06/2025 9:45
+R127,"Chills, Headache, Fatigue",Critical,Barangay D,61,Typhoid Fever,24/06/2025 6:50,24/06/2025 7:10
+R128,"Fever, Irritability",Moderate,Barangay B,2,Ear Infection,24/06/2025 10:45,24/06/2025 14:45
+R129,"Nausea, Vomiting, Stomach Pain",High,Barangay C,32,Acid Reflux,24/06/2025 8:20,24/06/2025 10:50
+R130,"Swollen Feet, High Blood Pressure",Critical,Barangay A,63,Heart Failure,24/06/2025 6:10,24/06/2025 6:30
+R131,"Blurred Vision, Headache",High,Barangay D,36,Hypertension,24/06/2025 9:10,24/06/2025 11:10
+R132,"Persistent Hiccups, Abdominal Pain",Moderate,Barangay B,47,Gastritis,24/06/2025 11:30,24/06/2025 15:30
+R133,"Rapid Pulse, Weakness",Critical,Barangay C,70,Septic Shock,24/06/2025 6:40,24/06/2025 6:55
+R134,"Cold Hands and Feet, Slow Growth",Moderate,Barangay A,5,Hypothyroidism,24/06/2025 10:15,24/06/2025 14:15
+R135,"Facial Twitching, Seizures",Critical,Barangay D,27,Epilepsy,24/06/2025 7:20,24/06/2025 7:35
+R136,"Skin Cracking, Red Patches",Low,Barangay B,30,Psoriasis,24/06/2025 13:00,25/06/2025 13:00
+R137,"Palpitations, Dizziness",High,Barangay C,54,Atrial Fibrillation,24/06/2025 8:00,24/06/2025 10:30
+R138,"Night Sweats, Swollen Lymph Nodes",Moderate,Barangay A,41,Tuberculosis,24/06/2025 12:40,24/06/2025 16:40
+R139,"High Fever, Red Spots on Skin",Critical,Barangay D,6,Measles,24/06/2025 6:55,24/06/2025 7:15
+R140,"Cramping, Bloating",Low,Barangay B,28,IBS,24/06/2025 13:30,26/06/2025 13:30
+R141,"Chest Pain, Sweating",Critical,Barangay C,57,Heart Attack,24/06/2025 6:05,24/06/2025 6:25
+R142,"Fever, Cough, Fatigue",Moderate,Barangay A,22,Flu,24/06/2025 9:50,24/06/2025 13:50
+R143,Severe Abdominal Pain,Critical,Barangay D,35,Appendicitis,24/06/2025 7:30,24/06/2025 7:55
+R144,"Dizziness, Weakness",High,Barangay B,44,Hypertension,24/06/2025 8:15,24/06/2025 10:15
+R145,"Red Rash, Itching",Moderate,Barangay C,12,Chickenpox,24/06/2025 11:00,24/06/2025 15:00
+R146,"Shortness of Breath, Wheezing",Critical,Barangay A,28,Asthma,24/06/2025 6:40,24/06/2025 7:00
+R147,"Nausea, Vomiting, Diarrhea",High,Barangay D,30,Food Poisoning,24/06/2025 13:20,24/06/2025 17:20
+R148,"Fatigue, Weight Loss",Moderate,Barangay B,50,Diabetes,24/06/2025 10:10,24/06/2025 14:10
+R149,"Headache, Sensitivity to Light",High,Barangay C,19,Migraine,24/06/2025 9:00,24/06/2025 11:00
+R150,Coughing Blood,Critical,Barangay A,41,Tuberculosis,24/06/2025 6:30,24/06/2025 6:50
+R151,"Blurred Vision, Eye Pain",Moderate,Barangay D,34,Glaucoma,24/06/2025 12:00,24/06/2025 16:00
+R152,"Chest Tightness, Palpitations",High,Barangay B,60,Arrhythmia,24/06/2025 8:45,24/06/2025 11:15
+R153,"Swollen Joints, Morning Stiffness",Moderate,Barangay C,46,Arthritis,24/06/2025 10:30,24/06/2025 14:30
+R154,"Fever, Sore Throat",Moderate,Barangay A,15,Strep Throat,24/06/2025 9:40,24/06/2025 13:40
+R155,"Numbness, Tingling",High,Barangay D,55,Peripheral Neuropathy,24/06/2025 7:20,24/06/2025 10:20
+R156,"Seizures, Loss of Consciousness",Critical,Barangay B,25,Epilepsy,24/06/2025 6:15,24/06/2025 6:35
+R157,"Stomach Bloating, Constipation",Low,Barangay C,30,IBS,24/06/2025 13:10,26/06/2025 13:10
+R158,"Fever, Rash",Moderate,Barangay A,8,Measles,24/06/2025 11:20,24/06/2025 15:20
+R159,"Severe Headache, Vomiting",Critical,Barangay D,27,Meningitis,24/06/2025 6:05,24/06/2025 6:30
+R160,"Chest Pain, Shortness of Breath",Critical,Barangay B,53,Heart Attack,24/06/2025 6:45,24/06/2025 7:05
+R161,"Fatigue, Shortness of Breath",High,Barangay A,45,Anemia,24/06/2025 9:15,24/06/2025 12:15
+R162,Severe Abdominal Pain,Critical,Barangay C,34,Appendicitis,24/06/2025 6:20,24/06/2025 6:45
+R163,"Nausea, Vomiting",Moderate,Barangay D,22,Gastroenteritis,24/06/2025 11:40,24/06/2025 15:40
+R164,"Dizziness, Weakness",High,Barangay B,51,Hypertension,24/06/2025 8:35,24/06/2025 10:35
+R165,"Fever, Rash",Moderate,Barangay A,10,Chickenpox,24/06/2025 9:55,24/06/2025 13:55
+R166,"Chest Pain, Palpitations",Critical,Barangay C,59,Arrhythmia,24/06/2025 6:10,24/06/2025 6:30
+R167,"Cough, Fever",Moderate,Barangay D,28,Pneumonia,24/06/2025 12:15,24/06/2025 16:15
+R168,"Headache, Nausea",High,Barangay B,24,Migraine,24/06/2025 10:00,24/06/2025 12:30
+R169,"Swollen Joints, Pain",Moderate,Barangay A,39,Arthritis,24/06/2025 11:25,24/06/2025 15:25
+R170,"Shortness of Breath, Wheezing",Critical,Barangay C,46,Asthma,24/06/2025 6:05,24/06/2025 6:25
+R171,"Fatigue, Weight Loss",Moderate,Barangay D,33,Diabetes,24/06/2025 9:20,24/06/2025 13:20
+R172,"Numbness, Tingling",High,Barangay B,55,Peripheral Neuropathy,24/06/2025 7:10,24/06/2025 10:10
+R173,"Blurred Vision, Eye Pain",Moderate,Barangay A,37,Glaucoma,24/06/2025 12:05,24/06/2025 16:05
+R174,"Seizures, Loss of Consciousness",Critical,Barangay C,29,Epilepsy,24/06/2025 6:30,24/06/2025 6:50
+R175,"Stomach Bloating, Constipation",Low,Barangay D,31,IBS,24/06/2025 13:20,26/06/2025 13:20
+R176,"Fever, Rash",Moderate,Barangay B,9,Measles,24/06/2025 11:35,24/06/2025 15:35
+R177,"Severe Headache, Vomiting",Critical,Barangay A,26,Meningitis,24/06/2025 6:15,24/06/2025 6:40
+R178,"Chest Pain, Shortness of Breath",Critical,Barangay C,51,Heart Attack,24/06/2025 6:40,24/06/2025 7:00
+R179,"Swollen Feet, Pain",High,Barangay D,42,Gout,24/06/2025 8:25,24/06/2025 11:25
+R180,"Fatigue, Cold Intolerance",Moderate,Barangay B,35,Hypothyroidism,24/06/2025 9:50,24/06/2025 13:50
+R181,"High Fever, Sweating",Critical,Barangay A,14,Malaria,24/06/2025 6:10,24/06/2025 6:30
+R182,"Chest Pain, Dizziness",High,Barangay C,55,Angina,24/06/2025 8:15,24/06/2025 10:45
+R183,"Nausea, Vomiting",Moderate,Barangay B,29,Gastritis,24/06/2025 11:50,24/06/2025 15:50
+R184,Difficulty Breathing,Critical,Barangay D,26,Asthma Attack,24/06/2025 6:35,24/06/2025 6:55
+R185,"Fatigue, Weight Loss",Moderate,Barangay A,41,Diabetes,24/06/2025 9:25,24/06/2025 13:25
+R186,"Headache, Sensitivity to Light",High,Barangay C,22,Migraine,24/06/2025 10:10,24/06/2025 13:10
+R187,"Swollen Joints, Morning Stiffness",Moderate,Barangay B,47,Arthritis,24/06/2025 11:15,24/06/2025 15:15
+R188,"Cough, Fever, Chest Pain",Critical,Barangay D,60,Tuberculosis,24/06/2025 6:05,24/06/2025 6:25
+R189,"Blurred Vision, Eye Pain",Moderate,Barangay A,33,Glaucoma,24/06/2025 12:10,24/06/2025 16:10
+R190,"Numbness, Tingling",High,Barangay C,55,Peripheral Neuropathy,24/06/2025 7:15,24/06/2025 10:15
+R191,"Seizures, Loss of Consciousness",Critical,Barangay B,28,Epilepsy,24/06/2025 6:20,24/06/2025 6:40
+R192,"Stomach Bloating, Constipation",Low,Barangay D,30,IBS,24/06/2025 13:15,26/06/2025 13:15
+R193,"Fever, Rash",Moderate,Barangay A,9,Measles,24/06/2025 11:40,24/06/2025 15:40
+R194,"Severe Headache, Vomiting",Critical,Barangay C,27,Meningitis,24/06/2025 6:00,24/06/2025 6:25
+R195,"Chest Pain, Shortness of Breath",Critical,Barangay B,53,Heart Attack,24/06/2025 6:50,24/06/2025 7:10
+R196,"Fatigue, Cold Intolerance",Moderate,Barangay D,37,Hypothyroidism,24/06/2025 9:55,24/06/2025 13:55
+R197,"Swollen Glands, Fever",Moderate,Barangay A,15,Mononucleosis,24/06/2025 10:20,24/06/2025 14:20
+R198,"Nausea, Abdominal Pain",High,Barangay C,35,Gallstones,24/06/2025 8:40,24/06/2025 11:10
+R199,"Dizziness, Blurred Vision",High,Barangay B,50,Hypertension,24/06/2025 7:35,24/06/2025 10:05
+R200,"Severe Cough, Shortness of Breath",Critical,Barangay D,62,COPD,24/06/2025 6:25,24/06/2025 6:45
+R201,"Fever, Muscle Pain",Moderate,Barangay A,27,Dengue,24/06/2025 9:10,24/06/2025 13:10
+R202,"Chest Tightness, Cough",Critical,Barangay B,54,Asthma,24/06/2025 6:20,24/06/2025 6:40
+R203,"Nausea, Diarrhea",Moderate,Barangay C,31,Gastroenteritis,24/06/2025 11:45,24/06/2025 15:45
+R204,"Severe Headache, Vomiting",Critical,Barangay D,23,Meningitis,24/06/2025 6:10,24/06/2025 6:30
+R205,"Fatigue, Weight Loss",Moderate,Barangay A,45,Diabetes,24/06/2025 9:35,24/06/2025 13:35
+R206,"Coughing Blood, Chest Pain",Critical,Barangay B,61,Tuberculosis,24/06/2025 6:05,24/06/2025 6:25
+R207,"Blurred Vision, Eye Pain",Moderate,Barangay C,38,Glaucoma,24/06/2025 12:15,24/06/2025 16:15
+R208,"Numbness, Tingling",High,Barangay D,56,Peripheral Neuropathy,24/06/2025 7:20,24/06/2025 10:20
+R209,"Seizures, Loss of Consciousness",Critical,Barangay A,27,Epilepsy,24/06/2025 6:30,24/06/2025 6:50
+R210,"Abdominal Bloating, Constipation",Low,Barangay B,33,IBS,24/06/2025 13:20,26/06/2025 13:20
+R211,"Fever, Rash",Moderate,Barangay C,10,Measles,24/06/2025 11:35,24/06/2025 15:35
+R212,"Severe Headache, Vomiting",Critical,Barangay D,28,Meningitis,24/06/2025 6:15,24/06/2025 6:40
+R213,"Chest Pain, Shortness of Breath",Critical,Barangay A,52,Heart Attack,24/06/2025 6:40,24/06/2025 7:00
+R214,"Fatigue, Cold Intolerance",Moderate,Barangay B,36,Hypothyroidism,24/06/2025 9:50,24/06/2025 13:50
+R215,"Swollen Glands, Fever",Moderate,Barangay C,14,Mononucleosis,24/06/2025 10:20,24/06/2025 14:20
+R216,"Nausea, Abdominal Pain",High,Barangay D,33,Gallstones,24/06/2025 8:40,24/06/2025 11:10
+R217,"Dizziness, Blurred Vision",High,Barangay A,51,Hypertension,24/06/2025 7:35,24/06/2025 10:05
+R218,"Cough, Shortness of Breath",Critical,Barangay B,63,COPD,24/06/2025 6:25,24/06/2025 6:45
+R219,"Swollen Joints, Pain",High,Barangay C,40,Arthritis,24/06/2025 8:25,24/06/2025 11:25
+R220,"Fatigue, Weight Loss",Moderate,Barangay D,35,Diabetes,24/06/2025 9:50,24/06/2025 13:50
+R221,"High Fever, Muscle Pain",Moderate,Barangay A,29,Dengue,24/06/2025 9:05,24/06/2025 13:05
+R222,"Chest Tightness, Cough",Critical,Barangay B,52,Asthma,24/06/2025 6:10,24/06/2025 6:30
+R223,"Nausea, Diarrhea",Moderate,Barangay C,34,Gastroenteritis,24/06/2025 11:35,24/06/2025 15:35
+R224,"Severe Headache, Vomiting",Critical,Barangay D,25,Meningitis,24/06/2025 6:05,24/06/2025 6:25
+R225,"Fatigue, Weight Loss",Moderate,Barangay A,46,Diabetes,24/06/2025 9:30,24/06/2025 13:30
+R226,"Coughing Blood, Chest Pain",Critical,Barangay B,63,Tuberculosis,24/06/2025 6:00,24/06/2025 6:20
+R227,"Blurred Vision, Eye Pain",Moderate,Barangay C,39,Glaucoma,24/06/2025 12:20,24/06/2025 16:20
+R228,"Numbness, Tingling",High,Barangay D,57,Peripheral Neuropathy,24/06/2025 7:10,24/06/2025 10:10
+R229,"Seizures, Loss of Consciousness",Critical,Barangay A,28,Epilepsy,24/06/2025 6:25,24/06/2025 6:45
+R230,"Abdominal Bloating, Constipation",Low,Barangay B,34,IBS,24/06/2025 13:10,26/06/2025 13:10
+R231,"Fever, Rash",Moderate,Barangay C,11,Measles,24/06/2025 11:30,24/06/2025 15:30
+R232,"Severe Headache, Vomiting",Critical,Barangay D,29,Meningitis,24/06/2025 6:10,24/06/2025 6:35
+R233,"Chest Pain, Shortness of Breath",Critical,Barangay A,53,Heart Attack,24/06/2025 6:35,24/06/2025 6:55
+R234,"Fatigue, Cold Intolerance",Moderate,Barangay B,37,Hypothyroidism,24/06/2025 9:45,24/06/2025 13:45
+R235,"Swollen Glands, Fever",Moderate,Barangay C,16,Mononucleosis,24/06/2025 10:15,24/06/2025 14:15
+R236,"Nausea, Abdominal Pain",High,Barangay D,36,Gallstones,24/06/2025 8:35,24/06/2025 11:05
+R237,"Dizziness, Blurred Vision",High,Barangay A,52,Hypertension,24/06/2025 7:30,24/06/2025 10:00
+R238,"Cough, Shortness of Breath",Critical,Barangay B,65,COPD,24/06/2025 6:20,24/06/2025 6:40
+R239,"Swollen Joints, Pain",High,Barangay C,41,Arthritis,24/06/2025 8:20,24/06/2025 11:20
+R240,"Fatigue, Weight Loss",Moderate,Barangay D,36,Diabetes,24/06/2025 9:45,24/06/2025 13:45
+R241,"Fever, Headache",Moderate,Barangay A,30,Influenza,24/06/2025 9:20,24/06/2025 13:20
+R242,"Chest Pain, Sweating",Critical,Barangay B,58,Heart Attack,24/06/2025 6:10,24/06/2025 6:30
+R243,"Nausea, Vomiting",Moderate,Barangay C,25,Gastroenteritis,24/06/2025 11:50,24/06/2025 15:50
+R244,Difficulty Breathing,Critical,Barangay D,20,Asthma Attack,24/06/2025 6:40,24/06/2025 7:00
+R245,"Fatigue, Weight Loss",Moderate,Barangay A,40,Diabetes,24/06/2025 9:40,24/06/2025 13:40
+R246,"Headache, Sensitivity to Light",High,Barangay B,23,Migraine,24/06/2025 10:15,24/06/2025 13:15
+R247,"Swollen Joints, Morning Stiffness",Moderate,Barangay C,45,Arthritis,24/06/2025 11:20,24/06/2025 15:20
+R248,"Cough, Fever, Chest Pain",Critical,Barangay D,59,Tuberculosis,24/06/2025 6:05,24/06/2025 6:25
+R249,"Blurred Vision, Eye Pain",Moderate,Barangay A,35,Glaucoma,24/06/2025 12:15,24/06/2025 16:15
+R250,"Numbness, Tingling",High,Barangay B,53,Peripheral Neuropathy,24/06/2025 7:10,24/06/2025 10:10
+R251,"Seizures, Loss of Consciousness",Critical,Barangay C,26,Epilepsy,24/06/2025 6:20,24/06/2025 6:40
+R252,"Stomach Bloating, Constipation",Low,Barangay D,32,IBS,24/06/2025 13:20,26/06/2025 13:20
+R253,"Fever, Rash",Moderate,Barangay A,11,Measles,24/06/2025 11:30,24/06/2025 15:30
+R254,"Severe Headache, Vomiting",Critical,Barangay B,28,Meningitis,24/06/2025 6:15,24/06/2025 6:40
+R255,"Chest Pain, Shortness of Breath",Critical,Barangay C,54,Heart Attack,24/06/2025 6:40,24/06/2025 7:00
+R256,"Fatigue, Cold Intolerance",Moderate,Barangay D,38,Hypothyroidism,24/06/2025 9:50,24/06/2025 13:50
+R257,"Swollen Glands, Fever",Moderate,Barangay A,15,Mononucleosis,24/06/2025 10:20,24/06/2025 14:20
+R258,"Nausea, Abdominal Pain",High,Barangay B,34,Gallstones,24/06/2025 8:40,24/06/2025 11:10
+R259,"Dizziness, Blurred Vision",High,Barangay C,50,Hypertension,24/06/2025 7:35,24/06/2025 10:05
+R260,"Cough, Shortness of Breath",Critical,Barangay D,61,COPD,24/06/2025 6:25,24/06/2025 6:45
+R261,"Fever, Body Ache",Moderate,Barangay A,28,Influenza,24/06/2025 9:15,24/06/2025 13:15
+R262,"Chest Pain, Sweating",Critical,Barangay B,56,Heart Attack,24/06/2025 6:10,24/06/2025 6:30
+R263,"Nausea, Vomiting",Moderate,Barangay C,27,Gastroenteritis,24/06/2025 11:40,24/06/2025 15:40
+R264,Difficulty Breathing,Critical,Barangay D,24,Asthma Attack,24/06/2025 6:35,24/06/2025 6:55
+R265,"Fatigue, Weight Loss",Moderate,Barangay A,43,Diabetes,24/06/2025 9:45,24/06/2025 13:45
+R266,"Headache, Sensitivity to Light",High,Barangay B,22,Migraine,24/06/2025 10:20,24/06/2025 13:20
+R267,"Swollen Joints, Morning Stiffness",Moderate,Barangay C,48,Arthritis,24/06/2025 11:25,24/06/2025 15:25
+R268,"Cough, Fever, Chest Pain",Critical,Barangay D,61,Tuberculosis,24/06/2025 6:05,24/06/2025 6:25
+R269,"Blurred Vision, Eye Pain",Moderate,Barangay A,36,Glaucoma,24/06/2025 12:20,24/06/2025 16:20
+R270,"Numbness, Tingling",High,Barangay B,54,Peripheral Neuropathy,24/06/2025 7:15,24/06/2025 10:15
+R271,"Seizures, Loss of Consciousness",Critical,Barangay C,27,Epilepsy,24/06/2025 6:30,24/06/2025 6:50
+R272,"Abdominal Bloating, Constipation",Low,Barangay D,33,IBS,24/06/2025 13:25,26/06/2025 13:25
+R273,"Fever, Rash",Moderate,Barangay A,12,Measles,24/06/2025 11:35,24/06/2025 15:35
+R274,"Severe Headache, Vomiting",Critical,Barangay B,29,Meningitis,24/06/2025 6:10,24/06/2025 6:35
+R275,"Chest Pain, Shortness of Breath",Critical,Barangay C,55,Heart Attack,24/06/2025 6:40,24/06/2025 7:00
+R276,"Fatigue, Cold Intolerance",Moderate,Barangay D,39,Hypothyroidism,24/06/2025 9:50,24/06/2025 13:50
+R277,"Swollen Glands, Fever",Moderate,Barangay A,14,Mononucleosis,24/06/2025 10:20,24/06/2025 14:20
+R278,"Nausea, Abdominal Pain",High,Barangay B,35,Gallstones,24/06/2025 8:40,24/06/2025 11:10
+R279,"Dizziness, Blurred Vision",High,Barangay C,51,Hypertension,24/06/2025 7:35,24/06/2025 10:05
+R280,"Cough, Shortness of Breath",Critical,Barangay D,64,COPD,24/06/2025 6:25,24/06/2025 6:45
+R281,"Fever, Muscle Pain",Moderate,Barangay A,30,Dengue,24/06/2025 9:20,24/06/2025 13:20
+R282,"Chest Tightness, Cough",Critical,Barangay B,53,Asthma,24/06/2025 6:10,24/06/2025 6:30
+R283,"Nausea, Diarrhea",Moderate,Barangay C,32,Gastroenteritis,24/06/2025 11:45,24/06/2025 15:45
+R284,"Severe Headache, Vomiting",Critical,Barangay D,24,Meningitis,24/06/2025 6:05,24/06/2025 6:25
+R285,"Fatigue, Weight Loss",Moderate,Barangay A,44,Diabetes,24/06/2025 9:40,24/06/2025 13:40
+R286,"Coughing Blood, Chest Pain",Critical,Barangay B,62,Tuberculosis,24/06/2025 6:00,24/06/2025 6:20
+R287,"Blurred Vision, Eye Pain",Moderate,Barangay C,37,Glaucoma,24/06/2025 12:15,24/06/2025 16:15
+R288,"Numbness, Tingling",High,Barangay D,56,Peripheral Neuropathy,24/06/2025 7:10,24/06/2025 10:10
+R289,"Seizures, Loss of Consciousness",Critical,Barangay A,29,Epilepsy,24/06/2025 6:25,24/06/2025 6:45
+R290,"Abdominal Bloating, Constipation",Low,Barangay B,33,IBS,24/06/2025 13:10,26/06/2025 13:10
+R291,"Fever, Rash",Moderate,Barangay C,13,Measles,24/06/2025 11:30,24/06/2025 15:30
+R292,"Severe Headache, Vomiting",Critical,Barangay D,30,Meningitis,24/06/2025 6:10,24/06/2025 6:35
+R293,"Chest Pain, Shortness of Breath",Critical,Barangay A,54,Heart Attack,24/06/2025 6:40,24/06/2025 7:00
+R294,"Fatigue, Cold Intolerance",Moderate,Barangay B,38,Hypothyroidism,24/06/2025 9:50,24/06/2025 13:50
+R295,"Swollen Glands, Fever",Moderate,Barangay C,15,Mononucleosis,24/06/2025 10:20,24/06/2025 14:20
+R296,"Nausea, Abdominal Pain",High,Barangay D,35,Gallstones,24/06/2025 8:40,24/06/2025 11:10
+R297,"Dizziness, Blurred Vision",High,Barangay A,52,Hypertension,24/06/2025 7:35,24/06/2025 10:05
+R298,"Cough, Shortness of Breath",Critical,Barangay B,64,COPD,24/06/2025 6:25,24/06/2025 6:45
+R299,"Swollen Joints, Pain",High,Barangay C,42,Arthritis,24/06/2025 8:25,24/06/2025 11:25
+R300,"Fatigue, Weight Loss",Moderate,Barangay D,37,Diabetes,24/06/2025 9:50,24/06/2025 13:50
+R301,"Fever, Cough",Moderate,Barangay A,26,Flu,24/06/2025 9:05,24/06/2025 13:05
+R302,"Chest Pain, Dizziness",Critical,Barangay B,57,Angina,24/06/2025 6:15,24/06/2025 6:35
+R303,"Nausea, Vomiting",Moderate,Barangay C,28,Gastritis,24/06/2025 11:50,24/06/2025 15:50
+R304,Difficulty Breathing,Critical,Barangay D,23,Asthma Attack,24/06/2025 6:40,24/06/2025 7:00
+R305,"Fatigue, Weight Loss",Moderate,Barangay A,42,Diabetes,24/06/2025 9:35,24/06/2025 13:35
+R306,"Headache, Sensitivity to Light",High,Barangay B,21,Migraine,24/06/2025 10:10,24/06/2025 13:10
+R307,"Swollen Joints, Morning Stiffness",Moderate,Barangay C,47,Arthritis,24/06/2025 11:20,24/06/2025 15:20
+R308,"Cough, Fever, Chest Pain",Critical,Barangay D,60,Tuberculosis,24/06/2025 6:05,24/06/2025 6:25
+R309,"Blurred Vision, Eye Pain",Moderate,Barangay A,35,Glaucoma,24/06/2025 12:10,24/06/2025 16:10
+R310,"Numbness, Tingling",High,Barangay B,55,Peripheral Neuropathy,24/06/2025 7:15,24/06/2025 10:15
+R311,"Seizures, Loss of Consciousness",Critical,Barangay C,28,Epilepsy,24/06/2025 6:20,24/06/2025 6:40
+R312,"Stomach Bloating, Constipation",Low,Barangay D,31,IBS,24/06/2025 13:20,26/06/2025 13:20
+R313,"Fever, Rash",Moderate,Barangay A,12,Measles,24/06/2025 11:30,24/06/2025 15:30
+R314,"Severe Headache, Vomiting",Critical,Barangay B,27,Meningitis,24/06/2025 6:10,24/06/2025 6:35
+R315,"Chest Pain, Shortness of Breath",Critical,Barangay C,53,Heart Attack,24/06/2025 6:40,24/06/2025 7:00
+R316,"Fatigue, Cold Intolerance",Moderate,Barangay D,37,Hypothyroidism,24/06/2025 9:50,24/06/2025 13:50
+R317,"Swollen Glands, Fever",Moderate,Barangay A,16,Mononucleosis,24/06/2025 10:20,24/06/2025 14:20
+R318,"Nausea, Abdominal Pain",High,Barangay B,34,Gallstones,24/06/2025 8:40,24/06/2025 11:10
+R319,"Dizziness, Blurred Vision",High,Barangay C,49,Hypertension,24/06/2025 7:35,24/06/2025 10:05
+R320,"Cough, Shortness of Breath",Critical,Barangay D,63,COPD,24/06/2025 6:25,24/06/2025 6:45
+R321,"Fever, Headache",Moderate,Barangay A,29,Influenza,24/06/2025 9:10,24/06/2025 13:10
+R322,"Chest Pain, Sweating",Critical,Barangay B,59,Heart Attack,24/06/2025 6:05,24/06/2025 6:25
+R323,"Nausea, Vomiting",Moderate,Barangay C,26,Gastroenteritis,24/06/2025 11:55,24/06/2025 15:55
+R324,Difficulty Breathing,Critical,Barangay D,22,Asthma Attack,24/06/2025 6:30,24/06/2025 6:50
+R325,"Fatigue, Weight Loss",Moderate,Barangay A,41,Diabetes,24/06/2025 9:30,24/06/2025 13:30
+R326,"Headache, Sensitivity to Light",High,Barangay B,24,Migraine,24/06/2025 10:20,24/06/2025 13:20
+R327,"Swollen Joints, Morning Stiffness",Moderate,Barangay C,49,Arthritis,24/06/2025 11:25,24/06/2025 15:25
+R328,"Cough, Fever, Chest Pain",Critical,Barangay D,62,Tuberculosis,24/06/2025 6:10,24/06/2025 6:30
+R329,"Blurred Vision, Eye Pain",Moderate,Barangay A,34,Glaucoma,24/06/2025 12:20,24/06/2025 16:20
+R330,"Numbness, Tingling",High,Barangay B,56,Peripheral Neuropathy,24/06/2025 7:10,24/06/2025 10:10
+R331,"Seizures, Loss of Consciousness",Critical,Barangay C,27,Epilepsy,24/06/2025 6:20,24/06/2025 6:40
+R332,"Abdominal Bloating, Constipation",Low,Barangay D,32,IBS,24/06/2025 13:20,26/06/2025 13:20
+R333,"Fever, Rash",Moderate,Barangay A,13,Measles,24/06/2025 11:35,24/06/2025 15:35
+R334,"Severe Headache, Vomiting",Critical,Barangay B,28,Meningitis,24/06/2025 6:15,24/06/2025 6:40
+R335,"Chest Pain, Shortness of Breath",Critical,Barangay C,56,Heart Attack,24/06/2025 6:40,24/06/2025 7:00
+R336,"Fatigue, Cold Intolerance",Moderate,Barangay D,38,Hypothyroidism,24/06/2025 9:50,24/06/2025 13:50
+R337,"Swollen Glands, Fever",Moderate,Barangay A,17,Mononucleosis,24/06/2025 10:20,24/06/2025 14:20
+R338,"Nausea, Abdominal Pain",High,Barangay B,36,Gallstones,24/06/2025 8:40,24/06/2025 11:10
+R339,"Dizziness, Blurred Vision",High,Barangay C,53,Hypertension,24/06/2025 7:35,24/06/2025 10:05
+R340,"Cough, Shortness of Breath",Critical,Barangay D,65,COPD,24/06/2025 6:25,24/06/2025 6:45
+R341,"Fever, Cough",Moderate,Barangay A,27,Flu,24/06/2025 9:15,24/06/2025 13:15
+R342,"Chest Pain, Dizziness",Critical,Barangay B,58,Angina,24/06/2025 6:15,24/06/2025 6:35
+R343,"Nausea, Vomiting",Moderate,Barangay C,29,Gastritis,24/06/2025 11:50,24/06/2025 15:50
+R344,Difficulty Breathing,Critical,Barangay D,25,Asthma Attack,24/06/2025 6:40,24/06/2025 7:00
+R345,"Fatigue, Weight Loss",Moderate,Barangay A,44,Diabetes,24/06/2025 9:40,24/06/2025 13:40
+R346,"Headache, Sensitivity to Light",High,Barangay B,23,Migraine,24/06/2025 10:20,24/06/2025 13:20
+R347,"Swollen Joints, Morning Stiffness",Moderate,Barangay C,50,Arthritis,24/06/2025 11:25,24/06/2025 15:25
+R348,"Cough, Fever, Chest Pain",Critical,Barangay D,60,Tuberculosis,24/06/2025 6:10,24/06/2025 6:30
+R349,"Blurred Vision, Eye Pain",Moderate,Barangay A,35,Glaucoma,24/06/2025 12:20,24/06/2025 16:20
+R350,"Numbness, Tingling",High,Barangay B,54,Peripheral Neuropathy,24/06/2025 7:15,24/06/2025 10:15
+R351,"Seizures, Loss of Consciousness",Critical,Barangay C,28,Epilepsy,24/06/2025 6:20,24/06/2025 6:40
+R352,"Abdominal Bloating, Constipation",Low,Barangay D,31,IBS,24/06/2025 13:20,26/06/2025 13:20
+R353,"Fever, Rash",Moderate,Barangay A,13,Measles,24/06/2025 11:35,24/06/2025 15:35
+R354,"Severe Headache, Vomiting",Critical,Barangay B,27,Meningitis,24/06/2025 6:15,24/06/2025 6:40
+R355,"Chest Pain, Shortness of Breath",Critical,Barangay C,55,Heart Attack,24/06/2025 6:40,24/06/2025 7:00

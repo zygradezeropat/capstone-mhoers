@@ -1,0 +1,375 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/admin_dashboard.css' %}" />
+<!-- Add Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+<!-- Navbar -->
+{% include 'components/navbar.html' %}
+{% include 'components/referral/referral_modal.html' %}
+{% include 'components/facility/facility_modal.html' %}
+
+<div class="container-fluid mt-4">
+  <div class="d-flex justify-content-between align-items-center">
+
+    <!-- Add Healthcare Provider Button -->
+    <button class="btn btn-success" id="actionButton" data-bs-toggle="modal" data-bs-target="#registerModal">
+      <i class="bi bi-person-plus-fill"></i> <span>Add Healthcare Provider</span>
+    </button>
+
+    <!-- Healthcare Provider Registration Modal -->
+    <div class="modal fade" id="registerModal" tabindex="-1" role="dialog" aria-labelledby="registerModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+          <form method="POST" action="{% url 'facilities:create_provider' %}"> 
+            {% csrf_token %}
+            <div class="modal-header">
+              <h5 class="modal-title" id="registerModalLabel">Add New Healthcare Provider</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+              {% if messages %}
+                <div class="alert alert-danger text-center py-2 w-100">
+                  {% for message in messages %}
+                    <p>{{ message }}</p>
+                  {% endfor %}
+                </div>
+              {% endif %}
+
+              <!-- Provider Details -->
+              <div class="form-row mb-3">
+                <div class="col-md-6 form-group">
+                  <label for="first_name">First Name</label>
+                  <input type="text" name="first_name" id="first_name" class="form-control" placeholder="Enter First Name" required>
+                </div>
+                <div class="col-md-6 form-group">
+                  <label for="last_name">Last Name</label>
+                  <input type="text" name="last_name" id="last_name" class="form-control" placeholder="Enter Last Name" required>
+                </div>
+                <div class="col-md-6">
+                  <label for="username">Provider Username</label>
+                  <input type="text" for="username" name="username" id="username" class="form-control" placeholder="Enter provider username" required>
+                </div>
+                <div class="col-md-6">
+                  <label for="role">Healthcare Role</label>
+                  <select name="role" id="role" class="form-control" required>
+                    <option value="" disabled selected>Select healthcare role</option>
+                    <option value="BHW">Barangay Health Worker</option> 
+                    <option value="MHO">Municipal Health Officer</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-row mb-3">
+                <div class="col-md-6 form-group">
+                  <label for="password1">Create Password</label>
+                  <input type="password" name="password1" id="password1" class="form-control" placeholder="Enter secure password" required>
+                </div>
+                <div class="col-md-6 form-group">
+                  <label for="password2">Verify Password</label>
+                  <input type="password" name="password2" id="password2" class="form-control" placeholder="Confirm password" required>
+                </div>
+              </div>
+
+              <!-- Map Location Selection -->
+              <div class="form-group">
+                <label for="locationMap">Location (Select a point on the map)</label>
+                <div id="map" style="height: 400px; width: 100%; margin-bottom: 15px;"></div>
+                <input type="hidden" id="latitude" name="latitude" required>
+                <input type="hidden" id="longitude" name="longitude" required>
+              </div>
+            
+            </div>
+
+            <div class="modal-footer">
+              <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+              <button type="submit" class="btn btn-success">Create Healthcare Account</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div class="modal fade" id="deleteConfirmationModal" tabindex="-1" role="dialog" aria-labelledby="deleteConfirmationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="deleteConfirmationModalLabel">Confirm Deletion</h5>
+          <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>Are you sure you want to delete this facility? This action cannot be undone.</p>
+          <div class="facility-details mt-3">
+            <p><strong>Facility ID:</strong> <span id="deleteFacilityId"></span></p>
+            <p><strong>Facility Name:</strong> <span id="deleteFacilityName"></span></p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+          <form id="deleteFacilityForm" method="POST" action="{% url 'facilities:delete_facility' %}">
+            {% csrf_token %}
+            <input type="hidden" name="facility_id" id="deleteFacilityIdInput">
+            <button type="submit" class="btn btn-danger">Delete Facility</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Healthcare Providers List -->
+  <div class="tab-pane fade show mt-3" id="tab1" role="tabpanel" aria-labelledby="reports-tab">
+    <div class="row g-4">
+      <!-- Table Section -->
+      <div class="col-lg-8 col-md-7">
+        <div class="card modern-card shadow-sm h-100">
+          <div class="card-body">
+            <h5 class="card-title mb-4 d-flex align-items-center">
+              <i class="bi bi-building me-2"></i>
+              Healthcare Providers Directory
+            </h5>
+            <div class="table-responsive">
+              <table id="providersTable" class="table table-hover mb-0">
+                <thead class="bg-light">
+                  <tr>
+                    <th>Facility ID</th>
+                    <th>Facility Name</th>
+                    <th>Assigned BHW</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for facility in facilities %}
+                  <tr class="clickable-row" data-id="{{ facility.facility_id }}" data-facility="{{ facility.name }}" data-bhw="{{ facility.assigned_bhw }}" data-latitude="{{ facility.latitude }}" data-longitude="{{ facility.longitude }}" data-first-name="{{ facility.user_id.first_name }}" data-last-name="{{ facility.user_id.last_name }}">
+                    <td>{{ facility.facility_id }}</td>
+                    <td>{{ facility.name }}</td>
+                    <td>{{ facility.assigned_bhw }}</td>
+                    <td>
+                      <div class="d-flex gap-2">
+                        <button class="btn btn-warning btn-sm edit-button" data-bs-toggle="modal" data-bs-target="#editFacilityModal" data-bs-toggle="tooltip" title="Edit Facility">
+                          <i class="bi bi-pencil-square"></i>
+                        </button>
+                        <button class="btn btn-danger btn-sm delete-button" data-bs-toggle="tooltip" title="Remove Facility">
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Provider Details Card -->
+      <div class="col-lg-4 col-md-5">
+        <div class="card modern-card p-4 shadow-sm h-100" id="infoCard">
+          <h5 class="mb-4 d-flex align-items-center">
+            <i class="bi bi-info-circle me-2"></i>
+            Facility Details
+          </h5>
+          <div id="cardContent" class="facility-details">
+            <div class="detail-item">
+              <span class="detail-label">Facility ID</span>
+              <span id="cardFacilityId" class="detail-value">Select a facility</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Facility Name</span>
+              <span id="cardFacility" class="detail-value">Select a facility</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Assigned BHW</span>
+              <span id="cardBHW" class="detail-value">Select a facility</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Enhanced Styles -->
+<style>
+  .modern-card {
+    border: none;
+    border-radius: 12px;
+    background: #ffffff;
+    transition: all 0.3s ease;
+  }
+
+  .modern-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1) !important;
+  }
+
+  .modern-card .card-title {
+    color: #2c3e50;
+    font-weight: 600;
+  }
+
+  .clickable-row {
+    transition: all 0.3s ease;
+    border-left: 3px solid transparent;
+  }
+  
+  .clickable-row:hover {
+    background-color: rgba(var(--bs-primary-rgb), 0.05);
+    cursor: pointer;
+    border-left: 3px solid var(--bs-primary);
+  } 
+
+  .clickable-row.active {
+    background-color: rgba(var(--bs-primary-rgb), 0.1);
+    border-left: 3px solid var(--bs-primary);
+  }
+
+  .facility-details {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .detail-label {
+    font-size: 0.875rem;
+    color: #6c757d;
+    font-weight: 500;
+  }
+
+  .detail-value {
+    font-size: 1rem;
+    color: #2c3e50;
+    font-weight: 500;
+  }
+
+  .btn-sm {
+    padding: 0.4rem 0.6rem;
+    border-radius: 6px;
+  }
+
+  .table {
+    margin-bottom: 0;
+  }
+
+  .table thead th {
+    border-top: none;
+    font-weight: 600;
+    color: #495057;
+    background-color: #f8f9fa;
+  }
+
+  .table td {
+    vertical-align: middle;
+  }
+</style>
+
+{% block script %}
+<!-- Add Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+let map;
+let marker;
+
+document.addEventListener("DOMContentLoaded", function() {
+  const rows = document.querySelectorAll(".clickable-row");
+
+  rows.forEach(row => {
+    row.addEventListener("click", function() {
+      rows.forEach(r => r.classList.remove("active"));
+      this.classList.add("active");
+
+      document.getElementById("cardFacilityId").innerText = this.dataset.id;
+      document.getElementById("cardFacility").innerText = this.dataset.facility;
+      document.getElementById("cardBHW").innerText = this.dataset.bhw;
+      document.getElementById("cardLocation").innerText = `${this.dataset.latitude}, ${this.dataset.longitude}`;
+
+      document.getElementById("infoCard").scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+
+  // Initialize tooltips
+  const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+  tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl);
+  });
+
+  // Function to initialize the map
+  function initializeMap() {
+    if (map) {
+      map.remove();
+    }
+
+    map = L.map('map').setView([7.587429855100546, 125.82881651697123], 13);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    map.on('click', function(e) {
+      const lat = e.latlng.lat;
+      const lng = e.latlng.lng;
+      document.getElementById('latitude').value = lat;
+      document.getElementById('longitude').value = lng;
+      if (marker) {
+        marker.setLatLng([lat, lng]);
+      } else {
+        marker = L.marker([lat, lng]).addTo(map);
+      }
+    });
+
+    setTimeout(() => {
+      map.invalidateSize();
+    }, 100);
+  }
+
+  // Initialize map when modal is shown
+  document.getElementById('registerModal').addEventListener('shown.bs.modal', function() {
+    initializeMap();
+  });
+ 
+  // Clean up map when modal is hidden
+  document.getElementById('registerModal').addEventListener('hidden.bs.modal', function() {
+    if (map) {
+      map.remove();
+      map = null;
+    }
+    if (marker) {
+      marker = null;
+    }
+    document.getElementById('latitude').value = '';
+    document.getElementById('longitude').value = '';
+  });
+
+  // Delete functionality
+  const deleteButtons = document.querySelectorAll('.delete-button');
+  deleteButtons.forEach(button => {
+    button.addEventListener('click', function(e) {
+      e.stopPropagation(); // Prevent row click event
+      const row = this.closest('tr');
+      const facilityId = row.dataset.id;
+      const facilityName = row.dataset.facility;
+
+      // Populate delete modal
+      document.getElementById('deleteFacilityId').textContent = facilityId;
+      document.getElementById('deleteFacilityName').textContent = facilityName;
+      document.getElementById('deleteFacilityIdInput').value = facilityId;
+
+      // Show delete confirmation modal
+      const deleteModal = new bootstrap.Modal(document.getElementById('deleteConfirmationModal'));
+      deleteModal.show();
+    });
+  });
+});
+</script>
+{% endblock %}
+{% endblock %}

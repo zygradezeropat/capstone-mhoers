@@ -1,0 +1,87 @@
+    <div class="modal fade" id="viewPatients" tabindex="-1" role="dialog" aria-labelledby="viewPatientsLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+            <div class="modal-content shadow-lg border-0">
+                <!-- Modal Header -->
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="viewPatientsLabel">
+                        <i class="bi bi-person-lines-fill mr-2"></i>Patient Informations
+                    </h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <!-- Modal Body -->
+                <div class="modal-body p-4">
+                    {% csrf_token %}
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="font-weight-bold text-muted" for="viewPatientName">Patient Name</label>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                </div>
+                                <input type="text" class="form-control bg-light" id="viewPatientName" disabled>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="font-weight-bold text-muted" for="viewPatientBday">Birth Date</label>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text"><i class="bi bi-calendar"></i></span>
+                                </div>
+                                <input type="text" class="form-control bg-light" id="viewPatientBday" disabled>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="font-weight-bold text-muted" for="viewAddress">Address</label>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
+                                </div>
+                                <input type="text" class="form-control bg-light" id="viewAddress" disabled>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="font-weight-bold text-muted" for="viewSex">Sex</label>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text"><i class="bi bi-gender-ambiguous"></i></span>
+                                </div>
+                                <input type="text" class="form-control bg-light" id="viewSex" disabled>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="font-weight-bold text-muted" for="viewReferralCount">Referral Count</label>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text"><i class="bi bi-list-ol"></i></span>
+                                </div>
+                                <input type="text" class="form-control bg-light" id="viewReferralCount" disabled>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="font-weight-bold text-muted" for="viewLastReferred">Last Referred</label>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text"><i class="bi bi-clock-history"></i></span>
+                                </div>
+                                <input type="text" class="form-control bg-light" id="viewLastReferred" disabled>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Modal Footer -->
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="bi bi-arrow-left mr-2"></i>Back
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>

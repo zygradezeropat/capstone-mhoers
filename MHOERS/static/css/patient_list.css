@@ -1,0 +1,108 @@
+/* Health-themed table and card accents */
+.health-card {
+    border-radius: 1rem;
+    box-shadow: 0 2px 12px rgba(46, 204, 113, 0.08);
+    border: 1px solid #e8f5e9;
+    background: #f8fcfa;
+    margin-bottom: 2rem;
+  }
+  .health-table thead th {
+    background: linear-gradient(90deg, #2ecc71, #27ae60);
+    color: #fff;
+    border-top-left-radius: 0.5rem;
+    border-top-right-radius: 0.5rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    border-bottom: 0;
+  }
+  .health-table tbody tr {
+    background: #f4fdfb;
+    transition: background 0.2s;
+  }
+  .health-table tbody tr:hover {
+    background: rgba(46, 204, 113, 0.1);
+  }
+  .health-table td, .health-table th {
+    vertical-align: middle !important;
+  }
+  .btn-health {
+    background: linear-gradient(90deg, #2ecc71, #27ae60);
+    color: #fff;
+    border: none;
+  }
+  .btn-health:hover, .btn-health:focus {
+    background: linear-gradient(90deg, #27ae60, #2ecc71);
+    color: #fff;
+  }
+  .btn-health-outline {
+    border: 2px solid #2ecc71;
+    color: #2ecc71;
+    background: #fff;
+  }
+  .btn-health-outline:hover, .btn-health-outline:focus {
+    background: #2ecc71;
+    color: #fff;
+  }
+  .table-action-btns .btn {
+    margin-right: 0.25rem;
+    margin-left: 0.25rem;
+  }
+  .table-action-btns {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .tab-content {
+    margin-top: 2rem;
+  }
+  .count-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    color: #030303;
+    background: rgba(46, 204, 113, 0.2);
+    border-radius: 10px;
+    margin-left: 8px;
+    backdrop-filter: blur(4px);
+    box-shadow: 0 2px 4px rgba(46, 204, 113, 0.1);
+  }
+  .nav-link {
+    display: flex;
+    align-items: center;
+  }
+
+  /* New styles for nav items hover effect */
+  .nav-pills .nav-link {
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .nav-pills .nav-link:hover {
+    color: #2ecc71 !important;
+    background-color: rgba(46, 204, 113, 0.1);
+  }
+
+  .nav-pills .nav-link:hover i {
+    color: #2ecc71 !important;
+  }
+
+  .nav-pills .nav-link.active {
+    background: linear-gradient(90deg, #2ecc71, #27ae60) !important;
+    color: white !important;
+  }
+
+  .nav-pills .nav-link.active i {
+    color: white !important;
+  }
+
+  .nav-pills .nav-link.active:hover {
+    background: linear-gradient(90deg, #27ae60, #2ecc71) !important;
+    color: white !important;
+  }

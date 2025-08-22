@@ -1,0 +1,299 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+{% block content %}
+
+
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}" />
+
+<!-- Navbar Include -->
+{% include 'components/navbar.html' %}
+{% include 'components/tabbar/tabbar.html' with tab1_name="Active Referral" tab2_name="Referred" %}
+
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm rounded-lg">
+        <div class="card-body p-4">
+          <div class="tab-content" id="dashboardTabContent">
+            <!-- Active Referral Tab -->
+            <div class="tab-pane fade show active" id="tab1" role="tabpanel">
+              <div class="table-responsive">
+                <table id="activeTable" class="table table-hover align-middle">
+                  <thead class="bg-light">
+                    <tr>
+                      <th>Patient Information</th>
+                      <th>Contact</th>
+                      <th>Age</th>
+                      <th>Location</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for r in active_referrals %}
+                      {% if r.patient.user.id == request.user.id %}
+                      <tr data-id="{{ r.referral_id }}" class="align-middle">
+                        <td>
+                          <div class="d-flex align-items-center">
+                            <div class="avatar-circle bg-success-soft me-3">
+                              <i class="bi bi-person-circle text-success fs-4"></i>
+                            </div>
+                            <div>
+                              <h6 class="mb-1 text-dark">{{ r.patient.first_name }} {{ r.patient.middle_name }} {{ r.patient.last_name }}</h6>
+                              <span class="badge badge-pill badge-light">ID: #{{ r.referral_id }}</span>
+                            </div>
+                          </div>
+                        </td>
+                        <td><i class="bi bi-telephone-fill text-primary me-2"></i>{{ r.patient.p_number }}</td>
+                        <td><i class="bi bi-calendar3 text-success me-2"></i>{{ r.patient.age }}</td>
+                        <td><i class="bi bi-geo-alt-fill text-danger me-2"></i>{{ r.patient.p_address }}</td>
+                        <td><span class="badge badge-pill badge-success">Active</span>
+                          {% if r.status == 'in-progress' %}
+                            <br>
+                            <small class="text-muted">
+                              <i class="bi bi-clock-history me-1"></i>
+                              Est. completion: {{ predictions|dict_get:r.referral_id|last|floatformat:0 }} mins
+                            </small>
+                          {% endif %}
+                        </td>
+                        <td>
+                          <button class="btn btn-outline-primary btn-sm rounded-pill MedicalDetails"
+                          data-id="{{ r.referral_id }}" 
+                          data-vpatient="{{ r.patient.first_name }} {{ r.patient.middle_name }} {{ r.patient.last_name }}"
+                          data-vage = "{{ r.patient.age }}"
+                          data-vaddress = "{{ r.patient.p_address}}"
+                          data-vsex = "{{ r.patient.sex}}"
+                          data-vreason = "{{ r.chief_complaint }}"
+                          data-vdisease = "{{ predictions|dict_get:r.referral_id|first }}"
+                          data-toggle="modal" 
+                          data-target="#MedicalDetails">
+                           <i class="bi bi-file-medical me-1"></i> Referral Details
+                         </button>
+                        </td>
+                      </tr>
+                      {% endif %}
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Referred Tab -->
+            <div class="tab-pane fade" id="tab2" role="tabpanel">
+              <div class="table-responsive">
+                <table id="referredTable" class="table table-hover align-middle">
+                  <thead class="bg-light">
+                    <tr>
+                      <th>Patient Name</th>
+                      <th>Phone Number</th>
+                      <th>Age</th>
+                      <th>Address</th>
+                      <th>Status</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for r in referred_referrals %}
+                      {% if r.patient.user.id == request.user.id %}
+                      <tr data-id="{{ r.referral_id }}" class="align-middle">
+                        <td>
+                          <div class="d-flex align-items-center">
+                            <div class="avatar-circle bg-info-soft me-3">
+                              <i class="bi bi-person-circle text-info fs-4"></i>
+                            </div>
+                            <div>
+                              <h6 class="mb-1 text-dark">{{ r.patient.first_name }} {{ r.patient.middle_name }} {{ r.patient.last_name }}</h6>
+                              <span class="badge badge-pill badge-light">ID: #{{ r.referral_id }}</span>
+                            </div>
+                          </div>
+                        </td>
+                        <td><i class="bi bi-telephone-fill text-primary me-2"></i>{{ r.patient.p_number }}</td>
+                        <td><i class="bi bi-calendar3 text-success me-2"></i>{{ r.patient.age }}</td>
+                        <td><i class="bi bi-geo-alt-fill text-danger me-2"></i>{{ r.patient.p_address }}</td>
+                        <td><span class="badge badge-pill badge-info">Referred</span>
+                          {% if r.status == 'completed' %}
+                            <br>
+                            <small class="text-muted">
+                              <i class="bi bi-check-circle me-1"></i>
+                              Completed in: {{ predictions|dict_get:r.referral_id|last|floatformat:0 }} mins
+                            </small>
+                          {% endif %}
+                        </td>
+                        <td>
+                          <button class="btn btn-outline-primary btn-sm rounded-pill MedicalDetails"
+                          data-id="{{ r.referral_id }}" 
+                          data-vpatient="{{ r.patient.first_name }} {{ r.patient.middle_name }} {{ r.patient.last_name }}"
+                          data-vage = "{{ r.patient.age }}"
+                          data-vaddress = "{{ r.patient.p_address}}"
+                          data-vsex = "{{ r.patient.sex}}"
+                          data-vreason = "{{ r.chief_complaint }}"
+                          data-vdisease = "{{ predictions|dict_get:r.referral_id|first }}"
+                          data-toggle="modal" 
+                          data-target="#MedicalDetails">
+                           <i class="bi bi-file-medical me-1"></i> Referral Details
+                         </button>
+                        </td>
+                      </tr>
+                      {% endif %}
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Medical Details Modal -->
+<div class="modal fade" id="MedicalDetails" tabindex="-1" role="dialog" aria-labelledby="MedicalDetailsLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+    <div class="modal-content shadow-lg border-0">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title"><i class="bi bi-person-lines-fill mr-2"></i>Medical Details</h5>
+        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body p-4">
+        {% csrf_token %}
+        <div class="row mb-4">
+          <div class="col-md-6">
+            <label class="font-weight-bold text-muted" for="viewPatientMedical">Patient Name</label>
+            <div class="input-group">
+                <div class="input-group-prepend">
+                    <span class="input-group-text"><i class="bi bi-person"></i></span>
+                </div>
+                <input type="text" class="form-control bg-light" id="viewPatientMedical" disabled>
+            </div>
+          </div>
+        <div class="col-md-6">
+          <label class="font-weight-bold text-muted" for="viewMedicalAge">Age</label>
+            <div class="input-group">
+              <div class="input-group-prepend">
+                  <span class="input-group-text"><i class="bi bi-calendar"></i></span>
+              </div>
+              <input type="text" class="form-control bg-light" id="viewMedicalAge" disabled>
+            </div>
+        </div>
+        </div>
+        <div class="row mb-4">
+          <div class="col-md-6">
+            <label class="font-weight-bold text-muted" for="viewMedicalAddress">Address</label>
+            <div class="input-group">
+                <div class="input-group-prepend">
+                    <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
+                </div>
+                <input type="text" class="form-control bg-light" id="viewMedicalAddress" disabled>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <label class="font-weight-bold text-muted" for="viewMedicalSex">Sex</label>
+            <div class="input-group">
+                <div class="input-group-prepend">
+                    <span class="input-group-text"><i class="bi bi-gender-ambiguous"></i></span>
+                </div>
+                <input type="text" class="form-control bg-light" id="viewMedicalSex" disabled>
+            </div>
+          </div>
+        </div>
+        <div class="row mb-4">
+          <div class="col-md-6">
+            <label class="font-weight-bold text-muted" for="viewMedicalReason">Reason</label>
+            <div class="input-group">
+                <div class="input-group-prepend">
+                    <span class="input-group-text"><i class="bi bi-patch-question"></i></span>
+                </div>
+                <input type="text" class="form-control bg-light" id="viewMedicalReason" disabled>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <label class="font-weight-bold text-muted" for="viewDisease">Possible Disease</label>
+            <div class="input-group">
+                <div class="input-group-prepend">
+                    <span class="input-group-text"><i class="bi bi-virus2"></i></span>
+                </div>
+                <input type="text" class="form-control bg-light" id="viewDisease" disabled>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer bg-light">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+          <i class="bi bi-arrow-left mr-2"></i>Back
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
+{% block script %}
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+$(document).ready(function() {
+  // Initialize DataTables with modern styling
+  const tableConfig = {
+    responsive: true,
+    dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+         '<"row"<"col-sm-12"tr>>' +
+         '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+    language: {
+      search: "_INPUT_",
+      searchPlaceholder: "Search patient records..."
+    },
+    pageLength: 10,
+    order: [[0, 'asc']],
+    columnDefs: [
+      { targets: -1, orderable: false }
+    ] 
+  };
+
+  $("#activeTable").DataTable(tableConfig);
+  $("#pendingTable").DataTable(tableConfig);
+  $("#referredTable").DataTable(tableConfig);
+  $("#rejectedTable").DataTable(tableConfig);
+
+  // Use event delegation to handle dynamically created elements
+  $(document).on('click', '.MedicalDetails', function() {
+    const button = $(this);
+    
+    // Clear previous data first
+    $('#viewPatientMedical').val('');
+    $('#viewMedicalAge').val('');
+    $('#viewMedicalAddress').val('');
+    $('#viewMedicalSex').val('');
+    $('#viewMedicalReason').val('');
+    $('#viewDisease').val('');
+    
+    // Set new data
+    $('#viewPatientMedical').val(button.data('vpatient'));
+    $('#viewMedicalAge').val(button.data('vage'));
+    $('#viewMedicalAddress').val(button.data('vaddress'));
+    $('#viewMedicalSex').val(button.data('vsex'));
+    $('#viewMedicalReason').val(button.data('vreason'));
+    $('#viewDisease').val(button.data('vdisease'));
+  });
+
+  // Clear modal data when modal is hidden
+  $('#MedicalDetails').on('hidden.bs.modal', function() {
+    $('#viewPatientMedical').val('');
+    $('#viewMedicalAge').val('');
+    $('#viewMedicalAddress').val('');
+    $('#viewMedicalSex').val('');
+    $('#viewMedicalReason').val('');
+    $('#viewDisease').val('');
+  });
+});
+</script>
+{% endblock %}
+{% endblock %}
