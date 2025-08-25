@@ -1,5 +1,5 @@
 # MHOERS-RMS
-
+" dont push the .venv so that you dont need to reinstall it "
 
 " delete the venv and recreate new cause the path is not the same "
 
