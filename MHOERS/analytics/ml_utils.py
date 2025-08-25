@@ -3,14 +3,15 @@ import numpy as np
 import os
 import joblib
 
-from sklearn.linear_model import LinearRegression
 from referrals.models import Referral 
 from analytics.models import Disease
-from sklearn.naive_bayes import MultinomialNB
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error, r2_score
+from django.db.models import Count
+from django.db.models.functions import TruncMonth
+
 
 
 
@@ -183,3 +184,61 @@ def random_forest_regression_prediction_time(referral, model=None, vectorizer=No
 
     except Exception as e:
         return f"Prediction error: {e}"
+    
+def train_model_disease_spike():
+    """
+    Train the model to predict disease spikes per months
+    """
+
+    qs = (
+    Referral.objects
+    .exclude(final_diagnosis__isnull=True)  # only with diagnosis
+    .annotate(month=TruncMonth("created_at"))
+    .values("month", "final_diagnosis")
+    .annotate(count=Count("id"))
+    .order_by("month")  
+    )
+
+    df = pd.DataFrame.from_records(qs)
+
+    # one col per disease
+    pv_df = df.pivot(index='month', columns='final_diagnosis', values='count').fillna(0)
+
+    # reset index for sklearn
+    pv_df = pv_df.reset_index()
+    pv_df['month'] = pd.to_datetime(pv_df['month'])
+
+    # extract features
+    pv_df['year'] = pv_df['month'].dt.year
+    pv_df['month_num'] = pv_df['month'].dt.month
+            
+    return pv_df
+
+def disease_forecast(pv_df, months_ahead=12):
+    predictions = {}
+
+    for disease in pv_df.columns[1:-2]:
+        X = pv_df[['year', 'month_num']]
+        y = pv_df[disease]
+
+        rf = RandomForestRegressor(n_estimators=100, random_state=42)
+        rf.fit(X, y)
+
+        # generate next N months
+        last_year, last_month = pv_df['year'].max(), pv_df['month_num'].max()
+        future = []
+        year, month_num = last_year, last_month
+        for _ in range(months_ahead):
+            month_num += 1
+            if month_num > 12:
+                month_num = 1
+                year += 1
+            future.append({year, month_num})
+
+        X_future = pd.DataFrame(future, columns=["year", "month_num"])
+        y_future = rf.predict(X_future)
+
+        predictions[disease] = list(zip(X_future.values.tolist(), y_future))
+
+    return predictions
+

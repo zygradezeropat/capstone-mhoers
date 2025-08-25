@@ -57,6 +57,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'MHOERS.middleware.PerformanceMiddleware',
 ]
 
 ROOT_URLCONF = 'MHOERS.urls'
@@ -142,6 +143,28 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 #Authentication Settings
 LOGIN_REDIRECT_URL = '/accounts//login/'
 LOGOUT_REDIRECT_URL = '/login/'
+
+# Cache configuration
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+        'TIMEOUT': 300,  # 5 minutes default
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000,
+        }
+    }
+}
+
+# For production, use Redis:
+# CACHES = {
+#     'default': {
+#         'BACKEND': 'django_redis.cache.RedisCache',
+#         'LOCATION': 'redis://127.0.0.1:6379/1',
+#         'OPTIONS': {
+#             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+#         }
+# }
 
 
 

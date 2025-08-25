@@ -12,6 +12,9 @@ from django.views.decorators.cache import never_cache
 from patients.models import Patient, Medical_History
 from django.http import JsonResponse
 from analytics.ml_utils import predict_disease_for_referral, random_forest_regression_train_model, random_forest_regression_prediction_time,  train_random_forest_model_classification
+from analytics.model_manager import MLModelManager
+from analytics.batch_predictor import BatchPredictor
+from .query_optimizer import ReferralQueryOptimizer
 from django.db.models import Count
 from django.contrib.auth.models import Group
 from django.db.models.functions import TruncMonth
@@ -113,30 +116,17 @@ def update_referral_status(request):
         is_read=False
     )
 
-    # ✅ Re-query updated data
-    active_referrals = Referral.objects.filter(status='in-progress')
-    referred_referrals = Referral.objects.filter(status='completed')
-    patients = Patient.objects.all()
+    # ✅ Use optimized queries
+    referrals = list(ReferralQueryOptimizer.get_all_referrals())
+    patients = ReferralQueryOptimizer.get_patients_with_referral_count()
     facilities = Facility.objects.all()
 
-    # ✅ Load model/vectorizer once
-    try:
-        model = joblib.load('ml_models/time_rf_model.pkl')
-        vectorizer = joblib.load('ml_models/symptom_vectorizer.pkl')
-    except Exception as e:
-        model = None
-        vectorizer = None
+    # ✅ Use batch predictions
+    predictions = BatchPredictor.predict_all_batch(referrals)
 
-    # ✅ Generate predictions
-    predictions = {}
-    for r in active_referrals | referred_referrals:
-        try:
-            disease_pred = predict_disease_for_referral(r.referral_id)
-            time_pred = random_forest_regression_prediction_time(r, model=model, vectorizer=vectorizer)
-        except Exception as e:
-            disease_pred = "Error"
-            time_pred = "Error"
-        predictions[r.referral_id] = (disease_pred, time_pred)
+    # ✅ Separate active and completed referrals
+    active_referrals = [r for r in referrals if r.status in ['pending', 'in-progress']]
+    referred_referrals = [r for r in referrals if r.status == 'completed']
 
     return render(request, 'patients/admin/patient_list.html', {
         'active_page': 'patient_list',
@@ -183,29 +173,17 @@ def referred_referral_status(request):
                 followup_date=followup_date
             )
 
-    # Re-query updated data
-    active_referrals = Referral.objects.filter(status='in-progress')
-    referred_referrals = Referral.objects.filter(status='completed')
-    patients = Patient.objects.all()
+    # Use optimized queries
+    referrals = list(ReferralQueryOptimizer.get_all_referrals())
+    patients = ReferralQueryOptimizer.get_patients_with_referral_count()
     facilities = Facility.objects.all()
 
-    # Load trained model/vectorizer once
-    try:
-        model = joblib.load('ml_models/time_rf_model.pkl')
-        vectorizer = joblib.load('ml_models/symptom_vectorizer.pkl')
-    except Exception as e:
-        model, vectorizer = None, None
+    # Use batch predictions
+    predictions = BatchPredictor.predict_all_batch(referrals)
 
-    # Predict disease and time
-    predictions = {}
-    for r in active_referrals | referred_referrals :
-        try:
-            disease_pred = predict_disease_for_referral(r.referral_id)
-            time_pred = random_forest_regression_prediction_time(r, model=model, vectorizer=vectorizer)
-        except Exception as e:
-            disease_pred = "Error"
-            time_pred = "Error"
-        predictions[r.referral_id] = (disease_pred, time_pred)
+    # Separate active and completed referrals
+    active_referrals = [r for r in referrals if r.status in ['pending', 'in-progress']]
+    referred_referrals = [r for r in referrals if r.status == 'completed']
 
     return render(request, 'patients/admin/patient_list.html', {
         'active_page': 'patient_list',
@@ -252,28 +230,15 @@ def referral_list(request):
     # Get patients associated with the current user
     patients = Patient.objects.filter(user=user)
 
-    # Filter referrals by patient user and status
-    active_referrals = Referral.objects.filter(patient__user=user, status='in-progress')
-    referred_referrals = Referral.objects.filter(patient__user=user, status='completed')
+    # Filter referrals by patient user and status with optimized queries
+    active_referrals = Referral.objects.filter(patient__user=user, status='in-progress').select_related('patient', 'patient__facility')
+    referred_referrals = Referral.objects.filter(patient__user=user, status='completed').select_related('patient', 'patient__facility')
 
-    # Load trained model and vectorizer (once)
-    try:
-        model = joblib.load('ml_models/time_rf_model.pkl')
-        vectorizer = joblib.load('ml_models/symptom_vectorizer.pkl')
-    except Exception as e:
-        model = None
-        vectorizer = None
-
-    # Run predictions
-    predictions = {}
-    for r in active_referrals | referred_referrals:
-        try:
-            disease_pred = predict_disease_for_referral(r.referral_id)
-            time_pred = random_forest_regression_prediction_time(r, model=model, vectorizer=vectorizer)
-        except Exception as e:
-            disease_pred = "Error"
-            time_pred = "Error"
-        predictions[r.referral_id] = (disease_pred, time_pred)
+    # Combine referrals for batch prediction
+    all_referrals = list(active_referrals) + list(referred_referrals)
+    
+    # Use batch predictions
+    predictions = BatchPredictor.predict_all_batch(all_referrals)
 
     return render(request, 'patients/user/referral_list.html', {
         'active_page': 'referral_list',
@@ -286,82 +251,30 @@ def referral_list(request):
 @login_required 
 @never_cache
 def admin_patient_list(request):
-    # Optional retrain
-    train_random_forest_model_classification()
-    training_result = random_forest_regression_train_model()
-    if "error" in training_result:
-        training_result = {"status": "Model already trained"}
-
-    # Load models once
-    disease_model = joblib.load('ml_models/disease_rf_model.pkl')
-    disease_vectorizer = joblib.load('ml_models/disease_vectorizer.pkl')
-    time_model = joblib.load('ml_models/time_rf_model.pkl')
-    time_vectorizer = joblib.load('ml_models/symptom_vectorizer.pkl')
-
-    # Get referrals
-    referrals = list(Referral.objects.filter(
-        status__in=['pending', 'in-progress', 'completed', 'rejected']
-    ).select_related('patient'))
-
-    # Predict diseases
-    symptom_texts = [r.symptoms or "" for r in referrals]
-    disease_vectors = disease_vectorizer.transform(symptom_texts)
-    disease_preds = disease_model.predict(disease_vectors)
-
-    # Prepare data for time prediction
-    numeric_data = []
-    text_data = []
-    for r in referrals:
-        try:
-            numeric_data.append({
-                'weight': float(r.weight),
-                'height': float(r.height),
-                'bp_systolic': r.bp_systolic,
-                'bp_diastolic': r.bp_diastolic,
-                'pulse_rate': r.pulse_rate,
-                'respiratory_rate': r.respiratory_rate,
-                'temperature': float(r.temperature),
-                'oxygen_saturation': r.oxygen_saturation
-            })
-            text_data.append(r.symptoms or '')
-        except:
-            numeric_data.append(None)
-            text_data.append("")
-
-    valid_indexes = [i for i, data in enumerate(numeric_data) if data]
-    X_numeric = pd.DataFrame([numeric_data[i] for i in valid_indexes])
-    X_text = time_vectorizer.transform([text_data[i] for i in valid_indexes]).toarray()
-    X_combined = pd.concat([X_numeric.reset_index(drop=True), pd.DataFrame(X_text)], axis=1)
-    X_combined.columns = X_combined.columns.astype(str)
-    time_preds = time_model.predict(X_combined)
-
-    # Combine predictions
-    predictions = {}
-    time_idx = 0
-    for i, r in enumerate(referrals):
-        disease = disease_preds[i]
-        if i in valid_indexes:
-            time_pred = round(float(time_preds[time_idx]), 2)
-            time_idx += 1
-        else:
-            time_pred = "N/A"
-        predictions[r.referral_id] = (disease, time_pred)
-
-    # Patients and other data
-    patients = Patient.objects.annotate(referral_count=Count('referral'))
-    patientsFat = Patient.objects.select_related('facility').all()
-    facility = Facility.objects.all()
-
+    # Step 1: Ensure models are loaded (only once)
+    MLModelManager.train_models_if_needed()
+    
+    # Step 2: Use optimized queries
+    referrals = list(ReferralQueryOptimizer.get_all_referrals())
+    patients = ReferralQueryOptimizer.get_patients_with_referral_count()
+    facilities = Facility.objects.all()
+    
+    # Step 3: Batch predictions (cached)
+    predictions = BatchPredictor.predict_all_batch(referrals)
+    
+    # Step 4: Separate active and completed referrals
+    active_referrals = [r for r in referrals if r.status in ['pending', 'in-progress']]
+    referred_referrals = [r for r in referrals if r.status == 'completed']
+    
     return render(request, 'patients/admin/patient_list.html', {
         'active_page': 'patient_list',
         'active_tab': 'tab1',
-        'facility': facility,
+        'facility': facilities,
         'patients': patients,
-        'active_referrals': [r for r in referrals if r.status == 'in-progress'],
-        'referred_referrals': [r for r in referrals if r.status == 'completed'],
-        'patientFat': patientsFat,
+        'active_referrals': active_referrals,
+        'referred_referrals': referred_referrals,
         'predictions': predictions,
-        'training_result': training_result,
+        'training_result': {"status": "Models loaded from cache"},
     })
     
     

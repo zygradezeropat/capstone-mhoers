@@ -7,7 +7,7 @@
     <title>{% block title %}NCERS{% endblock %}</title>
 
     <!-- Custom Styles -->
-    <link rel="stylesheet" href="{% static 'css/sidebar.css' %}?v=1" />
+    <link rel="stylesheet" href="{% static 'css/sidebar.css' %}?v=2" />
     <link rel="stylesheet" href="{% static 'css/admin_dashboard.css' %}?v=1" />
 
     <!-- Bootstrap 4.6.2 -->
@@ -34,8 +34,37 @@
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-
-    
+    <!-- Responsive Layout Styles -->
+    <style>
+      .main-content {
+        margin-left: 280px;
+        padding: 20px;
+        min-height: 100vh;
+        transition: margin-left 0.3s ease;
+        background: #f8f9fa;
+      }
+      
+      @media (max-width: 1199px) and (min-width: 768px) {
+        .main-content {
+          margin-left: 260px;
+        }
+      }
+      
+      @media (max-width: 767px) {
+        .main-content {
+          margin-left: 0;
+          padding: 15px;
+          padding-top: 80px; /* Space for toggle button */
+        }
+      }
+      
+      @media (max-width: 480px) {
+        .main-content {
+          padding: 10px;
+          padding-top: 70px;
+        }
+      }
+    </style>
   </head>
 
   <body>
@@ -47,7 +76,7 @@
       {% endif %}
     {% endblock %}
 
-    <main class="main-content" style="margin-left: 260px; padding: 20px;">
+    <main class="main-content">
       {% block content %}{% endblock %}
       {% if messages %}
         <div class="alert alert-success">
@@ -66,7 +95,6 @@
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
-    
     <!-- Sidebar Script -->
     <script src="{% static 'js/sidebar.js' %}"></script>
   </body>
