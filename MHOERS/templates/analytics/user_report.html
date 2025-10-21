@@ -15,30 +15,66 @@
     </div>
   </div>
 
+  <!-- Summary Statistics Cards -->
+  <div class="row mb-4">
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body text-center">
+          <h3 class="text-primary mb-1">{{ total_referrals }}</h3>
+          <p class="text-muted mb-0">Total Referrals ({{ current_year }})</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body text-center">
+          <h3 class="text-warning mb-1">{{ pending_referrals }}</h3>
+          <p class="text-muted mb-0">Pending Referrals</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body text-center">
+          <h3 class="text-success mb-1">{{ completed_referrals }}</h3>
+          <p class="text-muted mb-0">Completed Referrals</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body text-center">
+          <h3 class="text-info mb-1">{{ top_diagnoses|length }}</h3>
+          <p class="text-muted mb-0">Top Diagnoses</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Tab Navigation -->
   <div class="card border-0 shadow-sm rounded-lg mb-4">
     <div class="card-body">
       <ul class="nav nav-pills nav-fill" id="dashboardTab" role="tablist">
         <li class="nav-item">
-          <a class="nav-link active" id="tab1-tab" data-toggle="tab" href="#tab1" role="tab">
+          <a class="nav-link active" id="tab1-tab" data-bs-toggle="tab" href="#tab1" role="tab">
             <i class="bi bi-graph-up"></i>
             <span class="ms-2">Referral Statistics</span>
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" id="tab2-tab" data-toggle="tab" href="#tab2" role="tab">
+          <a class="nav-link" id="tab2-tab" data-bs-toggle="tab" href="#tab2" role="tab">
             <i class="bi bi-clipboard2-pulse"></i>
             <span class="ms-2">Common Diagnoses</span>
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" id="tab3-tab" data-toggle="tab" href="#tab3" role="tab">
+          <a class="nav-link" id="tab3-tab" data-bs-toggle="tab" href="#tab3" role="tab">
             <i class="bi bi-bar-chart"></i>
             <span class="ms-2">Barangay Performance</span>
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" id="tab5-tab" data-toggle="tab" href="#tab5" role="tab">
+          <a class="nav-link" id="tab5-tab" data-bs-toggle="tab" href="#tab5" role="tab">
             <i class="bi bi-printer"></i>
             <span class="ms-2">Generate Reports</span>
           </a>
@@ -165,10 +201,7 @@
 <script src="{% static 'js/user/line_chart_user.js' %}"></script>
 <script src="{% static 'js/user/topDiagnosedPie_chart_user.js' %}"></script>
 <script src="{% static 'js/user/barangay_performance_user.js' %}"></script>
-<script src="{% static 'js/user_report.js' %}"></script>
-<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.6.0/js/bootstrap.min.js"></script>
+
 {% endblock script %}
 
 {% endblock %}

@@ -261,14 +261,42 @@ function updateChartView(viewType) {
 
 // Function to update monthly data
 function updateMonthlyData() {
-    // Add your monthly data update logic here
-    console.log('Updating monthly data...');
+    const currentYear = new Date().getFullYear();
+    const url = `/analytics/api/referral-statistics/?view_type=monthly&year=${currentYear}`;
+    
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            const chart = Chart.getChart('monthlyReportChart');
+            if (chart) {
+                chart.data.labels = data.labels;
+                chart.data.datasets = data.datasets;
+                chart.update();
+            }
+        })
+        .catch(error => {
+            console.error('Error updating monthly data:', error);
+        });
 }
 
 // Function to update yearly data
 function updateYearlyData() {
-    // Add your yearly data update logic here
-    console.log('Updating yearly data...');
+    const currentYear = new Date().getFullYear();
+    const url = `/analytics/api/referral-statistics/?view_type=yearly&year=${currentYear}`;
+    
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            const chart = Chart.getChart('monthlyReportChart');
+            if (chart) {
+                chart.data.labels = data.labels;
+                chart.data.datasets = data.datasets;
+                chart.update();
+            }
+        })
+        .catch(error => {
+            console.error('Error updating yearly data:', error);
+        });
 }
 
 // Function to handle tab switching
@@ -286,7 +314,7 @@ function handleTabSwitch(tabId) {
 }
 
 // Add event listeners for tab switching
-document.querySelectorAll('a[data-toggle="tab"]').forEach(tab => {
+document.querySelectorAll('a[data-bs-toggle="tab"]').forEach(tab => {
     tab.addEventListener('shown.bs.tab', function(e) {
         handleTabSwitch(e.target.id);
     });

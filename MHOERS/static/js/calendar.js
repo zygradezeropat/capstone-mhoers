@@ -40,6 +40,7 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 
+
 // Function to fetch medical history follow-up dates
 async function fetchMedicalFollowups() {
   try {
@@ -178,17 +179,35 @@ function renderCalendar() {
       const followupContainer = document.createElement("div");
       followupContainer.className = "followup-indicators";
       
-      medicalFollowups[dateKey].forEach((followup, index) => {
+      const followups = medicalFollowups[dateKey];
+      const maxDisplay = 5;
+      const displayFollowups = followups.slice(0, maxDisplay);
+      
+      displayFollowups.forEach((followup, index) => {
         const indicator = document.createElement("div");
         indicator.className = "followup-indicator";
         indicator.title = `Follow-up: ${followup.patient_name} - ${followup.illness_name}`;
-        indicator.innerHTML = `<i class="bi bi-calendar-check"></i>`;
+        // Display advice text instead of icon, truncate if too long
+        const adviceText = followup.advice ? followup.advice.substring(0, 30) + (followup.advice.length > 30 ? '...' : '') : 'Follow-up';
+        indicator.innerHTML = `<span class="followup-text">${adviceText}</span>`;
         indicator.onclick = (e) => {
           e.stopPropagation(); // Prevent calendar day click
           showFollowupDetails(followup, current);
         };
         followupContainer.appendChild(indicator);
       });
+      
+      // Add "more..." option if there are more than 5 events
+      if (followups.length > maxDisplay) {
+        const moreIndicator = document.createElement("div");
+        moreIndicator.className = "followup-indicator more-events";
+        moreIndicator.innerHTML = `<span class="followup-text text-primary">+${followups.length - maxDisplay} more...</span>`;
+        moreIndicator.onclick = (e) => {
+          e.stopPropagation(); // Prevent calendar day click
+          showAllEventsModal(followups, current);
+        };
+        followupContainer.appendChild(moreIndicator);
+      }
       
       dayElement.appendChild(followupContainer);
     }
@@ -206,38 +225,35 @@ function isToday(date) {
   return date.toDateString() === today.toDateString();
 }
 
-// Function to show follow-up details
-function showFollowupDetails(followup, date) {
+// Function to show all events modal
+function showAllEventsModal(followups, date) {
   const modal = document.createElement('div');
   modal.className = 'modal fade';
-  modal.id = 'followupModal';
+  modal.id = 'allEventsModal';
   modal.innerHTML = `
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">
-            <i class="bi bi-calendar-check text-success"></i>
-            Medical Follow-up
+            <i class="bi bi-calendar-event text-primary"></i>
+            All Events for ${date.toLocaleDateString()}
           </h5>
-          <button type="button" class="btn-close" data-dismiss="modal"></button>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <div class="row">
-            <div class="col-md-6">
-              <strong>Patient:</strong><br>
-              <span class="text-primary">${followup.patient_name}</span>
-            </div>
-            <div class="col-md-6">
-              <strong>Reason:</strong><br>
-              <span class="text-success">${followup.notes}</span>
-            </div>
+          <div class="list-group">
+            ${followups.map((followup, index) => `
+              <div class="list-group-item list-group-item-action" onclick="showFollowupDetailsFromModal(${JSON.stringify(followup).replace(/"/g, '&quot;')}, '${date.toISOString()}')">
+                <div class="d-flex w-100 justify-content-between align-items-center">
+                  <h6 class="mb-0 text-primary">${followup.advice || 'Follow-up'}</h6>
+                  <small class="text-muted">${new Date(followup.followup_date).toLocaleDateString()}</small>
+                </div>
+              </div>
+            `).join('')}
           </div>
-          <hr>
+        </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-primary" onclick="viewPatientDetails(${followup.patient_id})">
-            <i class="bi bi-person"></i> View Patient Details
-          </button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
         </div>
       </div>
     </div>
@@ -255,6 +271,77 @@ function showFollowupDetails(followup, date) {
   });
 }
 
+// Function to show follow-up details from the all events modal
+function showFollowupDetailsFromModal(followup, dateString) {
+  const date = new Date(dateString);
+  showFollowupDetails(followup, date);
+}
+
+// Function to show follow-up details
+function showFollowupDetails(followup, date) {
+  const modal = document.createElement('div');
+  modal.className = 'modal fade';
+  modal.id = 'followupModal';
+  modal.tabIndex = -1;              // ✅ required for proper focus
+  modal.setAttribute("role", "dialog"); // ✅ accessibility + fixes clicks
+
+  modal.innerHTML = `
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="bi bi-calendar-check text-success"></i>
+            ${followup.advice}
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-2">
+            <strong>Name of the patient:</strong><br>
+            <span class="text-primary">${followup.patient_name}</span>
+          </div>
+          <div class="mb-2">
+            <strong>Date as the follow up:</strong><br>
+            <span class="text-info">${new Date(followup.followup_date).toLocaleDateString()}</span>
+          </div>
+          <div class="mb-2">
+            <strong>Reason (note):</strong><br>
+            <span class="text-success">${followup.notes}</span>
+          </div>
+          <div class="mb-2">
+            <strong>Illness:</strong><br>
+            <span class="text-warning">${followup.illness_name}</span>
+          </div>
+          <hr>
+          <div class="mb-2">
+            <strong>Advice:</strong><br>
+            <span class="text-dark">${followup.advice}</span>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button 
+              type="button" 
+              class="btn btn-primary go-to-assessment" 
+              data-patient-id="${followup.patient_id}">
+              New Assessment
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  const bootstrapModal = new bootstrap.Modal(modal);
+  bootstrapModal.show();
+
+  modal.addEventListener('hidden.bs.modal', function() {
+    document.body.removeChild(modal);
+  });
+}
+
+
 // Function to view patient details (placeholder - you can implement this based on your needs)
 function viewPatientDetails(patientId) {
   // You can implement this to redirect to patient details page
@@ -263,6 +350,18 @@ function viewPatientDetails(patientId) {
   // Example: window.location.href = `/patients/patient/${patientId}/`;
 }
 
+// Redirect handler for modal button
+document.addEventListener("click", function (e) {
+  if (e.target.classList.contains("go-to-assessment")) {
+    const patientId = e.target.getAttribute("data-patient-id");
+
+    // Fill hidden input with patient_id
+    document.getElementById("hiddenPatientId").value = patientId;
+
+    // Submit the hidden form from assessment.html
+    document.getElementById("goToAssessmentForm").submit();
+  }
+});
 
 
 function previousMonth() {
@@ -303,7 +402,11 @@ function renderSchedule() {
     const scheduleContainer = document.createElement("div");
     scheduleContainer.className = "list-group";
     
-    medicalFollowups[dateKey].forEach((followup, index) => {
+    const followups = medicalFollowups[dateKey];
+    const maxDisplay = 5;
+    const displayFollowups = followups.slice(0, maxDisplay);
+    
+    displayFollowups.forEach((followup, index) => {
       const schedule = document.createElement("div");
       schedule.className = "list-group-item d-flex align-items-start";
       schedule.innerHTML = `
@@ -316,6 +419,21 @@ function renderSchedule() {
       schedule.onclick = () => showFollowupDetails(followup, today);
       scheduleContainer.appendChild(schedule);
     });
+    
+    // Add "more..." option if there are more than 5 events
+    if (followups.length > maxDisplay) {
+      const moreSchedule = document.createElement("div");
+      moreSchedule.className = "list-group-item d-flex align-items-start text-primary";
+      moreSchedule.innerHTML = `
+        <div class="me-3 text-primary"><i class="bi bi-three-dots"></i></div>
+        <div>
+          <div class="fw-bold">+${followups.length - maxDisplay} more events...</div>
+          <div class="text-muted">Click to view all events for today</div>
+        </div>
+      `;
+      moreSchedule.onclick = () => showAllEventsModal(followups, today);
+      scheduleContainer.appendChild(moreSchedule);
+    }
     
     scheduleContent.appendChild(scheduleContainer);
   } else {

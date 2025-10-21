@@ -11,16 +11,86 @@ from patients.models import Medical_History, Patient
 from referrals.models import Referral
 from facilities.models import Facility
 from django.core import serializers
+from collections import Counter
+from datetime import datetime
  
 @login_required
 @never_cache
 def profile(request):
-    return render(request, 'accounts/profile.html', {'active_page': 'profile'})
+    """Render the user profile page with live stats and recent activities.
+
+    - total/pending/in-progress/completed referrals for current user
+    - assigned facility info
+    - recent referral activities
+    """
+    # Assigned facility for this user (if any)
+    facility = Facility.objects.filter(user_id=request.user).first()
+
+    # Referral statistics for this user
+    user_referrals = Referral.objects.filter(user=request.user)
+    total_referrals = user_referrals.count()
+    pending_referrals = user_referrals.filter(status='pending').count()
+    active_referrals = user_referrals.filter(status='in-progress').count()
+    completed_referrals = user_referrals.filter(status='completed').count()
+
+    # Recent activities: latest 10 referrals by this user
+    recent_referrals = (
+        user_referrals.select_related('patient').order_by('-created_at')[:10]
+    )
+
+    # Prepare activity rows
+    recent_activities = []
+    for r in recent_referrals:
+        # Determine activity type label and icon based on status
+        if r.status == 'completed':
+            activity_type = 'Completed Referral'
+            activity_icon = 'check-circle'
+            badge_class = 'success'
+        elif r.status == 'in-progress':
+            activity_type = 'Referral In-Progress'
+            activity_icon = 'file-medical'
+            badge_class = 'warning text-dark'
+        else:
+            activity_type = 'New Referral'
+            activity_icon = 'file-medical'
+            badge_class = 'secondary'
+
+        patient_name = ''
+        if hasattr(r.patient, 'first_name'):
+            patient_name = f"{r.patient.first_name} {r.patient.last_name}".strip()
+        else:
+            patient_name = f"#{r.patient_id}"
+
+        recent_activities.append({
+            'type': activity_type,
+            'icon': activity_icon,
+            'patient': patient_name,
+            'status': r.status,
+            'badge_class': badge_class,
+            'created_at': r.created_at,
+        })
+
+    context = {
+        'active_page': 'profile',
+        'facility': facility,
+        'total_referrals': total_referrals,
+        'pending_referrals': pending_referrals,
+        'active_referrals': active_referrals,
+        'completed_referrals': completed_referrals,
+        'recent_activities': recent_activities,
+    }
+    return render(request, 'accounts/profile.html', context)
 
 @login_required
 @never_cache
 def phistory(request):
-    return render(request, 'patients/admin/patient_history.html', {'active_page': 'phistory'})
+    # Get all patients for the admin view
+    patients = Patient.objects.all().order_by('first_name', 'last_name')
+    
+    return render(request, 'patients/admin/patient_history.html', {
+        'active_page': 'phistory',
+        'patients': patients
+    })
 
 @login_required
 @never_cache
@@ -128,7 +198,31 @@ def system_configuration(request):
 @login_required
 @never_cache
 def user_report(request):
-    return render(request, 'analytics/user_report.html', {'active_page': 'user_report'})
+    # Get some basic statistics for the current user
+    user = request.user
+    current_year = datetime.now().year
+    
+    # Get user's referral statistics
+    user_referrals = Referral.objects.filter(user=user, created_at__year=current_year)
+    total_referrals = user_referrals.count()
+    pending_referrals = user_referrals.filter(status='pending').count()
+    completed_referrals = user_referrals.filter(status='completed').count()
+    
+    # Get user's top diagnoses
+    medical_histories = Medical_History.objects.filter(user_id=user, diagnosed_date__year=current_year)
+    illness_counts = Counter(medical_histories.values_list('illness_name', flat=True))
+    top_diagnoses = dict(illness_counts.most_common(5))
+    
+    context = {
+        'active_page': 'user_report',
+        'total_referrals': total_referrals,
+        'pending_referrals': pending_referrals,
+        'completed_referrals': completed_referrals,
+        'top_diagnoses': top_diagnoses,
+        'current_year': current_year
+    }
+    
+    return render(request, 'analytics/user_report.html', context)
 
 @login_required
 @never_cache

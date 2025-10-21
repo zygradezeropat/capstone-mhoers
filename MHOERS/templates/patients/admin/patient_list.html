@@ -5,28 +5,110 @@
 
 <link rel="stylesheet" href="{% static 'css/admin_dashboard.css' %}" />
 
+<style>
+  /* Compact Filter Styles */
+  .date-filter-container {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    border: 1px solid #dee2e6;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  
+  .date-filter-container .form-control {
+    font-size: 0.875rem;
+    border-radius: 6px;
+    border: 1px solid #ced4da;
+    padding: 8px 12px;
+    height: auto;
+    transition: all 0.2s ease;
+  }
+  
+  .date-filter-container .form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+  }
+  
+  .date-filter-container .btn {
+    font-size: 0.875rem;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    min-width: 80px;
+  }
+  
+  .date-filter-container .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  }
+  
+  .date-filter-container .form-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0;
+    text-transform: none;
+    letter-spacing: 0;
+    white-space: nowrap;
+  }
+  
+  .date-filter-container .text-muted {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #6c757d;
+    white-space: nowrap;
+  }
+  
+  .date-filter-container .d-flex {
+    gap: 8px;
+    align-items: center;
+    flex-wrap: nowrap;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .date-filter-container .d-flex {
+      flex-direction: column;
+      gap: 15px;
+      align-items: stretch;
+    }
+    
+    .date-filter-container .form-control {
+      width: 100% !important;
+    }
+    
+    .date-filter-container .btn {
+      width: 100%;
+      margin-bottom: 10px;
+    }
+  }
+</style>
+
 <!-- Navbar Include --> 
 {% include 'components/navbar.html' %}
 {% include 'components/referral/referral_modal.html' %}
-{% include 'components/tabbar/tabbar.html' with tab1_name="Active Referral" tab2_name="Referred" tab3_name="All Patients" %}
+{% include 'components/tabbar/tabbar.html' with tab1_name="Active Referral" tab2_name="Referred" tab3_name="All Patients" tab4_name="Medical History"%}
 
 <div class="container-fluid py-4">
   <div class="row">
     <div class="col-12">
       <div class="card border-0 shadow-sm rounded-lg">
         <div class="card-body p-4">
+          <!-- Global Filter Controls -->
           <div class="tab-content" id="dashboardTabContent">
-
             <!-- Active Referral Tab -->
             <div class="tab-pane fade {% if active_tab == 'tab1' %}show active{% endif %}" id="tab1" role="tabpanel">
               <div class="table-responsive">
                 <table id="activeTable" class="table table-hover align-middle">
                   <thead class="bg-light">
                     <tr>
+                      <th>Date</th>
                       <th>Patient Name</th>
                       <th>Facility</th>
                       <th>Location</th>
-                      <th>Urgency Level</th>
+                      <th>Possible Disease</th>
                       <th>Status</th>
                       <th>Actions</th>
                     </tr>
@@ -34,6 +116,7 @@
                   <tbody>
                     {% for r in active_referrals %}
                     <tr data-id="{{ r.referral_id }}" class="align-middle">
+                      <td><h6 class="mb-1 text-dark">{{ r.completed_at}}</h6></td>
                       <td>
                         <div class="d-flex align-items-center">
                           <div class="avatar-circle bg-success-soft me-3">
@@ -49,7 +132,9 @@
                       <td><i class="bi bi-hospital text-primary me-2"></i>{{ r.patient.facility.name }}</td>
                       <td><i class="bi bi-geo-alt-fill text-danger me-2"></i>{{ r.patient.p_address }}</td>
                       <td>
-                        <span class="badge badge-pill text-dark badge-warning">Severe</span>
+                        <span class="badge badge-pill badge-info">
+                          {{ predictions|dict_get:r.referral_id|default:'No prediction available'|first }}
+                        </span>
                       </td>
                       <td><span class="badge badge-pill badge-success">Active</span>
                         {% if r.status == 'in-progress' %}
@@ -71,7 +156,7 @@
                           data-status="{{ r.status }}"
                           data-notes="{{ r.chief_complaint }}"
                           data-symptoms="{{ r.symptoms }}"
-                          data-workUp="{{ r.work_up_details }}"
+                          data-workup="{{ r.work_up_details }}"
                           data-height= "{{ r.height }}"
                           data-weight = "{{ r.weight }}"
                           data-systolic = "{{ r.bp_systolic }}/{{ r.bp_diastolic }}"
@@ -95,10 +180,28 @@
 
             <!-- Referred Tab -->
             <div class="tab-pane fade {% if active_tab == 'tab2' %}show active{% endif %}" id="tab2" role="tabpanel">
+              <!-- Compact Date Filter -->
+              <div class="date-filter-container">
+                <div class="d-flex align-items-center">
+                  <label class="form-label">Date Range:</label>
+                  <input type="date" class="form-control" id="referredStartDate" style="width: 140px;" placeholder="Start Date">
+                  <span class="text-muted">to</span>
+                  <input type="date" class="form-control" id="referredEndDate" style="width: 140px;" placeholder="End Date">
+                  <button type="button" class="btn btn-outline-success" id="referredFilterBtn">
+                    <i class="bi bi-search me-1"></i>Filter
+                  </button>
+                  <button type="button" class="btn btn-outline-secondary" id="referredClearBtn">
+                    <i class="bi bi-x me-1"></i>Clear
+                  </button>
+    
+                </div>
+              </div>
+              
               <div class="table-responsive">
                 <table id="referredTable" class="table table-hover align-middle">
                   <thead class="bg-light">
                     <tr>
+                      <th>Date/Time</th>
                       <th>Patient Name</th>
                       <th>Facility</th>
                       <th>Location</th>
@@ -109,6 +212,7 @@
                   <tbody>
                     {% for r in referred_referrals %}
                     <tr data-id="{{ r.referral_id }}" class="align-middle">
+                      <td><h6 class="mb-1 text-dark">{{ r.completed_at }}</h6></td>
                       <td>
                         <div class="d-flex align-items-center">
                           <div class="avatar-circle bg-info-soft me-3">
@@ -116,13 +220,12 @@
                           </div>
                           <div>
                             <h6 class="mb-1 text-dark">{{ r.patient.first_name }} {{ r.patient.middle_name }} {{ r.patient.last_name }}</h6>
-                            <span class="badge badge-pill badge-light">ID: #{{ r.referral_id }}</span>
                           </div>
                         </div>
                       </td>
                       <td><i class="bi bi-hospital text-primary me-2"></i>{{ r.patient.facility.name }}</td>
                       <td><i class="bi bi-geo-alt-fill text-danger me-2"></i>{{ r.patient.p_address }}</td>
-                      <td><span class="badge badge-pill badge-info">Referred</span>
+                      <td><span class="badge rounded-pill bg-info text-dark">Referred</span>
                         {% if r.status == 'completed' %}
                           <br>
                           <small class="text-muted">
@@ -142,7 +245,7 @@
                           data-status="{{ r.status }}"
                           data-notes="{{ r.chief_complaint }}"
                           data-symptoms="{{ r.symptoms }}"
-                          data-workUp="{{ r.work_up_details }}"
+                          data-workup="{{ r.work_up_details }}"
                           data-height= "{{ r.height }}"
                           data-weight = "{{ r.weight }}"
                           data-systolic = "{{ r.bp_systolic }}"
@@ -165,7 +268,26 @@
             </div>
 
             <!-- All Patients Tab -->
-            <div class="tab-pane fade {% if active_tab == 'tab5' %}show active{% endif %}" id="tab3" role="tabpanel">
+            <div class="tab-pane fade {% if active_tab == 'tab3' %}show active{% endif %}" id="tab3" role="tabpanel">
+              <!-- Compact Date Filter -->
+              <div class="date-filter-container">
+                <div class="d-flex align-items-center">
+                  <label class="form-label">Date Range:</label>
+                  <input type="date" class="form-control" id="patientsStartDate" style="width: 140px;" placeholder="Start Date">
+                  <span class="text-muted">to</span>
+                  <input type="date" class="form-control" id="patientsEndDate" style="width: 140px;" placeholder="End Date">
+                  <button type="button" class="btn btn-outline-info" id="patientsFilterBtn">
+                    <i class="bi bi-search me-1"></i>Filter
+                  </button>
+                  <button type="button" class="btn btn-outline-secondary" id="patientsClearBtn">
+                    <i class="bi bi-x me-1"></i>Clear
+                  </button>
+                  <button type="button" class="btn btn-outline-warning btn-sm" onclick="setTodayFilter('patients')">
+                    <i class="bi bi-calendar-day me-1"></i>Today
+                  </button>
+                </div>
+              </div>
+              
               <div class="row">
                 <!-- Patient List Column -->
                 <div class="col-md-6">
@@ -187,7 +309,6 @@
                               </div>
                               <div>
                                 <h6 class="mb-1 text-dark">{{ r.first_name }} {{ r.middle_name }} {{ r.last_name }}</h6>
-                                <span class="badge badge-pill badge-light">ID: #{{ r.patients_id }}</span>
                               </div>
                             </div>
                           </td>
@@ -270,6 +391,12 @@
               </div>
             </div>
             <!-- End of All Patients Tab -->
+
+            <!-- Medical History Tab -->
+             <div class="tab-pane fade {% if active_tab == 'tab4' %}show active{% endif %}" id="tab4" role="tabpanel">
+              {% include 'patients/admin/patient_history.html' %}
+            </div>
+      <!-- end 0f Medical History Tab -->
           </div>
         </div>
       </div>
@@ -285,9 +412,7 @@
         <h5 class="modal-title" id="referralSuccessModalLabel">
           <i class="bi bi-check-circle"></i> Referral Completed Successfully
         </h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
         <div class="text-center mb-3">
@@ -300,7 +425,7 @@
         </p>
       </div>
       <div class="modal-footer justify-content-center">
-        <button type="button" class="btn btn-success" data-dismiss="modal">
+        <button type="button" class="btn btn-success" data-bs-dismiss="modal">
           <i class="bi bi-check-lg"></i> Continue
         </button>
       </div>
@@ -311,7 +436,7 @@
 {% block script %}
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Use Bootstrap 5 from base.html; remove conflicting Bootstrap 4 bundle -->
 <script src="{% static 'js/patient_list_admin.js' %}"></script>
 
 <script>
@@ -336,6 +461,189 @@ $(document).ready(function() {
 
     $('#allTable').DataTable(tableConfig);
   }
+
+  // Enhanced Date Filter Functionality using DataTables
+  function filterTableByDate(tableId, startDate, endDate) {
+    const table = $(tableId);
+    const dataTable = table.DataTable();
+    
+    // Clear any existing filters
+    dataTable.search('').columns().search('').draw();
+    
+    // If no dates selected, show all rows
+    if (!startDate && !endDate) {
+      return;
+    }
+    
+    // Custom filtering function for DataTables
+    $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+      const row = $(dataTable.row(dataIndex).node());
+      const viewButton = row.find('.view-button');
+      let rowDate = null;
+      
+      if (viewButton.length > 0) {
+        const dateString = viewButton.attr('data-date');
+        if (dateString) {
+          // Parse the date string (format: YYYY-MM-DD HH:MM)
+          const [datePart, timePart] = dateString.split(' ');
+          rowDate = new Date(datePart + 'T' + (timePart || '00:00'));
+        }
+      }
+      
+      // If no date found, hide the row
+      if (!rowDate || isNaN(rowDate.getTime())) {
+        return false;
+      }
+      
+      // Apply date filtering
+      let showRow = true;
+      if (startDate && endDate) {
+        const start = new Date(startDate + 'T00:00:00');
+        const end = new Date(endDate + 'T23:59:59');
+        showRow = rowDate >= start && rowDate <= end;
+      } else if (startDate) {
+        const start = new Date(startDate + 'T00:00:00');
+        showRow = rowDate >= start;
+      } else if (endDate) {
+        const end = new Date(endDate + 'T23:59:59');
+        showRow = rowDate <= end;
+      }
+      
+      return showRow;
+    });
+    
+    // Apply the filter
+    dataTable.draw();
+    
+    // Remove the custom filter function to avoid accumulation
+    setTimeout(() => {
+      $.fn.dataTable.ext.search.pop();
+    }, 100);
+  }
+
+  // Set default dates (last 30 days)
+  const today = new Date();
+  const thirtyDaysAgo = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000));
+  
+  // Set default values
+  $('#activeStartDate').val(thirtyDaysAgo.toISOString().split('T')[0]);
+  $('#activeEndDate').val(today.toISOString().split('T')[0]);
+  $('#referredStartDate').val(thirtyDaysAgo.toISOString().split('T')[0]);
+  $('#referredEndDate').val(today.toISOString().split('T')[0]);
+  $('#patientsStartDate').val(thirtyDaysAgo.toISOString().split('T')[0]);
+  $('#patientsEndDate').val(today.toISOString().split('T')[0]);
+  
+  // Add quick date presets
+  function addQuickDatePresets() {
+    const presets = [
+      { label: 'Today', days: 0 },
+      { label: 'Last 7 Days', days: 7 },
+      { label: 'Last 30 Days', days: 30 },
+      { label: 'Last 90 Days', days: 90 }
+    ];
+    
+    $('.date-filter-container').each(function() {
+      const container = $(this);
+      const presetDiv = $('<div class="mt-3 d-flex gap-2 flex-wrap"></div>');
+      
+      presets.forEach(preset => {
+        const presetBtn = $(`<button class="btn btn-outline-dark btn-sm">${preset.label}</button>`);
+        presetBtn.on('click', function() {
+          const endDate = new Date();
+          const startDate = new Date(endDate.getTime() - (preset.days * 24 * 60 * 60 * 1000));
+          
+          container.find('input[type="date"]').first().val(startDate.toISOString().split('T')[0]);
+          container.find('input[type="date"]').last().val(endDate.toISOString().split('T')[0]);
+          
+          // Trigger filter
+          const filterBtn = container.find('button[id$="FilterBtn"]');
+          if (filterBtn.length) filterBtn.click();
+        });
+        
+        presetDiv.append(presetBtn);
+      });
+      
+      container.append(presetDiv);
+    });
+  }
+  
+  // Initialize quick date presets
+  addQuickDatePresets();
+  
+  // Function to set today's filter
+  function setTodayFilter(type) {
+    const today = new Date().toISOString().split('T')[0];
+    
+    switch(type) {
+      case 'active':
+        $('#activeStartDate').val(today);
+        $('#activeEndDate').val(today);
+        $('#activeFilterBtn').click();
+        break;
+      case 'referred':
+        $('#referredStartDate').val(today);
+        $('#referredEndDate').val(today);
+        $('#referredFilterBtn').click();
+        break;
+      case 'patients':
+        $('#patientsStartDate').val(today);
+        $('#patientsEndDate').val(today);
+        $('#patientsFilterBtn').click();
+        break;
+    }
+  }
+  
+  // Function to clear all filters
+  function clearAllFilters() {
+    $('.date-filter-container input[type="date"]').val('');
+    
+    // Clear DataTables filters for all tables
+    $('#activeTable').DataTable().search('').columns().search('').draw();
+    $('#referredTable').DataTable().search('').columns().search('').draw();
+    $('#allTable').DataTable().search('').columns().search('').draw();
+  }
+
+  // Active Referrals Filter
+  $('#activeFilterBtn').on('click', function() {
+    const startDate = $('#activeStartDate').val();
+    const endDate = $('#activeEndDate').val();
+    console.log('Active filter clicked:', { startDate, endDate });
+    filterTableByDate('#activeTable', startDate, endDate);
+  });
+
+  $('#activeClearBtn').on('click', function() {
+    $('#activeStartDate').val('');
+    $('#activeEndDate').val('');
+    $('#activeTable tbody tr').show();
+  });
+
+  // Referred Referrals Filter
+  $('#referredFilterBtn').on('click', function() {
+    const startDate = $('#referredStartDate').val();
+    const endDate = $('#referredEndDate').val();
+    console.log('Referred filter clicked:', { startDate, endDate });
+    filterTableByDate('#referredTable', startDate, endDate);
+  });
+
+  $('#referredClearBtn').on('click', function() {
+    $('#referredStartDate').val('');
+    $('#referredEndDate').val('');
+    $('#referredTable tbody tr').show();
+  });
+
+  // All Patients Filter
+  $('#patientsFilterBtn').on('click', function() {
+    const startDate = $('#patientsStartDate').val();
+    const endDate = $('#patientsEndDate').val();
+    console.log('Patients filter clicked:', { startDate, endDate });
+    filterTableByDate('#allTable', startDate, endDate);
+  });
+
+  $('#patientsClearBtn').on('click', function() {
+    $('#patientsStartDate').val('');
+    $('#patientsEndDate').val('');
+    $('#allTable tbody tr').show();
+  });
 
   // Handle patient row click
   $(document).on('click', '.patient-row', function() {
@@ -376,7 +684,11 @@ $(document).ready(function() {
   // This will be triggered when the page loads with a success parameter
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('referral_success') === 'true') {
-    $('#referralSuccessModal').modal('show');
+    const successEl = document.getElementById('referralSuccessModal');
+    if (successEl) {
+      const successModal = bootstrap.Modal.getOrCreateInstance(successEl);
+      successModal.show();
+    }
   }
 
   // Handle form submission for referral completion
@@ -391,11 +703,19 @@ $(document).ready(function() {
       processData: false,
       contentType: false,
       success: function(response) {
-        // Close the edit modal first
-        $('#editReferralModal').modal('hide');
+        // Close the edit modal first (Bootstrap 5 API)
+        const editEl = document.getElementById('editReferralModal');
+        if (editEl) {
+          const editModal = bootstrap.Modal.getOrCreateInstance(editEl);
+          editModal.hide();
+        }
         
-        // Show success modal
-        $('#referralSuccessModal').modal('show');
+        // Show success modal (Bootstrap 5 API)
+        const successEl = document.getElementById('referralSuccessModal');
+        if (successEl) {
+          const successModal = bootstrap.Modal.getOrCreateInstance(successEl);
+          successModal.show();
+        }
         
         // Reload the page after a short delay to update the data
         setTimeout(function() {

@@ -34,6 +34,7 @@ class Medical_History(models.Model):
     notes = models.TextField()
     advice = models.TextField()
     followup_date = models.DateField(null=True, blank=True)
+    referral = models.ForeignKey('referrals.Referral', on_delete=models.CASCADE, null=True, blank=True, related_name='medical_history')
     
     def __str__(self):
         return f"{self.illness_name} - {self.patient.first_name} {self.patient.last_name}"

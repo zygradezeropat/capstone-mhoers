@@ -25,29 +25,65 @@ class Referral(models.Model):
     followup_date = models.DateField(null=True, blank=True)
     initial_diagnosis = models.TextField()
     final_diagnosis = models.TextField(null=True, blank=True)
-    
+     
     def __str__(self):
         return f"Referral #{self.referral_id} - {self.patient}"
+
+
+class FollowUpVisit(models.Model):
+    """
+    Model to store follow-up visit data including new vital signs
+    """
+    followup_id = models.AutoField(primary_key=True)
+    medical_history = models.ForeignKey('patients.Medical_History', on_delete=models.CASCADE, related_name='followup_visits')
+    patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)  # Healthcare worker who conducted the follow-up
     
+    # New vital signs for this follow-up visit
+    weight = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    height = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    bp_systolic = models.IntegerField(null=True, blank=True)
+    bp_diastolic = models.IntegerField(null=True, blank=True)
+    pulse_rate = models.IntegerField(null=True, blank=True)
+    respiratory_rate = models.IntegerField(null=True, blank=True)
+    temperature = models.DecimalField(max_digits=4, decimal_places=1, null=True, blank=True)
+    oxygen_saturation = models.IntegerField(null=True, blank=True)
     
+    # Follow-up specific data
+    visit_date = models.DateField()
+    visit_notes = models.TextField(blank=True, null=True)
+    current_symptoms = models.TextField(blank=True, null=True)
+    treatment_response = models.TextField(blank=True, null=True)
+    new_medications = models.TextField(blank=True, null=True)
+    next_followup_date = models.DateField(null=True, blank=True)
+    
+    # Status tracking
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ('scheduled', 'Scheduled'),
+            ('completed', 'Completed'),
+            ('cancelled', 'Cancelled'),
+            ('no_show', 'No Show'),
+        ],
+        default='scheduled'
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"Follow-up Visit - {self.patient} on {self.visit_date}"
+    
+    class Meta:
+        ordering = ['-visit_date']
+        verbose_name = "Follow-up Visit"
+        verbose_name_plural = "Follow-up Visits"
+
+
 class ReferralLog(models.Model):
     # Foreign key to Referral
-    referral = models.ForeignKey(Referral, on_delete=models.CASCADE, related_name='logs')
+    referral = models.ForeignKey(Referral, on_delete=models.CASCADE)
+    # Add other fields as needed
+    pass
 
-    # Foreign key to User (who made the update)
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
-
-    # Note about the update
-    note = models.TextField()
-
-    # Timestamp when the log is created
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    # Status before the update
-    status_before = models.CharField(max_length=50)
-
-    # Status after the update
-    status_after = models.CharField(max_length=50)
-
-    def __str__(self):
-        return f"Referral Log {self.id} - {self.referral.referral_id} by {self.user.username if self.user else 'Unknown'}"

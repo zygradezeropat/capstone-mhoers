@@ -59,10 +59,10 @@ $(document).ready(function() {
     $('#editRespiratory').val(button.data('respiratory'));
     $('#editNotes').val(button.data('notes'));
     $('#editSymptoms').val(button.data('symptoms'));
-    $('#editworkUp').val(button.data('workUp'));
+    $('#editworkUp').val(button.data('workup'));
     $('#editDisease').val(button.data('disease'));
     $('#referral-id-edit-input').val(button.data('id'));
-  });
+  }); 
 
   $(document).on('click', '.delete-button', function() {
     const button = $(this);
@@ -75,6 +75,7 @@ $(document).ready(function() {
   $(document).on('click', '.view-button', function() {
     const button = $(this);
     const modalBody = $('#viewReferralModal .modal-body');
+    
     
     // Check if this is from All Patients tab (has birth data)
     if (button.data('birth')) {

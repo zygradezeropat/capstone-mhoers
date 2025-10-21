@@ -1,14 +1,15 @@
 document.addEventListener("DOMContentLoaded", function () {
   const ctx = document.getElementById("topDiagnosedChart").getContext("2d");
 
+  // Initialize top diagnosed chart
   const topDiagnosedChart = new Chart(ctx, {
-    type: "bar", // Change 'pie' to 'bar'
+    type: "bar",
     data: {
-      labels: ["Hypertension", "Diabetes", "Flu", "Malaria", "Asthma"],
+      labels: [],
       datasets: [
         {
           label: "Number of Diagnoses",
-          data: [45, 32, 28, 19, 12],
+          data: [],
           backgroundColor: [
             "#4e73df",
             "#1cc88a",
@@ -21,11 +22,11 @@ document.addEventListener("DOMContentLoaded", function () {
       ],
     },
     options: {
-      indexAxis: "y", // This makes it horizontal
+      indexAxis: "y",
       responsive: true,
       plugins: {
         legend: {
-          display: false, // Usually bar charts don't need legends
+          display: false,
         },
         title: {
           display: true,
@@ -49,31 +50,13 @@ document.addEventListener("DOMContentLoaded", function () {
     },
   });
 
-  // trends diagnosed months
+  // Initialize trends chart
   const ttd = document.getElementById("topTrendsDiagnosed").getContext("2d");
-
   const topTrendsDiagnosed = new Chart(ttd, {
-    type: "line", // LINE chart
+    type: "line",
     data: {
-      labels: ["January", "February", "March", "April", "May", "June"], // X-axis (Time)
-      datasets: [
-        {
-          label: "Hypertension Cases",
-          data: [12, 19, 15, 20, 18, 22],
-          fill: false,
-          borderColor: "#4e73df",
-          backgroundColor: "#4e73df",
-          tension: 0.4, // smooth curves
-        },
-        {
-          label: "Diabetes Cases",
-          data: [8, 11, 13, 9, 14, 17],
-          fill: false,
-          borderColor: "#1cc88a",
-          backgroundColor: "#1cc88a",
-          tension: 0.4,
-        },
-      ],
+      labels: [],
+      datasets: []
     },
     options: {
       responsive: true,
@@ -119,4 +102,60 @@ document.addEventListener("DOMContentLoaded", function () {
       },
     },
   });
+
+  // Function to fetch disease diagnosis counts
+  function fetchDiseaseCounts() {
+    const currentYear = new Date().getFullYear();
+    const url = `/analytics/api/disease-diagnosis-counts/?year=${currentYear}`;
+    
+    fetch(url)
+      .then(response => response.json())
+      .then(data => {
+        // Update top diagnosed chart
+        topDiagnosedChart.data.labels = data.labels;
+        topDiagnosedChart.data.datasets[0].data = data.counts;
+        topDiagnosedChart.update();
+      })
+      .catch(error => {
+        console.error('Error fetching disease counts:', error);
+      });
+  }
+
+  // Function to fetch monthly diagnosis trends
+  function fetchDiagnosisTrends() {
+    const currentYear = new Date().getFullYear();
+    const url = `/analytics/api/monthly-diagnosis-trends/?year=${currentYear}`;
+    
+    fetch(url)
+      .then(response => response.json())
+      .then(data => {
+        // Update trends chart
+        topTrendsDiagnosed.data.labels = data.months.map(month => {
+          const [year, monthNum] = month.split('-');
+          const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                             'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+          return monthNames[parseInt(monthNum) - 1];
+        });
+        
+        // Create datasets for each disease
+        const colors = ["#4e73df", "#1cc88a", "#36b9cc", "#f6c23e", "#e74a3b"];
+        topTrendsDiagnosed.data.datasets = data.diseases.slice(0, 5).map((disease, index) => ({
+          label: disease,
+          data: data.data[disease] || [],
+          fill: false,
+          borderColor: colors[index % colors.length],
+          backgroundColor: colors[index % colors.length],
+          tension: 0.4,
+        }));
+        
+        topTrendsDiagnosed.update();
+      })
+      .catch(error => {
+        console.error('Error fetching diagnosis trends:', error);
+      });
+  }
+
+  // Load initial data
+  fetchDiseaseCounts();
+  fetchDiagnosisTrends();
 });

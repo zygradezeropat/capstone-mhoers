@@ -13,8 +13,6 @@ from django.db.models import Count
 from django.db.models.functions import TruncMonth
 
 
-
-
 def train_random_forest_model_classification():
     """
     Train a Random Forest classifier using the Disease model's symptoms.

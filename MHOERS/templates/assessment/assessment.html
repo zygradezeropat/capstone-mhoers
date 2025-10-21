@@ -19,10 +19,10 @@ ul#dashboardTab.nav .nav-link {
 <div class="bg-light py-4">
   <div class="d-flex justify-content-between align-items-center mb-4 mr-3">
         <h4 class="mb-0 text-primary"></h4>
-        <button class="btn btn-success shadow-sm" data-toggle="modal" data-target="#registerModal">
-          <i class="bi bi-person-plus-fill"></i>
-          <span class="ml-2">Add Patient</span>
-        </button>
+        <button class="btn btn-success shadow-sm" data-bs-toggle="modal" data-bs-target="#registerModal">
+  <i class="bi bi-person-plus-fill"></i>
+  <span class="ml-2">Add Patient</span>
+</button>
       </div>
 
   <form id="referralForm" method="POST" action="{% url 'referrals:create_referral' %}" class="needs-validation" novalidate>
@@ -30,24 +30,25 @@ ul#dashboardTab.nav .nav-link {
     <div class="container"> 
       <div class="tab-content shadow-sm bg-white rounded p-4" id="assessmentTabContent">
         
-        <!-- Tab 1: General Info with Searchable Dropdown -->
+ 
+<!-- Tab 1: General Info with Searchable Dropdown -->
 <div class="tab-pane show active" id="tab1" role="tabpanel">
   
   <div class="row mb-4">
     <div class="col-md-8 mx-auto">
       <div class="card border-0 shadow-sm">
         <div class="card-body">
-          <h5 class="card-title text-primary mb-4"><i class="bi bi-person-lines-fill"></i> Patient Selection</h5>
+          <h5 class="card-title text-primary mb-4">
+            <i class="bi bi-person-lines-fill"></i> Patient Selection
+          </h5>
           <div class="form-group">
             <select class="form-control form-control-lg" required name="patient" id="patientSelect" style="width: 100%;">
               <option value="" disabled selected>Select Patient</option>
-              {% for patient in patients%}
-                <option value="{{ patient.patients_id }}">
-                  {{ patient.first_name }} {{ patient.middle_name }} {{ patient.last_name }}
+              {% if patient_id and selected_patient %}
+                <option value="{{ selected_patient.patients_id }}" selected>
+                  {{ selected_patient.first_name }} {{ selected_patient.middle_name }} {{ selected_patient.last_name }}
                 </option>
-              {% empty %}
-                <option disabled>No patients found.</option>
-              {% endfor %}
+              {% endif %}
             </select>
           </div>
         </div>
@@ -55,6 +56,7 @@ ul#dashboardTab.nav .nav-link {
     </div>
   </div>
 </div>
+
 
 
         <!-- Tab 2: Vital Signs -->
@@ -171,22 +173,20 @@ ul#dashboardTab.nav .nav-link {
 </div>
 
 <!-- Modal for Incomplete Form -->
-<div class="modal fade" id="incompleteFormModal" tabindex="-1" role="dialog" aria-labelledby="incompleteFormModalLabel" aria-hidden="true" >
-  <div class="modal-dialog modal-dialog-centered" role="document">
+<div class="modal fade" id="incompleteFormModal" tabindex="-1" aria-labelledby="incompleteFormModalLabel" aria-hidden="true" >
+  <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header bg-warning text-white">
         <h5 class="modal-title" id="incompleteFormModalLabel">
           <i class="bi bi-exclamation-triangle"></i> Incomplete Form
         </h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
         <p class="mb-0">Please complete all required fields in the current tab before proceeding.</p>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
       </div>
     </div>
   </div>
@@ -200,9 +200,7 @@ ul#dashboardTab.nav .nav-link {
         <h5 class="modal-title" id="referralConfirmationModalLabel">
           <i class="bi bi-check-circle"></i> Referral Submitted Successfully
         </h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
         <div class="text-center mb-3">
@@ -215,10 +213,10 @@ ul#dashboardTab.nav .nav-link {
         </p>
       </div>
       <div class="modal-footer justify-content-center">
-        <button type="button" class="btn btn-success" data-dismiss="modal" onclick="redirectToReferrals()">
+        <button type="button" class="btn btn-success" data-bs-dismiss="modal" onclick="redirectToReferrals()">
           <i class="bi bi-list-ul"></i> View All Referrals
         </button>
-        <button type="button" class="btn btn-outline-secondary" data-dismiss="modal" onclick="resetForm()">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" onclick="resetForm()">
           <i class="bi bi-plus-circle"></i> Create New Referral
         </button>
       </div>
@@ -242,10 +240,46 @@ ul#dashboardTab.nav .nav-link {
     // Make sure jQuery and Select2 are loaded before initializing
     if (typeof $ !== 'undefined' && typeof $.fn.select2 !== 'undefined') {
       $('#patientSelect').select2({
-        placeholder: "Select Patient",
+        placeholder: "Search patient by name",
         allowClear: true,
-        theme: "bootstrap4"
+        theme: "bootstrap4",
+        width: '100%',
+        minimumInputLength: 0,
+        ajax: {
+          url: "{% url 'patients:search_patients' %}",
+          dataType: 'json',
+          delay: 250,
+          data: function (params) {
+            return { q: params.term || '', page: params.page || 1 };
+          },
+          processResults: function (data, params) {
+            params.page = params.page || 1;
+            var term = (params.term || '').trim();
+            var results = data.results || [];
+            // Hard-cap to 5 items when there is no search term and first page
+            if (!term && params.page === 1 && results.length > 5) {
+              results = results.slice(0, 5);
+            }
+            return {
+              results: results,
+              pagination: { more: Boolean(data.has_more && !!term) }
+            };
+          },
+          cache: true
+        },
+        templateResult: function (item) {
+          if (!item.id) return item.text;
+          var name = item.name || item.text || '';
+          var el = document.createElement('div');
+          el.innerHTML = '<div><strong>' + name + '</strong></div>';
+          return el;
+        },
+        templateSelection: function (item) {
+          return item.name || item.text || '';
+        }
       });
+
+      // No manual fetch on open; Select2 will fetch page 1 automatically
     } else {
       console.error("jQuery or Select2 not loaded");
     }

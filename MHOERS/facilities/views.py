@@ -45,10 +45,12 @@ def create_provider(request):
 def facility_list(request):
     facilities = Facility.objects.all()
     data = [{
+        'facility_id': facility.facility_id,
         'name': facility.name,
         'assigned_bhw': facility.assigned_bhw,
         'latitude': facility.latitude,
-        'longitude': facility.longitude
+        'longitude': facility.longitude,
+        'user_id': facility.user_id.id if facility.user_id else None
     } for facility in facilities]
     return JsonResponse(data, safe=False)
 

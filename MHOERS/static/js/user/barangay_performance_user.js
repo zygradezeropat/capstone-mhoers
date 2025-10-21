@@ -6,24 +6,8 @@ document.addEventListener("DOMContentLoaded", function () {
   const stackedBarangayChart = new Chart(stackedBarangayCtx, {
     type: "bar",
     data: {
-      labels: ["January", "February", "March", "April"],
-      datasets: [
-        {
-          label: "Completed",
-          data: [30, 14, 43, 55],
-          backgroundColor: "#4e73df",
-        },
-        {
-          label: "Ongoing",
-          data: [20, 10, 25, 15],
-          backgroundColor: "#36b9cc",
-        },
-        {
-          label: "Cancelled",
-          data: [5, 10, 3, 4],
-          backgroundColor: "#e74a3b",
-        },
-      ],
+      labels: [],
+      datasets: []
     },
     options: {
       responsive: true,
@@ -47,7 +31,6 @@ document.addEventListener("DOMContentLoaded", function () {
     },
   });
 
-
   // Grouped Bar Chart (Referral Completion Rate by Barangay)
   const groupedBarangayCtx = document
     .getElementById("groupedBarangayChart")
@@ -55,19 +38,8 @@ document.addEventListener("DOMContentLoaded", function () {
   const groupedBarangayChart = new Chart(groupedBarangayCtx, {
     type: "bar",
     data: {
-      labels: ["2020", "2021", "2022", "2023"],
-      datasets: [
-        {
-          label: "Completed Referrals",
-          data: [50, 60, 45, 70],
-          backgroundColor: "#4e73df",
-        },
-        {
-          label: "Ongoing Referrals",
-          data: [25, 20, 30, 15],
-          backgroundColor: "#36b9cc",
-        },
-      ],
+      labels: [],
+      datasets: []
     },
     options: {
       responsive: true,
@@ -90,4 +62,38 @@ document.addEventListener("DOMContentLoaded", function () {
       },
     },
   });
+
+  // Function to fetch barangay performance data
+  function fetchBarangayPerformance() {
+    const currentYear = new Date().getFullYear();
+    const url = `/analytics/api/barangay-performance/?year=${currentYear}`;
+    
+    fetch(url)
+      .then(response => response.json())
+      .then(data => {
+        // Update stacked bar chart (status overview)
+        stackedBarangayChart.data.labels = data.status_overview.labels;
+        stackedBarangayChart.data.datasets = data.status_overview.datasets;
+        stackedBarangayChart.update();
+
+        // Update grouped bar chart (completion rate)
+        groupedBarangayChart.data.labels = data.completion_rate.labels;
+        groupedBarangayChart.data.datasets = data.completion_rate.datasets;
+        groupedBarangayChart.update();
+      })
+      .catch(error => {
+        console.error('Error fetching barangay performance data:', error);
+        // Fallback to empty data
+        stackedBarangayChart.data.labels = [];
+        stackedBarangayChart.data.datasets = [];
+        stackedBarangayChart.update();
+
+        groupedBarangayChart.data.labels = [];
+        groupedBarangayChart.data.datasets = [];
+        groupedBarangayChart.update();
+      });
+  }
+
+  // Load initial data
+  fetchBarangayPerformance();
 });

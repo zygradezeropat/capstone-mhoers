@@ -21,7 +21,7 @@
       <!-- Header -->
       <div class="d-flex justify-content-between align-items-center mb-4">
         <h4 class="mb-0 text-primary">Patient Records</h4>
-        <button class="btn btn-success shadow-sm" data-toggle="modal" data-target="#registerModal">
+        <button class="btn btn-success shadow-sm" data-bs-toggle="modal" data-bs-target="#registerModal">
           <i class="bi bi-person-plus-fill"></i>
           <span class="ml-2">Add Patient</span>
         </button>
@@ -72,8 +72,8 @@
                         data-vsex="{{ patient.sex }}"
                         data-vreferralcount="{{ patient.referral_count }}"
                         data-vlastreferred="{{ patient.latest_referral_date|date:'M d, Y h:i A' }}"
-                        data-toggle="modal"
-                        data-target="#viewPatients">
+                        data-bs-toggle="modal"
+                        data-bs-target="#viewPatients">
                         <i class="bi bi-eye-fill me-1"></i> View
                       </button>
 
@@ -87,8 +87,8 @@
                         data-ebday="{{ patient.date_of_birth|date:'Y-m-d' }}"
                         data-enum="{{ patient.p_number }}"
                         data-esex="{{ patient.sex }}"
-                        data-toggle="modal"
-                        data-target="#editPatients">
+                        data-bs-toggle="modal"
+                        data-bs-target="#editPatients">
                         <i class="bi bi-pencil-fill me-1"></i> Edit
                       </button>
 
@@ -96,8 +96,8 @@
                       <button class="btn btn-outline-danger btn-sm rounded-pill delete-button"
                         data-id="{{ patient.patients_id }}"
                         data-patient = "{{patient.first_name}}"
-                        data-toggle="modal"
-                        data-target="#deletePatient">
+                        data-bs-toggle="modal"
+                        data-bs-target="#deletePatient">
                         <i class="bi bi-trash-fill me-1"></i> Delete
                       </button>
                     </div>
@@ -147,8 +147,8 @@
       }
     });
 
-    // View button logic
-    $('.view-button').click(function () {
+    // View button logic (delegated to table to survive DataTables redraws)
+    $('#patientTable').on('click', '.view-button', function () {
       const button = $(this);
       $('#viewPatientName').val(button.data('vpatient'));
       $('#viewPatientBday').val(button.data('vbdate'));
@@ -157,10 +157,40 @@
       $('#viewReferralCount').val(button.data('vreferralcount'));
       $('#viewLastReferred').val(button.data('vlastreferred') || 'Not yet referred');
       $('#referral-id-input').val(button.data('id'));
+
+      // Load referral history into the view modal (reusing patient_history logic)
+      const patientId = button.data('id');
+      const historyContainer = $('#viewReferralHistory');
+      if (historyContainer.length) {
+        historyContainer.html('<div class="text-muted">Loading history...</div>');
+        $.ajax({
+          url: `/referral/patient/${patientId}/history/`,
+          method: 'GET',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+          success: function(data) {
+            const items = (data.referrals || []).map(r => {
+              const date = new Date(r.created_at).toLocaleString();
+              return `
+                <div class="mb-2 p-2 bg-white rounded border">
+                  <div class="d-flex justify-content-between">
+                    <div><strong>#${r.referral_id}</strong> - ${r.status}</div>
+                    <small class="text-muted">${date}</small>
+                  </div>
+                  <div class="small text-muted">CC: ${r.chief_complaint || 'N/A'}</div>
+                  <div class="small">Diagnosis: <strong>${r.illness_name || r.initial_diagnosis || 'N/A'}</strong></div>
+                </div>`;
+            }).join('');
+            historyContainer.html(items || '<div class="text-muted">No referral history found.</div>');
+          },
+          error: function() {
+            historyContainer.html('<div class="text-danger">Failed to load referral history.</div>');
+          }
+        });
+      }
     });
 
-    // Edit button logic
-    $('.edit-button').click(function () {
+    // Edit button logic (delegated)
+    $('#patientTable').on('click', '.edit-button', function () {
       const button = $(this);
       $('#editFname').val(button.data('firstname'));
       $('#editMname').val(button.data('middlename'));
@@ -173,8 +203,8 @@
     });
 
 
-     // Edit button logic
-     $('.delete-button').click(function () {
+     // Delete button logic (delegated)
+     $('#patientTable').on('click', '.delete-button', function () {
         const button = $(this);
         const patientName = button.data('patient');
         $('#deletePatientId').val(button.data('id'));

@@ -59,16 +59,20 @@
         <i class="bi bi-bell fs-5"></i>
       
         {% if request.user.is_authenticated %}
-          {% if request.user.is_superuser and unread_count > 0 %}
-            <span class="position-absolute top-0 end-0 translate-middle badge rounded-pill bg-danger">
-              {{ unread_count }}
-              <span class="visually-hidden"></span>
-            </span>
-          {% elif not request.user.is_superuser and user_unread_count > 0 %}
-            <span class="position-absolute top-0 end-0 translate-middle badge rounded-pill bg-danger">
-              {{ user_unread_count }}
-              <span class="visually-hidden"></span>
-            </span>
+          {% if request.user.is_staff or request.user.is_superuser %}
+            {% if unread_count > 0 %}
+              <span class="position-absolute top-0 end-0 translate-middle badge rounded-pill bg-danger">
+                {{ unread_count }}
+                <span class="visually-hidden"></span>
+              </span>
+            {% endif %}
+          {% else %}
+            {% if user_unread_count > 0 %}
+              <span class="position-absolute top-0 end-0 translate-middle badge rounded-pill bg-danger">
+                {{ user_unread_count }}
+                <span class="visually-hidden"></span>
+              </span>
+            {% endif %}
           {% endif %}
         {% endif %}
       </button>
@@ -81,7 +85,7 @@
                 <div class="d-flex justify-content-between align-items-start">
                   <div>
                     <i class="bi bi-envelope-fill text-primary me-2"></i>
-                    <span class="fw-medium">{{ notif.recipient.username }}:</span>
+                    <span class="fw-medium">{{ notif.get_notification_type_display }}:</span>
                     <span class="text-secondary">{{ notif.message }}</span>
                   </div>
                   <small class="text-muted ms-3">{{ notif.created_at|timesince }} ago</small>
@@ -116,5 +120,4 @@
   </div>
 </nav>
 
-<!-- Bootstrap 5 Bundle with Popper -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Bootstrap is loaded in base.html -->

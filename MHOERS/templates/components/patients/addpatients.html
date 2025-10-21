@@ -2,11 +2,10 @@
   class="modal fade"
   id="registerModal"
   tabindex="-1"
-  role="dialog"
   aria-labelledby="registerModalLabel"
   aria-hidden="true"
 >
-  <div class="modal-dialog modal-lg" role="document">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content shadow-lg border-0">
       <form
         id="addPatientForm" 
@@ -18,21 +17,14 @@
         {% csrf_token %}
         <div class="modal-header bg-success text-white">
           <h5 class="modal-title" id="registerModalLabel">
-            <i class="bi bi-person-plus mr-2"></i>Add New Patient
+            <i class="bi bi-person-plus me-2"></i>Add New Patient
           </h5>
-          <button
-            type="button"
-            class="close text-white"
-            data-dismiss="modal"
-            aria-label="Close"
-          >
-            <span aria-hidden="true">&times;</span>
-          </button>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body p-4">
-          <div class="form-row">
-            <div class="form-group col-md-4">
-              <label for="first_name" class="font-weight-bold">First Name</label>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label for="first_name" class="fw-semibold">First Name</label>
               <input
                 type="text"
                 class="form-control rounded-pill"
@@ -49,8 +41,8 @@
               </div>
               {% endif %}
             </div>
-            <div class="form-group col-md-4">
-              <label for="middle_name" class="font-weight-bold">Middle Name</label>
+            <div class="col-md-4">
+              <label for="middle_name" class="fw-semibold">Middle Name</label>
               <input
                 type="text"
                 class="form-control rounded-pill"
@@ -66,8 +58,8 @@
               </div>
               {% endif %}
             </div>
-            <div class="form-group col-md-4">
-              <label for="last_name" class="font-weight-bold">Last Name</label>
+            <div class="col-md-4">
+              <label for="last_name" class="fw-semibold">Last Name</label>
               <input
                 type="text"
                 class="form-control rounded-pill"
@@ -86,9 +78,9 @@
             </div>
           </div>
 
-          <div class="form-row">
-            <div class="form-group col-md-6">
-              <label for="p_address" class="font-weight-bold">Address</label>
+          <div class="row g-3 mt-1">
+            <div class="col-md-6">
+              <label for="p_address" class="fw-semibold">Address</label>
               <select class="form-control rounded-pill" id="p_address" name="p_address" required>
                 <option value="">Select Address</option>
                 {% if 'NewCortez' in request.user.username %}
@@ -103,10 +95,11 @@
                   <option value="Prk 2, Carcor">Prk 2, Carcor</option>
                   <option value="Prk 3, Carcor">Prk 3, Carcor</option>
                
-                {% elif 'Mesaoy ' in request.user.username %}
+                {% elif 'Mesaoy' in request.user.username %}
                 <option value="Prk 1, Carcor">Prk 1, Mesaoy</option>
                   <option value="Prk 2, Carcor">Prk 2, Mesaoy</option>
                   <option value="Prk 3, Carcor">Prk 3, Mesaoy</option>
+                  <option value="Prk 3, Carcor">Prk 4, Mesaoy</option>
                    {% endif %}
               </select>
               {% if form.p_address.errors %}
@@ -117,14 +110,15 @@
               </div>
               {% endif %}
             </div>
-            <div class="form-group col-md-6">
-              <label for="p_number" class="font-weight-bold">Phone Number</label>
+            <div class="col-md-6">
+              <label for="p_number" class="fw-semibold">Phone Number</label>
               <input
-                type="number"
+                type="tel"
                 class="form-control rounded-pill"
                 id="p_number"
                 name="p_number"
                 pattern="[0-9]{11}"
+                inputmode="numeric"
                 required
                 placeholder="Enter 11-digit phone number"
               />
@@ -138,9 +132,9 @@
             </div>
           </div>
 
-          <div class="form-row">
-            <div class="form-group col-md-6">
-              <label for="date_of_birth" class="font-weight-bold">Date of Birth</label>
+          <div class="row g-3 mt-1">
+            <div class="col-md-6">
+              <label for="date_of_birth" class="fw-semibold">Date of Birth</label>
               <input
                 type="date"
                 class="form-control rounded-pill"
@@ -156,8 +150,8 @@
               </div>
               {% endif %}
             </div>
-            <div class="form-group col-md-6">
-              <label for="sex" class="font-weight-bold">Sex</label>
+            <div class="col-md-6">
+              <label for="sex" class="fw-semibold">Sex</label>
               <select class="form-control rounded-pill" id="sex" name="sex" required>
                 <option value="">Select Gender</option>
                 <option value="Male">Male</option>
@@ -175,11 +169,11 @@
         </div>
 
         <div class="modal-footer bg-light">
-          <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-dismiss="modal">
-            <i class="bi bi-x-circle mr-2"></i>Cancel
+          <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">
+            <i class="bi bi-x-circle me-2"></i>Cancel
           </button>
           <button type="submit" class="btn btn-success rounded-pill px-4">
-            <i class="bi bi-check-circle mr-2"></i>Save Patient
+            <i class="bi bi-check-circle me-2"></i>Save Patient
           </button>
         </div>
       </form>

@@ -132,27 +132,50 @@ def deletePatient(request):
     messages.success(request, "Patient information failed!")
     return redirect('patients:barangayPatients')    
 
+from django.core.paginator import Paginator
+
 def search_patients(request):
     try:
-        query = request.GET.get('q', '').strip()
-        if not query:
-            return JsonResponse({'patients': []})
-        
-        # Search in patients table
-        patients = Patient.objects.filter(
-            Q(first_name__icontains=query) |
-            Q(middle_name__icontains=query) |
-            Q(last_name__icontains=query) |
-            Q(patients_id__icontains=query)
-        ).values('patients_id', 'first_name', 'middle_name', 'last_name')[:10]  # Limit to 10 results
-        
+        query = (request.GET.get('q') or '').strip()
+        page = int(request.GET.get('page') or 1)
+        per_page = 5 if not query else 20
+
+        qs = Patient.objects.all()
+
+        # Scope to current user's patients unless staff
+        if not request.user.is_staff:
+            qs = qs.filter(user=request.user)
+
+        if query:
+            qs = qs.filter(
+                Q(first_name__icontains=query) |
+                Q(middle_name__icontains=query) |
+                Q(last_name__icontains=query) |
+                Q(patients_id__icontains=query)
+            )
+
+        # Latest by highest patients_id, then stable by name
+        qs = qs.order_by('-patients_id', 'last_name', 'first_name')
+
+        paginator = Paginator(qs, per_page)
+        page_obj = paginator.get_page(page)
+
+        def to_item(p):
+            name = f"{p.first_name} {(p.middle_name or '').strip()} {p.last_name}".replace('  ', ' ').strip()
+            return {
+                'id': p.patients_id,
+                'text': name,
+                'name': name,
+                'pid': p.patients_id,
+                'dob': p.date_of_birth.strftime('%Y-%m-%d') if p.date_of_birth else None,
+            }
+
         return JsonResponse({
-            'patients': list(patients)  
+            'results': [to_item(p) for p in page_obj.object_list],
+            'has_more': page_obj.has_next(),
         })
     except Exception as e:
-        return JsonResponse({
-            'error': str(e)
-        }, status=500)
+        return JsonResponse({'error': str(e)}, status=500)
 
 def get_patient_details(request, patient_id):
     try:
@@ -269,6 +292,7 @@ def get_medical_history_followups(request):
             'patient_id__last_name',
             'illness_name',
             'notes',
+            'advice',
             'patient_id__user__username'  # Add username for debugging
         )
         
@@ -284,6 +308,7 @@ def get_medical_history_followups(request):
                 'patient_name': f"{followup['patient_id__first_name']} {followup['patient_id__last_name']}",
                 'illness_name': followup['illness_name'],
                 'notes': followup['notes'],
+                'advice': followup['advice'],
                 'followup_date': followup['followup_date'].isoformat(),
                 'patient_user': followup['patient_id__user__username']  # For debugging
             })

@@ -1,51 +1,234 @@
-{% extends 'base.html' %}
 {% load static %}
 {% load custom_filters %}
 {% block content %}
 
 <link rel="stylesheet" href="{% static 'css/admin_dashboard.css' %}" />
 
-<!-- Navbar Include -->
-{% include 'components/navbar.html' %}
+<style>
+  /* Patient List Table Styles */
+  .patient-row {
+    transition: all 0.2s ease;
+  }
+  
+  .patient-row:hover {
+    background-color: #f8f9fa;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  
+  .patient-row.table-active {
+    background-color: #e3f2fd !important;
+    border-left: 4px solid #2196f3;
+  }
+  
+  .avatar-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+  }
+  
+  .bg-primary-soft {
+    background-color: rgba(33, 150, 243, 0.1);
+    color: #2196f3;
+  }
+  
+  .bg-success-soft {
+    background-color: rgba(76, 175, 80, 0.1);
+    color: #4caf50;
+  }
+  
+  .bg-info-soft {
+    background-color: rgba(0, 188, 212, 0.1);
+    color: #00bcd4;
+  }
+  
+  .bg-warning-soft {
+    background-color: rgba(255, 193, 7, 0.1);
+    color: #ffc107;
+  }
+  
+  /* Patient Info Cards Animation */
+  #patientInfoCards {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.5s ease;
+  }
+  
+  #patientInfoCards.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  
+  /* Button spacing and layout */
+  .gap-2 {
+    gap: 0.5rem !important;
+  }
+  
+  /* Referral History Dropdown Styles */
+  .referral-history-dropdown {
+    margin-top: 1rem;
+  }
+  
+  .referral-history-dropdown .card {
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+  }
+  
+  .referral-history-dropdown .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+  }
+  
+  .referral-history-dropdown .card-header {
+    border-radius: 12px 12px 0 0 !important;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  }
+  
+  .referral-history-dropdown .form-select {
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+  }
+  
+  .referral-history-dropdown .form-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    transform: scale(1.02);
+  }
+  
+  .referral-history-dropdown .form-select option {
+    padding: 12px;
+    font-size: 0.9rem;
+  }
+  
+  .bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  }
+  
+  .form-select-lg {
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+  }
+  
+  .shadow-sm {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06) !important;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .table-responsive {
+      font-size: 0.875rem;
+    }
+    
+    .avatar-circle {
+      width: 32px;
+      height: 32px;
+    }
+    
+    .btn-sm {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.5rem;
+    }
+    
+    .gap-2 {
+      gap: 0.25rem !important;
+    }
+  }
+</style>
+
+
 
 <!-- Content Here -->
 <div class="container-fluid py-4">
     
-    <!-- Search Section -->
-    <div class="row mb-4">
+    <!-- Patient List Section -->
+    <div class="row mb-4" id="patientListSection">
         <div class="col-12">
             <div class="card border-0 shadow-sm">
-                <div class="card-body p-4">
-                    <div class="search-container">
-                        <form id="patientSearchForm" class="mb-4">
-                            <div class="input-group">
-                                <input type="text" id="patientSearchInput" class="form-control" placeholder="Search patients by name">
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="bi bi-search me-1"></i> Search
-                                </button>
-                            </div>
-                        </form>
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-people me-2"></i>All Patients</h5>
+                    <div class="d-flex gap-2">
+                        <!-- <button type="button" class="btn btn-outline-light btn-sm" onclick="refreshPatientList()">
+                            <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+                        </button> -->
+                       
                     </div>
-                    <div id="searchResults" class="table-responsive" style="display: none;">
-                        <table class="table table-hover align-middle">
+                </div>
+                <br>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table id="patientListTable" class="table table-hover align-middle mb-0">
                             <thead class="bg-light">
                                 <tr>
                                     <th>Patient Name</th>
+                                    <th>Age/Sex</th>
+                                    <th>Facility</th>
+                                    <th>Address</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
-                            <tbody id="searchResultsBody">
-                                <!-- Results will be populated here dynamically -->
+                            <tbody>
+                                {% for patient in patients %}
+                                <tr class="patient-row" data-patient-id="{{ patient.patients_id }}" style="cursor: pointer;">
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-circle bg-primary-soft me-3">
+                                                <i class="bi bi-person-circle text-primary fs-4"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-1 text-dark">{{ patient.first_name }} {{ patient.middle_name }} {{ patient.last_name }}</h6>
+                                                
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="text-muted">{{ patient.age|default:"N/A" }} / {{ patient.sex|default:"N/A" }}</span>
+                                    </td>
+                                    <td>
+                                        <i class="bi bi-hospital text-primary me-2"></i>
+                                        <span>{{ patient.facility.name|default:"N/A" }}</span>
+                                    </td>
+                                    <td>
+                                        <i class="bi bi-geo-alt-fill text-danger me-2"></i>
+                                        <span class="text-truncate d-inline-block" style="max-width: 200px;" title="{{ patient.p_address }}">
+                                            {{ patient.p_address|default:"N/A" }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-outline-primary btn-sm rounded-pill view-patient-btn" 
+                                                data-patient-id="{{ patient.patients_id }}"
+                                                data-patient-name="{{ patient.first_name }} {{ patient.middle_name }} {{ patient.last_name }}"
+                                                data-patient-age="{{ patient.age }}"
+                                                data-patient-sex="{{ patient.sex }}"
+                                                data-patient-facility="{{ patient.facility.name|default:'' }}"
+                                                data-patient-address="{{ patient.p_address|default:'' }}">
+                                            <i class="bi bi-eye me-1"></i> View
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted py-4">
+                                        <i class="bi bi-inbox fs-1"></i>
+                                        <p class="mt-2">No patients found</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
                             </tbody>
                         </table>
-                    </div>
-                    <div id="noResults" class="text-center py-4" style="display: none;">
-                        <i class="bi bi-search text-muted" style="font-size: 2rem;"></i>
-                        <p class="mt-2 text-muted">No patients found matching your search</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+    
+
 
     <!-- Date Filter Section -->
     <div class="row mb-3" id="dateFilterSection" style="display: none;">
@@ -62,17 +245,34 @@
         </div>
     </div>
 
-    <!-- Patient History Cards -->
-    <div class="row">
+    <!-- Patient Information Cards -->
+    <div class="row" id="patientInfoCards" style="display: none;">
+        <div class="col-12 mb-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h4 class="mb-0 text-primary" id="selectedPatientName"></h4>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-primary btn-sm" onclick="backToPatientList()">
+                        <i class="bi bi-arrow-left me-1"></i>Back to Patient List
+                    </button>
+                </div>
+            </div>
+            <hr>
+        </div>
+        
+        <!-- Referral History Filter Card - Positioned here between header and cards -->
+        <div class="col-12 mb-4" id="referralHistoryFilterContainer" style="display: none;">
+            <!-- Referral history dropdown will be inserted here -->
+        </div>
+        
         <!-- SUBJECTIVE CARD -->
         <div class="col-md-3 mb-3">
             <div class="card shadow-sm h-100 border">
                 <div class="card-header bg-primary text-white "><h6 class="fw-bold">SUBJECTIVE</h6></div>
                 <div class="card-body border-primary">
                     <h6 class="card-subtitle mb-2 text-muted">Chief Complaint</h6>
-                    <strong><p class="text-uppercase"></p></strong>
+                    <strong><p class="text-uppercase" id="chiefComplaint"></p></strong>
                     <h6 class="card-subtitle mt-3 mb-2 text-muted">Symptoms</h6>
-                    <strong><p class="text-uppercase"></p></strong>
+                    <strong><p class="text-uppercase" id="symptoms"></p></strong>
                 </div>
             </div>
         </div>
@@ -83,14 +283,14 @@
                 <div class="card-header bg-info text-white">OBJECTIVE</div>
                 <div class="card-body">
                     <h6 class="card-subtitle mb-2 text-muted">Vital Signs</h6>
-                    <ul class="list-unstyled">
-                        <li>BP: 142/76</li>
-                        <li>HR: 86</li>
-                        <li>TEMP: 36.4</li>
-                        <li>O2 SAT: 97%</li>
+                    <ul class="list-unstyled" id="vitalSigns">
+                        <li>BP: <span id="bpValue">N/A</span></li>
+                        <li>HR: <span id="hrValue">N/A</span></li>
+                        <li>TEMP: <span id="tempValue">N/A</span></li>
+                        <li>O2 SAT: <span id="o2Value">N/A</span></li>
                     </ul>
-                    <h6 class="card-subtitle mt-3 mb-2 text-muted"></h6>
-                    <p></p>
+                    <h6 class="card-subtitle mt-3 mb-2 text-muted">Physical Examination</h6>
+                    <p id="physicalExam">N/A</p>
                 </div>
             </div>
         </div>
@@ -101,8 +301,9 @@
                 <div class="card-header bg-warning text-dark">ASSESSMENT</div>
                 <div class="card-body">
                     <h6 class="card-subtitle mb-2 text-muted">Diagnosis</h6>
-                    <p><strong>Benign Paroxysmal Vertigo (H81.1)</strong></p>
-                
+                    <p id="diagnosis"><strong>No diagnosis available</strong></p>
+                    <h6 class="card-subtitle mt-3 mb-2 text-muted">ICD Code</h6>
+                    <p id="icdCode">N/A</p>
                 </div>
             </div>
         </div>
@@ -113,10 +314,10 @@
                 <div class="card-header bg-success text-white">PLAN</div>
                 <div class="card-body">
                     <h6 class="card-subtitle mb-2 text-muted">MHO Note / Actions / Follow-ups</h6>
-                    <p>Cinnarizine 25 mg<br>1 tab BID × 5 days</p>
+                    <p id="mhoNotes">No notes available</p>
 
                     <h6 class="card-subtitle mt-3 mb-2 text-muted">Advice</h6>
-                    <strong><p></p></strong>
+                    <strong><p id="advice">No advice available</p></strong>
                 </div>
             </div>
         </div>
@@ -128,5 +329,386 @@
 <script src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="{% static 'js/patient-search.js' %}"></script>
+
+<script>
+$(document).ready(function() {
+    // Get CSRF token for AJAX requests
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Set up CSRF token for all AJAX requests
+    $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            if (!(/^http:.*/.test(settings.url) || /^https:.*/.test(settings.url))) {
+                xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+            }
+        }
+    });
+    
+    // Initialize DataTable for patient list
+    $('#patientListTable').DataTable({
+        pageLength: 10,
+        order: [[0, 'asc']],
+        columnDefs: [
+            { targets: -1, orderable: false }
+        ],
+        language: {
+            search: "Search patients:",
+            lengthMenu: "Show _MENU_ patients per page",
+            info: "Showing _START_ to _END_ of _TOTAL_ patients"
+        }
+    });
+    
+    // Handle patient row click using event delegation for filtered results
+    $(document).on('click', '.patient-row', function() {
+        const patientId = $(this).data('patient-id');
+        const patientName = $(this).find('h6').text();
+        showPatientInfo(patientId, patientName);
+    });
+    
+    // Handle view button click using event delegation for filtered results
+    $(document).on('click', '.view-patient-btn', function(e) {
+        e.stopPropagation(); // Prevent row click
+        const patientId = $(this).data('patient-id');
+        const patientName = $(this).data('patient-name');
+        showPatientInfo(patientId, patientName);
+    });
+});
+
+// Function to show patient information
+function showPatientInfo(patientId, patientName) {
+    console.log('showPatientInfo called with:', { patientId, patientName });
+    console.log('Patient ID type:', typeof patientId);
+    
+    // Update patient name header
+    $('#selectedPatientName').text(patientName);
+    
+    // Hide the patient list section
+    $('#patientListSection').hide();
+    
+    // Show the patient info cards with animation
+    $('#patientInfoCards').show().addClass('show');
+    
+    // Scroll to the cards
+    $('html, body').animate({
+        scrollTop: $('#patientInfoCards').offset().top - 100
+    }, 500);
+    
+    // Load patient data (you can implement AJAX call here)
+    loadPatientData(patientId);
+    
+    // Highlight selected row
+    $('.patient-row').removeClass('table-active');
+    $(`.patient-row[data-patient-id="${patientId}"]`).addClass('table-active');
+}
+
+// Function to hide patient information
+function hidePatientInfo() {
+    $('#patientInfoCards').removeClass('show');
+    $('#referralHistoryFilterContainer').hide();
+    setTimeout(() => {
+        $('#patientInfoCards').hide();
+    }, 500);
+    $('.patient-row').removeClass('table-active');
+}
+
+// Function to go back to patient list
+function backToPatientList() {
+    // Hide patient info cards
+    $('#patientInfoCards').removeClass('show');
+    $('#referralHistoryFilterContainer').hide();
+    setTimeout(() => {
+        $('#patientInfoCards').hide();
+    }, 500);
+    
+    // Show patient list section
+    $('#patientListSection').show();
+    
+    // Remove active row highlighting
+    $('.patient-row').removeClass('table-active');
+    
+    // Scroll back to patient list
+    $('html, body').animate({
+        scrollTop: $('#patientListSection').offset().top - 100
+    }, 500);
+}
+
+// Function to refresh patient list
+function refreshPatientList() {
+    // Reload the page to refresh the patient list
+    location.reload();
+}
+
+// Function to test API endpoints
+function testAPI() {
+    console.log('Testing API endpoints...');
+    
+    // Test the test view
+    $.ajax({
+        url: '/referral/test/',
+        method: 'GET',
+        success: function(data) {
+            console.log('✅ Test view working:', data);
+        },
+        error: function(xhr, status, error) {
+            console.error('❌ Test view failed:', error);
+            console.error('Status:', xhr.status);
+            console.error('Response:', xhr.responseText);
+        }
+    });
+    
+    // Test with a sample patient ID (you can change this)
+    const testPatientId = 1;
+    console.log('Testing patient referral history with ID:', testPatientId);
+    
+    $.ajax({
+        url: `/referral/patient/${testPatientId}/history/`,
+        method: 'GET',
+        success: function(data) {
+            console.log('✅ Patient referral history working:', data);
+        },
+        error: function(xhr, status, error) {
+            console.error('❌ Patient referral history failed:', error);
+            console.error('Status:', xhr.status);
+            console.error('Response:', xhr.responseText);
+        }
+    });
+}
+
+// Function to load patient data from referral history
+function loadPatientData(patientId) {
+    // Show loading state
+    $('#chiefComplaint').text('Loading...');
+    $('#symptoms').text('Loading...');
+    $('#bpValue').text('Loading...');
+    $('#hrValue').text('Loading...');
+    $('#tempValue').text('Loading...');
+    $('#o2Value').text('Loading...');
+    $('#physicalExam').text('Loading...');
+    $('#diagnosis').html('<strong>Loading...</strong>');
+    $('#icdCode').text('Loading...');
+    $('#mhoNotes').text('Loading...');
+    $('#advice').text('Loading...');
+    
+    // Fetch real patient referral history data
+    // console.log('Fetching data for patient ID:', patientId);
+    // console.log('API URL:', `/referral/patient/${patientId}/history/`);
+    
+    $.ajax({
+        url: `/referral/patient/${patientId}/history/`,
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+        },
+        success: function(data) {
+            console.log('Patient referral history loaded:', data);
+            
+            if (data.referrals && data.referrals.length > 0) {
+                // Get the most recent referral
+                const latestReferral = data.referrals[0];
+                
+                // Populate SUBJECTIVE card
+                $('#chiefComplaint').text(latestReferral.chief_complaint || 'No chief complaint recorded');
+                $('#symptoms').text(latestReferral.symptoms || 'No symptoms recorded');
+                
+                // Populate OBJECTIVE card (Vital Signs)
+                $('#bpValue').text(`${latestReferral.bp_systolic || 'N/A'}/${latestReferral.bp_diastolic || 'N/A'}`);
+                $('#hrValue').text(latestReferral.pulse_rate || 'N/A');
+                $('#tempValue').text(latestReferral.temperature ? `${latestReferral.temperature}°C` : 'N/A');
+                $('#o2Value').text(latestReferral.oxygen_saturation ? `${latestReferral.oxygen_saturation}%` : 'N/A');
+                
+                // Populate Physical Examination (Work Up Details)
+                $('#physicalExam').text(latestReferral.work_up_details || 'No work-up details recorded');
+                
+                // Populate ASSESSMENT card
+                // Show illness name from medical history if available, otherwise show referral status
+                $('#diagnosis').html(`<strong>${latestReferral.illness_name || latestReferral.status.toUpperCase()}</strong>`);
+                $('#icdCode').text(latestReferral.illness_name || 'N/A');
+                
+                // Populate PLAN card
+                // For now, showing referral creation date as MHO notes
+                const referralDate = new Date(latestReferral.created_at).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                $('#mhoNotes').text(latestReferral.notes || `Referral created on ${referralDate}`);
+                
+                // Show additional referral history if available
+                if (data.referrals.length > 1) {
+                    $('#advice').html(`<strong>${latestReferral.advice || `Patient has ${data.referrals.length} total referrals`}</strong><br><small class="text-muted">Showing data from most recent referral</small>`);
+                    // Add referral history dropdown for multiple referrals
+                    addReferralHistoryDropdown(data.referrals, patientId);
+                } else {
+                    $('#advice').text(latestReferral.advice || 'This is the patient\'s first referral');
+                    // Hide the referral history filter container if only one referral
+                    $('#referralHistoryFilterContainer').hide();
+                }
+                
+            } else {
+                // No referrals found
+                $('#chiefComplaint').text('No referrals found for this patient');
+                $('#symptoms').text('No referral data available');
+                $('#bpValue').text('N/A');
+                $('#hrValue').text('N/A');
+                $('#tempValue').text('N/A');
+                $('#o2Value').text('N/A');
+                $('#physicalExam').text('No referral data available');
+                $('#diagnosis').html('<strong>No Referrals</strong>');
+                $('#icdCode').text('N/A');
+                $('#mhoNotes').text('This patient has no referral history');
+                $('#advice').text('No referral data available');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Failed to load patient referral history:', error);
+            console.error('Status:', status);
+            console.error('Response Text:', xhr.responseText);
+            console.error('Status Code:', xhr.status);
+            console.error('Response Headers:', xhr.getAllResponseHeaders());
+            
+            // Show error state
+            $('#chiefComplaint').text('Error loading data');
+            $('#symptoms').text('Failed to fetch referral history');
+            $('#bpValue').text('Error');
+            $('#hrValue').text('Error');
+            $('#tempValue').text('Error');
+            $('#o2Value').text('Error');
+            $('#physicalExam').text('Error loading data');
+            $('#diagnosis').html('<strong>Error</strong>');
+            $('#icdCode').text('Error');
+            $('#mhoNotes').text('Failed to load patient referral data');
+            $('#advice').text('Please try again or contact support');
+        }
+    });
+}
+
+// Function to add referral history dropdown for patients with multiple referrals
+function addReferralHistoryDropdown(referrals, patientId) {
+    // Remove existing dropdown if any
+    $('.referral-history-dropdown').remove();
+    
+    // Create dropdown HTML
+    const dropdownHtml = `
+        <div class="referral-history-dropdown">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-gradient-primary text-white border-0">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-clock-history me-2 fs-5"></i>
+                        <h6 class="mb-0 fw-semibold">Referral History</h6><span></span>
+                        <span class="badge bg-light text-primary ms-auto fs-6">${referrals.length} total</span>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    <div class="form-group mb-3">
+                        <label for="referralHistorySelect" class="form-label fw-medium text-muted mb-2">
+                            <i class="bi bi-arrow-down-circle me-1"></i>Select Referral to View
+                        </label>
+                        <select class="form-select form-select-lg border-0 shadow-sm" 
+                                id="referralHistorySelect" 
+                                onchange="switchReferralData(this.value, ${patientId})"
+                                style="background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);">
+                            ${referrals.map((referral, index) => {
+                                const referralDate = new Date(referral.created_at);
+                                const dateStr = referralDate.toLocaleDateString('en-US', {
+                                    month: 'short',
+                                    day: 'numeric',
+                                    year: 'numeric'
+                                });
+                                const timeStr = referralDate.toLocaleTimeString('en-US', {
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                });
+                                
+                                // Get status color and icon
+                                let statusColor = 'secondary';
+                                let statusIcon = 'bi-clock';
+                                if (referral.status === 'completed') {
+                                    statusColor = 'success';
+                                    statusIcon = 'bi-check-circle';
+                                } else if (referral.status === 'in-progress') {
+                                    statusColor = 'primary';
+                                    statusIcon = 'bi-arrow-right-circle';
+                                } else if (referral.status === 'rejected') {
+                                    statusColor = 'danger';
+                                    statusIcon = 'bi-x-circle';
+                                }
+                                
+                                return `
+                                    <option value="${index}" ${index === 0 ? 'selected' : ''}>
+                                        <div class="d-flex align-items-center">
+                                            <i class="bi ${statusIcon} text-${statusColor} me-2"></i>
+                                            ${dateStr} at ${timeStr}
+                                            <span class="badge bg-${statusColor} ms-2">${referral.status}</span>
+                                        </div>
+                                    </option>
+                                `;
+                            }).join('')}
+                        </select>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add dropdown to the referral history filter container and show it
+    $('#referralHistoryFilterContainer').html(dropdownHtml).show();
+}
+
+// Function to switch between different referral data
+function switchReferralData(referralIndex, patientId) {
+    // Fetch the referral data again and populate with selected referral
+    $.ajax({
+        url: `/referral/patient/${patientId}/history/`,
+        method: 'GET',
+        success: function(data) {
+            if (data.referrals && data.referrals[referralIndex]) {
+                const selectedReferral = data.referrals[referralIndex];
+                
+                // Update the cards with selected referral data
+                $('#chiefComplaint').text(selectedReferral.chief_complaint || 'No chief complaint recorded');
+                $('#symptoms').text(selectedReferral.symptoms || 'No symptoms recorded');
+                $('#bpValue').text(`${selectedReferral.bp_systolic || 'N/A'}/${selectedReferral.bp_diastolic || 'N/A'}`);
+                $('#hrValue').text(selectedReferral.pulse_rate || 'N/A');
+                $('#tempValue').text(selectedReferral.temperature ? `${selectedReferral.temperature}°C` : 'N/A');
+                $('#o2Value').text(selectedReferral.oxygen_saturation ? `${selectedReferral.oxygen_saturation}%` : 'N/A');
+                $('#physicalExam').text(selectedReferral.work_up_details || 'No work-up details recorded');
+                $('#diagnosis').html(`<strong>${selectedReferral.illness_name || `Referral Status: ${selectedReferral.status.toUpperCase()}`}</strong>`);
+                $('#icdCode').text(selectedReferral.illness_name || 'N/A');
+                
+                const referralDate = new Date(selectedReferral.created_at).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                $('#mhoNotes').text(selectedReferral.notes || `Referral created on ${referralDate}`);
+                $('#advice').text(selectedReferral.advice || 'No advice available');
+                
+                console.log(`Switched to referral #${selectedReferral.referral_id}`);
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Failed to switch referral data:', error);
+        }
+    });
+}
+</script>
 {% endblock %}
 {% endblock %}

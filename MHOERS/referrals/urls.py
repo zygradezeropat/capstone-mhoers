@@ -15,7 +15,12 @@ urlpatterns = [
     path('reject-referral/', views.reject_referral, name='reject_referral'),
     path('referral/predict/<int:referral_id>/', views.get_disease_prediction, name='get_disease_prediction'),
     path('patient/<int:patient_id>/history/', views.get_patient_referral_history, name='patient_referral_history'),
+    path('test/', views.test_view, name='test_view'),
     path('api/referral-counts-by-user/', views.referral_counts_by_user, name='referral_counts_by_user'),
     path('api/monthly-referral-counts-by-user/', views.monthly_referral_counts_by_user, name='monthly_referral_counts_by_user'),
+    path('api/yearly-referral-counts-by-user/', views.yearly_referral_counts_by_user, name='yearly_referral_counts_by_user'),
+    path('api/referrals/', views.api_referrals, name='api_referrals'),
+    path('export/referrals.csv', views.export_referrals_csv, name='export_referrals_csv'),
+    
 ]
 

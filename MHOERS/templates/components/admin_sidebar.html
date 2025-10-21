@@ -1,15 +1,32 @@
 
 {% load static %}
 
-    <aside class="sidebar">
-      <header class="sidebar-header">
-  <div class="header-content">
-    <a href="#" class="header-logo">
-      <img src="{% static 'images/newcorellalogo.png' %}" alt="Logo" />
-    </a>
-    <span class="username">{{ request.user.username }}</span>
-  </div>
-</header>
+<!-- Mobile Toggle Button -->
+<button class="sidebar-toggle" id="sidebarToggle">
+  <i class="bi bi-list"></i>
+</button>
+
+<aside class="sidebar" id="sidebar">
+  <header class="sidebar-header">
+    <div class="header-content">
+      <a href="#" class="header-logo">
+        <img src="{% static 'images/newcorellalogo.png' %}" alt="Logo" />
+      </a>
+      <div class="header-text">
+        <h3 class="app-title">MHO-Admin</h3>
+        <span class="username">{{ request.user.username }}</span>
+      </div>
+    </div>
+    <!-- Desktop collapse toggle button -->
+    <button class="sidebar-toggle-desktop" id="sidebarToggleDesktop">
+      <i class="bi bi-chevron-left" id="collapseIcon"></i>
+    </button>
+    
+    <!-- Close button for mobile -->
+    <button class="sidebar-close" id="sidebarClose">
+      <i class="bi bi-x-lg"></i>
+    </button>
+  </header>
 
 
       <nav class="sidebar-nav">
@@ -18,39 +35,39 @@
             <a
               href="{% url 'admin_dashboard' %}"
               class="nav-link {% if active_page == 'admin_dashboard' %}active{% endif %}"
+              data-tooltip="Dashboard"
             >
               <i class="bi bi-speedometer"></i>
               <span class="nav-label">Dashboard</span>
             </a>
           </li>
           <li class="nav-item">
-            <a href="{% url 'heatmap' %}" class="nav-link {% if active_page == 'heatmap' %}active{% endif %}">
+            <a href="{% url 'heatmap' %}" class="nav-link {% if active_page == 'heatmap' %}active{% endif %}" data-tooltip="Heatmap">
               <i class="bi bi-map"></i>
               <span class="nav-label">Heatmap</span>
             </a>
           </li>
+          
+          <li class="nav-item">
+        <a href="{% url 'referrals:assessment' %}" class="nav-link {% if active_page == 'assessment' %}active{% endif %}" data-tooltip="Assessment">
+          <i class="bi bi-file-plus"></i>
+          <span class="nav-label">Assessment</span>
+        </a>
+      </li>
 
           <li class="nav-item">
-            <a href="{% url 'referrals:patient_list' %}" class="nav-link {% if active_page == 'patient_list' %}active{% endif %}">
+            <a href="{% url 'referrals:patient_list' %}" class="nav-link {% if active_page == 'patient_list' %}active{% endif %}" data-tooltip="Patients Referral">
               <i class="bi bi-menu-button-wide"></i>
-              <span class="nav-label">Patients Referral</span>
+              <span class="nav-label">Patients</span>
             </a>
           </li>
 
-          <li class="nav-item">
-            <a
-              href="{% url 'phistory' %}"
-              class="nav-link {% if active_page == 'phistory' %}active{% endif %}"
-            >
-              <i class="bi bi-clock-history"></i>
-              <span class="nav-label">Patients/History</span>
-            </a>
-          </li>
 
           <li class="nav-item">
             <a
               href="{% url 'health_facilities' %}"
               class="nav-link {% if active_page == 'health_facilities' %}active{% endif %}"
+              data-tooltip="Health Facilities"
             >
               <i class="bi bi-person-add"></i>
               <span class="nav-label">Health Facilities</span>
@@ -58,14 +75,14 @@
           </li>
           
           <li class="nav-item">
-            <a href="{% url 'report_analytics' %}" class="nav-link {% if active_page == 'report_analytics' %}active{% endif %}">
+            <a href="{% url 'report_analytics' %}" class="nav-link {% if active_page == 'report_analytics' %}active{% endif %}" data-tooltip="Report & Analytics">
               <i class="bi bi-newspaper"></i>
               <span class="nav-label">Report & Analytics</span>
             </a>
           </li>
 
            <li class="nav-item">
-            <a href="{% url 'user_management' %}" class="nav-link {% if active_page == 'user_management' %}active{% endif %}">
+            <a href="{% url 'user_management' %}" class="nav-link {% if active_page == 'user_management' %}active{% endif %}" data-tooltip="User Management">
               <i class="bi bi-person"></i>
               <span class="nav-label">User Management</span>
             </a>
@@ -80,13 +97,13 @@
 
         <ul class="nav-list secondary-nav">
           <li class="nav-item">
-            <a href="{% url 'profile' %}" class="nav-link {% if active_page == 'profile' %}active{% endif %}">
+            <a href="{% url 'profile' %}" class="nav-link {% if active_page == 'profile' %}active{% endif %}" data-tooltip="Profile">
               <i class="bi bi-person-circle"></i>
               <span class="nav-label">Profile</span>
             </a>
           </li>
           <li class="nav-item">
-            <a href="{% url 'logout' %}" class="nav-link">
+            <a href="{% url 'logout' %}" class="nav-link" data-tooltip="Logout">
               <i class="bi bi-box-arrow-left"></i>
               <span class="nav-label">Logout</span>
             </a>
@@ -94,3 +111,6 @@
         </ul>
       </nav>
     </aside>
+
+<!-- Overlay for mobile -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>

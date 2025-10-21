@@ -1,4 +1,5 @@
 from django.urls import path
+from referrals.views import assessment
 from .views import *
 
 urlpatterns = [
@@ -16,5 +17,6 @@ urlpatterns = [
     path('user_report/', user_report, name='user_report'),
     path('phistory/', phistory, name='phistory'),
     path('heatmap/', heatmap, name='heatmap'),
-    path('calendar/', calendar_view, name='calendar')
+    path('calendar/', calendar_view, name='calendar'),
+    path("assessment/", assessment, name="assessment"),
 ]

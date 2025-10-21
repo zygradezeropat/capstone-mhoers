@@ -20,27 +20,28 @@
     <div class="card-body">
       <ul class="nav nav-pills nav-fill" id="dashboardTab" role="tablist">
         <li class="nav-item">
-          <a class="nav-link active" id="tab1-tab" data-toggle="tab" href="#tab1" role="tab">
+          <a class="nav-link active" id="tab1-tab" data-bs-toggle="tab" href="#tab1" role="tab">
             <i class="bi bi-graph-up"></i>
             <span class="ms-2">Referral Statistics</span>
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" id="tab2-tab" data-toggle="tab" href="#tab2" role="tab">
+          <a class="nav-link" id="tab2-tab" data-bs-toggle="tab" href="#tab2" role="tab">
             <i class="bi bi-clipboard2-pulse"></i>
             <span class="ms-2">Common Diagnoses</span>
           </a>
         </li>
+        
         <li class="nav-item">
-          <a class="nav-link" id="tab3-tab" data-toggle="tab" href="#tab3" role="tab">
-            <i class="bi bi-bar-chart"></i>
-            <span class="ms-2">Barangay Performance</span>
+          <a class="nav-link" id="tab4-tab" data-bs-toggle="tab" href="#tab4" role="tab">
+            <i class="bi bi-activity"></i>
+            <span class="ms-2">System Usage</span>
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" id="tab4-tab" data-toggle="tab" href="#tab4" role="tab">
-            <i class="bi bi-activity"></i>
-            <span class="ms-2">System Usage</span>
+          <a class="nav-link" id="tab5-tab" data-bs-toggle="tab" href="#tab5" role="tab">
+            <i class="bi bi-file-earmark-arrow-down"></i>
+            <span class="ms-2">Referral Reports</span>
           </a>
         </li>
 
@@ -50,10 +51,11 @@
 
   <!-- Tab Content -->
   <div class="tab-content" id="dashboardTabContent">
+    
     <!-- Tab 1: Referral Statistics -->
     <div class="tab-pane fade show active" id="tab1" role="tabpanel">
       <div class="card border-0 shadow-sm">
-        <div class="card-body p-4">
+        <div class="card-body p-4" id="referralStatsSection">
           <div class="row align-items-center mb-4">
             <div class="col-md-6">
               <select id="reportViewFilter" class="w-50" style="display: block; width: 100%; padding: 0.375rem 2.25rem 0.375rem 0.75rem; font-size: 1rem; font-weight: 400; line-height: 1.5; color: #212529; background-color: #fff; background-image: url('data:image/svg+xml,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3e%3cpath fill=%27none%27 stroke=%27%23343a40%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27 stroke-width=%272%27 d=%27m2 5 6 6 6-6%27/%3e%3c/svg%3e'); background-repeat: no-repeat; background-position: right 0.75rem center; background-size: 16px 12px; border: 1px solid #ced4da; border-radius: 0.375rem; transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out; -webkit-appearance: none; -moz-appearance: none; appearance: none;">
@@ -61,14 +63,17 @@
                 <option value="yearly">Yearly View</option>
               </select>
             </div>
-            <div class="col-md-6 text-right">
+            <div class="col-md-6 text-end">
               <button id="printReferralStatsBtn" class="btn btn-outline-primary">
                 <i class="bi bi-printer"></i> Print This Report
               </button>
             </div>
           </div>
-          <h5 class="card-title mb-4">Monthly Referral Analytics</h5>
-          <canvas id="monthlyReportChart" height="100"></canvas>
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <h5 class="card-title mb-0">Referrals per Account</h5>
+          </div>
+          <canvas id="referralsPerUserChart" height="90"></canvas>
+          
         </div>
       </div>
     </div>
@@ -96,7 +101,7 @@
             <option value="12">December</option>
           </select>
         </div>
-        <div class="mb-3">
+        <div class="mb-3 text-end">
           <button id="printDiagnosesBtn" class="btn btn-outline-primary">
             <i class="bi bi-printer"></i> Print This Report
           </button>
@@ -128,53 +133,82 @@
       </div>
     </div>
 
-    <!-- Tab 3: Barangay Performance -->
-    <div class="tab-pane fade" id="tab3" role="tabpanel">
-      <div class="card border-0 shadow-sm">
-        <div class="card-body p-4">
-          <div class="d-flex justify-content-end mb-3">
-            <button id="printBarangayBtn" class="btn btn-outline-primary">
-              <i class="bi bi-printer"></i> Print This Report
-            </button>
-          </div>
-          <h5 class="card-title mb-4">Barangay Performance Analytics</h5>
-          
-          <div class="row mb-4">
-            <div class="col-md-6 mb-4">
-              <h6 class="text-muted mb-3">Referral Status Overview</h6>
-              <canvas id="stackedBarangayChart" height="200"></canvas>
-            </div>
-          </div>
-    
-          <div class="row">
-            <div class="col-md-12">
-              <h6 class="text-muted mb-3">Completion Rate Analysis</h6>
-              <canvas id="groupedBarangayChart" height="200"></canvas>
-            </div>
-          </div>
-    
-        </div>
-      </div>
-    </div>
-    
-
+   
     <!-- Tab 4: System Usage -->
     <div class="tab-pane fade" id="tab4" role="tabpanel">
       <div class="card border-0 shadow-sm">
         <div class="card-body p-4">
-          <div class="d-flex justify-content-end mb-3">
-            <button id="printSystemUsageBtn" class="btn btn-outline-primary">
-              <i class="bi bi-printer"></i> Print This Report
-            </button>
+          <div class="row align-items-center mb-4">
+            <div class="col-md-6">
+              <h5 class="card-title mb-0">System Usage Analytics</h5>
+              <p class="text-muted small mb-0">Track referrals and medical records by facility</p>
+            </div>
+            <div class="col-md-3">
+              <label for="systemUsageYearFilter" class="form-label small">Year</label>
+              <select id="systemUsageYearFilter" class="form-select form-select-sm">
+                <option value="2024">2024</option>
+                <option value="2025" selected>2025</option>
+                <option value="2023">2023</option>
+                <option value="2022">2022</option>
+              </select>
+            </div>
+            <div class="col-md-3 text-end">
+              <button id="printSystemUsageBtn" class="btn btn-outline-primary">
+                <i class="bi bi-printer"></i> Print This Report
+              </button>
+            </div>
           </div>
-          <h5 class="card-title mb-4">System Usage Analytics</h5>
-          <canvas id="systemUsageLogsChart" height="100"></canvas>
+          <div class="chart-container" style="position: relative; height: 400px;">
+            <canvas id="systemUsageLogsChart"></canvas>
+          </div>
         </div>
       </div>
     </div>
 
-  
-
+    <!-- Tab 5: Referral Reports -->
+    <div class="tab-pane fade" id="tab5" role="tabpanel">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <h5 class="card-title mb-4">Export Referral Reports (CSV)</h5>
+          <div class="row g-3 align-items-end mb-3">
+            <div class="col-md-3">
+              <label class="form-label">Facility</label>
+              <select id="reportFacilityFilter" class="form-select">
+                <option value="">All Facilities</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label">Year</label>
+              <input id="reportYearFilter" class="form-control" type="number" min="2000" max="2100" placeholder="e.g. 2025" />
+            </div>
+            <div class="col-md-2">
+              <label class="form-label">Month</label>
+              <select id="reportMonthFilter" class="form-select">
+                <option value="">All</option>
+                <option value="1">January</option>
+                <option value="2">February</option>
+                <option value="3">March</option>
+                <option value="4">April</option>
+                <option value="5">May</option>
+                <option value="6">June</option>
+                <option value="7">July</option>
+                <option value="8">August</option>
+                <option value="9">September</option>
+                <option value="10">October</option>
+                <option value="11">November</option>
+                <option value="12">December</option>
+              </select>
+            </div>
+            <div class="col-md-2 text-end">
+              <button id="exportReferralsCsvBtn" class="btn btn-outline-primary w-100">
+                <i class="bi bi-filetype-csv"></i> Export CSV
+              </button>
+            </div>
+          </div>
+          <div class="small text-muted">Tip: Leave fields blank to export all.</div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -184,12 +218,157 @@
 <script src="{% static 'js/barangay_performance.js' %}"></script>
 <script src="{% static 'js/system_usage.js' %}"></script>
 <script src="{% static 'js/print_report.js' %}"></script>
-<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.6.0/js/bootstrap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script>
+  // Populate facility and user dropdowns for referral reports
+  async function loadFacilitiesAndUsers() {
+    try {
+      // Facilities
+      const fRes = await fetch('/facilities/api/facilities/');
+      const facilities = fRes.ok ? await fRes.json() : [];
+      const fSelect = document.getElementById('reportFacilityFilter');
+      if (fSelect) {
+        facilities.forEach(f => {
+          const opt = document.createElement('option');
+          opt.value = f.facility_id; // backend now returns facility_id
+          opt.textContent = `${f.name} (${f.assigned_bhw || 'No BHW'})`;
+          fSelect.appendChild(opt);
+        });
+      }
+      // Users derived from facilities' user_id
+      const uSelect = document.getElementById('reportUserFilter');
+      if (uSelect) {
+        const seen = new Set();
+        facilities.forEach(f => {
+          if (f.user_id && !seen.has(f.user_id)) {
+            seen.add(f.user_id);
+            const opt = document.createElement('option');
+            opt.value = f.user_id;
+            opt.textContent = `User #${f.user_id} - ${f.assigned_bhw || f.name}`;
+            uSelect.appendChild(opt);
+          }
+        });
+      }
+    } catch (e) {
+      console.error('Failed to load facilities/users for report filters', e);
+    }
+  }
 
+  // Build export URL with query params and trigger download
+  function exportReferralsCsv() {
+    const params = new URLSearchParams();
+    const year = document.getElementById('reportYearFilter')?.value.trim();
+    const month = document.getElementById('reportMonthFilter')?.value;
+    const facilityId = document.getElementById('reportFacilityFilter')?.value;
+    const userId = document.getElementById('reportUserFilter')?.value;
+    if (year) params.set('year', year);
+    if (month) params.set('month', month);
+    if (facilityId) params.set('facility_id', facilityId);
+    if (userId) params.set('user_id', userId);
+    const url = `/referral/export/referrals.csv?${params.toString()}`;
+    window.location.href = url;
+  }
 
+  document.addEventListener('DOMContentLoaded', function() {
+    loadFacilitiesAndUsers();
+    const btn = document.getElementById('exportReferralsCsvBtn');
+    if (btn) btn.addEventListener('click', exportReferralsCsv);
+
+    // System Usage year filter
+    const systemUsageYearFilter = document.getElementById('systemUsageYearFilter');
+    if (systemUsageYearFilter) {
+      systemUsageYearFilter.addEventListener('change', function() {
+        // Trigger system usage chart reload
+        if (typeof loadSystemUsageData === 'function') {
+          loadSystemUsageData();
+        }
+      });
+    }
+
+    // Print Referral Statistics section as image
+    const printStatsBtn = document.getElementById('printReferralStatsBtn');
+    if (printStatsBtn) {
+      printStatsBtn.addEventListener('click', async function() {
+        const section = document.getElementById('referralStatsSection');
+        if (!section) return;
+        // Ensure charts/fonts are rendered
+        await new Promise(r => setTimeout(r, 200));
+        html2canvas(section, { scale: 2, useCORS: true, backgroundColor: '#ffffff' }).then(canvas => {
+          const imgData = canvas.toDataURL('image/png');
+          const printWindow = window.open('', '_blank');
+          printWindow.document.write(`<!DOCTYPE html><html><head><title>Referral Statistics</title>
+            <style>body{margin:0;padding:0;text-align:center;background:#fff}img{max-width:100%;height:auto}</style>
+          </head><body><img src="${imgData}" /></body></html>`);
+          printWindow.document.close();
+          // Wait for image to load then print
+          printWindow.onload = () => {
+            printWindow.focus();
+            printWindow.print();
+            printWindow.close();
+          };
+        });
+      });
+    }
+
+    // Populate users for stats filter (from facilities API like reports tab)
+    (async function populateStatsUsers(){
+      try {
+        const res = await fetch('/facilities/api/facilities/');
+        const facilities = res.ok ? await res.json() : [];
+        const uSelect = document.getElementById('statsUserFilter');
+        if (uSelect) {
+          const seen = new Set();
+          facilities.forEach(f => {
+            if (f.user_id && !seen.has(f.user_id)) {
+              seen.add(f.user_id);
+              const opt = document.createElement('option');
+              opt.value = f.user_id;
+              opt.textContent = `User #${f.user_id} - ${f.assigned_bhw || f.name}`;
+              uSelect.appendChild(opt);
+            }
+          });
+        }
+      } catch(e) { console.error('Failed to load users for stats filter', e); }
+    })();
+
+    // Fetch and render referral records table per filters
+    async function fetchAndRenderReferralTable(){
+      const params = new URLSearchParams();
+      const y = document.getElementById('statsYearFilter')?.value.trim();
+      const m = document.getElementById('statsMonthFilter')?.value;
+      const u = document.getElementById('statsUserFilter')?.value;
+      if (y) params.set('year', y);
+      if (m) params.set('month', m);
+      if (u) params.set('user_id', u);
+      const url = `/referral/api/referrals/?${params.toString()}`;
+      const tbody = document.getElementById('statsReferralTableBody');
+      if (tbody) tbody.innerHTML = `<tr><td colspan="8" class="text-muted">Loading...</td></tr>`;
+      try {
+        const r = await fetch(url);
+        const json = r.ok ? await r.json() : { results: [] };
+        const rows = (json.results || []).map(item => `
+          <tr>
+            <td>${item.referral_id}</td>
+            <td>${new Date(item.created_at).toLocaleString()}</td>
+            <td>${item.status}</td>
+            <td>${item.facility_name || ''}</td>
+            <td>${item.username || ('User #' + item.user_id)}</td>
+            <td>${item.patient || ('#' + item.patient_id)}</td>
+            <td>${item.chief_complaint || ''}</td>
+            <td>${item.initial_diagnosis || ''}</td>
+          </tr>
+        `).join('');
+        if (tbody) {
+          tbody.innerHTML = rows || `<tr><td colspan="8" class="text-muted">No records found for selected filters.</td></tr>`;
+        }
+      } catch(e) {
+        if (tbody) tbody.innerHTML = `<tr><td colspan="8" class="text-danger">Failed to load records.</td></tr>`;
+      }
+    }
+
+    const applyBtn = document.getElementById('statsApplyFilters');
+    if (applyBtn) applyBtn.addEventListener('click', fetchAndRenderReferralTable);
+  });
 </script>
 {% endblock script %}
 

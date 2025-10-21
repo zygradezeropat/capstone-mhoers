@@ -10,7 +10,7 @@
 {% include 'components/navbar.html' %}
 
 <div class="container-fluid">
-  <div class="row mt-4">
+  <div class="row mt-4"> 
     <div class="col-md-4">
       <div class="card-counter primary">
         <i class="fa fa-code-fork"></i>
@@ -78,12 +78,16 @@
     </div>
   </div>
 </div>
-
+<form id="goToAssessmentForm" action="{% url 'assessment' %}" method="post" style="display:none;">
+  {% csrf_token %}
+  <input type="hidden" name="patient_id" id="hiddenPatientId">
+</form>
 {% block script %}
 <script src="{% static 'js/line_chart.js' %}"></script>
 <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 <script src="{% static 'js/heatdisease_map.js' %}"></script>
+<script src="{% static 'js/calendar.js' %}"></script>
 
 <!-- Pass current user context to JavaScript -->
 <script>
@@ -92,7 +96,7 @@
   window.isAdmin = {{ request.user.is_staff|yesno:"true,false" }};
 </script>
 
-<script src="{% static 'js/calendar.js' %}"></script>
+
 
 <script>
   // Notification check function

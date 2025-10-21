@@ -16,16 +16,21 @@
             <div class="card-body p-4">
               <h4 class="text-primary mb-0">New Corella Disease Heat Map</h4>
               
-              <!-- Disease Filter -->
-              <div class="disease-filter">
-                <h6 class="mb-3">Filter by Disease:</h6>
-                <div class="d-flex flex-wrap">
-                  <span class="disease-badge flu active" data-disease="flu">Flu</span>
-                  <span class="disease-badge cold" data-disease="cold">Common Cold</span>
-                  <span class="disease-badge respiratory" data-disease="respiratory">Respiratory Issue</span>
-                  <span class="disease-badge gastrointestinal" data-disease="gastrointestinal">Gastrointestinal Issue</span>
+              <!-- Facility Filter Dropdown -->
+              <div class="mt-3">
+                <div class="d-flex align-items-end gap-2">
+                  <div class="flex-grow-1">
+                    <label for="facility-select" class="form-label fw-semibold">Select Facility</label>
+                    <select id="facility-select" class="form-select form-select-sm">
+                      <option value=""  >-- Choose a facility --</option>
+                    </select>
+                  </div>
+                  <div class="pb-1">
+                    <button id="facility-reset" type="button" class="btn btn-outline-secondary btn-sm">Reset</button>
+                  </div>
                 </div>
               </div>
+              <br>
               <div id="map" style="height: 500px; border-radius: 10px;"></div>
             </div>
           </div>
@@ -33,6 +38,12 @@
 
         <!-- Legend Section -->
         <div class="col-md-4">
+          <div class="card border-0 shadow-sm mb-3">
+            <div class="card-body p-3">
+              <h5 class="mb-3">Facility Information</h5>
+              <div id="facility-info" class="small text-muted">Select a facility to view details.</div>
+            </div>
+          </div>
           <div class="legend-table">
             <h4>Legend</h4>
             <table class="table table-bordered">

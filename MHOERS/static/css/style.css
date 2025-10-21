@@ -69,7 +69,7 @@
 
 .calendar-day {
   position: relative;
-  min-height: 60px;
+  min-height: 80px;
   padding: 8px;
   border: 1px solid #e9ecef;
   border-radius: 5px;
@@ -123,17 +123,44 @@
 }
 
 .followup-indicator {
-  position: absolute !important;
-  top: 2px !important;
-  right: 2px !important;
-  font-size: 12px !important;
-  z-index: 1 !important;
-  color: #007bff !important;
+  position: relative !important;
+  width: 100% !important;
+  margin: 2px 0 !important;
+  padding: 4px 6px !important;
+  background: #e3f2fd !important;
+  border-left: 3px solid #2196f3 !important;
+  border-radius: 3px !important;
+  font-size: 11px !important;
+  line-height: 1.2 !important;
+  color: #1976d2 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
 }
 
-.calendar-day .followup-indicator i {
-  font-size: 14px;
-  animation: pulse 2s infinite;
+.followup-indicator:hover {
+  background: #bbdefb !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+}
+
+.followup-indicators {
+  position: absolute !important;
+  top: 20px !important;
+  left: 2px !important;
+  right: 2px !important;
+  bottom: 2px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1px !important;
+  overflow: hidden !important;
+}
+
+.followup-text {
+  font-weight: 500 !important;
+  display: block !important;
 }
 
 @keyframes pulse {

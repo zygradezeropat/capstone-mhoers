@@ -253,35 +253,64 @@
 
 /* Medical Follow-up Indicators */
 .followup-indicators {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 2px;
-    margin-top: 2px;
-    justify-content: center;
+    position: absolute !important;
+    top: 20px !important;
+    left: 2px !important;
+    right: 2px !important;
+    bottom: 2px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1px !important;
+    overflow: hidden !important;
 }
 
 .followup-indicator {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 16px;
-    height: 16px;
-    background: #28a745;
-    color: white;
-    border-radius: 50%;
-    font-size: 8px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    position: relative !important;
+    width: 100% !important;
+    margin: 2px 0 !important;
+    padding: 4px 6px !important;
+    background: #e3f2fd !important;
+    border-left: 3px solid #2196f3 !important;
+    border-radius: 3px !important;
+    font-size: 11px !important;
+    line-height: 1.2 !important;
+    color: #1976d2 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
 }
 
 .followup-indicator:hover {
-    transform: scale(1.2);
-    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    background: #bbdefb !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
 }
 
-.followup-indicator i {
-    font-size: 8px;
+.followup-text {
+    font-weight: 500 !important;
+    display: block !important;
+}
+
+/* More events indicator styling */
+.followup-indicator.more-events {
+    background: #fff3cd !important;
+    border-left: 3px solid #ffc107 !important;
+    color: #856404 !important;
+    font-weight: 600 !important;
+    font-style: italic !important;
+}
+
+.followup-indicator.more-events:hover {
+    background: #ffeaa7 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 6px rgba(255, 193, 7, 0.3) !important;
+}
+
+.followup-indicator.more-events .followup-text {
+    color: #856404 !important;
+    font-weight: 600 !important;
 }
 
 .calendar-day.today .followup-indicator {
@@ -324,17 +353,12 @@
     }
     
     .followup-indicators {
-        gap: 1px;
+        gap: 1px !important;
     }
     
     .followup-indicator {
-        width: 12px;
-        height: 12px;
-        font-size: 6px;
-    }
-    
-    .followup-indicator i {
-        font-size: 6px;
+        font-size: 10px !important;
+        padding: 3px 4px !important;
     }
 }
 
@@ -352,17 +376,12 @@
     }
     
     .followup-indicators {
-        gap: 1px;
+        gap: 1px !important;
     }
     
     .followup-indicator {
-        width: 10px;
-        height: 10px;
-        font-size: 5px;
-    }
-    
-    .followup-indicator i {
-        font-size: 5px;
+        font-size: 9px !important;
+        padding: 2px 3px !important;
     }
 }
 

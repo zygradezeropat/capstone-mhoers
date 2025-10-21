@@ -1,6 +1,10 @@
 // Global variables for current selections
 let currentDisease = 'flu';
 let currentMonth = '';
+// Cache of facilities and markers for quick lookup and filtering
+let facilityCache = [];
+let facilityIdToMarker = new Map();
+let selectedFacilityId = null;
 
 // Leaflet Marker Icons
 const redIcon = new L.Icon({
@@ -349,7 +353,9 @@ const sampleData = {
   ],
 };
 
-// Function to fetch facilities from backend
+// Function: fetchFacilities
+// Purpose: Retrieve facilities from the backend API for plotting and filtering
+// Returns: Array of facility objects with id, name, assigned_bhw, latitude, longitude, user_id
 async function fetchFacilities() {
   try {
     const response = await fetch('/facilities/api/facilities/');
@@ -365,35 +371,144 @@ async function fetchFacilities() {
   }
 }
 
-// Plot facility markers
-async function plotFacilityMarkers() {
-  const facilities = await fetchFacilities();
+// Function: updateFacilityInfoPanel
+// Purpose: Show selected facility details in the right-side info card
+// Inputs: facility object
+function updateFacilityInfoPanel(facility) {
+  const infoEl = document.getElementById('facility-info');
+  if (!infoEl) return;
+  if (!facility) {
+    infoEl.innerHTML = 'Select a facility to view details.';
+    return;
+  }
+  infoEl.innerHTML = `
+    <div class="mb-2"><span class="text-uppercase text-muted">Facility</span><br><strong>${facility.name}</strong></div>
+    <div class="mb-2"><span class="text-uppercase text-muted">Assigned BHW</span><br><strong>${facility.assigned_bhw || 'N/A'}</strong></div>
+    <div class="mb-2"><span class="text-uppercase text-muted">User ID</span><br><code>${facility.user_id ?? ''}</code></div>
+    <div class="text-muted">Lat: ${facility.latitude.toFixed(6)} | Lng: ${facility.longitude.toFixed(6)}</div>
+  `;
+}
+
+// Function: selectFacilityById
+// Purpose: Focus map and open popup for a facility, and update info panel
+// Inputs: facilityId (number)
+function selectFacilityById(facilityId) {
+  console.log('Selecting facility with ID:', facilityId);
+  console.log('Available facilities:', facilityCache);
+  console.log('Available markers:', Array.from(facilityIdToMarker.keys()));
   
-  facilities.forEach((facility) => {
+  const facility = facilityCache.find(f => String(f.facility_id) === String(facilityId));
+  const marker = facilityIdToMarker.get(String(facilityId));
+  
+  console.log('Found facility:', facility);
+  console.log('Found marker:', marker);
+  
+  if (!facility) {
+    console.error('Facility not found in cache for ID:', facilityId);
+    return;
+  }
+  
+  if (!marker) {
+    console.error('Marker not found for facility ID:', facilityId);
+    return;
+  }
+  
+  selectedFacilityId = String(facilityId);
+  // Smoothly fly to the facility and open the popup after the movement to keep it centered
+  const targetLatLng = [facility.latitude, facility.longitude];
+  const targetZoom = Math.max(map.getZoom(), 15);
+  
+  console.log('Flying to:', targetLatLng, 'with zoom:', targetZoom);
+  
+  let opened = false;
+  const openIfNeeded = () => {
+    if (opened) return;
+    opened = true;
+    marker.openPopup();
+    console.log('Popup opened for facility:', facility.name);
+  };
+  map.once('moveend', openIfNeeded);
+  map.flyTo(targetLatLng, targetZoom, { animate: true, duration: 0.8 });
+  updateFacilityInfoPanel(facility);
+  // Highlight selected badge in list
+  document.querySelectorAll('#facility-list .badge').forEach(b => b.classList.remove('active'));
+  const active = document.querySelector(`#facility-list .badge[data-id="${String(facilityId)}"]`);
+  if (active) active.classList.add('active');
+}
+
+// Function: populateFacilityDropdown
+// Purpose: Fill the facility <select> with options and wire change event to focus map
+function populateFacilityDropdown() {
+  const select = document.getElementById('facility-select');
+  if (!select) return;
+  
+  console.log('Populating dropdown with facilities:', facilityCache);
+  
+  // Reset options keeping the first placeholder
+  select.innerHTML = '<option value="">-- Choose a facility --</option>';
+  facilityCache.forEach(f => {
+    console.log('Adding facility to dropdown:', f);
+    const opt = document.createElement('option');
+    opt.value = String(f.facility_id);
+    opt.textContent = f.name;
+    select.appendChild(opt);
+  });
+  
+  select.addEventListener('change', (e) => {
+    const id = e.target.value;
+    console.log('Facility selected from dropdown:', id);
+    if (id) selectFacilityById(id);
+  });
+}
+
+// Function: plotFacilityMarkers
+// Purpose: Fetch facilities then place markers on the map and wire events
+async function plotFacilityMarkers() {
+  facilityCache = await fetchFacilities();
+  // Populate dropdown
+  populateFacilityDropdown();
+  
+  facilityCache.forEach((facility) => {
     let popupContent = `<strong>${facility.name}</strong><br>`;
-    
     if (facility.assigned_bhw) {
       popupContent += `<strong>BHW:</strong> ${facility.assigned_bhw}<br>`;
     } else {
-      popupContent += "No BHWS available<br>";
+      popupContent += 'No BHWS available<br>';
     }
 
     // Determine icon color based on facility type
     let icon = redIcon;
-    if (facility.name.includes("MHO")) {
+    if (facility.name.includes('MHO')) {
       icon = greenIcon;
-    } else if (facility.name.includes("BHC")) {
+    } else if (facility.name.includes('BHC')) {
       icon = blueIcon;
     }
 
-    L.marker([facility.latitude, facility.longitude], { icon })
+    const marker = L.marker([facility.latitude, facility.longitude], { icon })
       .addTo(map)
       .bindPopup(popupContent);
+
+    // Store marker by facility id for later focusing
+    facilityIdToMarker.set(String(facility.facility_id), marker);
+
+    // When a marker is clicked, update the info panel and remember selection
+    marker.on('click', () => {
+      selectedFacilityId = String(facility.facility_id);
+      // Center the map on the marker for consistent positioning
+      const latLng = marker.getLatLng();
+      const zoom = Math.max(map.getZoom(), 15);
+      map.flyTo(latLng, zoom, { animate: true, duration: 0.6 });
+      // Open popup after fly to keep it centered
+      map.once('moveend', () => marker.openPopup());
+      updateFacilityInfoPanel(facility);
+    });
   });
 }
 
 // Initialize the map
-const map = L.map('map').setView([7.587429855100546, 125.82881651697123], 12);
+const DEFAULT_CENTER = [7.587429855100546, 125.82881651697123];
+const DEFAULT_ZOOM = 12;
+const map = L.map('map').setView(DEFAULT_CENTER, DEFAULT_ZOOM);
 
 // Add OpenStreetMap tiles
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -416,21 +531,7 @@ let heat = L.heatLayer([], {
   }
 }).addTo(map);
 
-// Add legend with enhanced colors
-const legend = L.control({ position: 'bottomright' });
-legend.onAdd = function(map) {
-  const div = L.DomUtil.create('div', 'legend');
-  div.innerHTML = `
-    <h4>Case Intensity</h4>
-    <div><span class="heat-intensity" style="background: blue"></span>Very Low</div>
-    <div><span class="heat-intensity" style="background: cyan"></span>Low</div>
-    <div><span class="heat-intensity" style="background: lime"></span>Medium</div>
-    <div><span class="heat-intensity" style="background: yellow"></span>High</div>
-    <div><span class="heat-intensity" style="background: red"></span>Very High</div>
-  `;
-  return div;
-};
-legend.addTo(map);
+
 
 // Function to update heat map based on selected disease and month with animation
 function updateHeatMap() {
@@ -534,26 +635,34 @@ plotFacilityMarkers();
 document.addEventListener('DOMContentLoaded', function() {
   console.log('DOM Content Loaded - Initializing heatmap...');
   
-  // Initialize month badges
+  // Initialize month badges (kept for future use of heatmap)
   getCurrentMonth();
-  
-  // Initialize heat map with current selections
+  // Initialize heat map with current selections (no longer tied to UI)
   updateHeatMap();
   
-  // Disease filter handlers
-  document.querySelectorAll('.disease-badge[data-disease]').forEach(badge => {
-    badge.addEventListener('click', function() {
-      // Toggle active state for disease badges only
-      document.querySelectorAll('.disease-badge[data-disease]').forEach(b => {
-        b.classList.remove('active');
-        b.style.transform = 'scale(1)';
-      });
-      this.classList.add('active');
-      this.style.transform = 'scale(1.05)';
-      
-      // Update current disease and refresh map
-      currentDisease = this.dataset.disease;
-      updateHeatMap();
+  // Initialize facility markers, list, and info panel
+  plotFacilityMarkers().then(() => {
+    // Optionally auto-select first facility for a better UX
+    if (facilityCache.length > 0) {
+      updateFacilityInfoPanel(null); // keep empty until user clicks
+    }
+  });
+
+  // Wire reset button to return to default view and clear selection
+  const resetBtn = document.getElementById('facility-reset');
+  if (resetBtn) {
+    resetBtn.addEventListener('click', () => {
+      const select = document.getElementById('facility-select');
+      if (select) select.value = '';
+      selectedFacilityId = null;
+      // Close any open popup
+      map.closePopup();
+      // Reset info panel
+      updateFacilityInfoPanel(null);
+      // Fly back to default
+      map.flyTo(DEFAULT_CENTER, DEFAULT_ZOOM, { animate: true, duration: 0.8 });
     });
-  }); 
+  }
+  
+  // Disease filter badges removed in favor of facility dropdown
 }); 

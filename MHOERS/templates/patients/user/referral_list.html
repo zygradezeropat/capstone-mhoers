@@ -66,8 +66,8 @@
                           data-vsex = "{{ r.patient.sex}}"
                           data-vreason = "{{ r.chief_complaint }}"
                           data-vdisease = "{{ predictions|dict_get:r.referral_id|first }}"
-                          data-toggle="modal" 
-                          data-target="#MedicalDetails">
+                          data-bs-toggle="modal" 
+                          data-bs-target="#MedicalDetails">
                            <i class="bi bi-file-medical me-1"></i> Referral Details
                          </button>
                         </td>
@@ -129,8 +129,8 @@
                           data-vsex = "{{ r.patient.sex}}"
                           data-vreason = "{{ r.chief_complaint }}"
                           data-vdisease = "{{ predictions|dict_get:r.referral_id|first }}"
-                          data-toggle="modal" 
-                          data-target="#MedicalDetails">
+                          data-bs-toggle="modal" 
+                          data-bs-target="#MedicalDetails">
                            <i class="bi bi-file-medical me-1"></i> Referral Details
                          </button>
                         </td>
@@ -155,9 +155,7 @@
     <div class="modal-content shadow-lg border-0">
       <div class="modal-header bg-success text-white">
         <h5 class="modal-title"><i class="bi bi-person-lines-fill mr-2"></i>Medical Details</h5>
-        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body p-4">
         {% csrf_token %}
@@ -223,8 +221,8 @@
         </div>
       </div>
       <div class="modal-footer bg-light">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">
-          <i class="bi bi-arrow-left mr-2"></i>Back
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="bi bi-arrow-left me-2"></i>Back
         </button>
       </div>
     </div>
