@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Python Virtual Environments
 venv/
 env/
@@ -72,3 +73,6 @@ MHOERS.backup/
 Thumbs.db
 .DS_Store
 
+=======
+venv/
+>>>>>>> fc843bf29042ed8b14667e04d78e9e7dbcc6d873
