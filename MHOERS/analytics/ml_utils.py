@@ -1045,6 +1045,21 @@ def load_disease_peak_csv_data(csv_2023_path=None, csv_2024_path=None):
             if matching_cols:
                 df.rename(columns={matching_cols[0]: col}, inplace=True)
     
+    # Handle SITIO/BARANGAY column (preserve if exists)
+    if 'SITIO/BARANGAY' not in df.columns:
+        # Try to find similar column names
+        possible_barangay_cols = [c for c in df.columns if 'barangay' in c.lower() or 'sitio' in c.lower() or 'location' in c.lower()]
+        if possible_barangay_cols:
+            df.rename(columns={possible_barangay_cols[0]: 'SITIO/BARANGAY'}, inplace=True)
+        else:
+            df['SITIO/BARANGAY'] = 'Unknown'
+    
+    # Handle DATE column if exists
+    if 'DATE' in df.columns:
+        df['DATE'] = pd.to_datetime(df['DATE'], errors='coerce')
+    elif 'CREATED_AT' in df.columns:
+        df['DATE'] = pd.to_datetime(df['CREATED_AT'], errors='coerce')
+    
     # Clean ICD10 CODE column
     if 'ICD10 CODE' in df.columns:
         mask_empty = df['ICD10 CODE'].isna() | (df['ICD10 CODE'].astype(str).str.strip() == '')
@@ -1063,7 +1078,7 @@ def queryset_to_disease_peak_dataframe(referrals):
     """
     data = []
     
-    for referral in referrals.select_related('patient'):
+    for referral in referrals.select_related('patient', 'facility'):
         patient = referral.patient
         if not patient:
             continue
@@ -1080,6 +1095,13 @@ def queryset_to_disease_peak_dataframe(referrals):
         
         diagnosis_label = icd10_code if icd10_code else str(diagnosis)[:50].strip() or 'Unknown'
         
+        # Get barangay/facility name
+        barangay = 'Unknown'
+        if referral.facility:
+            barangay = referral.facility.name
+        elif hasattr(patient, 'facility') and patient.facility:
+            barangay = patient.facility.name
+        
         data.append({
             'AGE': patient.age,
             'SEX': patient.sex,
@@ -1087,6 +1109,8 @@ def queryset_to_disease_peak_dataframe(referrals):
             'DIAGNOSIS': diagnosis,
             'ICD10 CODE': icd10_code if icd10_code else diagnosis_label,
             'CREATED_AT': referral.created_at,
+            'SITIO/BARANGAY': barangay,
+            'DATE': referral.created_at,
         })
     
     return pd.DataFrame(data)
@@ -1498,6 +1522,250 @@ def predict_disease_peak_for_month(month_name=None, samples_per_month=100, use_d
             'total_samples': month_samples,  # Use historical average
             'all_diseases': all_diseases  # All diseases with their counts
         }
+    
+    return results
+
+
+def train_barangay_disease_peak_model(csv_2023_path=None, csv_2024_path=None, use_db=False, allowed_icd=None):
+    """
+    Train barangay-based disease peak prediction model (similar to Google Colab code).
+    Trains a RandomForestRegressor per disease per barangay using YEAR and MONTH features.
+    
+    Args:
+        csv_2023_path: Path to 2023 CSV file (if None, uses default)
+        csv_2024_path: Path to 2024 CSV file (if None, uses default)
+        use_db: If True, load from Django database instead of CSV
+        allowed_icd: List of allowed ICD10 codes (if None, uses default)
+    
+    Returns:
+        dict: Training status and saved model paths
+    """
+    # Default allowed ICD codes
+    if allowed_icd is None:
+        allowed_icd = ALLOWED_ICD_CODES
+    
+    # Step 1: Load data
+    if use_db:
+        referrals_2023_2024 = Referral.objects.filter(
+            created_at__year__in=[2023, 2024]
+        ).exclude(
+            Q(patient__isnull=True) | 
+            Q(initial_diagnosis__isnull=True) | 
+            Q(initial_diagnosis='')
+        ).select_related('patient', 'facility')
+        
+        if not referrals_2023_2024.exists():
+            return {"error": "No referral data found for 2023-2024"}
+        
+        df = queryset_to_disease_peak_dataframe(referrals_2023_2024)
+    else:
+        try:
+            df = load_disease_peak_csv_data(csv_2023_path, csv_2024_path)
+        except FileNotFoundError as e:
+            return {"error": str(e)}
+    
+    if df.empty:
+        return {"error": "No data loaded"}
+    
+    # Step 2: Clean and prepare key columns
+    if 'DATE' not in df.columns:
+        if 'CREATED_AT' in df.columns:
+            df['DATE'] = pd.to_datetime(df['CREATED_AT'], errors='coerce')
+        else:
+            return {"error": "No date column found in data"}
+    
+    df['DATE'] = pd.to_datetime(df['DATE'], errors='coerce')
+    df['MONTH'] = df['DATE'].dt.month
+    df['YEAR'] = df['DATE'].dt.year
+    
+    # Drop rows with missing barangay or ICD10 code
+    df = df.dropna(subset=['SITIO/BARANGAY', 'ICD10 CODE'])
+    
+    # Filter by allowed ICD codes
+    df = df[df['ICD10 CODE'].isin(allowed_icd)].copy()
+    
+    if df.empty:
+        return {"error": "No data remaining after filtering"}
+    
+    # Step 3: Aggregate disease counts by Barangay, Disease, Year, and Month
+    barangay_trends = (
+        df.groupby(['SITIO/BARANGAY', 'ICD10 CODE', 'YEAR', 'MONTH'])
+          .size()
+          .reset_index(name='CASE_COUNT')
+    )
+    
+    if barangay_trends.empty:
+        return {"error": "No aggregated data available"}
+    
+    # Step 4: Train regression model per disease per barangay
+    models_dict = {}
+    training_stats = {
+        'total_barangays': 0,
+        'total_diseases': 0,
+        'models_trained': 0,
+        'skipped_insufficient_data': 0
+    }
+    
+    for barangay in barangay_trends['SITIO/BARANGAY'].unique():
+        training_stats['total_barangays'] += 1
+        models_dict[barangay] = {}
+        
+        for disease in barangay_trends['ICD10 CODE'].unique():
+            training_stats['total_diseases'] += 1
+            
+            subset = barangay_trends[
+                (barangay_trends['SITIO/BARANGAY'] == barangay) &
+                (barangay_trends['ICD10 CODE'] == disease)
+            ]
+            
+            if len(subset) < 3:
+                training_stats['skipped_insufficient_data'] += 1
+                continue  # Skip if not enough data points
+            
+            X = subset[['YEAR', 'MONTH']]
+            y = subset['CASE_COUNT']
+            
+            model = RandomForestRegressor(n_estimators=100, random_state=42)
+            model.fit(X, y)
+            
+            models_dict[barangay][disease] = model
+            training_stats['models_trained'] += 1
+    
+    # Save models
+    models_dir = get_ml_models_path()
+    os.makedirs(models_dir, exist_ok=True)
+    
+    model_path = os.path.join(models_dir, 'barangay_disease_peak_models.pkl')
+    metadata_path = os.path.join(models_dir, 'barangay_disease_peak_metadata.pkl')
+    
+    joblib.dump(models_dict, model_path)
+    
+    metadata = {
+        'allowed_icd': allowed_icd,
+        'barangays': list(barangay_trends['SITIO/BARANGAY'].unique()),
+        'diseases': list(barangay_trends['ICD10 CODE'].unique()),
+        'training_stats': training_stats
+    }
+    joblib.dump(metadata, metadata_path)
+    
+    return {
+        "status": "Training completed",
+        "models_saved_to": model_path,
+        "metadata_saved_to": metadata_path,
+        "training_stats": training_stats
+    }
+
+
+def predict_barangay_disease_peak_2025(target_barangays=None, csv_2023_path=None, csv_2024_path=None, use_db=False):
+    """
+    Predict monthly disease peaks for each barangay in 2025 (similar to Google Colab code).
+    
+    Args:
+        target_barangays: List of barangay names to filter (if None, predicts for all)
+        csv_2023_path: Path to 2023 CSV file (if None, uses default)
+        csv_2024_path: Path to 2024 CSV file (if None, uses default)
+        use_db: If True, load from Django database instead of CSV
+    
+    Returns:
+        dict: Predictions with structure {barangay: {month: {disease: count, ...}}}
+    """
+    # Load saved models
+    models_dir = get_ml_models_path()
+    model_path = os.path.join(models_dir, 'barangay_disease_peak_models.pkl')
+    metadata_path = os.path.join(models_dir, 'barangay_disease_peak_metadata.pkl')
+    
+    if not os.path.exists(model_path) or not os.path.exists(metadata_path):
+        return {"error": "Barangay disease peak models not found. Please train the model first using train_barangay_disease_peak_model()"}
+    
+    try:
+        models_dict = joblib.load(model_path)
+        metadata = joblib.load(metadata_path)
+    except Exception as e:
+        return {"error": f"Error loading models: {e}"}
+    
+    # Get all barangays from models and filter out "poblacion" (case-insensitive)
+    all_barangays = [b for b in models_dict.keys() if 'poblacion' not in b.lower()]
+    
+    # Filter target barangays if specified
+    if target_barangays:
+        # Case-insensitive matching
+        target_barangays_upper = [b.upper() for b in target_barangays]
+        filtered_barangays = [b for b in all_barangays if b.upper() in target_barangays_upper]
+        if not filtered_barangays:
+            return {"error": f"No matching barangays found. Available: {all_barangays}"}
+        all_barangays = filtered_barangays
+    
+    # Step 5: Generate predictions for 2025
+    predictions = []
+    
+    for barangay in all_barangays:
+        if barangay not in models_dict:
+            continue
+        
+        for disease in models_dict[barangay].keys():
+            model = models_dict[barangay][disease]
+            
+            # Predict for 2025 months (1-12)
+            future_months = pd.DataFrame({'YEAR': [2025]*12, 'MONTH': range(1, 13)})
+            y_pred = model.predict(future_months)
+            
+            for m, p in zip(range(1, 13), y_pred):
+                predictions.append({
+                    'Barangay': barangay,
+                    'Disease': disease,
+                    'Year': 2025,
+                    'Month': m,
+                    'Predicted_Cases': max(0, round(p, 2))
+                })
+    
+    if not predictions:
+        return {"error": "No predictions generated"}
+    
+    # Convert predictions to DataFrame
+    pred_df = pd.DataFrame(predictions)
+    
+    # Find the top disease per barangay each month
+    peak_disease = (
+        pred_df.sort_values(['Barangay', 'Month', 'Predicted_Cases'], ascending=[True, True, False])
+        .groupby(['Barangay', 'Month'])
+        .first()
+        .reset_index()
+    )
+    
+    # Organize results by barangay and month
+    results = {}
+    for barangay in all_barangays:
+        results[barangay] = {}
+        
+        # Get all predictions for this barangay
+        barangay_preds = pred_df[pred_df['Barangay'] == barangay]
+        
+        for month in range(1, 13):
+            month_data = barangay_preds[barangay_preds['Month'] == month]
+            
+            # Get peak disease
+            peak = peak_disease[
+                (peak_disease['Barangay'] == barangay) & 
+                (peak_disease['Month'] == month)
+            ]
+            
+            # Get all diseases for this month
+            all_diseases = {}
+            for _, row in month_data.iterrows():
+                all_diseases[row['Disease']] = row['Predicted_Cases']
+            
+            if not peak.empty:
+                results[barangay][month] = {
+                    'peak_disease': peak.iloc[0]['Disease'],
+                    'peak_cases': peak.iloc[0]['Predicted_Cases'],
+                    'all_diseases': all_diseases
+                }
+            else:
+                results[barangay][month] = {
+                    'peak_disease': None,
+                    'peak_cases': 0,
+                    'all_diseases': all_diseases
+                }
     
     return results
 

@@ -15,7 +15,7 @@ import calendar
 from .models import *
 from django.contrib.auth.models import User
 from django.utils.translation import gettext_lazy as _
-from analytics.ml_utils import predict_disease_peak_for_month
+from analytics.ml_utils import predict_disease_peak_for_month, train_barangay_disease_peak_model, predict_barangay_disease_peak_2025
 
 
 SINGAPORE_TZ = ZoneInfo('Asia/Singapore')
@@ -1003,6 +1003,67 @@ def get_disease_peak_predictions(request):
     result = predict_disease_peak_for_month(
         month_name=month,
         samples_per_month=samples_per_month,
+        use_db=use_db
+    )
+    
+    if "error" in result:
+        return JsonResponse(result, status=400)
+    
+    return JsonResponse(result)
+
+
+@login_required
+def train_barangay_disease_peak_model_api(request):
+    """
+    API endpoint to train barangay-based disease peak prediction model.
+    
+    Query parameters:
+        - use_db: Use Django database instead of CSV (default: false)
+        - allowed_icd: Comma-separated list of ICD codes (optional)
+    
+    Returns:
+        JSON response with training status
+    """
+    use_db = request.GET.get('use_db', 'false').lower() == 'true'
+    allowed_icd_param = request.GET.get('allowed_icd', None)
+    
+    allowed_icd = None
+    if allowed_icd_param:
+        allowed_icd = [code.strip() for code in allowed_icd_param.split(',')]
+    
+    result = train_barangay_disease_peak_model(
+        use_db=use_db,
+        allowed_icd=allowed_icd
+    )
+    
+    if "error" in result:
+        return JsonResponse(result, status=400)
+    
+    return JsonResponse(result)
+
+
+@login_required
+def get_barangay_disease_peak_predictions(request):
+    """
+    API endpoint to get barangay-based disease peak predictions for 2025.
+    Returns predicted disease peaks for each barangay per month.
+    
+    Query parameters:
+        - barangays: Comma-separated list of barangay names to filter (optional)
+        - use_db: Use Django database instead of CSV (default: false)
+    
+    Returns:
+        JSON response with predictions per barangay per month
+    """
+    barangays_param = request.GET.get('barangays', None)
+    use_db = request.GET.get('use_db', 'false').lower() == 'true'
+    
+    target_barangays = None
+    if barangays_param:
+        target_barangays = [b.strip() for b in barangays_param.split(',')]
+    
+    result = predict_barangay_disease_peak_2025(
+        target_barangays=target_barangays,
         use_db=use_db
     )
     

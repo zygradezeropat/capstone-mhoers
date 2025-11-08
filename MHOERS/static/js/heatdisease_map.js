@@ -34,6 +34,189 @@ const blueIcon = new L.Icon({
   shadowSize: [41, 41],
 });
 
+// Function to create custom numbered marker icon with percentage-based color
+function createNumberedMarkerIcon(number, percentage = 0) {
+  const size = 40;
+  const className = 'numbered-marker';
+  
+  // Determine color based on percentage of total cases
+  // Green (light): 0-20% of total
+  // Yellow: 21-60% of total
+  // Red: 61-100% of total
+  let bgColor, textColor;
+  if (percentage === 0 || number === '0') {
+    bgColor = '#f8f9fa';  // Gray for zero
+    textColor = '#6c757d';
+  } else if (percentage <= 20) {
+    bgColor = '#d4edda';  // Light green for low percentage (0-20%)
+    textColor = '#155724';
+  } else if (percentage <= 60) {
+    bgColor = '#fff3cd';  // Yellow for medium percentage (21-60%)
+    textColor = '#856404';
+  } else {
+    bgColor = '#f8d7da';  // Red for high percentage (61-100%)
+    textColor = '#721c24';
+  }
+  
+  return L.divIcon({
+    className: className,
+    html: `
+      <div style="
+        background-color: ${bgColor};
+        width: ${size}px;
+        height: ${size}px;
+        border-radius: 50%;
+        border: 3px solid white;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 14px;
+        color: ${textColor};
+        text-align: center;
+        line-height: 1;
+      ">
+        ${number}
+      </div>
+    `,
+    iconSize: [size, size],
+    iconAnchor: [size/2, size/2],
+    popupAnchor: [0, -size/2]
+  });
+}
+
+// Function to get predicted cases for a facility/barangay
+function getPredictedCasesForBarangay(barangayName, diseaseCode, monthNum, barangayPredictions) {
+  if (!barangayPredictions || barangayPredictions.error) return 0;
+  
+  // Filter out poblacion
+  const filteredPredictions = {};
+  Object.keys(barangayPredictions).forEach(b => {
+    if (!b.toLowerCase().includes('poblacion')) {
+      filteredPredictions[b] = barangayPredictions[b];
+    }
+  });
+  
+  // Try to find matching barangay (case-insensitive, handle variations)
+  const matchingBarangay = Object.keys(filteredPredictions).find(b => {
+    const bLower = b.toLowerCase().trim();
+    const nameLower = barangayName.toLowerCase().trim();
+    return bLower === nameLower || 
+           bLower.includes(nameLower) || 
+           nameLower.includes(bLower);
+  });
+  
+  if (!matchingBarangay) return 0;
+  
+  const months = filteredPredictions[matchingBarangay];
+  if (!months || !months[monthNum] || !months[monthNum].all_diseases) return 0;
+  
+  const monthData = months[monthNum].all_diseases;
+  // Try to get the disease count (handle normalized codes)
+  const normalizedCode = normalizeDiseaseCode(diseaseCode);
+  return monthData[diseaseCode] || monthData[normalizedCode] || 0;
+}
+
+// Function to update marker icons with intensity numbers
+async function updateMarkerIntensities() {
+  if (!currentDisease || !currentMonth) {
+    // If no selection, show default markers
+    facilityCache.forEach((facility) => {
+      const marker = facilityIdToMarker.get(String(facility.facility_id));
+      if (!marker) return;
+      
+      let icon = redIcon;
+      if (facility.name.includes('MHO')) {
+        icon = greenIcon;
+      } else if (facility.name.includes('BHC')) {
+        icon = blueIcon;
+      }
+      marker.setIcon(icon);
+    });
+    return;
+  }
+  
+  // Get disease code from current disease filter
+  let targetDiseaseCode = null;
+  for (const [code, filterKey] of Object.entries(diseaseCodeToFilter)) {
+    if (filterKey === currentDisease) {
+      targetDiseaseCode = code;
+      break;
+    }
+  }
+  
+  if (!targetDiseaseCode) return;
+  
+  // Get month number
+  const monthNames = {
+    'January': '1', 'February': '2', 'March': '3', 'April': '4',
+    'May': '5', 'June': '6', 'July': '7', 'August': '8',
+    'September': '9', 'October': '10', 'November': '11', 'December': '12'
+  };
+  const monthNum = monthNames[currentMonth] || currentMonth.replace(/\D/g, '');
+  
+  // Get barangay predictions (use cache)
+  const barangayPredictions = await fetchBarangayDiseasePeakPredictions();
+  
+  // First, calculate total cases across all barangays for this disease and month
+  let totalCases = 0;
+  const facilityCases = new Map();
+  
+  facilityCache.forEach((facility) => {
+    const predictedCases = getPredictedCasesForBarangay(
+      facility.name,
+      targetDiseaseCode,
+      monthNum,
+      barangayPredictions
+    );
+    facilityCases.set(facility.facility_id, predictedCases);
+    totalCases += predictedCases;
+  });
+  
+  // Update each marker with percentage-based coloring
+  facilityCache.forEach((facility) => {
+    const marker = facilityIdToMarker.get(String(facility.facility_id));
+    if (!marker) return;
+    
+    // Get predicted cases for this facility/barangay
+    const predictedCases = facilityCases.get(facility.facility_id) || 0;
+    
+    // Calculate percentage of total (0-100)
+    const percentage = totalCases > 0 ? (predictedCases / totalCases) * 100 : 0;
+    
+    // Format the number (show 1 decimal if needed, otherwise integer)
+    const displayNumber = predictedCases > 0 
+      ? (predictedCases % 1 === 0 ? predictedCases.toFixed(0) : predictedCases.toFixed(1))
+      : '0';
+    
+    // Create new icon with number - color based on percentage of total
+    const newIcon = createNumberedMarkerIcon(displayNumber, percentage);
+    
+    // Update marker icon
+    marker.setIcon(newIcon);
+    
+    // Update popup to include prediction
+    const diseaseDisplayNames = {
+      'T14.1': 'Open Wounds (T14.1)',
+      'W54.99': 'Dog Bites (W54.99)',
+      'J06.9': 'Acute Respiratory Infections (J06.9)',
+      'J15': 'Bacterial pneumonia (J15)',
+      'I10.1': 'Hypertension Level 2 (I10.1)',
+      'I10-1': 'Hypertension Level 2 (I10-1)'
+    };
+    const diseaseName = diseaseDisplayNames[targetDiseaseCode] || targetDiseaseCode;
+    
+    const popupContent = `
+      <strong>${facility.name}</strong><br>
+      ${facility.assigned_bhw ? `<strong>BHW:</strong> ${facility.assigned_bhw}<br>` : 'No BHWS available<br>'}
+      <strong>Predicted Cases (${currentMonth}):</strong> ${displayNumber}<br>
+      <small><strong>Disease:</strong> ${diseaseName}</small>
+    `;
+    marker.setPopupContent(popupContent);
+  });
+}
+
 // Function to generate random points around a center
 function generateRandomPoints(centerLat, centerLng, count, radius = 0.01) {
   const points = [];
@@ -551,6 +734,8 @@ let predictionsCache = {};
 let countInfoCache = {};
 // Cache for raw predictions data (for table display)
 let rawPredictionsCache = {};
+// Cache for barangay predictions (to avoid multiple API calls)
+let barangayPredictionsCache = null;
 
 // Function to fetch disease peak predictions from API
 async function fetchDiseasePeakPredictions(month = null) {
@@ -564,6 +749,32 @@ async function fetchDiseasePeakPredictions(month = null) {
     return data;
   } catch (error) {
     console.error('Error fetching disease peak predictions:', error);
+    return null;
+  }
+}
+
+// Function to fetch barangay disease peak predictions from API (with caching)
+async function fetchBarangayDiseasePeakPredictions(forceRefresh = false) {
+  // Return cached data if available and not forcing refresh
+  if (!forceRefresh && barangayPredictionsCache !== null) {
+    console.log('Using cached barangay predictions');
+    return barangayPredictionsCache;
+  }
+  
+  try {
+    console.log('Fetching barangay predictions from API...');
+    const url = `/analytics/api/barangay-disease-peak-predictions/`;
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    // Cache the result
+    barangayPredictionsCache = data;
+    console.log('Barangay predictions cached');
+    return data;
+  } catch (error) {
+    console.error('Error fetching barangay disease peak predictions:', error);
     return null;
   }
 }
@@ -793,7 +1004,8 @@ async function fetchAllPredictions() {
   console.log('Disease distribution across months:', diseaseCounts);
   
   // Update table with all predictions
-  updatePredictionTable(allPredictions);
+  // Note: updatePredictionTable now uses barangay predictions, so we don't need to call it here
+  // The table will be updated when barangay predictions are loaded
   
   // Update raw data table (if it still exists)
   if (typeof updateRawDataTable === 'function') {
@@ -974,8 +1186,8 @@ function updateRawDataTable(allPredictions) {
   tableContainer.style.display = 'block';
 }
 
-// Function to update prediction summary table
-function updatePredictionTable(allPredictions) {
+// Function to update prediction summary table using barangay-based predictions
+async function updatePredictionTable(allPredictions) {
   const tableContainer = document.getElementById('prediction-table-container');
   const table = document.getElementById('prediction-summary-table');
   
@@ -988,18 +1200,14 @@ function updatePredictionTable(allPredictions) {
   const allMonths = ["January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December"];
   
-  // Get months that have predictions (for data processing)
-  const monthsWithData = Object.keys(allPredictions).sort((a, b) => {
-    return allMonths.indexOf(a) - allMonths.indexOf(b);
-  });
+  // Month number to name mapping
+  const monthNumToName = {
+    '1': 'January', '2': 'February', '3': 'March', '4': 'April',
+    '5': 'May', '6': 'June', '7': 'July', '8': 'August',
+    '9': 'September', '10': 'October', '11': 'November', '12': 'December'
+  };
   
-  // Use all 12 months for table display
   const months = allMonths;
-  
-  if (monthsWithData.length === 0 && Object.keys(allPredictions).length === 0) {
-    tableContainer.style.display = 'none';
-    return;
-  }
   
   // Build disease to display name mapping
   const diseaseDisplayNames = {
@@ -1013,11 +1221,12 @@ function updatePredictionTable(allPredictions) {
     'I10.1': 'Hypertension Level 2 (I10-1)'  // Normalized
   };
   
-  // Collect all diseases and their counts per month
-  // API now returns all_diseases with all predictions, not just peak
-  const diseaseData = {};
+  // Fetch barangay predictions
+  const barangayPredictions = await fetchBarangayDiseasePeakPredictions();
   
-  // Initialize all known diseases
+  // Initialize disease data structure (use normalized codes only to avoid duplicates)
+  const diseaseData = {};
+  // Use normalized codes only - normalize I10.1 to I10-1
   const allDiseaseCodes = ['T14.1', 'W54.99', 'J06.9', 'J15', 'I10-1'];
   allDiseaseCodes.forEach(code => {
     diseaseData[code] = {};
@@ -1026,43 +1235,69 @@ function updatePredictionTable(allPredictions) {
     });
   });
   
-  // Fill in actual predictions (all diseases per month)
-  // Only process months that have data in allPredictions
-  monthsWithData.forEach(month => {
-    const monthPrediction = allPredictions[month];
-    if (monthPrediction && typeof monthPrediction === 'object' && !Array.isArray(monthPrediction)) {
-      // Check if we have all_diseases (new format) or just disease/count (old format)
-      if (monthPrediction.all_diseases) {
-        // New format: all diseases with their counts
-        Object.entries(monthPrediction.all_diseases).forEach(([diseaseCode, count]) => {
-          // Filter out ZOO disease code
-          if (diseaseCode === 'ZOO' || diseaseCode === 'zoo') {
-            return;
-          }
-          // Normalize disease code (I10.1 -> I10-1, I10.0 -> I10-0)
-          const normalizedCode = normalizeDiseaseCode(diseaseCode);
-          if (!diseaseData[normalizedCode]) {
-            diseaseData[normalizedCode] = {};
-            months.forEach(m => {
-              diseaseData[normalizedCode][m] = 0;
-            });
-          }
-          // Accumulate counts if the same disease appears with different formats
-          diseaseData[normalizedCode][month] = (diseaseData[normalizedCode][month] || 0) + count;
-        });
-      } else if (monthPrediction.disease && monthPrediction.count !== undefined) {
-        // Old format: only peak disease (for backward compatibility)
-        const diseaseCode = normalizeDiseaseCode(monthPrediction.disease);
-        if (!diseaseData[diseaseCode]) {
-          diseaseData[diseaseCode] = {};
-          months.forEach(m => {
-            diseaseData[diseaseCode][m] = 0;
+  // If barangay predictions are available, use them to calculate totals
+  if (barangayPredictions && !barangayPredictions.error) {
+    // Sum up predictions from all barangays by disease and month
+    Object.keys(barangayPredictions).forEach(barangay => {
+      // Filter out poblacion
+      if (barangay.toLowerCase().includes('poblacion')) {
+        return;
+      }
+      
+      const months = barangayPredictions[barangay];
+      Object.keys(months).forEach(monthNum => {
+        const monthName = monthNumToName[monthNum];
+        if (!monthName) return;
+        
+        const monthData = months[monthNum];
+        if (monthData && monthData.all_diseases) {
+          // Sum up all diseases for this barangay and month
+          Object.entries(monthData.all_diseases).forEach(([diseaseCode, count]) => {
+            // Normalize disease code
+            const normalizedCode = normalizeDiseaseCode(diseaseCode);
+            if (diseaseData[normalizedCode] && diseaseData[normalizedCode][monthName] !== undefined) {
+              diseaseData[normalizedCode][monthName] += count;
+            }
           });
         }
-        diseaseData[diseaseCode][month] = monthPrediction.count;
+      });
+    });
+  } else {
+    // Fallback to old method if barangay predictions not available
+    const monthsWithData = Object.keys(allPredictions).sort((a, b) => {
+      return allMonths.indexOf(a) - allMonths.indexOf(b);
+    });
+    
+    monthsWithData.forEach(month => {
+      const monthPrediction = allPredictions[month];
+      if (monthPrediction && typeof monthPrediction === 'object' && !Array.isArray(monthPrediction)) {
+        if (monthPrediction.all_diseases) {
+          Object.entries(monthPrediction.all_diseases).forEach(([diseaseCode, count]) => {
+            if (diseaseCode === 'ZOO' || diseaseCode === 'zoo') {
+              return;
+            }
+            const normalizedCode = normalizeDiseaseCode(diseaseCode);
+            if (!diseaseData[normalizedCode]) {
+              diseaseData[normalizedCode] = {};
+              months.forEach(m => {
+                diseaseData[normalizedCode][m] = 0;
+              });
+            }
+            diseaseData[normalizedCode][month] = (diseaseData[normalizedCode][month] || 0) + count;
+          });
+        } else if (monthPrediction.disease && monthPrediction.count !== undefined) {
+          const diseaseCode = normalizeDiseaseCode(monthPrediction.disease);
+          if (!diseaseData[diseaseCode]) {
+            diseaseData[diseaseCode] = {};
+            months.forEach(m => {
+              diseaseData[diseaseCode][m] = 0;
+            });
+          }
+          diseaseData[diseaseCode][month] = monthPrediction.count;
+        }
       }
-    }
-  });
+    });
+  }
   
   // Build table header
   const thead = table.querySelector('thead tr');
@@ -1078,9 +1313,26 @@ function updatePredictionTable(allPredictions) {
   const tbody = table.querySelector('tbody');
   tbody.innerHTML = '';
   
-  // Sort diseases by code and filter out ZOO
-  const sortedDiseases = Object.keys(diseaseData)
-    .filter(diseaseCode => diseaseCode !== 'ZOO' && diseaseCode !== 'zoo')
+  // Sort diseases by code, filter out ZOO, and ensure no duplicates after normalization
+  const normalizedDiseaseData = {};
+  Object.keys(diseaseData).forEach(code => {
+    if (code === 'ZOO' || code === 'zoo') return;
+    const normalized = normalizeDiseaseCode(code);
+    if (!normalizedDiseaseData[normalized]) {
+      normalizedDiseaseData[normalized] = diseaseData[code];
+    } else {
+      // Merge data if duplicate found (shouldn't happen with proper normalization, but just in case)
+      months.forEach(month => {
+        normalizedDiseaseData[normalized][month] = (normalizedDiseaseData[normalized][month] || 0) + (diseaseData[code][month] || 0);
+      });
+    }
+  });
+  
+  const sortedDiseases = Object.keys(normalizedDiseaseData)
+    .filter(diseaseCode => {
+      const count = months.reduce((sum, month) => sum + (normalizedDiseaseData[diseaseCode][month] || 0), 0);
+      return count > 0; // Only show diseases with data
+    })
     .sort();
   
   sortedDiseases.forEach(diseaseCode => {
@@ -1095,21 +1347,23 @@ function updatePredictionTable(allPredictions) {
     // Month count cells
     months.forEach(month => {
       const countCell = document.createElement('td');
-      const count = diseaseData[diseaseCode][month] || 0;
-      countCell.textContent = count;
+      const count = normalizedDiseaseData[diseaseCode][month] || 0;
+      // Format count: show 2 decimal places if it's a decimal, otherwise show as integer
+      const formattedCount = count % 1 === 0 ? count.toFixed(0) : count.toFixed(2);
+      countCell.textContent = formattedCount;
       countCell.style.textAlign = 'center';
       
-      // Add color coding based on count
+      // Add color coding based on count (adjusted for smaller decimal values)
       if (count === 0) {
         countCell.textContent = '-';
         countCell.style.backgroundColor = '#f8f9fa';
         countCell.style.color = '#6c757d';
         countCell.style.fontStyle = 'italic';
-      } else if (count < 20) {
+      } else if (count < 5) {
         countCell.style.backgroundColor = '#d1ecf1';
         countCell.style.color = '#0c5460';
         countCell.style.fontWeight = '500';
-      } else if (count < 40) {
+      } else if (count < 15) {
         countCell.style.backgroundColor = '#fff3cd';
         countCell.style.color = '#856404';
         countCell.style.fontWeight = '600';
@@ -1127,6 +1381,132 @@ function updatePredictionTable(allPredictions) {
   
   // Show table container
   tableContainer.style.display = 'block';
+}
+
+// Function to update barangay disease predictions table
+async function updateBarangayPredictionTable() {
+  const tableContainer = document.getElementById('barangay-prediction-table-container');
+  const table = document.getElementById('barangay-prediction-table');
+  
+  if (!tableContainer || !table) {
+    console.error('Barangay table elements not found');
+    return;
+  }
+  
+  // Fetch barangay predictions
+  const barangayPredictions = await fetchBarangayDiseasePeakPredictions();
+  
+  if (!barangayPredictions || barangayPredictions.error) {
+    console.error('Error loading barangay predictions:', barangayPredictions?.error || 'Unknown error');
+    tableContainer.style.display = 'none';
+    return;
+  }
+  
+  // Disease display names
+  const diseaseDisplayNames = {
+    'T14.1': 'Open Wounds (T14.1)',
+    'W54.99': 'Dog Bites (W54.99)',
+    'J06.9': 'Acute Respiratory Infections (J06.9)',
+    'J15': 'Bacterial pneumonia (J15)',
+    'I10.0': 'Hypertension Level 1 (I10.0)',
+    'I10.1': 'Hypertension Level 2 (I10.1)',
+    'I10-1': 'Hypertension Level 2 (I10-1)'
+  };
+  
+  // Month names
+  const monthNames = {
+    '1': 'January', '2': 'February', '3': 'March', '4': 'April',
+    '5': 'May', '6': 'June', '7': 'July', '8': 'August',
+    '9': 'September', '10': 'October', '11': 'November', '12': 'December'
+  };
+  
+  // Build table body
+  const tbody = table.querySelector('tbody');
+  tbody.innerHTML = '';
+  
+  // Sort barangays alphabetically and filter out "poblacion" (case-insensitive)
+  const sortedBarangays = Object.keys(barangayPredictions)
+    .filter(barangay => !barangay.toLowerCase().includes('poblacion'))
+    .sort();
+  
+  sortedBarangays.forEach(barangay => {
+    const months = barangayPredictions[barangay];
+    
+    // Sort months numerically
+    const sortedMonths = Object.keys(months).sort((a, b) => parseInt(a) - parseInt(b));
+    
+    sortedMonths.forEach(monthNum => {
+      const monthData = months[monthNum];
+      if (!monthData) return;
+      
+      const row = document.createElement('tr');
+      
+      // Barangay cell
+      const barangayCell = document.createElement('td');
+      barangayCell.textContent = barangay;
+      barangayCell.style.fontWeight = '600';
+      row.appendChild(barangayCell);
+      
+      // Month cell
+      const monthCell = document.createElement('td');
+      monthCell.textContent = monthNames[monthNum] || monthNum;
+      row.appendChild(monthCell);
+      
+      // Peak disease cell
+      const peakDiseaseCell = document.createElement('td');
+      const peakDisease = monthData.peak_disease || 'N/A';
+      peakDiseaseCell.textContent = diseaseDisplayNames[peakDisease] || peakDisease;
+      peakDiseaseCell.style.fontWeight = '500';
+      row.appendChild(peakDiseaseCell);
+      
+      // Peak cases cell
+      const peakCasesCell = document.createElement('td');
+      const peakCases = monthData.peak_cases || 0;
+      peakCasesCell.textContent = peakCases.toFixed(2);
+      peakCasesCell.style.textAlign = 'center';
+      peakCasesCell.style.fontWeight = '600';
+      
+      // Color code based on case count
+      if (peakCases === 0) {
+        peakCasesCell.style.backgroundColor = '#f8f9fa';
+        peakCasesCell.style.color = '#6c757d';
+      } else if (peakCases < 3) {
+        peakCasesCell.style.backgroundColor = '#d1ecf1';
+        peakCasesCell.style.color = '#0c5460';
+      } else if (peakCases < 5) {
+        peakCasesCell.style.backgroundColor = '#fff3cd';
+        peakCasesCell.style.color = '#856404';
+      } else {
+        peakCasesCell.style.backgroundColor = '#f8d7da';
+        peakCasesCell.style.color = '#721c24';
+      }
+      
+      row.appendChild(peakCasesCell);
+      
+      // All diseases cell (formatted list)
+      const allDiseasesCell = document.createElement('td');
+      const allDiseases = monthData.all_diseases || {};
+      const diseaseList = Object.entries(allDiseases)
+        .map(([disease, count]) => {
+          const displayName = diseaseDisplayNames[disease] || disease;
+          return `${displayName}: ${count.toFixed(2)}`;
+        })
+        .join(', ');
+      allDiseasesCell.textContent = diseaseList || 'No data';
+      allDiseasesCell.style.fontSize = '0.9em';
+      allDiseasesCell.style.maxWidth = '400px';
+      row.appendChild(allDiseasesCell);
+      
+      tbody.appendChild(row);
+    });
+  });
+  
+  // Show table container
+  if (tbody.children.length > 0) {
+    tableContainer.style.display = 'block';
+  } else {
+    tableContainer.style.display = 'none';
+  }
 }
 
 // Function to update heat map based on selected disease and month with animation
@@ -1248,8 +1628,11 @@ async function updateHeatMap() {
     }
   }
   
-  // Update count display
-  updateCountDisplay(currentCount);
+  // Update count display (now uses barangay predictions)
+  await updateCountDisplay(currentCount);
+  
+  // Update marker intensities with predicted cases
+  await updateMarkerIntensities();
   
   // Update summary table if we have predictions
   // Always use the full cache to show all months, not just the current one
@@ -1271,7 +1654,7 @@ async function updateHeatMap() {
 }
 
 // Function to update count display
-function updateCountDisplay(count) {
+async function updateCountDisplay(count) {
   // Create or update count display element
   let countDisplay = document.getElementById('prediction-count-display');
   const monthContainer = document.getElementById('month-container');
@@ -1315,10 +1698,76 @@ function updateCountDisplay(count) {
     monthName = monthBadge.textContent.trim();
   }
   
+  // Try to get count from barangay predictions if available
+  let totalCount = count;
+  if (currentMonth) {
+    try {
+      const barangayPredictions = await fetchBarangayDiseasePeakPredictions();
+      if (barangayPredictions && !barangayPredictions.error) {
+        // Get disease code from current disease filter
+        let targetDiseaseCode = null;
+        for (const [code, filterKey] of Object.entries(diseaseCodeToFilter)) {
+          if (filterKey === currentDisease) {
+            targetDiseaseCode = code;
+            break;
+          }
+        }
+        
+        // Extract month number from month name (e.g., "January" -> "1")
+        const monthNames = {
+          'January': '1', 'February': '2', 'March': '3', 'April': '4',
+          'May': '5', 'June': '6', 'July': '7', 'August': '8',
+          'September': '9', 'October': '10', 'November': '11', 'December': '12'
+        };
+        const monthNum = monthNames[currentMonth] || currentMonth.replace(/\D/g, '');
+        
+        // Sum up predictions from all barangays for this disease and month
+        let sum = 0;
+        Object.keys(barangayPredictions).forEach(barangay => {
+          // Filter out poblacion
+          if (barangay.toLowerCase().includes('poblacion')) {
+            return;
+          }
+          
+          const months = barangayPredictions[barangay];
+          if (months[monthNum] && months[monthNum].all_diseases) {
+            const monthData = months[monthNum].all_diseases;
+            // Check for disease code (try both normalized and original)
+            if (targetDiseaseCode && monthData[targetDiseaseCode] !== undefined) {
+              sum += monthData[targetDiseaseCode];
+            } else {
+              // Try normalized version
+              const normalizedCode = normalizeDiseaseCode(targetDiseaseCode);
+              if (monthData[normalizedCode] !== undefined) {
+                sum += monthData[normalizedCode];
+              } else {
+                // Try all disease codes to find match
+                Object.entries(monthData).forEach(([diseaseCode, diseaseCount]) => {
+                  const normalized = normalizeDiseaseCode(diseaseCode);
+                  if (normalized === normalizeDiseaseCode(targetDiseaseCode)) {
+                    sum += diseaseCount;
+                  }
+                });
+              }
+            }
+          }
+        });
+        
+        if (sum > 0) {
+          totalCount = sum;
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching barangay predictions for count display:', error);
+    }
+  }
+  
   // Format the message as requested
-  if (count !== null && count !== undefined && count > 0) {
+  if (totalCount !== null && totalCount !== undefined && totalCount > 0) {
+    // Format count: show 2 decimal places if it's a decimal, otherwise show as integer
+    const formattedCount = totalCount % 1 === 0 ? totalCount.toFixed(0) : totalCount.toFixed(2);
     countDisplay.innerHTML = `
-      <strong>Prediction Summary:</strong> Predicted "${count}" cases of ${diseaseName} for ${monthName}<br>
+      <strong>Prediction Summary:</strong> Predicted "${formattedCount}" cases of ${diseaseName} for ${monthName}<br>
       <small class="text-muted d-block mt-1">Check the summary table below for detailed predictions by month</small>
     `;
     countDisplay.style.display = 'block';
@@ -1379,7 +1828,7 @@ function getCurrentMonth(){
     }
     
     // Add click event listener
-    monthBadge.addEventListener('click', function() {
+    monthBadge.addEventListener('click', async function() {
       // Remove active class from all month badges
       document.querySelectorAll('.month-badge').forEach(badge => {
         badge.classList.remove('active');
@@ -1393,6 +1842,9 @@ function getCurrentMonth(){
       // Update current month and refresh map
       currentMonth = this.dataset.month;
       console.log('Month selected:', currentMonth);
+      
+      // Update marker intensities when month changes
+      await updateMarkerIntensities();
       updateHeatMap();
     });
     
@@ -1414,12 +1866,19 @@ document.addEventListener('DOMContentLoaded', async function() {
   // Initialize map first
   initializeMap();
   
-  // Fetch all predictions FIRST to populate the summary table with all months
+  // Fetch barangay predictions ONCE and cache it (reduces API calls from 3 to 1)
+  console.log('Fetching barangay predictions (one time)...');
+  await fetchBarangayDiseasePeakPredictions();
+  
+  // Load barangay predictions table (uses cached data)
+  await updateBarangayPredictionTable();
+  
+  // Update summary table using barangay predictions (uses cached data)
+  await updatePredictionTable({});
+  
+  // Also fetch old predictions for raw data table (if needed)
   await fetchAllPredictions().then(() => {
-    console.log('All predictions fetched, updating table...');
-    // Update table with all predictions after fetching
-    // Always try to update the table, even if cache is empty (will show empty table)
-    updatePredictionTable(rawPredictionsCache);
+    console.log('All predictions fetched, updating raw data table...');
     updateRawDataTable(rawPredictionsCache);
   });
   
@@ -1429,11 +1888,13 @@ document.addEventListener('DOMContentLoaded', async function() {
   updateHeatMap();
   
   // Initialize facility markers, list, and info panel
-  plotFacilityMarkers().then(() => {
+  plotFacilityMarkers().then(async () => {
     // Optionally auto-select first facility for a better UX
     if (facilityCache.length > 0) {
       updateFacilityInfoPanel(null); // keep empty until user clicks
     }
+    // Update marker intensities after markers are plotted
+    await updateMarkerIntensities();
   });
 
   // Wire reset button to return to default view and clear selection
@@ -1467,6 +1928,9 @@ document.addEventListener('DOMContentLoaded', async function() {
       
       // Update current disease and refresh map
       currentDisease = this.dataset.disease;
+      
+      // Update marker intensities when disease changes
+      updateMarkerIntensities();
       console.log('Disease selected:', currentDisease);
       updateHeatMap();
     });
