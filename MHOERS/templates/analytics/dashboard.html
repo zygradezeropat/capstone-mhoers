@@ -80,6 +80,12 @@
 
 </div>
 
+<!-- Hidden form for New Assessment functionality -->
+<form id="goToAssessmentForm" action="{% url 'assessment' %}" method="post" style="display:none;">
+  {% csrf_token %}
+  <input type="hidden" name="patient_id" id="hiddenPatientId">
+</form>
+
 <!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
@@ -93,7 +99,7 @@
 <script>
   // Make current user ID and admin status available to calendar.js
   window.currentUserId = {{ request.user.id }};
-  window.isAdmin = {{ request.user.is_staff|yesno:"true,false" }};
+  window.isAdmin = {{ request.user.is_staff|yesno:"true,false" }}; 
 </script>
 
 <script src="{% static 'js/calendar.js' %}"></script>

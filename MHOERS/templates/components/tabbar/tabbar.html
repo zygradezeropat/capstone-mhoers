@@ -53,44 +53,51 @@
     font-size: 1.1rem;
   }
 </style>
-
 <ul class="nav nav-tabs" id="dashboardTab" role="tablist">
   {% if tab1_name %}
   <li class="nav-item" role="presentation">
-    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab1" type="button" role="tab">
-      <i class="bi bi-clock-history"></i>
+    <button class="nav-link {% if active_tab == 'tab1' or not active_tab %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab1" type="button" role="tab">
+      <i class="bi {{ tab1_icon|default:'bi-clock-history' }}"></i>
       {{ tab1_name }}
+      <span> </span>
+      {% if pending_users_count > 0 %}
+                <span class="notification-badge">{{ pending_users_count }}</span>
+          {% endif %}
     </button>
   </li>
   {% endif %}
+
   {% if tab2_name %}
   <li class="nav-item" role="presentation">
     <button class="nav-link {% if active_tab == 'tab2' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab2" type="button" role="tab">
-      <i class="bi bi-check-circle"></i>
+      <i class="bi {{ tab2_icon|default:'bi-check-circle' }}"></i>
       {{ tab2_name }}
     </button>
   </li>
   {% endif %}
+
   {% if tab3_name %}
   <li class="nav-item" role="presentation">
     <button class="nav-link {% if active_tab == 'tab3' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab3" type="button" role="tab">
-      <i class="bi bi-arrow-right-circle"></i>
+      <i class="bi {{ tab3_icon|default:'bi-arrow-right-circle' }}"></i>
       {{ tab3_name }}
     </button>
   </li>
   {% endif %}
+
   {% if tab4_name %}
   <li class="nav-item" role="presentation">
     <button class="nav-link {% if active_tab == 'tab4' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab4" type="button" role="tab">
-      <i class="bi bi-archive"></i>
+      <i class="bi {{ tab4_icon|default:'bi-archive' }}"></i>
       {{ tab4_name }}
     </button>
   </li>
   {% endif %}
+
   {% if tab5_name %}
   <li class="nav-item" role="presentation">
     <button class="nav-link {% if active_tab == 'tab5' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab5" type="button" role="tab">
-      <i class="bi bi-trash"></i>
+      <i class="bi {{ tab5_icon|default:'bi-person-check' }}"></i>
       {{ tab5_name }}
     </button>
   </li>

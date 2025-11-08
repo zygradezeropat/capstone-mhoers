@@ -8,7 +8,7 @@
 {% include 'components/patients/addpatients.html' %}
 
 <style>
-  /* Only disable the top navigation tabs */
+  /* Only disable the top navigation tabs */ 
 ul#dashboardTab.nav .nav-link {
   pointer-events: none;
   cursor: not-allowed;
@@ -43,7 +43,7 @@ ul#dashboardTab.nav .nav-link {
           </h5>
           <div class="form-group">
             <select class="form-control form-control-lg" required name="patient" id="patientSelect" style="width: 100%;">
-              <option value="" disabled selected>Select Patient</option>
+              <option value="" disabled {% if not patient_id %}selected{% endif %}>Select Patient</option>
               {% if patient_id and selected_patient %}
                 <option value="{{ selected_patient.patients_id }}" selected>
                   {{ selected_patient.first_name }} {{ selected_patient.middle_name }} {{ selected_patient.last_name }}
@@ -239,12 +239,23 @@ ul#dashboardTab.nav .nav-link {
 
     // Make sure jQuery and Select2 are loaded before initializing
     if (typeof $ !== 'undefined' && typeof $.fn.select2 !== 'undefined') {
+      // Check if we have a pre-selected patient
+      var preselectedPatient = null;
+      {% if patient_id and selected_patient %}
+        preselectedPatient = {
+          id: "{{ selected_patient.patients_id }}",
+          text: "{{ selected_patient.first_name }} {{ selected_patient.middle_name }} {{ selected_patient.last_name }}",
+          name: "{{ selected_patient.first_name }} {{ selected_patient.middle_name }} {{ selected_patient.last_name }}"
+        };
+      {% endif %}
+
       $('#patientSelect').select2({
         placeholder: "Search patient by name",
         allowClear: true,
         theme: "bootstrap4",
         width: '100%',
         minimumInputLength: 0,
+        data: preselectedPatient ? [preselectedPatient] : [], // Pre-populate with selected patient
         ajax: {
           url: "{% url 'patients:search_patients' %}",
           dataType: 'json',
@@ -256,6 +267,18 @@ ul#dashboardTab.nav .nav-link {
             params.page = params.page || 1;
             var term = (params.term || '').trim();
             var results = data.results || [];
+            
+            // If we have a preselected patient and no search term, include it in results
+            if (preselectedPatient && !term && params.page === 1) {
+              // Check if preselected patient is not already in results
+              var patientExists = results.some(function(item) {
+                return item.id === preselectedPatient.id;
+              });
+              if (!patientExists) {
+                results.unshift(preselectedPatient);
+              }
+            }
+            
             // Hard-cap to 5 items when there is no search term and first page
             if (!term && params.page === 1 && results.length > 5) {
               results = results.slice(0, 5);
@@ -279,7 +302,11 @@ ul#dashboardTab.nav .nav-link {
         }
       });
 
-      // No manual fetch on open; Select2 will fetch page 1 automatically
+      // Set the preselected value if we have one
+      {% if patient_id and selected_patient %}
+        $('#patientSelect').val("{{ selected_patient.patients_id }}").trigger('change');
+      {% endif %}
+
     } else {
       console.error("jQuery or Select2 not loaded");
     }

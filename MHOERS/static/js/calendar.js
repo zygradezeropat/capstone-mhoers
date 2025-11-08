@@ -317,15 +317,15 @@ function showFollowupDetails(followup, date) {
             <strong>Advice:</strong><br>
             <span class="text-dark">${followup.advice}</span>
           </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            <button 
-              type="button" 
-              class="btn btn-primary go-to-assessment" 
-              data-patient-id="${followup.patient_id}">
-              New Assessment
-            </button>
-          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button 
+            type="button" 
+            class="btn btn-primary go-to-assessment" 
+            data-patient-id="${followup.patient_id}">
+            New Assessment
+          </button>
         </div>
       </div>
     </div>
@@ -333,7 +333,10 @@ function showFollowupDetails(followup, date) {
 
   document.body.appendChild(modal);
 
-  const bootstrapModal = new bootstrap.Modal(modal);
+  const bootstrapModal = new bootstrap.Modal(modal, {
+    backdrop: 'static',
+    keyboard: false
+  });
   bootstrapModal.show();
 
   modal.addEventListener('hidden.bs.modal', function() {
@@ -353,13 +356,26 @@ function viewPatientDetails(patientId) {
 // Redirect handler for modal button
 document.addEventListener("click", function (e) {
   if (e.target.classList.contains("go-to-assessment")) {
+    e.preventDefault();
+    e.stopPropagation();
+    
     const patientId = e.target.getAttribute("data-patient-id");
+    console.log('New Assessment clicked for patient ID:', patientId);
 
-    // Fill hidden input with patient_id
-    document.getElementById("hiddenPatientId").value = patientId;
-
-    // Submit the hidden form from assessment.html
-    document.getElementById("goToAssessmentForm").submit();
+    // Check if the form exists
+    const form = document.getElementById("goToAssessmentForm");
+    const hiddenInput = document.getElementById("hiddenPatientId");
+    
+    if (form && hiddenInput) {
+      // Fill hidden input with patient_id
+      hiddenInput.value = patientId;
+      
+      // Submit the hidden form
+      form.submit();
+    } else {
+      console.error('Assessment form or hidden input not found');
+      alert('Error: Assessment form not found. Please refresh the page and try again.');
+    }
   }
 });
 

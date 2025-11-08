@@ -13,7 +13,8 @@ from patients.models import Patient, Medical_History
 from django.http import JsonResponse
 from django.http import HttpResponse
 from django.utils.text import slugify
-from analytics.ml_utils import predict_disease_for_referral, random_forest_regression_train_model, random_forest_regression_prediction_time,  train_random_forest_model_classification
+from django.core.paginator import Paginator
+from analytics.ml_utils import predict_disease_for_referral, random_forest_regression_train_model, random_forest_regression_prediction_time,  train_random_forest_model_classification, predict_time_to_cater_advanced, train_time_prediction_model_advanced, train_time_prediction_model_advanced_from_csv
 from analytics.model_manager import MLModelManager
 from analytics.batch_predictor import BatchPredictor
 from .query_optimizer import ReferralQueryOptimizer
@@ -35,8 +36,31 @@ def get_disease_prediction(request, referral_id):
         return JsonResponse({'error': 'Referral not found'}, status=404)
 
 @login_required
+def get_time_prediction_advanced(request, referral_id):
+    """API endpoint for advanced time-to-cater prediction"""
+    prediction = predict_time_to_cater_advanced(referral_id)
+    if isinstance(prediction, (int, float)):
+        return JsonResponse({
+            'prediction': prediction, 
+            'unit': 'hours',
+            'prediction_minutes': round(prediction * 60, 1)
+        })
+    else:
+        return JsonResponse({'error': prediction}, status=400)
+
+@login_required
+def train_time_model_advanced(request):
+    """API endpoint to train advanced time prediction model"""
+    if not request.user.is_staff:
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+    
+    result = train_time_prediction_model_advanced()
+    return JsonResponse(result)
+
+@login_required
 @never_cache
 def assessment(request):
+    facility = request.user.shared_facilities.first() 
     user = request.user
     patient_id = None  
     selected_patient = None
@@ -52,32 +76,35 @@ def assessment(request):
         except Patient.DoesNotExist:
             selected_patient = None
 
-    # Base queryset depending on role
+    # Base queryset depending on role - show patients from shared facilities
     if user.is_superuser or user.is_staff:
         patients = Patient.objects.all()
     else:
-        patients = Patient.objects.filter(user=user)
+        # Get patients from facilities shared by the user
+        user_facilities = user.shared_facilities.all()
+        patients = Patient.objects.filter(facility__in=user_facilities)
 
     return render(request, "assessment/assessment.html", {
         "active_page": "assessment",
         "patients": patients,
         "patient_id": patient_id,  # send selected patient to template
         "selected_patient": selected_patient,
+        "facility": facility,
     })
 
 @login_required
-@never_cache
 def create_referral(request):
     if request.method == 'POST':
         form = ReferralForm(request.POST)
         if form.is_valid():
             patient = form.cleaned_data.get('patient')
 
-            # Prevent duplicate active referrals
+            # 🔍 Check for duplicate active referrals
             existing_pending = Referral.objects.filter(
                 patient=patient,
                 status='in-progress'
             ).exists()
+
             if existing_pending and not request.user.is_staff:
                 messages.error(request, "Cannot create new referral. This patient already has an active referral.")
                 return redirect('referrals:assessment')
@@ -85,26 +112,38 @@ def create_referral(request):
             referral = form.save(commit=False)
             referral.user = request.user  
 
-            # ✅ Different status depending on role
-            if request.user.is_staff or request.user.is_superuser:
-                referral.status = 'completed'  # Admin auto-completes
+            # ✅ Automatically assign the facility
+            # If a user belongs to multiple facilities, you can decide how to pick one
+            user_facility = request.user.shared_facilities.first()  # gets the first linked facility
+            if user_facility:
+                referral.facility = user_facility
             else:
-                referral.status = 'in-progress'  # BHW just starts the process
+                messages.error(request, "You are not assigned to any facility. Contact admin.")
+                return redirect('referrals:assessment')
+
+            # ✅ Set referral status based on user role
+            if request.user.is_staff or request.user.is_superuser:
+                referral.status = 'completed'
+            else:
+                referral.status = 'in-progress'
 
             referral.save()
 
             # ✅ Notifications
             if request.user.is_staff or request.user.is_superuser:
-                # Notify BHW that follow-up is done
-                Notification.objects.create(
-                    recipient=patient.user,  # assuming patient has a related BHW user
-                    title="Follow-up Completed",
-                    message=f"Follow up check up for {patient.first_name} {patient.last_name} has been completed by MHO.",
-                    referral=referral,
-                    is_read=False
-                )
+                # Notify the BHW assigned to that facility
+                assigned_bhw_username = referral.facility.assigned_bhw
+                bhw_user = User.objects.filter(username=assigned_bhw_username).first()
+                if bhw_user:
+                    Notification.objects.create(
+                        recipient=bhw_user,
+                        title="Follow-up Completed",
+                        message=f"Follow-up for {patient.first_name} {patient.last_name} has been completed by MHO.",
+                        referral=referral,
+                        is_read=False
+                    )
             else:
-                # Notify all staff that referral is submitted
+                # Notify MHO staff users
                 staff_users = User.objects.filter(is_staff=True)
                 for staff_user in staff_users:
                     Notification.objects.create(
@@ -115,7 +154,7 @@ def create_referral(request):
                         is_read=False
                     )
 
-            # ✅ Success messages
+            # ✅ Feedback
             if request.user.is_staff or request.user.is_superuser:
                 messages.success(request, "Referral completed successfully! The BHW has been notified.")
             else:
@@ -124,7 +163,7 @@ def create_referral(request):
             return redirect('referrals:assessment')
         else:
             messages.error(request, "Form is invalid.")
-    else:   
+    else:
         form = ReferralForm()
 
     return render(request, 'assessment/assessment.html', {
@@ -273,53 +312,74 @@ def delete_referral(request):
 @login_required
 @never_cache
 def referral_list(request):
-    user = request.user
-    # Get patients associated with the current user
-    patients = Patient.objects.filter(user=user)
+    user_facilities = request.user.shared_facilities.all()
 
-    # Filter referrals by patient user and status with optimized queries
-    active_referrals = Referral.objects.filter(patient__user=user, status='in-progress').select_related('patient', 'patient__facility')
-    referred_referrals = Referral.objects.filter(patient__user=user, status='completed').select_related('patient', 'patient__facility')
+    active_qs = Referral.objects.filter(
+        facility__in=user_facilities,
+        status='in-progress'
+    ).select_related('patient', 'patient__facility', 'patient__user').order_by('-created_at')
 
-    # Combine referrals for batch prediction
-    all_referrals = list(active_referrals) + list(referred_referrals)
-    
-    # Use batch predictions
-    predictions = BatchPredictor.predict_all_batch(all_referrals)
+    referred_qs = Referral.objects.filter(
+        facility__in=user_facilities,
+        status='completed'
+    ).select_related('patient', 'patient__facility', 'patient__user').order_by('-completed_at', '-created_at')
+
+    active_page_number = request.GET.get('active_page') or 1
+    referred_page_number = request.GET.get('referred_page') or 1
+
+    active_page = Paginator(active_qs, 10).get_page(active_page_number)
+    referred_page = Paginator(referred_qs, 10).get_page(referred_page_number)
+
+    visible_referrals = list(active_page.object_list) + list(referred_page.object_list)
+    predictions = BatchPredictor.predict_all_batch(visible_referrals)
+
+    active_tab = request.GET.get('tab')
+    if not active_tab:
+        active_tab = 'tab2' if request.GET.get('referred_page') else 'tab1'
 
     return render(request, 'patients/user/referral_list.html', {
         'active_page': 'referral_list',
-        'patients': patients,
-        'active_referrals': active_referrals,
-        'referred_referrals': referred_referrals,
+        'active_referrals': active_page,
+        'referred_referrals': referred_page,
         'predictions': predictions,
+        'active_tab': active_tab,
     })
 
 @login_required 
 @never_cache
 def admin_patient_list(request):
-    # Step 1: Ensure models are loaded (only once)
     MLModelManager.train_models_if_needed()
-    
-    # Step 2: Use optimized queries
-    referrals = list(ReferralQueryOptimizer.get_all_referrals())
-    patients = ReferralQueryOptimizer.get_patients_with_referral_count()
+
+    base_qs = Referral.objects.select_related('patient', 'patient__facility', 'user').order_by('-created_at')
+    active_qs = base_qs.filter(status__in=['pending', 'in-progress'])
+    referred_qs = base_qs.filter(status='completed')
+
+    patients_qs = ReferralQueryOptimizer.get_patients_with_referral_count().order_by('first_name', 'last_name')
     facilities = Facility.objects.all()
-    
-    # Step 3: Batch predictions (cached)
-    predictions = BatchPredictor.predict_all_batch(referrals)
-    
-    # Step 4: Separate active and completed referrals
-    active_referrals = [r for r in referrals if r.status in ['pending', 'in-progress']]
-    referred_referrals = [r for r in referrals if r.status == 'completed']
-    
+
+    active_page = Paginator(active_qs, 10).get_page(request.GET.get('active_page') or 1)
+    referred_page = Paginator(referred_qs, 10).get_page(request.GET.get('referred_page') or 1)
+    patients_page = Paginator(patients_qs, 10).get_page(request.GET.get('patients_page') or 1)
+
+    visible_referrals = list(active_page.object_list) + list(referred_page.object_list)
+    predictions = BatchPredictor.predict_all_batch(visible_referrals)
+
+    active_tab = request.GET.get('tab')
+    if not active_tab:
+        if request.GET.get('referred_page'):
+            active_tab = 'tab2'
+        elif request.GET.get('patients_page'):
+            active_tab = 'tab3'
+        else:
+            active_tab = 'tab1'
+
     return render(request, 'patients/admin/patient_list.html', {
         'active_page': 'patient_list',
-        'active_tab': 'tab1',
+        'active_tab': active_tab,
         'facility': facilities,
-        'patients': patients,
-        'active_referrals': active_referrals,
-        'referred_referrals': referred_referrals,
+        'patients': patients_page,
+        'active_referrals': active_page,
+        'referred_referrals': referred_page,
         'predictions': predictions,
         'training_result': {"status": "Models loaded from cache"},
     })
@@ -328,17 +388,17 @@ def admin_patient_list(request):
 @login_required
 def get_patient_referral_history(request, patient_id):
     try:
-        print(f"🔍 Fetching referral history for patient ID: {patient_id}")
-        print(f"🔍 Patient ID type: {type(patient_id)}")
+        print(f"Fetching referral history for patient ID: {patient_id}")
+        print(f"Patient ID type: {type(patient_id)}")
         
         # Get all referrals for the patient, ordered by most recent first
         referrals = Referral.objects.filter(patient_id=patient_id).order_by('-created_at')
-        print(f"🔍 Found {referrals.count()} referrals for patient {patient_id}")
+        print(f"Found {referrals.count()} referrals for patient {patient_id}")
         
         # Get ALL medical history records for this patient
         from patients.models import Medical_History
         all_medical_history = Medical_History.objects.filter(patient_id=patient_id).order_by('-diagnosed_date')
-        print(f"🔍 Found {all_medical_history.count()} medical history records for patient {patient_id}")
+        print(f"Found {all_medical_history.count()} medical history records for patient {patient_id}")
         
         # Convert to list of dictionaries for JSON response
         referral_list = []
@@ -655,10 +715,11 @@ def api_referrals(request):
 
     # Build facility name map for users present in queryset
     user_ids = list(qs.values_list('user_id', flat=True).distinct())
-    facility_map = {
-        f.user_id_id: f.name
-        for f in Facility.objects.filter(user_id_id__in=user_ids)
-    }
+    facility_map = {}
+    for facility in Facility.objects.filter(users__in=user_ids):
+        for user in facility.users.all():
+            if user.id in user_ids:
+                facility_map[user.id] = facility.name
 
     data = []
     for r in qs.order_by('-created_at'):
@@ -675,4 +736,17 @@ def api_referrals(request):
             'initial_diagnosis': r.initial_diagnosis,
         })
     return JsonResponse({'results': data})
+
+@login_required
+def train_time_model_from_csv(request):
+    """API endpoint to train advanced time prediction model from CSV"""
+    if not request.user.is_staff:
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+    
+    # Optional: get CSV path from request
+    csv_path = request.GET.get('csv_path', None)
+    
+    from analytics.ml_utils import train_time_prediction_model_advanced_from_csv
+    result = train_time_prediction_model_advanced_from_csv(csv_path=csv_path)
+    return JsonResponse(result)
 

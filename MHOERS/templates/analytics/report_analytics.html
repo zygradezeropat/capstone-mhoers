@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+  {% extends 'base.html' %}
 {% load static %}
 {% block content %}
 
@@ -208,6 +208,30 @@
           <div class="small text-muted">Tip: Leave fields blank to export all.</div>
         </div>
       </div>
+
+      <div class="card border-0 shadow-sm mt-4">
+        <div class="card-body p-4">
+          <h5 class="card-title mb-2">Printable Reports</h5>
+          <p class="text-muted mb-4">Generate ready-to-print summaries for LGU oversight and compliance.</p>
+          <div class="d-flex flex-column flex-md-row gap-2">
+            <a class="btn btn-outline-primary" href="{% url 'barangay_referral_performance_report' %}">
+              <i class="bi bi-file-text"></i> Barangay Referral Performance Summary
+            </a>
+            <a class="btn btn-outline-primary" href="{% url 'morbidity_report' %}">
+              <i class="bi bi-clipboard-data"></i> Morbidity &amp; Top-Diagnosis Report
+            </a>
+            <a class="btn btn-outline-primary" href="{% url 'facility_workforce_masterlist' %}">
+              <i class="bi bi-people"></i> Facility &amp; Workforce Masterlist
+            </a>
+            <a class="btn btn-outline-primary" href="{% url 'referral_registry_report' %}">
+              <i class="bi bi-activity"></i> Referral Registry with Vital Signs
+            </a>
+            <a class="btn btn-outline-primary" href="{% url 'system_usage_scorecard_report' %}">
+              <i class="bi bi-graph-up"></i> System Usage &amp; Adoption Scorecard
+            </a>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -270,6 +294,8 @@
   }
 
   document.addEventListener('DOMContentLoaded', function() {
+    // Expose whether current user is superuser to JS (true/false)
+    const isSuperuser = '{{ request.user.is_superuser|yesno:"true,false" }}' === 'true';
     loadFacilitiesAndUsers();
     const btn = document.getElementById('exportReferralsCsvBtn');
     if (btn) btn.addEventListener('click', exportReferralsCsv);
@@ -285,28 +311,332 @@
       });
     }
 
-    // Print Referral Statistics section as image
+    // Print Referral Statistics (chart image + table derived from chart data)
     const printStatsBtn = document.getElementById('printReferralStatsBtn');
     if (printStatsBtn) {
-      printStatsBtn.addEventListener('click', async function() {
-        const section = document.getElementById('referralStatsSection');
-        if (!section) return;
-        // Ensure charts/fonts are rendered
-        await new Promise(r => setTimeout(r, 200));
-        html2canvas(section, { scale: 2, useCORS: true, backgroundColor: '#ffffff' }).then(canvas => {
-          const imgData = canvas.toDataURL('image/png');
-          const printWindow = window.open('', '_blank');
-          printWindow.document.write(`<!DOCTYPE html><html><head><title>Referral Statistics</title>
-            <style>body{margin:0;padding:0;text-align:center;background:#fff}img{max-width:100%;height:auto}</style>
-          </head><body><img src="${imgData}" /></body></html>`);
-          printWindow.document.close();
-          // Wait for image to load then print
-          printWindow.onload = () => {
+      printStatsBtn.addEventListener('click', function() {
+        const chart = Chart.getChart('referralsPerUserChart');
+        if (!chart) {
+          alert('Please wait for the chart to load before printing.');
+          return;
+        }
+
+        // Capture chart image
+        const chartImgDataUrl = chart.canvas.toDataURL('image/png', 1.0);
+
+        // Build table from current chart data
+        const labels = chart.data?.labels || [];
+        const values = (chart.data?.datasets?.[0]?.data || []).map(v => Number(v) || 0);
+
+        let total = 0;
+        let tableRows = '';
+        labels.forEach((label, idx) => {
+          const val = values[idx] ?? 0;
+          total += val;
+          tableRows += `
+            <tr>
+              <td style="text-align:center; border:1px solid #000; padding:8px;">${idx + 1}</td>
+              <td style="text-align:left; border:1px solid #000; padding:8px;">${label}</td>
+              <td style="text-align:center; border:1px solid #000; padding:8px;">${val}</td>
+            </tr>
+          `;
+        });
+        tableRows += `
+          <tr>
+            <td colspan="2" style="text-align:right; border:1px solid #000; padding:8px; font-weight:bold;">TOTAL</td>
+            <td style="text-align:center; border:1px solid #000; padding:8px; font-weight:bold;">${total}</td>
+          </tr>
+        `;
+
+        // Print document
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8" />
+            <title>Referral Statistics</title>
+            <style>
+              @media print { body { margin: 0; padding: 0; font-family: Arial, sans-serif; } @page { margin: 12mm; size: A4; } }
+              body { margin: 16px; font-family: Arial, sans-serif; color: #000; }
+              .title { text-align: center; color: #dc3545; font-weight: bold; font-size: 18px; margin: 8px 0 16px; text-transform: uppercase; }
+              .section { margin: 12px 0; }
+              .chart-wrap { display: flex; justify-content: center; margin: 12px 0 20px; }
+              .chart-wrap img { max-width: 100%; height: auto; }
+              table { width: 100%; border-collapse: collapse; margin-top: 6px; }
+              th, td { border: 1px solid #000; padding: 8px; }
+              th { background-color: #f8f9fa; font-weight: bold; text-align: center; }
+              .number-col { text-align: center; width: 60px; }
+              .left-col { text-align: left; }
+            </style>
+          </head>
+          <body>
+            <div class="title">REFERRAL STATISTICS (From Current Chart)</div>
+            <div class="section chart-wrap"><img src="${chartImgDataUrl}" alt="Referral Statistics Chart" /></div>
+            <div class="section">
+              <table>
+                <thead>
+                  <tr>
+                    <th class="number-col">NO.</th>
+                    <th class="left-col">LABEL</th>
+                    <th class="number-col">COUNT</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${tableRows}
+                </tbody>
+              </table>
+            </div>
+          </body>
+          </html>
+        `);
+        printWindow.document.close();
+        printWindow.onload = () => {
+          setTimeout(() => {
+            const style = printWindow.document.createElement('style');
+            style.media = 'print';
+            style.textContent = `@page { size: A4 landscape; margin: 10mm; } @media print { html, body { width: 297mm; height: 210mm; } }`;
+            printWindow.document.head.appendChild(style);
             printWindow.focus();
             printWindow.print();
-            printWindow.close();
-          };
+            setTimeout(() => {
+              style.remove();
+              printWindow.close();
+            }, 100);
+          }, 300);
+        };
+      });
+    }
+
+    // Print Common Diagnoses section with custom layout
+    const printDiagnosesBtn = document.getElementById('printDiagnosesBtn');
+    if (printDiagnosesBtn) {
+      printDiagnosesBtn.addEventListener('click', async function() {
+        // Get chart data for the table
+        const chart = Chart.getChart('topDiagnosedChart');
+        if (!chart) {
+          alert('Please wait for the chart to load before printing.');
+          return;
+        }
+
+        const labels = chart.data.labels || [];
+        const data = chart.data.datasets[0]?.data || [];
+        
+        // Create table rows from chart data
+        let tableRows = '';
+        labels.forEach((label, index) => {
+          const value = data[index] || 0;
+          tableRows += `
+            <tr>
+              <td style="text-align: center; border: 1px solid #000; padding: 8px;">${index + 1}</td>
+              <td style="text-align: left; border: 1px solid #000; padding: 8px;">${label}</td>
+              <td style="text-align: center; border: 1px solid #000; padding: 8px;">${value}</td>
+              <td style="text-align: center; border: 1px solid #000; padding: 8px;">0</td>
+              <td style="text-align: center; border: 1px solid #000; padding: 8px;">${value}</td>
+            </tr>
+          `;
         });
+
+          const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <style>
+              /* Force A4 landscape with consistent printable area */
+              @page { size: A4 landscape; margin: 10mm; }
+              @media print {
+                body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
+                .no-print { display: none; }
+              }
+              html, body { width: 297mm; height: 210mm; }
+              .print-container { padding: 6mm; }
+              .header { display: flex; align-items: center; justify-content: center; margin-bottom: 20px; position: relative; }
+              .header-text { font-size: 12px; line-height: 1.2; margin-bottom: 5px; text-align: center; }
+              .logo { width: 80px; height: 80px; object-fit: contain; position: absolute; }
+              .logo-left { left: 0; }
+              .logo-right { right: 0; }
+              .title { text-align: center; color: #dc3545; font-weight: bold; font-size: 18px; margin: 20px 0; text-transform: uppercase; }
+              .separator { border-top: 1px solid #000; margin: 10px 0; }
+              table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+              th, td { border: 1px solid #000; padding: 8px; }
+              th { background-color: #f8f9fa; font-weight: bold; text-align: center; }
+              .barangay-col { text-align: left; }
+              .number-col { text-align: center; }
+              tr, td, th { page-break-inside: avoid; }
+            </style>
+          </head>
+          <body>
+            <div class="print-container">
+            <div class="header">
+              <img src="/static/images/LGU-NEWCORELLA.png" alt="LGU Logo" class="logo logo-left">
+              <img src="/static/images/MHO-LOGO.png" alt="MHO Logo" class="logo logo-right">
+              <div>
+                <div class="header-text">Republic of the Philippines</div>
+                <div class="header-text">Province of Davao del Norte</div>
+                <div class="header-text">Municipality of New Corella</div>
+                <div class="header-text">Municipal Health Office</div>
+                <div class="header-text">Purok 5, Poblacion, New Corella</div>
+                <div class="header-text">rhunewcorella@yahoo.com</div>
+                <div class="header-text">(+63) 9700933480</div>
+                <div class="header-text">Calendar Year 2025</div>
+              </div>
+            </div>
+            
+            <div class="separator"></div>
+            
+            <div class="title">COMMON DIAGNOSES REPORT LGU NEW CORELLA</div>
+            
+            <table>
+              <thead>
+                <tr>
+                  <th class="number-col">NO.</th>
+                  <th class="barangay-col">DIAGNOSIS</th>
+                  <th class="number-col">ACCREDITED</th>
+                  <th class="number-col">REGISTERED</th>
+                  <th class="number-col">TOTAL</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${tableRows}
+              </tbody>
+            </table>
+          </body>
+          </html>
+        `);
+        printWindow.document.close();
+
+        // Wait for images to load then print
+        printWindow.onload = () => {
+          setTimeout(() => {
+            const style = printWindow.document.createElement('style');
+            style.media = 'print';
+            style.textContent = `@page { size: A4 landscape; margin: 10mm; } @media print { html, body { width: 297mm; height: 210mm; } }`;
+            printWindow.document.head.appendChild(style);
+            printWindow.focus();
+            printWindow.print();
+            setTimeout(() => {
+              style.remove();
+              printWindow.close();
+            }, 100);
+          }, 500);
+        };
+      });
+    }
+
+    // Print System Usage section with custom layout
+    const printSystemUsageBtn = document.getElementById('printSystemUsageBtn');
+    if (printSystemUsageBtn) {
+      printSystemUsageBtn.addEventListener('click', async function() {
+        // Get chart data for the table
+        const chart = Chart.getChart('systemUsageLogsChart');
+        if (!chart) {
+          alert('Please wait for the chart to load before printing.');
+          return;
+        }
+
+        const labels = chart.data.labels || [];
+        const data = chart.data.datasets[0]?.data || [];
+        
+        // Create table rows from chart data
+        let tableRows = '';
+        labels.forEach((label, index) => {
+          const value = data[index] || 0;
+          tableRows += `
+            <tr>
+              <td style="text-align: center; border: 1px solid #000; padding: 8px;">${index + 1}</td>
+              <td style="text-align: left; border: 1px solid #000; padding: 8px;">${label}</td>
+              <td style="text-align: center; border: 1px solid #000; padding: 8px;">${value}</td>
+              <td style="text-align: center; border: 1px solid #000; padding: 8px;">0</td>
+              <td style="text-align: center; border: 1px solid #000; padding: 8px;">${value}</td>
+            </tr>
+          `;
+        });
+
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <style>
+              @media print {
+                body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
+                .no-print { display: none; }
+                @page { margin: 0; }
+              }
+              @page { 
+                margin: 0; 
+                size: A4;
+              }
+              body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
+              .header { display: flex; align-items: center; justify-content: center; margin-bottom: 20px; position: relative; }
+              .header-text { font-size: 12px; line-height: 1.2; margin-bottom: 5px; text-align: center; }
+              .logo { width: 80px; height: 80px; object-fit: contain; position: absolute; }
+              .logo-left { left: 0; }
+              .logo-right { right: 0; }
+              .title { text-align: center; color: #dc3545; font-weight: bold; font-size: 18px; margin: 20px 0; text-transform: uppercase; }
+              .separator { border-top: 1px solid #000; margin: 10px 0; }
+              table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+              th, td { border: 1px solid #000; padding: 8px; }
+              th { background-color: #f8f9fa; font-weight: bold; text-align: center; }
+              .barangay-col { text-align: left; }
+              .number-col { text-align: center; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <img src="/static/images/LGU-NEWCORELLA.png" alt="LGU Logo" class="logo logo-left">
+              <img src="/static/images/MHO-LOGO.png" alt="MHO Logo" class="logo logo-right">
+              <div>
+                <div class="header-text">Republic of the Philippines</div>
+                <div class="header-text">Province of Davao del Norte</div>
+                <div class="header-text">Municipality of New Corella</div>
+                <div class="header-text">Municipal Health Office</div>
+                <div class="header-text">Purok 5, Poblacion, New Corella</div>
+                <div class="header-text">rhunewcorella@yahoo.com</div>
+                <div class="header-text">(+63) 9700933480</div>
+                <div class="header-text">Calendar Year 2025</div>
+              </div>
+            </div>
+            
+            <div class="separator"></div>
+            
+            <div class="title">SYSTEM USAGE REPORT LGU NEW CORELLA</div>
+            
+            <table>
+              <thead>
+                <tr>
+                  <th class="number-col">NO.</th>
+                  <th class="barangay-col">FACILITY</th>
+                  <th class="number-col">ACCREDITED</th>
+                  <th class="number-col">REGISTERED</th>
+                  <th class="number-col">TOTAL</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${tableRows}
+              </tbody>
+            </table>
+          </body>
+          </html>
+        `);
+        printWindow.document.close();
+
+        // Wait for images to load then print
+        printWindow.onload = () => {
+          setTimeout(() => {
+            const style = printWindow.document.createElement('style');
+            style.media = 'print';
+            style.textContent = `@page { size: A4 landscape; margin: 10mm; } @media print { html, body { width: 297mm; height: 210mm; } }`;
+            printWindow.document.head.appendChild(style);
+            printWindow.focus();
+            printWindow.print();
+            setTimeout(() => {
+              style.remove();
+              printWindow.close();
+            }, 100);
+          }, 500);
+        };
       });
     }
 
@@ -339,7 +669,8 @@
       const u = document.getElementById('statsUserFilter')?.value;
       if (y) params.set('year', y);
       if (m) params.set('month', m);
-      if (u) params.set('user_id', u);
+      // Admin (superuser) sees all; non-admin filtered by user_id
+      if (!isSuperuser && u) params.set('user_id', u);
       const url = `/referral/api/referrals/?${params.toString()}`;
       const tbody = document.getElementById('statsReferralTableBody');
       if (tbody) tbody.innerHTML = `<tr><td colspan="8" class="text-muted">Loading...</td></tr>`;
@@ -368,6 +699,117 @@
 
     const applyBtn = document.getElementById('statsApplyFilters');
     if (applyBtn) applyBtn.addEventListener('click', fetchAndRenderReferralTable);
+    
+    // Print the Referral Records table (with LGU/MHO header format)
+    const printStatsTableBtn = document.getElementById('printStatsTableBtn');
+    if (printStatsTableBtn) {
+      printStatsTableBtn.addEventListener('click', function() {
+        const tbody = document.getElementById('statsReferralTableBody');
+        if (!tbody) return;
+        const rowsHtml = tbody.innerHTML || '';
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Referral Records</title>
+            <style>
+              /* Force A4 landscape with consistent printable area */
+              @page { size: A4 landscape; margin: 10mm; }
+              @media print {
+                body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
+              }
+              html, body { width: 297mm; height: 210mm; }
+              .print-container { padding: 6mm; }
+              .header { display: flex; align-items: center; justify-content: center; margin-bottom: 20px; position: relative; }
+              .header-text { font-size: 12px; line-height: 1.2; margin-bottom: 5px; text-align: center; }
+              .logo { width: 80px; height: 80px; object-fit: contain; position: absolute; }
+              .logo-left { left: 0; }
+              .logo-right { right: 0; }
+              .title { text-align: center; color: #dc3545; font-weight: bold; font-size: 18px; margin: 20px 0; text-transform: uppercase; }
+              .separator { border-top: 1px solid #000; margin: 10px 0; }
+              table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+              th, td { border: 1px solid #000; padding: 8px; }
+              th { background-color: #f8f9fa; font-weight: bold; text-align: center; }
+              .barangay-col { text-align: left; }
+              .number-col { text-align: center; }
+              tr, td, th { page-break-inside: avoid; }
+            </style>
+          </head>
+          <body>
+            <div class="print-container">
+              <div class="header">
+                <img src="/static/images/LGU-NEWCORELLA.png" alt="LGU Logo" class="logo logo-left">
+                <img src="/static/images/MHO-LOGO.png" alt="MHO Logo" class="logo logo-right">
+                <div>
+                  <div class="header-text">Republic of the Philippines</div>
+                  <div class="header-text">Province of Davao del Norte</div>
+                  <div class="header-text">Municipality of New Corella</div>
+                  <div class="header-text">Municipal Health Office</div>
+                  <div class="header-text">Purok 5, Poblacion, New Corella</div>
+                  <div class="header-text">rhunewcorella@yahoo.com</div>
+                  <div class="header-text">(+63) 9700933480</div>
+                  <div class="header-text">Reporting Period: <span id="printReportPeriod">Calendar Year ____</span></div>
+                </div>
+              </div>
+
+              <div class="separator"></div>
+
+              <div class="title">REFERRAL RECORDS REPORT LGU NEW CORELLA</div>
+
+              <table>
+                <thead>
+                  <tr>
+                    <th class="number-col">ID</th>
+                    <th class="barangay-col">Created</th>
+                    <th class="number-col">Status</th>
+                    <th class="barangay-col">Facility</th>
+                    <th class="barangay-col">User</th>
+                    <th class="barangay-col">Patient</th>
+                    <th class="barangay-col">Chief Complaint</th>
+                    <th class="barangay-col">Initial Diagnosis</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${rowsHtml}
+                </tbody>
+              </table>
+            </div>
+          </body>
+          </html>
+        `);
+        printWindow.document.close();
+        printWindow.onload = () => {
+          setTimeout(() => {
+            const style = printWindow.document.createElement('style');
+            style.media = 'print';
+            style.textContent = '@page { size: A4 landscape; margin: 10mm; } @media print { html, body { width: 297mm; height: 210mm; } }';
+            printWindow.document.head.appendChild(style);
+
+            const yearFilter = document.getElementById('statsYearFilter')?.value.trim();
+            const monthFilter = document.getElementById('statsMonthFilter')?.value;
+            const reportYear = yearFilter || new Date().getFullYear();
+            const monthName = monthFilter ? new Date(0, monthFilter - 1).toLocaleString('en-US', { month: 'long' }) : null;
+            const suggestedTitle = monthName ? `referral_report_${monthName}_${reportYear}` : `referral_report_${reportYear}`;
+            printWindow.document.title = suggestedTitle;
+            const periodSpan = printWindow.document.getElementById('printReportPeriod');
+            if (periodSpan) {
+              periodSpan.textContent = monthName ? `${monthName} ${reportYear}` : `Calendar Year ${reportYear}`;
+            }
+
+            printWindow.focus();
+            printWindow.print();
+            setTimeout(() => {
+              style.remove();
+              printWindow.close();
+            }, 100);
+          }, 300);
+        };
+      });
+    }
+
+    // Initial load of referral records
+    fetchAndRenderReferralTable();
   });
 </script>
 {% endblock script %}

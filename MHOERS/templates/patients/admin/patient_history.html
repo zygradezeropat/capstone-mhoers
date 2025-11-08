@@ -91,15 +91,21 @@
   
   .referral-history-dropdown .form-select {
     border-radius: 8px;
-    border: 1px solid #e9ecef;
+    border: 2px solid #cfe2ff; /* visible outline */
     font-size: 0.95rem;
     transition: all 0.2s ease;
+    cursor: pointer;
   }
   
   .referral-history-dropdown .form-select:focus {
-    border-color: #667eea;
-    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.25);
     transform: scale(1.02);
+  }
+  
+  .referral-history-dropdown .form-select:hover {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 0.15rem rgba(59, 130, 246, 0.2);
   }
   
   .referral-history-dropdown .form-select option {
@@ -618,7 +624,7 @@ function addReferralHistoryDropdown(referrals, patientId) {
                         <label for="referralHistorySelect" class="form-label fw-medium text-muted mb-2">
                             <i class="bi bi-arrow-down-circle me-1"></i>Select Referral to View
                         </label>
-                        <select class="form-select form-select-lg border-0 shadow-sm" 
+                        <select class="form-select form-select-lg shadow-sm" 
                                 id="referralHistorySelect" 
                                 onchange="switchReferralData(this.value, ${patientId})"
                                 style="background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);">

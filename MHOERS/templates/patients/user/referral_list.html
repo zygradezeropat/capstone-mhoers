@@ -17,7 +17,7 @@
         <div class="card-body p-4">
           <div class="tab-content" id="dashboardTabContent">
             <!-- Active Referral Tab -->
-            <div class="tab-pane fade show active" id="tab1" role="tabpanel">
+            <div class="tab-pane fade {% if active_tab == 'tab1' or not active_tab %}show active{% endif %}" id="tab1" role="tabpanel">
               <div class="table-responsive">
                 <table id="activeTable" class="table table-hover align-middle">
                   <thead class="bg-light">
@@ -32,7 +32,6 @@
                   </thead>
                   <tbody>
                     {% for r in active_referrals %}
-                      {% if r.patient.user.id == request.user.id %}
                       <tr data-id="{{ r.referral_id }}" class="align-middle">
                         <td>
                           <div class="d-flex align-items-center">
@@ -53,7 +52,12 @@
                             <br>
                             <small class="text-muted">
                               <i class="bi bi-clock-history me-1"></i>
-                              Est. completion: {{ predictions|dict_get:r.referral_id|last|floatformat:0 }} mins
+                              Est. completion: 
+                              {% with preds=predictions|dict_get:r.referral_id %}
+                              <span class="est-time" data-ref="{{ r.referral_id }}">
+                                {% if preds %}{{ preds|last|floatformat:0 }} mins{% else %}--{% endif %}
+                              </span>
+                              {% endwith %}
                             </small>
                           {% endif %}
                         </td>
@@ -65,22 +69,52 @@
                           data-vaddress = "{{ r.patient.p_address}}"
                           data-vsex = "{{ r.patient.sex}}"
                           data-vreason = "{{ r.chief_complaint }}"
-                          data-vdisease = "{{ predictions|dict_get:r.referral_id|first }}"
+                          {% with preds=predictions|dict_get:r.referral_id %}
+                          data-vdisease = "{% if preds %}{{ preds|first }}{% else %}{% endif %}"
+                          {% endwith %}
                           data-bs-toggle="modal" 
                           data-bs-target="#MedicalDetails">
                            <i class="bi bi-file-medical me-1"></i> Referral Details
                          </button>
                         </td>
                       </tr>
-                      {% endif %}
+                    {% empty %}
+                      <tr>
+                        <td colspan="6" class="text-center text-muted py-4">No active referrals found.</td>
+                      </tr>
                     {% endfor %}
                   </tbody>
                 </table>
               </div>
+
+              {% if active_referrals.paginator.count %}
+              <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3">
+                <small class="text-muted">
+                  Showing {{ active_referrals.start_index }}&ndash;{{ active_referrals.end_index }} of {{ active_referrals.paginator.count }}
+                </small>
+                {% if active_referrals.has_other_pages %}
+                <nav>
+                  <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item {% if not active_referrals.has_previous %}disabled{% endif %}">
+                      <a class="page-link" href="{% if active_referrals.has_previous %}?active_page={{ active_referrals.previous_page_number }}&tab=tab1{% else %}#{% endif %}" aria-label="Previous">&laquo;</a>
+                    </li>
+                    {% for page_num in active_referrals.paginator.page_range %}
+                      <li class="page-item {% if page_num == active_referrals.number %}active{% endif %}">
+                        <a class="page-link" href="?active_page={{ page_num }}&tab=tab1">{{ page_num }}</a>
+                      </li>
+                    {% endfor %}
+                    <li class="page-item {% if not active_referrals.has_next %}disabled{% endif %}">
+                      <a class="page-link" href="{% if active_referrals.has_next %}?active_page={{ active_referrals.next_page_number }}&tab=tab1{% else %}#{% endif %}" aria-label="Next">&raquo;</a>
+                    </li>
+                  </ul>
+                </nav>
+                {% endif %}
+              </div>
+              {% endif %}
             </div>
 
             <!-- Referred Tab -->
-            <div class="tab-pane fade" id="tab2" role="tabpanel">
+            <div class="tab-pane fade {% if active_tab == 'tab2' %}show active{% endif %}" id="tab2" role="tabpanel">
               <div class="table-responsive">
                 <table id="referredTable" class="table table-hover align-middle">
                   <thead class="bg-light">
@@ -95,7 +129,6 @@
                   </thead>
                   <tbody>
                     {% for r in referred_referrals %}
-                      {% if r.patient.user.id == request.user.id %}
                       <tr data-id="{{ r.referral_id }}" class="align-middle">
                         <td>
                           <div class="d-flex align-items-center">
@@ -116,7 +149,9 @@
                             <br>
                             <small class="text-muted">
                               <i class="bi bi-check-circle me-1"></i>
-                              Completed in: {{ predictions|dict_get:r.referral_id|last|floatformat:0 }} mins
+                              {% with preds=predictions|dict_get:r.referral_id %}
+                              Completed in: {% if preds %}{{ preds|last|floatformat:0 }} mins{% else %}--{% endif %}
+                              {% endwith %}
                             </small>
                           {% endif %}
                         </td>
@@ -128,18 +163,47 @@
                           data-vaddress = "{{ r.patient.p_address}}"
                           data-vsex = "{{ r.patient.sex}}"
                           data-vreason = "{{ r.chief_complaint }}"
-                          data-vdisease = "{{ predictions|dict_get:r.referral_id|first }}"
+                          {% with preds=predictions|dict_get:r.referral_id %}
+                          data-vdisease = "{% if preds %}{{ preds|first }}{% else %}{% endif %}"
+                          {% endwith %}
                           data-bs-toggle="modal" 
                           data-bs-target="#MedicalDetails">
                            <i class="bi bi-file-medical me-1"></i> Referral Details
                          </button>
                         </td>
                       </tr>
-                      {% endif %}
+                    {% empty %}
+                      <tr>
+                        <td colspan="6" class="text-center text-muted py-4">No referred records found.</td>
+                      </tr>
                     {% endfor %}
                   </tbody>
                 </table>
               </div>
+              {% if referred_referrals.paginator.count %}
+              <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3">
+                <small class="text-muted">
+                  Showing {{ referred_referrals.start_index }}&ndash;{{ referred_referrals.end_index }} of {{ referred_referrals.paginator.count }}
+                </small>
+                {% if referred_referrals.has_other_pages %}
+                <nav>
+                  <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item {% if not referred_referrals.has_previous %}disabled{% endif %}">
+                      <a class="page-link" href="{% if referred_referrals.has_previous %}?referred_page={{ referred_referrals.previous_page_number }}&tab=tab2{% else %}#{% endif %}" aria-label="Previous">&laquo;</a>
+                    </li>
+                    {% for page_num in referred_referrals.paginator.page_range %}
+                      <li class="page-item {% if page_num == referred_referrals.number %}active{% endif %}">
+                        <a class="page-link" href="?referred_page={{ page_num }}&tab=tab2">{{ page_num }}</a>
+                      </li>
+                    {% endfor %}
+                    <li class="page-item {% if not referred_referrals.has_next %}disabled{% endif %}">
+                      <a class="page-link" href="{% if referred_referrals.has_next %}?referred_page={{ referred_referrals.next_page_number }}&tab=tab2{% else %}#{% endif %}" aria-label="Next">&raquo;</a>
+                    </li>
+                  </ul>
+                </nav>
+                {% endif %}
+              </div>
+              {% endif %}
             </div>
 
           </div>
@@ -242,24 +306,14 @@ $(document).ready(function() {
   // Initialize DataTables with modern styling
   const tableConfig = {
     responsive: true,
-    dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
-         '<"row"<"col-sm-12"tr>>' +
-         '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
-    language: {
-      search: "_INPUT_",
-      searchPlaceholder: "Search patient records..."
-    },
-    pageLength: 10,
-    order: [[0, 'asc']],
-    columnDefs: [
-      { targets: -1, orderable: false }
-    ] 
+    paging: false,
+    info: false,
+    searching: false,
+    ordering: false
   };
 
   $("#activeTable").DataTable(tableConfig);
-  $("#pendingTable").DataTable(tableConfig);
   $("#referredTable").DataTable(tableConfig);
-  $("#rejectedTable").DataTable(tableConfig);
 
   // Use event delegation to handle dynamically created elements
   $(document).on('click', '.MedicalDetails', function() {
@@ -282,6 +336,24 @@ $(document).ready(function() {
     $('#viewDisease').val(button.data('vdisease'));
   });
 
+  // Replace est-time spans with live API prediction (keeps server value as fallback)
+  (function refreshEstTimes() {
+    $(".est-time").each(function() {
+      const $el = $(this);
+      const id = $el.data('ref');
+      if (!id) return;
+      $.get(`/referral/referral/time-predict/${id}/`)
+        .done(function(res) {
+          if (res && typeof res.prediction_minutes !== 'undefined') {
+            const mins = Math.round(res.prediction_minutes);
+            if (!isNaN(mins)) {
+              $el.text(`${mins} mins`);
+            }
+          }
+        });
+    });
+  })();
+ 
   // Clear modal data when modal is hidden
   $('#MedicalDetails').on('hidden.bs.modal', function() {
     $('#viewPatientMedical').val('');

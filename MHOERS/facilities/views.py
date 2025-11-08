@@ -1,10 +1,11 @@
 from django.contrib.auth.models import User
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from .forms import HealthcareProviderForm
+from .forms import HealthcareProviderForm, FacilityForm
 from facilities.models import Facility
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
+from django.db import IntegrityError
 
 
 def create_provider(request):
@@ -17,30 +18,68 @@ def create_provider(request):
                 messages.error(request, "Passwords do not match.")
                 return render(request, 'accounts/user_management.html', {'form': form, 'active_page': 'user_management'})
 
-            # Create user
-            user = User.objects.create_user(
-                username=form.cleaned_data['username'],
-                password=form.cleaned_data['password1'],
-                first_name=form.cleaned_data['first_name'],
-                last_name=form.cleaned_data['last_name'],
-            )
+            # Check username availability
+            if User.objects.filter(username=form.cleaned_data['username']).exists():
+                messages.error(request, "Username is already taken.")
+                return render(request, 'accounts/user_management.html', {'form': form, 'active_page': 'user_management'})
 
-            # Create facility and assign to user
-            Facility.objects.create(
-                name=f"{form.cleaned_data['username']}",
+            # Create user
+            try:
+                user = User.objects.create_user(
+                    username=form.cleaned_data['username'],
+                    password=form.cleaned_data['password1'],
+                    first_name=form.cleaned_data['first_name'],
+                    last_name=form.cleaned_data['last_name'],
+                )
+            except IntegrityError:
+                messages.error(request, "Username is already taken.")
+                return render(request, 'accounts/user_management.html', {'form': form, 'active_page': 'user_management'})
+
+            # Create facility and assign to user (prevent duplicate names)
+            facility_name = f"{form.cleaned_data['username']}"
+            if Facility.objects.filter(name__iexact=facility_name).exists():
+                messages.error(request, "A facility with this name already exists.")
+                return redirect('user_management')
+            facility = Facility.objects.create(
+                name=facility_name,
                 assigned_bhw=f"{form.cleaned_data['first_name']} {form.cleaned_data['last_name']}",
                 latitude=form.cleaned_data['latitude'],
-                longitude=form.cleaned_data['longitude'],
-                user_id=user
+                longitude=form.cleaned_data['longitude']
             )
+            # Add user to facility's many-to-many relationship
+            facility.users.add(user)
 
             messages.success(request, "Healthcare provider and facility created.")
-            return render(request, 'accounts/user_management.html', {'facilities': facilities,'form': form, 'active_page': 'user_management'})
+            return redirect('user_management')
     else:
         form = HealthcareProviderForm()
-        return render(request, 'accounts/user_management.html', {'facilities': facilities,'form': form, 'active_page': 'user_management'})
     
-    return render(request, 'accounts/user_management.html', {'facilities': facilities,'form': form, 'active_page': 'user_management'})
+    return redirect('user_management')
+
+@login_required
+def create_facility(request):
+    if request.method == 'POST':
+        form = FacilityForm(request.POST)
+        if form.is_valid():
+            name = form.cleaned_data['name']
+            if Facility.objects.filter(name__iexact=name).exists():
+                messages.error(request, "A facility with this name already exists.")
+                return redirect('user_management')
+            try:
+                Facility.objects.create(
+                    name=name,
+                    assigned_bhw=form.cleaned_data['assigned_bhw'],
+                    latitude=form.cleaned_data['latitude'],
+                    longitude=form.cleaned_data['longitude']
+                )
+                messages.success(request, "Facility created successfully.")
+            except IntegrityError:
+                messages.error(request, "A facility with this name already exists.")
+            except Exception as e:
+                messages.error(request, f"Error creating facility: {str(e)}")
+        else:
+            messages.error(request, "Please correct the errors in the form.")
+    return redirect('user_management')
 
 def facility_list(request):
     facilities = Facility.objects.all()
@@ -50,7 +89,7 @@ def facility_list(request):
         'assigned_bhw': facility.assigned_bhw,
         'latitude': facility.latitude,
         'longitude': facility.longitude,
-        'user_id': facility.user_id.id if facility.user_id else None
+        'user_ids': [user.id for user in facility.users.all()]
     } for facility in facilities]
     return JsonResponse(data, safe=False)
 
@@ -64,7 +103,13 @@ def update_facility(request):
             user = facility.user_id
             
             # Update facility details
-            facility.name = request.POST.get('facility_name')
+            new_name = request.POST.get('facility_name')
+            # Enforce uniqueness on rename
+            if Facility.objects.filter(name__iexact=new_name).exclude(facility_id=facility.facility_id).exists():
+                messages.error(request, "A facility with this name already exists.")
+                return render(request, 'accounts/user_management.html', {'facilities': facilities, 'active_page': 'user_management'})
+
+            facility.name = new_name
             facility.assigned_bhw = f"{request.POST.get('first_name')} {request.POST.get('last_name')}"
             facility.latitude = float(request.POST.get('latitude'))
             facility.longitude = float(request.POST.get('longitude'))

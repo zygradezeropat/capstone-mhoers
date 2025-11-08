@@ -2,161 +2,743 @@
 {% load static %}
 {% block content %}
 <link rel="stylesheet" href="{% static 'css/admin_dashboard.css' %}" />
+<link rel="stylesheet" href="{% static 'css/user_management.css' %}" />
 <!-- Add Leaflet CSS -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
-<!-- Navbar -->
-{% include 'components/navbar.html' %}
-{% include 'components/referral/referral_modal.html' %}
-{% include 'components/facility/facility_modal.html' %}
- 
-<div class="container-fluid mt-4">
-  <div class="d-flex justify-content-between align-items-center">
+  <!-- Navbar -->
+  {% include 'components/navbar.html' %}
+  {% include 'components/referral/referral_modal.html' %}
+  {% include 'components/facility/facility_modal.html' %}
+  {% include 'components/workers/doctor_modal.html' %}
+  {% include 'components/workers/nurse_modal.html' %}
+  {% include 'components/tabbar/tabbar.html' with tab1_name="Pending Users" tab1_icon="bi-hourglass-split" tab2_name="Active Users" tab2_icon="bi-people-fill" tab3_name="Accredited BHW" tab3_icon="bi-person-badge" tab4_name="Nurse" tab4_icon="bi-heart-pulse" tab5_name="Doctor" tab5_icon="bi-clipboard2-pulse" %}
 
-    <!-- Add Healthcare Provider Button -->
-    <button class="btn btn-success" id="actionButton" data-bs-toggle="modal" data-bs-target="#registerModal">
-      <i class="bi bi-person-plus-fill"></i> <span>Add Healthcare Provider</span>
-    </button>
 
-    <!-- Healthcare Provider Registration Modal -->
-    <div class="modal fade" id="registerModal" tabindex="-1" role="dialog" aria-labelledby="registerModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
-        <div class="modal-content">
-          <form method="POST" action="{% url 'facilities:create_provider' %}"> 
-            {% csrf_token %}
+  <div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center">
+
+      <!-- Add Healthcare Provider Button -->
+      <button class="btn btn-success" id="actionButton" data-bs-toggle="modal" data-bs-target="#providerTypeModal">
+        <i class="bi bi-person-plus-fill"></i> <span>Add Healthcare Provider</span>
+      </button>
+
+      <!-- Provider Type Selection Modal -->
+      <div class="modal fade" id="providerTypeModal" tabindex="-1" role="dialog" aria-labelledby="providerTypeModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+          <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title" id="registerModalLabel">Add New Healthcare Provider</h5>
+              <h5 class="modal-title" id="providerTypeModalLabel">Select Healthcare Provider Type</h5>
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-
-            <div class="modal-body">
-              {% if messages %}
-                <div class="alert alert-danger text-center py-2 w-100">
-                  {% for message in messages %}
-                    <p>{{ message }}</p>
-                  {% endfor %}
-                </div>
-              {% endif %}
-
-              <!-- Provider Details -->
-              <div class="form-row mb-12">
-                <div class="form-group w-100 form-group">
-                  <label for="first_name">First Name</label>
-                  <input type="text" name="first_name" id="first_name" class="form-control" placeholder="Enter First Name" required>
-                </div>
-                <div class="form-group w-100 form-group">
-                  <label for="last_name">Last Name</label>
-                  <input type="text" name="last_name" id="last_name" class="form-control" placeholder="Enter Last Name" required>
-                </div>
-                <div class="form-group w-100">
-                  <label for="username">Provider Username</label>
-                  <input type="text" for="username" name="username" id="username" class="form-control" placeholder="Enter provider username" required>
-                </div>
-                <div class="form-group w-100">
-                  <label for="role">Healthcare Role</label>
-                  <select name="role" id="role" class="form-control" required>
-                    <option value="" disabled selected>Select healthcare role</option>
-                    <option value="BHW">Barangay Health Worker</option> 
-                    <option value="MHO">Municipal Health Officer</option>
-                  </select>
-                </div>
+            <div class="modal-body text-center">
+              <p class="mb-4">Choose the type of healthcare provider you want to add:</p>
+              <div class="d-grid gap-3">
+                <button class="btn btn-outline-primary btn-lg" id="selectDoctor">
+                  <i class="bi bi-clipboard2-pulse me-2"></i>Doctor
+                </button>
+                <button class="btn btn-outline-success btn-lg" id="selectNurse">
+                  <i class="bi bi-heart-pulse me-2"></i>Nurse
+                </button>
+                <button class="btn btn-outline-info btn-lg" id="selectBHW">
+                  <i class="bi bi-person-badge me-2"></i>Barangay Health Worker
+                </button>
+                <button class="btn btn-outline-warning btn-lg" id="selectHealthcareProvider">
+                  <i class="bi bi-building me-2"></i>Healthcare Provider
+                </button>
               </div>
-
-              <div class="form-row mb-3">
-                <div class="form-group w-100 form-group">
-                  <label for="password1">Create Password</label>
-                  <input type="password" name="password1" id="password1" class="form-control" placeholder="Enter secure password" required>
-                </div>
-                <div class="form-group w-100 form-group">
-                  <label for="password2">Verify Password</label>
-                  <input type="password" name="password2" id="password2" class="form-control" placeholder="Confirm password" required>
-                </div>
-              </div>
-
-              <!-- Map Location Selection -->
-              <div class="form-group">
-                <label for="locationMap">Location (Select a point on the map)</label>
-                <div id="map" style="height: 400px; width: 100%; margin-bottom: 15px;"></div>
-                <input type="hidden" id="latitude" name="latitude" required>
-                <input type="hidden" id="longitude" name="longitude" required>
-              </div>
-            
             </div>
-
             <div class="modal-footer">
-              <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-              <button type="submit" class="btn btn-success">Create Healthcare Account</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
             </div>
-          </form>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Delete Confirmation Modal -->
-  <div class="modal fade" id="deleteConfirmationModal" tabindex="-1" role="dialog" aria-labelledby="deleteConfirmationModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="deleteConfirmationModalLabel">Confirm Deletion</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <p>Are you sure you want to delete this facility? This action cannot be undone.</p>
-          <div class="facility-details mt-3">
-            <p><strong>Facility ID:</strong> <span id="deleteFacilityId"></span></p>
-            <p><strong>Facility Name:</strong> <span id="deleteFacilityName"></span></p>
           </div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <form id="deleteFacilityForm" method="POST" action="{% url 'facilities:delete_facility' %}">
-            {% csrf_token %}
-            <input type="hidden" name="facility_id" id="deleteFacilityIdInput">
-            <button type="submit" class="btn btn-danger">Delete Facility</button>
-          </form>
+      </div>
+
+      <!-- Facility Creation Modal -->
+      <div class="modal fade" id="registerModal" tabindex="-1" role="dialog" aria-labelledby="registerModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
+          <div class="modal-content modern-modal">
+            <form method="POST" action="{% url 'facilities:create_facility' %}" class="provider-form"> 
+              {% csrf_token %}
+              <div class="modal-header modern-header">
+                <div class="header-content">
+                  <div class="icon-wrapper">
+                    <i class="bi bi-building-fill"></i>
+                  </div>
+                  <div class="title-content">
+                    <h5 class="modal-title" id="registerModalLabel">Add New Facility</h5>
+                    <p class="modal-subtitle">Create a healthcare facility without creating a user</p>
+                  </div>
+                </div>
+                <button type="button" class="btn-close modern-close" data-bs-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+
+              <div class="modal-body modern-body">
+                {% if messages %}
+                  <div class="alert alert-danger modern-alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    {% for message in messages %}
+                      <p class="mb-0">{{ message }}</p>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+
+                <!-- Facility Information Section -->
+                <div class="form-section">
+                  <div class="section-header">
+                    <i class="bi bi-building"></i>
+                    <h6>Facility Information</h6>
+                  </div>
+                  <div class="row g-3">
+                    <div class="col-md-6">
+                      <div class="form-floating">
+                        <input type="text" name="name" id="facility_name" class="form-control modern-input" placeholder="Facility Name" required>
+                        <label for="facility_name"><i class="bi bi-building me-2"></i>Facility Name</label>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="form-floating">
+                        <input type="text" name="assigned_bhw" id="assigned_bhw" class="form-control modern-input" placeholder="Assigned BHW" required>
+                        <label for="assigned_bhw"><i class="bi bi-person-badge me-2"></i>Assigned BHW</label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Location Selection Section -->
+                <div class="form-section">
+                  <div class="section-header">
+                    <i class="bi bi-geo-alt"></i>
+                    <h6>Location Selection</h6>
+                  </div>
+                  <div class="location-container">
+                    <p class="location-instruction">Select a point on the map to set the facility location</p>
+                    <div id="map" class="modern-map"></div>
+                    <input type="hidden" id="latitude" name="latitude" required>
+                    <input type="hidden" id="longitude" name="longitude" required>
+                  </div>
+                </div>
+              </div>
+
+              <div class="modal-footer modern-footer">
+                <button type="button" class="btn btn-outline-secondary modern-btn-cancel" data-bs-dismiss="modal">
+                  <i class="bi bi-x-circle me-2"></i>Cancel
+                </button>
+                <button type="submit" class="btn btn-success modern-btn-submit">
+                  <i class="bi bi-building me-2"></i>Create Facility
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Healthcare Providers List -->
-  <div class="tab-pane fade show mt-3" id="tab1" role="tabpanel" aria-labelledby="reports-tab">
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteConfirmationModal" tabindex="-1" role="dialog" aria-labelledby="deleteConfirmationModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="deleteConfirmationModalLabel">Confirm Deletion</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <p>Are you sure you want to delete this facility? This action cannot be undone.</p>
+            <div class="facility-details mt-3">
+              <p><strong>Facility ID:</strong> <span id="deleteFacilityId"></span></p>
+              <p><strong>Facility Name:</strong> <span id="deleteFacilityName"></span></p>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <form id="deleteFacilityForm" method="POST" action="{% url 'facilities:delete_facility' %}">
+              {% csrf_token %}
+              <input type="hidden" name="facility_id" id="deleteFacilityIdInput">
+              <button type="submit" class="btn btn-danger">Delete Facility</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- TAB 1 for PENDING USERS -->
+    <div class="tab-content" id="dashboardTabContent">
+    <div class="tab-pane fade {% if active_tab == 'tab1' %}show active{% endif %} mt-3" id="tab1" role="tabpanel" aria-labelledby="pendinguser-tab">
+      <div class="row g-4">
+        <div class="col-lg-12">
+          <div class="card modern-card shadow-sm h-100">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="card-title d-flex align-items-center mb-0">
+                  <i class="bi bi-hourglass-split me-2 text-warning"></i>
+                  Pending User Registrations
+                </h5>
+                <span class="badge bg-warning text-dark">{{ pending_bhw|length|add:pending_doctors|length|add:pending_nurses|length }}</span>
+              </div>
+              
+              <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                  <thead class="bg-light">
+                    <tr>
+                      <th>Type</th>
+                      <th>Name</th>
+                      <th>Details</th>
+                      <th>Status</th>
+                      <th>Assign Facility</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for bhw in pending_bhw %}
+                    <tr class="pending-user-row pending-user-clickable" style="cursor: pointer;" data-modal-target="#pendingUserModal{{ bhw.bhw_id }}">
+                      <td><span class="badge bg-info text-dark"><i class="bi bi-person-badge me-1"></i> BHW</span></td>
+                      <td>{{ bhw.first_name }} {{ bhw.last_name }}</td>
+                      <td>{{ bhw.barangay }}</td>
+                      <td><span class="badge rounded-pill bg-warning">Pending</span></td>
+                      <td>{{ bhw.assigned_barangay }}</td>
+                      <td>
+                        <div class="d-flex gap-2" onclick="event.stopPropagation();">
+                          <form method="POST" action="{% url 'approve_user' %}" style="display: inline-block; margin-right: 0.5rem;">
+                            {% csrf_token %}
+                            <input type="hidden" name="user_type" value="bhw">
+                            <input type="hidden" name="user_id" value="{{ bhw.bhw_id }}">
+                            <button type="submit" class="btn btn-success btn-sm" title="Approve">
+                              <i class="bi bi-check-circle"></i>
+                            </button>
+                          </form>
+                          <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#rejectModal{{ bhw.bhw_id }}" title="Reject">
+                            <i class="bi bi-x-circle"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                      <td colspan="6" class="text-center text-muted">No pending BHW registrations</td>
+                    </tr>
+                    {% endfor %}
+
+                    {% for doctor in pending_doctors %}
+                    <tr class="pending-user-row pending-user-clickable" style="cursor: pointer;" data-modal-target="#pendingUserModalDoc{{ doctor.doctor_id }}">
+                      <td><span class="badge bg-primary text-white"><i class="bi bi-clipboard2-pulse me-1"></i> Doctor</span></td>
+                      <td>{{ doctor.first_name }} {{ doctor.last_name }}</td>
+                      <td>{{ doctor.specialization }}</td>
+                      <td><span class="badge rounded-pill bg-warning">Pending</span></td>
+                      <td>{{doctor.specialization }}</td>
+                      <td>
+                        <div class="d-flex gap-2" onclick="event.stopPropagation();">
+                          <form method="POST" action="{% url 'approve_user' %}" style="display: inline-block; margin-right: 0.5rem;">
+                            {% csrf_token %}
+                            <input type="hidden" name="user_type" value="doctor">
+                            <input type="hidden" name="user_id" value="{{ doctor.doctor_id }}">
+                            <button type="submit" class="btn btn-success btn-sm" title="Approve">
+                              <i class="bi bi-check-circle"></i>
+                            </button>
+                          </form>
+                          <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#rejectModal{{ doctor.doctor_id }}" title="Reject">
+                            <i class="bi bi-x-circle"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                      <td colspan="6" class="text-center text-muted">No pending doctor registrations</td>
+                    </tr>
+                    {% endfor %}
+
+                    {% for nurse in pending_nurses %}
+                    <tr class="pending-user-row pending-user-clickable" style="cursor: pointer;" data-modal-target="#pendingUserModalNur{{ nurse.nurse_id }}">
+                      <td><span class="badge bg-danger text-white"><i class="bi bi-heart-pulse me-1"></i> Nurse</span></td>
+                      <td>{{ nurse.first_name }} {{ nurse.last_name }}</td>
+                      <td>{{ nurse.barangay|default:"N/A" }}</td>
+                      <td><span class="badge rounded-pill bg-warning">Pending</span></td>
+                      <td>{{ nurse.nursing_assigned_area }}</td>
+                      <td>
+                        <div class="d-flex gap-2" onclick="event.stopPropagation();">
+                          <form method="POST" action="{% url 'approve_user' %}" style="display: inline-block; margin-right: 0.5rem;">
+                            {% csrf_token %}
+                            <input type="hidden" name="user_type" value="nurse">
+                            <input type="hidden" name="user_id" value="{{ nurse.nurse_id }}">
+                            <button type="submit" class="btn btn-success btn-sm" title="Approve">
+                              <i class="bi bi-check-circle"></i>
+                            </button>
+                          </form>
+                          <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#rejectModal{{ nurse.nurse_id }}" title="Reject">
+                            <i class="bi bi-x-circle"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                      <td colspan="6" class="text-center text-muted">No pending nurse registrations</td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2 for ACTIVE USERS -->
+    <div class="tab-pane fade {% if active_tab == 'tab2' %}show active{% endif %} mt-3" id="tab2" role="tabpanel" aria-labelledby="activeuser-tab">
+      <div class="row g-4">
+        <!-- Table Section -->
+        <div class="col-lg-8 col-md-7">
+          <div class="card modern-card shadow-sm h-100">
+            <div class="card-body">
+              <h5 class="card-title mb-4 d-flex align-items-center">
+                <i class="bi bi-building me-2"></i>
+                Healthcare Providers Directory
+              </h5>
+              <div class="table-responsive">
+                <table id="providersTable" class="table table-hover mb-0">
+                  <thead class="bg-light">
+                    <tr>
+                      <th>Facility ID</th>
+                      <th>Facility Name</th>
+                      <th>Assigned BHW</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for facility in facilities %}
+                    <tr class="clickable-row" data-id="{{ facility.facility_id }}" data-facility="{{ facility.name }}" data-bhw="{{ facility.assigned_bhw }}" data-latitude="{{ facility.latitude }}" data-longitude="{{ facility.longitude }}" data-first-name="{{ facility.user_id.first_name }}" data-last-name="{{ facility.user_id.last_name }}">
+                      <td>{{ facility.facility_id }}</td>
+                      <td>{{ facility.name }}</td>
+                      <td>{{ facility.assigned_bhw }}</td>
+                      <td><span class="badge rounded-pill bg-info text-dark">Active</span></td>
+                      <td>
+                        <div class="d-flex gap-2">
+                          <button class="btn btn-warning btn-sm edit-button" data-bs-toggle="modal" data-bs-target="#editFacilityModal" data-bs-toggle="tooltip" title="Edit Facility">
+                            <i class="bi bi-pencil-square"></i>
+                          </button>
+                          <button class="btn btn-danger btn-sm delete-button" data-bs-toggle="tooltip" title="Remove Facility">
+                            <i class="bi bi-trash"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Provider Details Card -->
+        <div class="col-lg-4 col-md-5">
+          <div class="card modern-card p-4 shadow-sm h-100" id="infoCard">
+            <h5 class="mb-4 d-flex align-items-center">
+              <i class="bi bi-info-circle me-2"></i>
+              Facility Details
+            </h5>
+            <div id="cardContent" class="facility-details">
+              <div class="detail-item">
+                <span class="detail-label">Facility ID</span>
+                <span id="cardFacilityId" class="detail-value">Select a facility</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Facility Name</span>
+                <span id="cardFacility" class="detail-value">Select a facility</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Assigned BHW</span>
+                <span id="cardBHW" class="detail-value">Select a facility</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+  <!-- Pending User Modals Container -->
+  <div id="pendingUserModals">
+      {% for bhw in pending_bhw %}
+      <!-- Modern Pending User Modal -->
+      <div class="modal fade" id="pendingUserModal{{ bhw.bhw_id }}" tabindex="-1" aria-labelledby="pendingUserModalLabel{{ bhw.bhw_id }}" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+          <div class="modal-content modern-modal">
+            <div class="modal-header modern-header" style="background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);">
+              <div class="header-content">
+                <div class="icon-wrapper">
+                  <i class="bi bi-person-badge"></i>
+                </div>
+                <div class="title-content">
+                  <h5 class="modal-title" id="pendingUserModalLabel{{ bhw.bhw_id }}">Pending BHW Registration</h5>
+                  <p class="modal-subtitle">Review registration details</p>
+                </div>
+              </div>
+              <button type="button" class="btn-close modern-close" data-bs-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body modern-body">
+              <div class="form-section">
+                <div class="section-header">
+                  <i class="bi bi-person-circle"></i>
+                  <h6>Personal Information</h6>
+                </div>
+                <div class="info-item mb-3">
+                  <p class="info-label">Full Name</p>
+                  <p class="info-value">{{ bhw.first_name }} {{ bhw.middle_name }} {{ bhw.last_name }}</p>
+                </div>
+                <div class="info-item mb-3">
+                  <p class="info-label">Phone</p>
+                  <p class="info-value">{{ bhw.phone|default:"N/A" }}</p>
+                </div>
+                <div class="info-item mb-3">
+                  <p class="info-label">Address</p>
+                  <p class="info-value">{{ bhw.street_address }} {{ bhw.city }}, {{ bhw.province }} - {{ bhw.barangay }}</p>
+                </div>
+              </div>
+              
+              <div class="form-section">
+                <div class="section-header">
+                  <i class="bi bi-award"></i>
+                  <h6>Professional Information</h6>
+                </div>
+                <div class="info-item mb-3">
+                  <p class="info-label">Registration Number</p>
+                  <p class="info-value">{{ bhw.registrationNumber }}</p>
+                </div>
+                <div class="info-item mb-3">
+                  <p class="info-label">Accreditation Number</p>
+                  <p class="info-value">{{ bhw.accreditationNumber }}</p>
+                </div>
+                <div class="info-item mb-3">
+                  <p class="info-label">Role</p>
+                  <p class="info-value">{{ bhw.bhw_sub_role }}</p>
+                </div>
+                <div class="info-item mb-3">
+                  <p class="info-label">Assigned Barangay</p>
+                  <p class="info-value">{{ bhw.assigned_barangay }}</p>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer modern-footer">
+              <form method="POST" action="{% url 'approve_user' %}" style="display: inline-block; margin-right: 0.5rem;">
+                {% csrf_token %}
+                <input type="hidden" name="user_type" value="bhw">
+                <input type="hidden" name="user_id" value="{{ bhw.bhw_id }}">
+                <button type="submit" class="btn modern-btn-approve">
+                  <i class="bi bi-check-circle me-2"></i>Approve
+                </button>
+              </form>
+              <button class="btn modern-btn-reject" data-bs-toggle="modal" data-bs-target="#rejectModal{{ bhw.bhw_id }}">
+                <i class="bi bi-x-circle me-2"></i>Reject
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reject Modal for BHW -->
+      <div class="modal fade" id="rejectModal{{ bhw.bhw_id }}" tabindex="-1" aria-labelledby="rejectModalLabel{{ bhw.bhw_id }}" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+              <h5 class="modal-title" id="rejectModalLabel{{ bhw.bhw_id }}">Reject BHW Registration</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{% url 'reject_user' %}">
+              {% csrf_token %}
+              <div class="modal-body">
+                <p>Are you sure you want to reject <strong>{{ bhw.first_name }} {{ bhw.last_name }}</strong>?</p>
+                <div class="mb-3">
+                  <label for="reason{{ bhw.bhw_id }}" class="form-label">Rejection Reason:</label>
+                  <textarea class="form-control" id="reason{{ bhw.bhw_id }}" name="reason" rows="3" placeholder="Enter reason for rejection" required></textarea>
+                </div>
+                <input type="hidden" name="user_type" value="bhw">
+                <input type="hidden" name="user_id" value="{{ bhw.bhw_id }}">
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-danger">Reject Registration</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+
+      {% for doctor in pending_doctors %}
+      <!-- Modern Pending Doctor Modal -->
+      <div class="modal fade" id="pendingUserModalDoc{{ doctor.doctor_id }}" tabindex="-1" aria-labelledby="pendingUserModalLabelDoc{{ doctor.doctor_id }}" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+          <div class="modal-content modern-modal">
+            <div class="modal-header modern-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+              <div class="header-content">
+                <div class="icon-wrapper">
+                  <i class="bi bi-clipboard2-pulse"></i>
+                </div>
+                <div class="title-content">
+                  <h5 class="modal-title" id="pendingUserModalLabelDoc{{ doctor.doctor_id }}">Pending Doctor Registration</h5>
+                  <p class="modal-subtitle">Review registration details</p>
+                </div>
+              </div>
+              <button type="button" class="btn-close modern-close" data-bs-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body modern-body">
+              <div class="form-section">
+                <div class="section-header">
+                  <i class="bi bi-person-circle"></i>
+                  <h6>Personal Information</h6>
+                </div>
+                <div class="info-item mb-3">
+                  <p class="info-label">Full Name</p>
+                  <p class="info-value">{{ doctor.first_name }} {{ doctor.middle_name }} {{ doctor.last_name }}</p>
+                </div>
+                <div class="info-item mb-3">
+                  <p class="info-label">Email</p>
+                  <p class="info-value">{{ doctor.email }}</p>
+                </div>
+                <div class="info-item mb-3">
+                  <p class="info-label">Phone</p>
+                  <p class="info-value">{{ doctor.phone }}</p>
+                </div>
+                <div class="info-item mb-3">
+                  <p class="info-label">Address</p>
+                  <p class="info-value">{{ doctor.street_address }}, {{ doctor.city }}, {{ doctor.province }}</p>
+                </div>
+              </div>
+              
+              <div class="form-section">
+                <div class="section-header">
+                  <i class="bi bi-award"></i>
+                  <h6>Professional Information</h6>
+                </div>
+                <div class="info-item mb-3">
+                  <p class="info-label">Specialization</p>
+                  <p class="info-value">{{ doctor.specialization }}</p>
+                </div>
+                <div class="info-item mb-3">
+                  <p class="info-label">License Number</p>
+                  <p class="info-value">{{ doctor.license_number }}</p>
+                </div>
+                <div class="info-item mb-3">
+                  <p class="info-label">Medical School</p>
+                  <p class="info-value">{{ doctor.medical_school }}</p>
+                </div>
+                <div class="info-item mb-3">
+                  <p class="info-label">Years of Practice</p>
+                  <p class="info-value">{{ doctor.years_medical_practice }}</p>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer modern-footer">
+              <form method="POST" action="{% url 'approve_user' %}" style="display: inline-block; margin-right: 0.5rem;">
+                {% csrf_token %}
+                <input type="hidden" name="user_type" value="doctor">
+                <input type="hidden" name="user_id" value="{{ doctor.doctor_id }}">
+                <button type="submit" class="btn modern-btn-approve">
+                  <i class="bi bi-check-circle me-2"></i>Approve
+                </button>
+              </form>
+              <button class="btn modern-btn-reject" data-bs-toggle="modal" data-bs-target="#rejectModal{{ doctor.doctor_id }}">
+                <i class="bi bi-x-circle me-2"></i>Reject
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reject Modal for Doctor -->
+      <div class="modal fade" id="rejectModal{{ doctor.doctor_id }}" tabindex="-1" aria-labelledby="rejectModalLabel{{ doctor.doctor_id }}" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+              <h5 class="modal-title" id="rejectModalLabel{{ doctor.doctor_id }}">Reject Doctor Registration</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{% url 'reject_user' %}">
+              {% csrf_token %}
+              <div class="modal-body">
+                <p>Are you sure you want to reject <strong>{{ doctor.first_name }} {{ doctor.last_name }}</strong>?</p>
+                <div class="mb-3">
+                  <label for="reason{{ doctor.doctor_id }}" class="form-label">Rejection Reason:</label>
+                  <textarea class="form-control" id="reason{{ doctor.doctor_id }}" name="reason" rows="3" placeholder="Enter reason for rejection" required></textarea>
+                </div>
+                <input type="hidden" name="user_type" value="doctor">
+                <input type="hidden" name="user_id" value="{{ doctor.doctor_id }}">
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-danger">Reject Registration</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+
+      {% for nurse in pending_nurses %}
+      <!-- Modern Pending Nurse Modal -->
+      <div class="modal fade" id="pendingUserModalNur{{ nurse.nurse_id }}" tabindex="-1" aria-labelledby="pendingUserModalLabelNur{{ nurse.nurse_id }}" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+          <div class="modal-content modern-modal">
+            <div class="modal-header modern-header" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+              <div class="header-content">
+                <div class="icon-wrapper">
+                  <i class="bi bi-heart-pulse"></i>
+                </div>
+                <div class="title-content">
+                  <h5 class="modal-title" id="pendingUserModalLabelNur{{ nurse.nurse_id }}">Pending Nurse Registration</h5>
+                  <p class="modal-subtitle">Review registration details</p>
+                </div>
+              </div>
+              <button type="button" class="btn-close modern-close" data-bs-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body modern-body">
+              <div class="form-section">
+                <div class="section-header">
+                  <i class="bi bi-person-circle"></i>
+                  <h6>Personal Information</h6>
+                </div>
+                <div class="info-item mb-3">
+                  <p class="info-label">Full Name</p>
+                  <p class="info-value">{{ nurse.first_name }} {{ nurse.middle_name }} {{ nurse.last_name }}</p>
+                </div>
+                <div class="info-item mb-3">
+                  <p class="info-label">Email</p>
+                  <p class="info-value">{{ nurse.email|default:"N/A" }}</p>
+                </div>
+                <div class="info-item mb-3">
+                  <p class="info-label">Phone</p>
+                  <p class="info-value">{{ nurse.phone }}</p>
+                </div>
+                <div class="info-item mb-3">
+                  <p class="info-label">Address</p>
+                  <p class="info-value">{{ nurse.street_address }}, {{ nurse.city }}, {{ nurse.province }}</p>
+                </div>
+              </div>
+              
+              <div class="form-section">
+                <div class="section-header">
+                  <i class="bi bi-award"></i>
+                  <h6>Professional Information</h6>
+                </div>
+                <div class="info-item mb-3">
+                  <p class="info-label">Nurse License Number</p>
+                  <p class="info-value">{{ nurse.nurse_license_number }}</p>
+                </div>
+                <div class="info-item mb-3">
+                  <p class="info-label">PRC License Number</p>
+                  <p class="info-value">{{ nurse.prc_license_number }}</p>
+                </div>
+                <div class="info-item mb-3">
+                  <p class="info-label">Nursing School</p>
+                  <p class="info-value">{{ nurse.nursing_school }}</p>
+                </div>
+                <div class="info-item mb-3">
+                  <p class="info-label">Specialization</p>
+                  <p class="info-value">{{ nurse.nursing_specialization }}</p>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer modern-footer">
+              <form method="POST" action="{% url 'approve_user' %}" style="display: inline-block; margin-right: 0.5rem;">
+                {% csrf_token %}
+                <input type="hidden" name="user_type" value="nurse">
+                <input type="hidden" name="user_id" value="{{ nurse.nurse_id }}">
+                <button type="submit" class="btn modern-btn-approve">
+                  <i class="bi bi-check-circle me-2"></i>Approve
+                </button>
+              </form>
+              <button class="btn modern-btn-reject" data-bs-toggle="modal" data-bs-target="#rejectModal{{ nurse.nurse_id }}">
+                <i class="bi bi-x-circle me-2"></i>Reject
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reject Modal for Nurse -->
+      <div class="modal fade" id="rejectModal{{ nurse.nurse_id }}" tabindex="-1" aria-labelledby="rejectModalLabel{{ nurse.nurse_id }}" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+              <h5 class="modal-title" id="rejectModalLabel{{ nurse.nurse_id }}">Reject Nurse Registration</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{% url 'reject_user' %}">
+              {% csrf_token %}
+              <div class="modal-body">
+                <p>Are you sure you want to reject <strong>{{ nurse.first_name }} {{ nurse.last_name }}</strong>?</p>
+                <div class="mb-3">
+                  <label for="reason{{ nurse.nurse_id }}" class="form-label">Rejection Reason:</label>
+                  <textarea class="form-control" id="reason{{ nurse.nurse_id }}" name="reason" rows="3" placeholder="Enter reason for rejection" required></textarea>
+                </div>
+                <input type="hidden" name="user_type" value="nurse">
+                <input type="hidden" name="user_id" value="{{ nurse.nurse_id }}">
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-danger">Reject Registration</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- ACCREDATED TAB 3rd TAB 3 FOR THE LIST OF BHW -->
+    <div class="tab-pane fade {% if active_tab == 'tab3' %}show active{% endif %} mt-3" id="tab3" role="tabpanel" aria-labelledby="bhwregister-tab">
     <div class="row g-4">
       <!-- Table Section -->
-      <div class="col-lg-8 col-md-7">
+      <div class="col-lg-12 col-md-12">
         <div class="card modern-card shadow-sm h-100">
           <div class="card-body">
-            <h5 class="card-title mb-4 d-flex align-items-center">
-              <i class="bi bi-building me-2"></i>
-              Healthcare Providers Directory
-            </h5>
+            
+            <!-- Header Row with Button on the Right -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+              <h5 class="card-title d-flex align-items-center mb-0">
+                <i class="bi bi-clock-history me-2"></i>
+                Accreditated Names
+              </h5>
+            </div>
+
+            <!-- Table -->
             <div class="table-responsive">
               <table id="providersTable" class="table table-hover mb-0">
                 <thead class="bg-light">
                   <tr>
-                    <th>Facility ID</th>
-                    <th>Facility Name</th>
-                    <th>Assigned BHW</th>
-                    <th>Actions</th>
+                    <th>#</th>
+                    <th>Accreditation Number</th>
+                    <th>Registration Number</th>
+                    <th>Full Name</th>
+                    <th>From Facility of</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {% for facility in facilities %}
-                  <tr class="clickable-row" data-id="{{ facility.facility_id }}" data-facility="{{ facility.name }}" data-bhw="{{ facility.assigned_bhw }}" data-latitude="{{ facility.latitude }}" data-longitude="{{ facility.longitude }}" data-first-name="{{ facility.user_id.first_name }}" data-last-name="{{ facility.user_id.last_name }}">
-                    <td>{{ facility.facility_id }}</td>
-                    <td>{{ facility.name }}</td>
-                    <td>{{ facility.assigned_bhw }}</td>
-                    <td>
-                      <div class="d-flex gap-2">
-                        <button class="btn btn-warning btn-sm edit-button" data-bs-toggle="modal" data-bs-target="#editFacilityModal" data-bs-toggle="tooltip" title="Edit Facility">
-                          <i class="bi bi-pencil-square"></i>
-                        </button>
-                        <button class="btn btn-danger btn-sm delete-button" data-bs-toggle="tooltip" title="Remove Facility">
-                          <i class="bi bi-trash"></i>
-                        </button>
-                      </div>
-                    </td>
+                  {% for bhw in bhwnames %}
+                  <tr class="clickable-row" 
+                      data-id="{{ bhw.facility_id }}" 
+                      data-facility="{{ bhw.facility }}" 
+                      data-first-name="{{ bhw.first_name }}" 
+                      data-last-name="{{ bhw.last_name }}">
+                    
+                    <td><input type="checkbox" class="form-check-input row-checkbox" value="{{ bhw.id }}"></td>
+                    <td>{{ bhw.accreditationNumber }}</td>
+                    <td>{{ bhw.registrationNumber }}</td>
+                    <td>{{ bhw.last_name }}, {{ bhw.first_name }} {{ bhw.middle_name }}</td>
+                    <td>{{ bhw.barangay }}</td>
                   </tr>
                   {% endfor %}
                 </tbody>
@@ -165,113 +747,108 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
+  <!-- NURSE TAB 4 -->
+  <div class="tab-pane fade {% if active_tab == 'tab4' %}show active{% endif %} mt-3" id="tab4" role="tabpanel" aria-labelledby="nurse-tab">
+    <div class="row g-4">
+      <!-- Table Section -->
+      <div class="col-lg-12 col-md-12">
+        <div class="card modern-card shadow-sm h-100">
+          <div class="card-body">
+            
+            <!-- Header Row with Button on the Right -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+              <h5 class="card-title d-flex align-items-center mb-0">
+                <i class="bi bi-clock-history me-2"></i>
+                List of Nurses
+              </h5>
+            </div>
 
-      <!-- Provider Details Card -->
-      <div class="col-lg-4 col-md-5">
-        <div class="card modern-card p-4 shadow-sm h-100" id="infoCard">
-          <h5 class="mb-4 d-flex align-items-center">
-            <i class="bi bi-info-circle me-2"></i>
-            Facility Details
-          </h5>
-          <div id="cardContent" class="facility-details">
-            <div class="detail-item">
-              <span class="detail-label">Facility ID</span>
-              <span id="cardFacilityId" class="detail-value">Select a facility</span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">Facility Name</span>
-              <span id="cardFacility" class="detail-value">Select a facility</span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">Assigned BHW</span>
-              <span id="cardBHW" class="detail-value">Select a facility</span>
+            <!-- Table -->
+            <div class="table-responsive">
+              <table id="providersTable" class="table table-hover mb-0">
+                <thead class="bg-light">
+                  <tr>
+                    <th>#</th>
+                    <th>Full Name</th>
+                    <th>Facility Assigned</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for nurse in nurses %}
+                  <tr class="clickable-row" 
+                      data-id="{{ nurse.nurse_id }}" 
+                      data-facility="{{ nurse.facility }}" 
+                      data-first-name="{{ nurse.first_name }}" 
+                      data-last-name="{{ nurse.last_name }}">
+
+                    <td><input type="checkbox" class="form-check-input row-checkbox" value="{{ bhw.id }}"></td>
+                    <td>{{ nurse.last_name }}, {{ nurse.first_name }} {{ nurse.middle_name }}</td>
+                    <td>{{ nurse.barangay }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- Enhanced Styles -->
-<style>
-  .modern-card {
-    border: none;
-    border-radius: 12px;
-    background: #ffffff;
-    transition: all 0.3s ease;
-  }
 
-  .modern-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 16px rgba(0,0,0,0.1) !important;
-  }
 
-  .modern-card .card-title {
-    color: #2c3e50;
-    font-weight: 600;
-  }
+  <!-- DOCTORS TAB 5 -->
+    <div class="tab-pane fade {% if active_tab == 'tab5' %}show active{% endif %} mt-3" id="tab5" role="tabpanel" aria-labelledby="doctors-tab">
+    <div class="row g-4">
+      <!-- Table Section -->
+      <div class="col-lg-12 col-md-12">
+        <div class="card modern-card shadow-sm h-100">
+          <div class="card-body">
+            
+            <!-- Header Row with Button on the Right -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+              <h5 class="card-title d-flex align-items-center mb-0">
+                <i class="bi bi-clock-history me-2"></i>
+                List of Doctors
+              </h5>
+            </div>
 
-  .clickable-row {
-    transition: all 0.3s ease;
-    border-left: 3px solid transparent;
-  }
-  
-  .clickable-row:hover {
-    background-color: rgba(var(--bs-primary-rgb), 0.05);
-    cursor: pointer;
-    border-left: 3px solid var(--bs-primary);
-  } 
+            <!-- Table -->
+            <div class="table-responsive">
+              <table id="providersTable" class="table table-hover mb-0">
+                <thead class="bg-light">
+                  <tr>
+                    <th>#</th>
+                    <th>Full Name</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for doctors in doctors %}
+                  <tr class="clickable-row" 
+                      data-id="{{ doctors.doctor_id }}" 
+                      data-facility="{{ doctors.facility_id }}" 
+                      data-first-name="{{ doctors.first_name }}" 
+                      data-last-name="{{ doctors.last_name }}">
+                    
+                    <td><input type="checkbox" class="form-check-input row-checkbox" value="{{ bhw.id }}"></td>
+                    <td>{{ doctors.last_name }}, {{ doctors.first_name }} {{ doctors.middle_name }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-  .clickable-row.active {
-    background-color: rgba(var(--bs-primary-rgb), 0.1);
-    border-left: 3px solid var(--bs-primary);
-  }
+    </div>
+    </div>
 
-  .facility-details {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-  }
-
-  .detail-item {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .detail-label {
-    font-size: 0.875rem;
-    color: #6c757d;
-    font-weight: 500;
-  }
-
-  .detail-value {
-    font-size: 1rem;
-    color: #2c3e50;
-    font-weight: 500;
-  }
-
-  .btn-sm {
-    padding: 0.4rem 0.6rem;
-    border-radius: 6px;
-  }
-
-  .table {
-    margin-bottom: 0;
-  }
-
-  .table thead th {
-    border-top: none;
-    font-weight: 600;
-    color: #495057;
-    background-color: #f8f9fa;
-  }
-
-  .table td {
-    vertical-align: middle;
-  }
-</style>
+  </div>
 
 {% block script %}
 <!-- Add Leaflet JS -->
@@ -281,19 +858,82 @@ let map;
 let marker;
 
 document.addEventListener("DOMContentLoaded", function() {
-  const rows = document.querySelectorAll(".clickable-row");
+  // Handle provider type selection
+  document.getElementById('selectDoctor').addEventListener('click', function() {
+    // Close type selection modal
+    const typeModal = bootstrap.Modal.getInstance(document.getElementById('providerTypeModal'));
+    typeModal.hide();
+    
+    // Show the doctor registration modal
+    const doctorModal = new bootstrap.Modal(document.getElementById('doctorModal'));
+    doctorModal.show();
+  });
+
+  document.getElementById('selectNurse').addEventListener('click', function() {
+    // Close type selection modal
+    const typeModal = bootstrap.Modal.getInstance(document.getElementById('providerTypeModal'));
+    typeModal.hide();
+    
+    // Show the nurse registration modal
+    const nurseModal = new bootstrap.Modal(document.getElementById('nurseModal'));
+    nurseModal.show();
+  });
+
+  document.getElementById('selectBHW').addEventListener('click', function() {
+    // Close type selection modal
+    const typeModal = bootstrap.Modal.getInstance(document.getElementById('providerTypeModal'));
+    typeModal.hide();
+    
+    // TODO: Show BHW registration modal (to be implemented)
+    alert('BHW registration form will be implemented');
+  });
+
+  document.getElementById('selectHealthcareProvider').addEventListener('click', function() {
+    // Close type selection modal
+    const typeModal = bootstrap.Modal.getInstance(document.getElementById('providerTypeModal'));
+    typeModal.hide();
+    
+    // Show the existing healthcare provider registration modal
+    const registerModal = new bootstrap.Modal(document.getElementById('registerModal'));
+    registerModal.show();
+  });
+
+  // Only handle clickable rows in Tab 1 (facilities table), not in pending users tab
+  const rows = document.querySelectorAll("#tab1 .clickable-row");
 
   rows.forEach(row => {
     row.addEventListener("click", function() {
       rows.forEach(r => r.classList.remove("active"));
       this.classList.add("active");
 
-      document.getElementById("cardFacilityId").innerText = this.dataset.id;
-      document.getElementById("cardFacility").innerText = this.dataset.facility;
-      document.getElementById("cardBHW").innerText = this.dataset.bhw;
-      document.getElementById("cardLocation").innerText = `${this.dataset.latitude}, ${this.dataset.longitude}`;
+      if (document.getElementById("cardFacilityId")) {
+        document.getElementById("cardFacilityId").innerText = this.dataset.id;
+        document.getElementById("cardFacility").innerText = this.dataset.facility;
+        document.getElementById("cardBHW").innerText = this.dataset.bhw;
+        if (this.dataset.latitude && this.dataset.longitude) {
+          document.getElementById("cardLocation").innerText = `${this.dataset.latitude}, ${this.dataset.longitude}`;
+        }
+        document.getElementById("infoCard").scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  });
 
-      document.getElementById("infoCard").scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // Handle pending user row clicks to open modals
+  const pendingUserRows = document.querySelectorAll('.pending-user-clickable');
+  pendingUserRows.forEach(row => {
+    row.addEventListener('click', function(e) {
+      // Don't open modal if clicking on buttons
+      if (e.target.closest('button, form, .d-flex')) {
+        return;
+      }
+      const modalTarget = this.getAttribute('data-modal-target');
+      if (modalTarget) {
+        const modalElement = document.querySelector(modalTarget);
+        if (modalElement) {
+          const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+          modal.show();
+        }
+      }
     });
   });
 
@@ -302,6 +942,13 @@ document.addEventListener("DOMContentLoaded", function() {
   tooltipTriggerList.map(function (tooltipTriggerEl) {
     return new bootstrap.Tooltip(tooltipTriggerEl);
   });
+
+  // Auto-open register modal if there are error messages rendered inside it
+  const modalHasMessages = document.querySelector('#registerModal .modern-alert');
+  if (modalHasMessages) {
+    const registerModal = new bootstrap.Modal(document.getElementById('registerModal'));
+    registerModal.show();
+  }
 
   // Function to initialize the map
   function initializeMap() {
@@ -332,6 +979,7 @@ document.addEventListener("DOMContentLoaded", function() {
     }, 100);
   }
 
+
   // Initialize map when modal is shown
   document.getElementById('registerModal').addEventListener('shown.bs.modal', function() {
     initializeMap();
@@ -349,6 +997,7 @@ document.addEventListener("DOMContentLoaded", function() {
     document.getElementById('latitude').value = '';
     document.getElementById('longitude').value = '';
   });
+
 
   // Delete functionality
   const deleteButtons = document.querySelectorAll('.delete-button');

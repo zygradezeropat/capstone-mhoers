@@ -8,14 +8,14 @@ $(document).ready(function() {
   // Initialize DataTables with modern styling
   const tableConfig = {
     responsive: true,
-    dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
-         '<"row"<"col-sm-12"tr>>' +
-         '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+    dom: '<"row"<"col-sm-12 col-md-6"f>>' +
+         '<"row"<"col-sm-12"tr>>',
     language: {
       search: "_INPUT_",
       searchPlaceholder: "Search patient records..."
     },
-    pageLength: 10,
+    paging: false,
+    info: false,
     order: [[0, 'asc']],
     columnDefs: [
       { 
@@ -37,10 +37,15 @@ $(document).ready(function() {
     ]
   };
 
-  $("#activeTable").DataTable(tableConfig);
-  $("#pendingTable").DataTable(tableConfig);
-  $("#referredTable").DataTable(tableConfig);
-  $("#allTable").DataTable(tableConfig);
+  if ($("#activeTable").length) {
+    $("#activeTable").DataTable(tableConfig);
+  }
+  if ($("#referredTable").length) {
+    $("#referredTable").DataTable(tableConfig);
+  }
+  if ($("#allTable").length) {
+    $("#allTable").DataTable(tableConfig);
+  }
 
   // Button click events for View, Edit, Delete using event delegation
   $(document).on('click', '.edit-button', function() {

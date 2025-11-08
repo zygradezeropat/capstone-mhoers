@@ -1,0 +1,219 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block alerts %}{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/admin_dashboard.css' %}" />
+
+<!-- Navbar -->
+{% include 'components/navbar.html' %}
+
+<div class="container-fluid py-4">
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center">
+          <a href="{% url 'chat:chat_home' %}" class="btn btn-outline-secondary me-3">
+            <i class="bi bi-arrow-left me-2"></i>Back
+          </a>
+          <div class="d-flex align-items-center">
+            <div class="avatar-circle bg-primary-soft me-3">
+              <i class="bi bi-person-fill text-primary"></i>
+            </div>
+            <div>
+              <h4 class="mb-1 fw-bold">{{ other_user.get_full_name|default:other_user.username }}</h4>
+              <small class="text-muted">
+                {% if other_user.is_staff %}Municipal Health Officer{% else %}Barangay Health Worker{% endif %}
+              </small>
+            </div>
+          </div>
+        </div>
+        <div class="d-flex gap-2">
+          <button class="btn btn-outline-primary" onclick="refreshMessages()">
+            <i class="bi bi-arrow-clockwise me-2"></i>Refresh
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Messages Area -->
+    <div class="col-12">
+      <div class="card border-0 shadow-sm rounded-4 h-100" style="height: 600px;">
+        <div class="card-body p-0 d-flex flex-column">
+          <!-- Messages Container -->
+          <div id="messagesContainer" class="flex-grow-1 p-4 overflow-auto" style="max-height: 450px;">
+            {% for message in messages %}
+              <div class="message-item mb-3 {% if message.sender == request.user %}text-end{% endif %}">
+                <div class="d-flex {% if message.sender == request.user %}justify-content-end{% else %}justify-content-start{% endif %}">
+                  <div class="message-bubble {% if message.sender == request.user %}bg-primary text-white{% else %}bg-light{% endif %} p-3 rounded-3" style="max-width: 70%;">
+                    <p class="mb-1">{{ message.content }}</p>
+                    <small class="{% if message.sender == request.user %}text-white-50{% else %}text-muted{% endif %}">
+                      {{ message.created_at|date:"M d, Y g:i A" }}
+                    </small>
+                  </div>
+                </div>
+              </div>
+            {% empty %}
+              <div class="text-center py-5">
+                <i class="bi bi-chat-dots display-4 text-muted mb-3"></i>
+                <p class="text-muted">No messages yet. Start the conversation!</p>
+              </div>
+            {% endfor %}
+          </div>
+          
+          <!-- Message Input -->
+          <div class="border-top p-4">
+            <form id="messageForm" method="post">
+              {% csrf_token %}
+              <div class="input-group">
+                <textarea class="form-control" id="messageInput" name="content" rows="2" 
+                          placeholder="Type your message..." style="resize: none;"></textarea>
+                <button class="btn btn-primary" type="submit">
+                  <i class="bi bi-send"></i>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Custom Styles -->
+<style>
+  .avatar-circle {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+  }
+  
+  .bg-primary-soft {
+    background-color: rgba(13, 110, 253, 0.1);
+  }
+  
+  .message-bubble {
+    word-wrap: break-word;
+    word-break: break-word;
+  }
+  
+  .message-item:last-child {
+    margin-bottom: 0 !important;
+  }
+  
+  #messagesContainer {
+    scroll-behavior: smooth;
+  }
+  
+  .message-item {
+    animation: fadeIn 0.3s ease-in;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+
+{% block script %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const messageForm = document.getElementById('messageForm');
+  const messageInput = document.getElementById('messageInput');
+  const messagesContainer = document.getElementById('messagesContainer');
+  
+  // Auto-scroll to bottom
+  scrollToBottom();
+  
+  // Handle form submission
+  messageForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const content = messageInput.value.trim();
+    if (!content) return;
+    
+    // Send message via AJAX
+    sendMessage(content);
+    
+    // Clear input
+    messageInput.value = '';
+  });
+  
+  // Send message function
+  function sendMessage(content) {
+    fetch(`{% url 'chat:send_message' conversation.id %}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+      },
+      body: JSON.stringify({ content: content })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        addMessageToUI(data, true);
+        scrollToBottom();
+      } else {
+        alert('Error sending message: ' + data.error);
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('Error sending message');
+    });
+  }
+  
+  // Add message to UI
+  function addMessageToUI(messageData, isOwn) {
+    const messageItem = document.createElement('div');
+    messageItem.className = `message-item mb-3 ${isOwn ? 'text-end' : ''}`;
+    
+    const messageBubble = document.createElement('div');
+    messageBubble.className = `d-flex ${isOwn ? 'justify-content-end' : 'justify-content-start'}`;
+    
+    const bubble = document.createElement('div');
+    bubble.className = `message-bubble ${isOwn ? 'bg-primary text-white' : 'bg-light'} p-3 rounded-3`;
+    bubble.style.maxWidth = '70%';
+    
+    bubble.innerHTML = `
+      <p class="mb-1">${messageData.content}</p>
+      <small class="${isOwn ? 'text-white-50' : 'text-muted'}">
+        ${new Date(messageData.created_at).toLocaleString()}
+      </small>
+    `;
+    
+    messageBubble.appendChild(bubble);
+    messageItem.appendChild(messageBubble);
+    messagesContainer.appendChild(messageItem);
+  }
+  
+  // Scroll to bottom
+  function scrollToBottom() {
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  }
+  
+  // Refresh messages
+  window.refreshMessages = function() {
+    location.reload();
+  };
+  
+  // Auto-refresh every 30 seconds
+  setInterval(function() {
+    // You can implement real-time updates here
+  }, 30000);
+  
+  // Focus on message input
+  messageInput.focus();
+});
+</script>
+{% endblock %}
+{% endblock %}

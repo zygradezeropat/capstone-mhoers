@@ -83,25 +83,28 @@
               <label for="p_address" class="fw-semibold">Address</label>
               <select class="form-control rounded-pill" id="p_address" name="p_address" required>
                 <option value="">Select Address</option>
-                {% if 'NewCortez' in request.user.username %}
-                  <option value="Prk 1, Central, New Cortez, New Corella">Prk 1, Central, New Cortez, New Corella</option>
-                  <option value="Prk 2, Matin Ao, New Cortez, New Corella">Prk 2, Matin Ao, New Cortez, New Corella</option>
-                  <option value="Prk 3, Kauswagan, New Cortez, New Corella">Prk 3, Kauswagan, New Cortez, New Corella</option>
-                  <option value="Prk 4, Anaman, New Cortez, New Corella">Prk 4, Anaman, New Cortez, New Corella</option>
-                  <option value="Prk 5, Kasilak, New Cortez, New Corella">Prk 5, Kasilak, New Cortez, New Corella</option>
-                  <option value="Prk 6, San Roque, New Cortez, New Corella">Prk 6, San Roque, New Cortez, New Corella</option>
-                {% elif 'Carcor' in request.user.username %}
-                  <option value="Prk 1, Carcor">Prk 1, Carcor</option>
-                  <option value="Prk 2, Carcor">Prk 2, Carcor</option>
-                  <option value="Prk 3, Carcor">Prk 3, Carcor</option>
-               
-                {% elif 'Mesaoy' in request.user.username %}
-                <option value="Prk 1, Carcor">Prk 1, Mesaoy</option>
-                  <option value="Prk 2, Carcor">Prk 2, Mesaoy</option>
-                  <option value="Prk 3, Carcor">Prk 3, Mesaoy</option>
-                  <option value="Prk 3, Carcor">Prk 4, Mesaoy</option>
-                   {% endif %}
+
+                {% if facility.name == "BHC - New Cortez" %}
+                    <option value="Prk 1, Central, New Cortez, New Corella">Prk 1, Central, New Cortez, New Corella</option>
+                    <option value="Prk 2, Matin Ao, New Cortez, New Corella">Prk 2, Matin Ao, New Cortez, New Corella</option>
+                    <option value="Prk 3, Kauswagan, New Cortez, New Corella">Prk 3, Kauswagan, New Cortez, New Corella</option>
+                    <option value="Prk 4, Anaman, New Cortez, New Corella">Prk 4, Anaman, New Cortez, New Corella</option>
+                    <option value="Prk 5, Kasilak, New Cortez, New Corella">Prk 5, Kasilak, New Cortez, New Corella</option>
+                    <option value="Prk 6, San Roque, New Cortez, New Corella">Prk 6, San Roque, New Cortez, New Corella</option>
+                
+                {% elif facility.name == "BHW-Carcor" %}
+                    <option value="Prk 1, Carcor">Prk 1, Carcor</option>
+                    <option value="Prk 2, Carcor">Prk 2, Carcor</option>
+                    <option value="Prk 3, Carcor">Prk 3, Carcor</option>
+
+                {% elif facility.name == "Mesaoy" %}
+                    <option value="Prk 1, Mesaoy">Prk 1, Mesaoy</option>
+                    <option value="Prk 2, Mesaoy">Prk 2, Mesaoy</option>
+                    <option value="Prk 3, Mesaoy">Prk 3, Mesaoy</option>
+                    <option value="Prk 4, Mesaoy">Prk 4, Mesaoy</option>
+                {% endif %}
               </select>
+
               {% if form.p_address.errors %}
               <div class="alert alert-danger mt-2 rounded-pill">
                 {% for error in form.p_address.errors %}

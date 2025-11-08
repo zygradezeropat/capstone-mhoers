@@ -1,0 +1,239 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/admin_dashboard.css' %}" />
+
+<!-- Navbar -->
+{% include 'components/navbar.html' %}
+
+<div class="container-fluid py-4">
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h2 class="text-primary mb-1 fw-bold">
+            <i class="bi bi-chat-dots me-2"></i>Messages
+          </h2>
+          <p class="text-muted mb-0">Communicate with your healthcare team</p>
+        </div>
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newMessageModal">
+            <i class="bi bi-plus-circle me-2"></i>New Message
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Conversations List -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm rounded-4 h-100">
+        <div class="card-header bg-white border-0 p-4">
+          <h5 class="card-title mb-0 fw-bold">Conversations</h5>
+        </div>
+        <div class="card-body p-0">
+          {% if conversations %}
+            <div class="conversation-list">
+              {% for conversation in conversations %}
+                <a href="{% url 'chat:chat_conversation' conversation.id %}" 
+                   class="conversation-item d-flex align-items-center p-3 text-decoration-none border-bottom">
+                  <div class="conversation-avatar me-3">
+                    <div class="avatar-circle bg-primary-soft">
+                      <i class="bi bi-person-fill text-primary"></i>
+                    </div>
+                    {% if conversation.user_unread_count > 0 %}
+                      <span class="position-absolute top-0 end-0 translate-middle badge rounded-pill bg-danger">
+                        {{ conversation.user_unread_count }}
+                      </span>
+                    {% endif %}
+                  </div>
+                  <div class="conversation-content flex-grow-1">
+                    <div class="d-flex justify-content-between align-items-start">
+                      <h6 class="mb-1 fw-semibold">
+                        {{ conversation.other_user_name }}
+                      </h6>
+                      <small class="text-muted">{{ conversation.updated_at|timesince }} ago</small>
+                    </div>
+                    <p class="mb-0 text-muted small">
+                      {% if conversation.get_last_message %}
+                        {{ conversation.get_last_message.content|truncatechars:50 }}
+                      {% else %}
+                        No messages yet
+                      {% endif %}
+                    </p>
+                  </div>
+                </a>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="text-center py-5">
+              <i class="bi bi-chat-dots display-4 text-muted mb-3"></i>
+              <p class="text-muted">No conversations yet</p>
+              <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newMessageModal">
+                Start a conversation
+              </button>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Welcome Message -->
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm rounded-4 h-100">
+        <div class="card-body d-flex align-items-center justify-content-center">
+          <div class="text-center">
+            <i class="bi bi-chat-square-text display-1 text-muted mb-4"></i>
+            <h4 class="text-muted mb-3">Welcome to Messages</h4>
+            <p class="text-muted mb-4">Select a conversation from the left or start a new one to begin messaging.</p>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newMessageModal">
+              <i class="bi bi-plus-circle me-2"></i>Start New Conversation
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- New Message Modal -->
+<div class="modal fade" id="newMessageModal" tabindex="-1" aria-labelledby="newMessageModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-primary text-white border-0">
+        <h5 class="modal-title fw-bold" id="newMessageModalLabel">
+          <i class="bi bi-plus-circle me-2"></i>Start New Conversation
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div class="mb-3">
+          <label for="userSearch" class="form-label fw-semibold">Search Users</label>
+          <input type="text" class="form-control" id="userSearch" placeholder="Type to search users...">
+        </div>
+        <div id="userList" class="user-list">
+          <!-- Users will be loaded here via AJAX -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Custom Styles -->
+<style>
+  .conversation-item {
+    transition: all 0.2s ease;
+    color: inherit;
+  }
+  
+  .conversation-item:hover {
+    background-color: rgba(13, 110, 253, 0.05);
+    color: inherit;
+  }
+  
+  .conversation-avatar {
+    position: relative;
+  }
+  
+  .avatar-circle {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+  }
+  
+  .user-list {
+    max-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .user-item {
+    padding: 12px;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .user-item:hover {
+    background-color: rgba(13, 110, 253, 0.05);
+    border-color: #0d6efd;
+  }
+  
+  .bg-primary-soft {
+    background-color: rgba(13, 110, 253, 0.1);
+  }
+</style>
+
+{% block script %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const userSearch = document.getElementById('userSearch');
+  const userList = document.getElementById('userList');
+  
+  // Search users as user types
+  userSearch.addEventListener('input', function() {
+    const query = this.value.trim();
+    
+    if (query.length < 2) {
+      userList.innerHTML = '<p class="text-muted text-center py-3">Type at least 2 characters to search</p>';
+      return;
+    }
+    
+    fetch(`{% url 'chat:user_list' %}?search=${encodeURIComponent(query)}`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          displayUsers(data.users);
+        } else {
+          userList.innerHTML = '<p class="text-danger text-center py-3">Error loading users</p>';
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        userList.innerHTML = '<p class="text-danger text-center py-3">Error loading users</p>';
+      });
+  });
+  
+  function displayUsers(users) {
+    if (users.length === 0) {
+      userList.innerHTML = '<p class="text-muted text-center py-3">No users found</p>';
+      return;
+    }
+    
+    let html = '';
+    users.forEach(user => {
+      html += `
+        <div class="user-item" onclick="startConversation(${user.id})">
+          <div class="d-flex align-items-center">
+            <div class="avatar-circle bg-primary-soft me-3">
+              <i class="bi bi-person-fill text-primary"></i>
+            </div>
+            <div>
+              <h6 class="mb-1 fw-semibold">${user.full_name}</h6>
+              <small class="text-muted">@${user.username}</small>
+              ${user.is_staff ? '<span class="badge bg-primary ms-2">Staff</span>' : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    });
+    
+    userList.innerHTML = html;
+  }
+  
+  // Start conversation with selected user
+  window.startConversation = function(userId) {
+    window.location.href = `{% url 'chat:start_conversation' 0 %}`.replace('0', userId);
+  };
+});
+</script>
+{% endblock %}
+{% endblock %}

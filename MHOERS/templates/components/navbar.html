@@ -38,6 +38,22 @@
     background-color: #f0f9ff; /* Light medical blue background */
     border-left: 3px solid #3498db; /* Medical blue accent */
   }
+  
+  /* Message badge styling */
+  .nav-link .badge {
+    min-width: 18px;
+    height: 18px;
+    line-height: 1;
+    padding: 0.25em 0.4em;
+    font-weight: 600;
+    animation: pulse 2s infinite;
+  }
+  
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+  }
 </style>
 
 <nav class="navbar navbar-expand-lg bg-white shadow-sm px-4">
@@ -46,9 +62,19 @@
       <i class="bi bi-hospital me-2 text-success"></i>
       <span class="fw-semibold">New Corella E-Referral System</span>
     </a>
-
+    
     <div class="d-flex align-items-center gap-4">
-      <!-- Notifications Dropdown -->
+      <!-- Messages Link -->
+      <a href="{% url 'chat:chat_home' %}" class="nav-link {% if active_page == 'chat' %}active{% endif %} text-decoration-none position-relative" title="Messages">
+        <i class="bi bi-chat-dots fs-5"></i>
+        {% if unread_message_count > 0 %}
+          <span class="position-absolute top-0 end-0 translate-middle badge rounded-pill bg-danger" style="font-size: 0.7rem;">
+            {{ unread_message_count }}
+            <span class="visually-hidden">unread messages</span>
+          </span>
+        {% endif %}
+        <span class="visually-hidden">Messages</span>
+      </a>
       <div class="dropdown">
         <button 
         class="notification-btn dropdown-toggle position-relative p-2 rounded-circle"
@@ -121,3 +147,42 @@
 </nav>
 
 <!-- Bootstrap is loaded in base.html -->
+
+<script>
+// Update message count periodically
+function updateMessageCount() {
+  fetch('{% url "chat:unread_count" %}')
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        const badge = document.querySelector('.nav-link .badge');
+        if (data.unread_count > 0) {
+          if (badge) {
+            badge.textContent = data.unread_count;
+          } else {
+            // Create badge if it doesn't exist
+            const messageLink = document.querySelector('a[href="{% url "chat:chat_home" %}"]');
+            const icon = messageLink.querySelector('i');
+            const badge = document.createElement('span');
+            badge.className = 'position-absolute top-0 end-0 translate-middle badge rounded-pill bg-danger';
+            badge.style.fontSize = '0.7rem';
+            badge.textContent = data.unread_count;
+            messageLink.appendChild(badge);
+          }
+        } else {
+          // Remove badge if no unread messages
+          if (badge) {
+            badge.remove();
+          }
+        }
+      }
+    })
+    .catch(error => console.error('Error updating message count:', error));
+}
+
+// Update message count every 30 seconds
+document.addEventListener('DOMContentLoaded', function() {
+  updateMessageCount();
+  setInterval(updateMessageCount, 30000);
+});
+</script>

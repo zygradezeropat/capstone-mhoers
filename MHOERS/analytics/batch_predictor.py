@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from django.core.cache import cache
 from .model_manager import MLModelManager
+from .ml_utils import build_disease_feature_frame, format_icd_prediction
 
 class BatchPredictor:
     """Handles batch predictions for multiple referrals"""
@@ -11,19 +12,26 @@ class BatchPredictor:
         """Predict diseases for multiple referrals at once"""
         try:
             models = MLModelManager.get_models()
-            disease_model = models['disease_model']
-            disease_vectorizer = models['disease_vectorizer']
-            
-            # Prepare all symptoms
-            symptoms_list = [r.symptoms or "" for r in referrals]
-            
-            # Vectorize all symptoms at once
-            symptoms_vectors = disease_vectorizer.transform(symptoms_list)
-            
-            # Predict all diseases at once
-            predictions = disease_model.predict(symptoms_vectors)
-            
-            return dict(zip([r.referral_id for r in referrals], predictions))
+            disease_model = models.get('disease_model')
+            metadata = models.get('disease_vectorizer')
+            if disease_model is None or metadata is None:
+                return {}
+
+            feature_df = build_disease_feature_frame(referrals, metadata)
+            if feature_df.empty:
+                return {}
+
+            predictions = disease_model.predict(feature_df)
+            allowed_codes = metadata.get('allowed_icd', [])
+
+            formatted = []
+            for code in predictions:
+                if allowed_codes and code not in allowed_codes:
+                    formatted.append("Unspecified")
+                else:
+                    formatted.append(code)
+
+            return dict(zip([r.referral_id for r in referrals], formatted))
             
         except Exception as e:
             print(f"Error in batch disease prediction: {e}")
@@ -34,8 +42,11 @@ class BatchPredictor:
         """Predict completion times for multiple referrals at once"""
         try:
             models = MLModelManager.get_models()
-            time_model = models['time_model']
-            time_vectorizer = models['time_vectorizer']
+            time_model = models.get('time_model')
+            time_vectorizer = models.get('time_vectorizer')
+
+            if time_model is None or time_vectorizer is None:
+                return {}
             
             # Prepare data for all referrals
             numeric_data = []
@@ -68,13 +79,15 @@ class BatchPredictor:
             X_combined = pd.concat([X_numeric.reset_index(drop=True), pd.DataFrame(X_text)], axis=1)
             X_combined.columns = X_combined.columns.astype(str)
             
-            # Predict all times at once
+            # Predict all times at once (model outputs hours)
             time_predictions = time_model.predict(X_combined)
             
             # Create results dictionary
             results = {}
             for i, r in enumerate(valid_referrals):
-                results[r.referral_id] = round(float(time_predictions[i]), 2)
+                hours = float(time_predictions[i])
+                minutes = round(hours * 60, 0)
+                results[r.referral_id] = minutes
             
             return results
             

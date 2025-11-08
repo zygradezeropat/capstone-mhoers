@@ -16,6 +16,7 @@ from analytics.models import Disease
 from django.views.decorators.csrf import csrf_exempt
 from analytics.views import get_disease_diagnosis_counts, get_monthly_diagnosis_trends
 from referrals.views import monthly_referral_counts_by_user
+from referrals.utils import send_sms_iprog
 
 logger = logging.getLogger(__name__)
 
@@ -40,15 +41,15 @@ def addPatient(request):
                 return redirect('patients:barangayPatients')
 
             # Get the facility associated with the current user
-            try:
-                facility = Facility.objects.get(user_id=request.user)
+            facility = Facility.objects.filter(users=request.user).first()
+            if facility:
                 patient = form.save(commit=False)
                 patient.user = request.user
                 patient.facility = facility
                 patient.save()
                 messages.success(request, "Patient added successfully!")
                 return redirect('patients:barangayPatients')
-            except Facility.DoesNotExist:
+            else:
                 messages.error(request, "No facility found for this user.")
                 return redirect('patients:barangayPatients')
         else:
@@ -62,18 +63,29 @@ def addPatient(request):
 
 @login_required
 def barangayPatients(request):
+    facility = request.user.shared_facilities.first() 
     user = request.user
     latest_referral_subquery = Referral.objects.filter(
         patient=OuterRef('pk')
     ).order_by('-created_at')
 
-    patients = Patient.objects.filter(user=user).annotate(
-        referral_count=Count('referral'),
-        latest_referral_id=Subquery(latest_referral_subquery.values('referral_id')[:1]),
-        latest_referral_date=Subquery(latest_referral_subquery.values('created_at')[:1]),
-    )
+    # Filter patients by facility instead of individual user
+    try:
+        facility = Facility.objects.get(users=user)
+        patients = Patient.objects.filter(facility=facility).annotate(
+            referral_count=Count('referral'),
+            latest_referral_id=Subquery(latest_referral_subquery.values('referral_id')[:1]), 
+            latest_referral_date=Subquery(latest_referral_subquery.values('created_at')[:1]),
+        )
+    except Facility.DoesNotExist:
+        # If user has no facility, return empty queryset
+        patients = Patient.objects.none().annotate(
+            referral_count=Count('referral'),
+            latest_referral_id=Subquery(latest_referral_subquery.values('referral_id')[:1]),
+            latest_referral_date=Subquery(latest_referral_subquery.values('created_at')[:1]),
+        )
 
-    return render(request, 'patients/user/patient_list.html', {'active_page': 'barangayPatients', 'patients': patients})
+    return render(request, 'patients/user/patient_list.html', {'active_page': 'barangayPatients', 'patients': patients, 'facility': facility})
 
 @login_required
 def editPatients(request):
@@ -84,13 +96,26 @@ def editPatients(request):
         
         latest_referral_subquery = Referral.objects.filter(patient=OuterRef('pk')).order_by('-created_at')
         
-        patients = Patient.objects.filter(user=user).annotate(
-        referral_count=Count('referral'),
-        latest_referral_id=Subquery(latest_referral_subquery.values('referral_id')[:1]),
-        latest_referral_date=Subquery(latest_referral_subquery.values('created_at')[:1]),)
+        # Filter patients by facility instead of individual user
+        try:
+            facility = Facility.objects.get(users=user)
+            patients = Patient.objects.filter(facility=facility).annotate(
+                referral_count=Count('referral'),
+                latest_referral_id=Subquery(latest_referral_subquery.values('referral_id')[:1]),
+                latest_referral_date=Subquery(latest_referral_subquery.values('created_at')[:1]),
+            )
+        except Facility.DoesNotExist:
+            # If user has no facility, return empty queryset
+            patients = Patient.objects.none().annotate(
+                referral_count=Count('referral'),
+                latest_referral_id=Subquery(latest_referral_subquery.values('referral_id')[:1]),
+                latest_referral_date=Subquery(latest_referral_subquery.values('created_at')[:1]),
+            )
 
         try:
-            patient = Patient.objects.get(patients_id=patient_id, user=request.user)
+            # Update the patient lookup to also check facility
+            facility = Facility.objects.get(users=user)
+            patient = Patient.objects.get(patients_id=patient_id, facility=facility)
             
             # Update patient information
             patient.first_name = request.POST.get('editFname')
@@ -103,6 +128,9 @@ def editPatients(request):
 
             patient.save()
             messages.success(request, "Patient information updated successfully!")
+            return render(request, 'patients/user/patient_list.html', {'active_page': 'barangayPatients', 'patients': patients})
+        except Facility.DoesNotExist:
+            messages.error(request, "No facility found for this user.")
             return render(request, 'patients/user/patient_list.html', {'active_page': 'barangayPatients', 'patients': patients})
         except Patient.DoesNotExist:
             messages.error(request, "Patient not found.")
@@ -119,9 +147,14 @@ def deletePatient(request):
         patient_id = request.POST.get('patient_id')
         user = request.user
         try:
-            patient = Patient.objects.get(patients_id=patient_id, user=user)
+            # Get the facility associated with the current user
+            facility = Facility.objects.get(users=user)
+            patient = Patient.objects.get(patients_id=patient_id, facility=facility)
             patient.delete()
             messages.success(request, "Patient deleted successfully!")
+            return redirect('patients:barangayPatients')
+        except Facility.DoesNotExist:
+            messages.error(request, "No facility found for this user.")
             return redirect('patients:barangayPatients')
         except Patient.DoesNotExist:
             messages.error(request, "Patient not found.")
@@ -142,9 +175,15 @@ def search_patients(request):
 
         qs = Patient.objects.all()
 
-        # Scope to current user's patients unless staff
+        # Scope to current user's facility patients unless staff
         if not request.user.is_staff:
-            qs = qs.filter(user=request.user)
+            # Get the facility associated with the current user
+            try:
+                facility = Facility.objects.get(users=request.user)
+                qs = qs.filter(facility=facility)
+            except Facility.DoesNotExist:
+                # If user has no facility, return empty results
+                qs = qs.none()
 
         if query:
             qs = qs.filter(
@@ -252,7 +291,7 @@ def get_medical_history_followups(request):
     """
     API endpoint to fetch medical history follow-up dates for calendar display.
     Returns follow-up dates with patient information for the current month.
-    Filters by user unless the user is admin (staff).
+    Filters by facility unless the user is admin (staff).
     """
     try:
         # Get current month and year
@@ -276,12 +315,17 @@ def get_medical_history_followups(request):
             followup_date__lte=end_date
         ).select_related('patient_id')
         
-        # Filter by current user unless user is admin (staff)
+        # Filter by current user's facility unless user is admin (staff)
         if not request.user.is_staff:
-            # For regular users, only show follow-ups for their own patients
-            followups_query = followups_query.filter(
-                patient_id__user=request.user
-            )
+            # For regular users, only show follow-ups for patients in their facility
+            try:
+                facility = Facility.objects.get(users=request.user)
+                followups_query = followups_query.filter(
+                    patient_id__facility=facility
+                )
+            except Facility.DoesNotExist:
+                # If user has no facility, return empty queryset
+                followups_query = followups_query.none()
         # Admin users (is_staff=True) can see all follow-ups, so no additional filtering
         
         # Get the filtered followups
@@ -327,3 +371,45 @@ def get_medical_history_followups(request):
         return JsonResponse({'error': str(e)}, status=500)
 
  
+# New endpoint: send SMS if patient has a check-up (follow-up) scheduled today
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def send_today_checkup_sms(request, patient_id: int):
+    try:
+        # Determine today's date (timezone aware if Django timezone configured)
+        try:
+            from django.utils import timezone
+            today = timezone.localdate()
+        except Exception:
+            from datetime import date
+            today = date.today()
+
+        # Scope patient to current user's facility where applicable
+        user = request.user
+        try:
+            facility = Facility.objects.get(users=user)
+            patient = Patient.objects.get(patients_id=patient_id, facility=facility)
+        except Facility.DoesNotExist:
+            return JsonResponse({'ok': False, 'error': 'No facility for user'}, status=403)
+        except Patient.DoesNotExist:
+            return JsonResponse({'ok': False, 'error': 'Patient not found'}, status=404)
+
+        # Check for any follow-up scheduled today
+        has_today_followup = Medical_History.objects.filter(
+            patient_id=patient,
+            followup_date=today,
+        ).exists()
+
+        if not has_today_followup:
+            return JsonResponse({'ok': False, 'error': 'No check-up scheduled today'}, status=200)
+
+        # Optional sender_id via query string
+        sender_id = request.GET.get('sender_id') or None
+
+        message = f"Hi {patient.first_name} {patient.last_name}, this is a reminder of your medical check-up scheduled today."
+        result = send_sms_iprog(patient.p_number, patient.first_name, patient.last_name, message=message, sender_id=sender_id)
+        status = 200 if result.get('ok') else 502
+        return JsonResponse(result, status=status)
+    except Exception as e:
+        return JsonResponse({'ok': False, 'error': str(e)}, status=500)

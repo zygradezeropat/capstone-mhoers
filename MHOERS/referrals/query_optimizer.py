@@ -45,4 +45,4 @@ class ReferralQueryOptimizer:
         """Get patients with referral count using optimized queries"""
         return Patient.objects.select_related('facility').annotate(
             referral_count=Count('referral')
-        ).prefetch_related('referral_set')
+        )

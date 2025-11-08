@@ -28,58 +28,69 @@
   </header>
 
   <nav class="sidebar-nav">
-    <ul class="nav-list primary-nav">
-      <li class="nav-item">
-        <a
-          href="{% url 'home' %}"
-          class="nav-link {% if active_page == 'home' %}active{% endif %}"
-          data-tooltip="Dashboard"
-        >
-          <i class="bi bi-speedometer"></i>
-          <span class="nav-label">Dashboard</span>
-        </a>
-      </li>
+    {% if is_approved %}
+      <ul class="nav-list primary-nav">
+        <li class="nav-item">
+          <a
+            href="{% url 'home' %}"
+            class="nav-link {% if active_page == 'home' %}active{% endif %}"
+            data-tooltip="Dashboard"
+          >
+            <i class="bi bi-speedometer"></i>
+            <span class="nav-label">Dashboard</span>
+          </a>
+        </li>
 
-      <li class="nav-item">
-        <a href="{% url 'referrals:assessment' %}" class="nav-link {% if active_page == 'assessment' %}active{% endif %}" data-tooltip="Assessment">
-          <i class="bi bi-menu-button-wide"></i>
-          <span class="nav-label">Assessment</span>
-        </a>
-      </li>
+        <li class="nav-item">
+          <a href="{% url 'referrals:assessment' %}" class="nav-link {% if active_page == 'assessment' %}active{% endif %}" data-tooltip="Assessment">
+            <i class="bi bi-menu-button-wide"></i>
+            <span class="nav-label">Assessment</span>
+          </a>
+        </li>
 
-      <li class="nav-item">
-        <a
-          href="{% url 'referrals:referral_list' %}"
-          class="nav-link {% if active_page == 'referral_list' %}active{% endif %}"
-          data-tooltip="Referral"
-        >
-          <i class="bi bi-person-add"></i>
-          <span class="nav-label">Referral</span>
-        </a>
-      </li>
+        <li class="nav-item">
+          <a
+            href="{% url 'referrals:referral_list' %}"
+            class="nav-link {% if active_page == 'referral_list' %}active{% endif %}"
+            data-tooltip="Referral"
+          >
+            <i class="bi bi-person-add"></i>
+            <span class="nav-label">Referral</span>
+          </a> 
+        </li>
 
-      <li class="nav-item">
-        <a
-          href="{% url 'patients:barangayPatients' %}"
-          class="nav-link {% if active_page == 'barangayPatients' %}active{% endif %}"
-          data-tooltip="Patients"
-        >
-          <i class="bi bi-list-ul"></i>
-          <span class="nav-label">Patients/History</span>
-        </a>
-      </li>
+        <li class="nav-item">
+          <a
+            href="{% url 'patients:barangayPatients' %}"
+            class="nav-link {% if active_page == 'barangayPatients' %}active{% endif %}"
+            data-tooltip="Patients"
+          >
+            <i class="bi bi-list-ul"></i>
+            <span class="nav-label">Patients/History</span>
+          </a>
+        </li>
 
-      <li class="nav-item">
-        <a
-          href="{% url 'user_report' %}"
-          class="nav-link {% if active_page == 'user_report' %}active{% endif %}"
-          data-tooltip="Report"
-        >
-          <i class="bi bi-newspaper"></i>
-          <span class="nav-label">Report</span>
-        </a>
-      </li>
-    </ul>
+        <li class="nav-item">
+          <a
+            href="{% url 'user_report' %}"
+            class="nav-link {% if active_page == 'user_report' %}active{% endif %}"
+            data-tooltip="Report"
+          >
+            <i class="bi bi-newspaper"></i>
+            <span class="nav-label">Report</span>
+          </a>
+        </li>
+      </ul>
+    {% else %}
+      <ul class="nav-list primary-nav">
+        <li class="nav-item">
+          <a href="{% url 'pending_dashboard' %}" class="nav-link {% if active_page == 'pending' %}active{% endif %}" data-tooltip="Pending">
+            <i class="bi bi-hourglass-split"></i>
+            <span class="nav-label">Pending Approval</span>
+          </a>
+        </li>
+      </ul>
+    {% endif %}
 
     <ul class="nav-list secondary-nav">
       <li class="nav-item">

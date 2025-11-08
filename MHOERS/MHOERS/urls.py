@@ -27,5 +27,6 @@ urlpatterns = [
     path('notifications/', include('notifications.urls', namespace='notifications')),
     path('facilities/', include('facilities.urls')),
     path('analytics/', include('analytics.urls')),
+    path('chat/', include('chat.urls', namespace='chat')),
 
 ]

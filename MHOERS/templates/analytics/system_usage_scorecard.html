@@ -1,0 +1,231 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{% static 'css/admin_dashboard.css' %}">
+
+<style>
+  .report-logo {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+  }
+
+  .btn-print {
+    width: 100%;
+  }
+
+  @media (max-width: 576px) {
+    .report-logo {
+      width: 60px;
+      height: 60px;
+    }
+  }
+
+  @media (min-width: 992px) {
+    .btn-print {
+      width: auto;
+    }
+  }
+
+  .scorecard-table td,
+  .scorecard-table th {
+    font-size: 0.85rem;
+  }
+</style>
+
+{% include 'components/navbar.html' %}
+
+<div class="container-fluid py-4">
+  <div class="card border-0 shadow-sm">
+    <div class="card-body p-4">
+      <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center mb-4">
+        <div class="flex-grow-1">
+          <div class="d-flex align-items-center justify-content-between flex-wrap mb-3">
+            <img src="{% static 'images/LGU-NEWCORELLA.png' %}" alt="LGU New Corella Logo" class="report-logo mb-3 mb-lg-0">
+            <div class="text-center flex-grow-1 px-lg-4">
+              <h4 class="text-primary mb-1">System Usage &amp; Adoption Scorecard</h4>
+              <p class="text-muted mb-0">Monthly referral and medical record activity by facility</p>
+              <small class="text-muted">Reporting Year: {{ year }}</small>
+            </div>
+            <img src="{% static 'images/MHO-LOGO.png' %}" alt="MHO Logo" class="report-logo mb-3 mb-lg-0 d-none d-sm-block">
+          </div>
+        </div>
+      </div>
+
+      <div class="row d-print-none mb-4">
+        <div class="col-md-4">
+          <label for="year" class="form-label small mb-1">Year</label>
+          <form method="get" class="d-flex gap-2">
+            <input type="number" class="form-control" id="year" name="year" value="{{ year }}" min="2000" max="2100" step="1">
+            <button type="submit" class="btn btn-primary">Go</button>
+          </form>
+        </div>
+        <div class="col-md-8 text-md-end d-grid gap-2 d-md-flex justify-content-md-end">
+          <button type="button" class="btn btn-outline-primary btn-print" onclick="printSystemUsageScorecard()">
+            <i class="bi bi-printer"></i> Print Scorecard
+          </button>
+        </div>
+      </div>
+
+      <div class="table-responsive mb-4" id="scorecardTable">
+        <table class="table table-bordered scorecard-table align-middle">
+          <thead class="table-light">
+            <tr>
+              <th rowspan="2">Facility</th>
+              {% for label in month_labels %}
+                <th class="text-center">{{ label }}</th>
+              {% endfor %}
+              <th class="text-center">Total</th>
+            </tr>
+            <tr>
+              {% for label in month_labels %}
+                <th class="text-center">Ref / Med</th>
+              {% endfor %}
+              <th class="text-center">Ref / Med</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if scorecard %}
+              {% for row in scorecard %}
+              <tr>
+                <td>
+                  <div class="fw-semibold">{{ row.facility.name }}</div>
+                </td>
+                {% for ref_count, med_count in row.referrals|zip_lists:row.medical %}
+                  <td class="text-center">
+                    <div><strong>{{ ref_count }}</strong> ref</div>
+                    <div class="text-muted">{{ med_count }} med</div>
+                  </td>
+                {% endfor %}
+                <td class="text-center">
+                  <div><strong>{{ row.referrals_total }}</strong> ref</div>
+                  <div class="text-muted">{{ row.medical_total }} med</div>
+                </td>
+              </tr>
+              {% endfor %}
+            {% else %}
+              <tr>
+                <td colspan="{{ month_labels|length|add:1 }}" class="text-center text-muted py-4">No facility data available.</td>
+              </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">Monthly Totals</h5>
+          <div class="table-responsive" id="summaryTable">
+            <table class="table table-sm table-bordered align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>Month</th>
+                  {% for label in month_labels %}
+                    <th class="text-center">{{ label }}</th>
+                  {% endfor %}
+                  <th class="text-center">Grand Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Referrals</strong></td>
+                  {% for value in summary_referrals %}
+                    <td class="text-center">{{ value }}</td>
+                  {% endfor %}
+                  <td class="text-center">{{ summary_referrals|sum_values }}</td>
+                </tr>
+                <tr>
+                  <td><strong>Medical Records</strong></td>
+                  {% for value in summary_medical %}
+                    <td class="text-center">{{ value }}</td>
+                  {% endfor %}
+                  <td class="text-center">{{ summary_medical|sum_values }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-3">
+        <small class="text-muted d-block">• Counts represent total entries logged per month within the selected year.</small>
+        <small class="text-muted d-block">• Referrals are sourced from patient facility linkage; medical records are from morbidity entries.</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% block script %}
+<script>
+  function printSystemUsageScorecard() {
+    const reportTitle = 'System Usage & Adoption Scorecard';
+    const year = '{{ year }}';
+    const generatedAt = '{{ report_generated_at|date:"F d, Y h:i A" }}';
+    const logoLeft = "{% static 'images/LGU-NEWCORELLA.png' %}";
+    const logoRight = "{% static 'images/MHO-LOGO.png' %}";
+    const scorecardHtml = document.getElementById('scorecardTable')?.innerHTML || '';
+    const summaryHtml = document.getElementById('summaryTable')?.innerHTML || '';
+
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>${reportTitle}</title>
+        <style>
+          @page { size: A4 landscape; margin: 10mm; }
+          body { font-family: Arial, sans-serif; margin: 0; padding: 16px; color: #000; }
+          .header { text-align: center; border-bottom: 1px solid #000; padding-bottom: 12px; margin-bottom: 16px; }
+          .header h5, .header h6, .header p { margin: 2px 0; }
+          .logo-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+          .logo-row img { width: 80px; height: 80px; object-fit: contain; }
+          table { width: 100%; border-collapse: collapse; font-size: 12px; }
+          th, td { border: 1px solid #000; padding: 6px 8px; text-align: center; }
+          th { background-color: #f8f9fa; }
+          .section { margin-top: 16px; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="logo-row">
+            <img src="${logoLeft}" alt="LGU New Corella Logo">
+            <img src="${logoRight}" alt="MHO Logo">
+          </div>
+          <h6>Republic of the Philippines</h6>
+          <h6>Province of Davao del Norte</h6>
+          <h5>Municipality of New Corella</h5>
+          <h6>Municipal Health Office</h6>
+          <p>Purok 5, Poblacion, New Corella | rhunewcorella@yahoo.com | (+63) 970-093-3480</p>
+        </div>
+        <h2 style="text-align:center; margin-bottom: 8px;">${reportTitle}</h2>
+        <p style="text-align:center; margin-bottom: 16px;">Reporting Year: ${year}</p>
+        <div class="section">
+          <h4>Facility Usage Matrix</h4>
+          ${scorecardHtml}
+        </div>
+        <div class="section">
+          <h4>Monthly Totals</h4>
+          ${summaryHtml}
+        </div>
+        <p style="margin-top: 12px; font-size: 12px;">Generated on ${generatedAt}</p>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.onload = () => {
+      setTimeout(() => {
+        printWindow.focus();
+        printWindow.print();
+        setTimeout(() => printWindow.close(), 100);
+      }, 300);
+    };
+  }
+</script>
+{% endblock %}
+
+{% endblock %}
+

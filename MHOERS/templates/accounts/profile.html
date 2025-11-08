@@ -7,40 +7,82 @@
 {% include 'components/navbar.html' %}
 
 <div class="container-fluid py-4">
+  <!-- Header Section -->
   <div class="row mb-4">
     <div class="col-12">
-      <h4 class="text-primary mb-0">Healthcare Provider Profile</h4>
-      <p class="text-muted">Manage your healthcare provider information and activity</p>
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h2 class="text-primary mb-1 fw-bold">My Profile</h2>
+          <p class="text-muted mb-0">Manage your healthcare provider information and account settings</p>
+        </div>
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+            <i class="bi bi-pencil-square me-2"></i>Edit Profile
+          </button>
+          <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+            <i class="bi bi-shield-lock me-2"></i>Change Password
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- Profile Information Section -->
   <div class="row g-4">
-    <!-- Profile Card Section -->
+    <!-- Profile Information Card -->
     <div class="col-lg-4 col-md-5">
-      <div class="card border-0 shadow-sm rounded-lg h-100">
+      <div class="card border-0 shadow-sm rounded-4 h-100">
         <div class="card-body p-4">
+          <!-- Profile Header -->
           <div class="text-center mb-4">
-            <div class="avatar-circle bg-primary-soft mx-auto mb-3" style="width: 100px; height: 100px">
-              <i class="bi bi-person-badge-fill text-primary" style="font-size: 3rem"></i>
+            <div class="position-relative d-inline-block">
+              <div class="avatar-circle bg-gradient-primary mx-auto mb-3" style="width: 120px; height: 120px">
+                <i class="bi bi-person-badge-fill text-white" style="font-size: 3.5rem"></i>
+              </div>
+              <div class="position-absolute bottom-0 end-0">
+                <button class="btn btn-sm btn-light rounded-circle shadow-sm" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                  <i class="bi bi-camera text-primary"></i>
+                </button>
+              </div>
             </div>
-            <h5 class="mb-1">{{ request.user.first_name }} {{ request.user.last_name }}</h5>
-            <span class="badge bg-{% if request.user.is_staff %}primary{% else %}success{% endif %} rounded-pill">
+            <h4 class="mb-2 fw-bold">{{ request.user.first_name }} {{ request.user.last_name }}</h4>
+            <span class="badge bg-{% if request.user.is_staff %}primary{% else %}success{% endif %} rounded-pill px-3 py-2">
+              <i class="bi bi-{% if request.user.is_staff %}shield-check{% else %}person-heart{% endif %} me-1"></i>
               {% if request.user.is_staff %}Municipal Health Officer{% else %}Barangay Health Worker{% endif %}
             </span>
           </div>
+
+          <!-- Profile Details -->
           <div class="border-top pt-4">
-            <div class="mb-3">
-              <label class="text-muted small">Healthcare Provider ID</label>
-              <p class="mb-0 fw-bold">{{ request.user.username }}</p>
+            <div class="profile-detail-item mb-4">
+              <div class="d-flex align-items-center mb-2">
+                <i class="bi bi-person-badge text-primary me-3"></i>
+                <label class="text-muted small fw-semibold text-uppercase">Healthcare Provider ID</label>
+              </div>
+              <p class="mb-0 fw-bold text-dark">{{ request.user.username }}</p>
             </div>
-            <div class="mb-3">
-              <label class="text-muted small">Assigned Facility</label>
-              <p class="mb-0 fw-bold">{{ facility.name|default:"Not Assigned" }}</p>
+            
+            <div class="profile-detail-item mb-4">
+              <div class="d-flex align-items-center mb-2">
+                <i class="bi bi-building text-primary me-3"></i>
+                <label class="text-muted small fw-semibold text-uppercase">Assigned Facility</label>
+              </div>
+              <p class="mb-0 fw-bold text-dark">{{ facility.name|default:"Not Assigned" }}</p>
             </div>
-            <div class="mb-3">
-              <label class="text-muted small">Service Area</label>
-              <p class="mb-0 fw-bold">Municipality of New Corella</p>
+            
+            <div class="profile-detail-item mb-4">
+              <div class="d-flex align-items-center mb-2">
+                <i class="bi bi-geo-alt text-primary me-3"></i>
+                <label class="text-muted small fw-semibold text-uppercase">Service Area</label>
+              </div>
+              <p class="mb-0 fw-bold text-dark">Municipality of New Corella</p>
+            </div>
+
+            <div class="profile-detail-item">
+              <div class="d-flex align-items-center mb-2">
+                <i class="bi bi-calendar-check text-primary me-3"></i>
+                <label class="text-muted small fw-semibold text-uppercase">Member Since</label>
+              </div>
+              <p class="mb-0 fw-bold text-dark">{{ request.user.date_joined|date:"F d, Y" }}</p>
             </div>
           </div>
         </div>
@@ -49,69 +91,226 @@
 
     <!-- Activity & Stats Section -->
     <div class="col-lg-8 col-md-7">
-      <div class="card border-0 shadow-sm rounded-lg h-100">
+      <div class="card border-0 shadow-sm rounded-4 h-100">
         <div class="card-body p-4">
-          <h5 class="card-title mb-4">Healthcare Activity Overview</h5>
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <h5 class="card-title mb-0 fw-bold">Healthcare Activity Overview</h5>
+            <button class="btn btn-sm btn-outline-primary">
+              <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+            </button>
+          </div>
           
-          <!-- Stats Row -->
-          <div class="row g-3 mb-4">
-            <div class="col-sm-3">
-              <div class="p-3 bg-primary-soft rounded-3">
-                <h6 class="text-primary mb-1">Total Referrals</h6>
-                <h3 class="mb-0">{{ total_referrals }}</h3>
+          <!-- Modern Stats Grid -->
+          <div class="row g-3 mb-5">
+            <div class="col-sm-6 col-lg-3">
+              <div class="stat-card bg-gradient-primary rounded-4 p-4 h-100">
+                <div class="d-flex align-items-center justify-content-between">
+                  <div>
+                    <h6 class="text-muted mb-2 fw-semibold">Total Referrals</h6>
+                    <h2 class="mb-0 fw-bold">{{ total_referrals }}</h2>
+                  </div>
+                  <div class="stat-icon">
+                    <i class="bi bi-graph-up" style="font-size: 2.5rem; opacity: 0.3;"></i>
+                  </div>
+                </div>
               </div>
             </div>
-            <div class="col-sm-3">
-              <div class="p-3 bg-warning-soft rounded-3">
-                <h6 class="text-warning mb-1">In-Progress</h6>
-                <h3 class="mb-0">{{ active_referrals }}</h3>
+            
+            <div class="col-sm-6 col-lg-3">
+              <div class="stat-card bg-gradient-warning rounded-4 p-4 h-100">
+                <div class="d-flex align-items-center justify-content-between">
+                  <div>
+                    <h6 class="text-muted mb-2 fw-semibold">In-Progress</h6>
+                    <h2 class="mb-0 fw-bold">{{ active_referrals }}</h2>
+                  </div>
+                  <div class="stat-icon">
+                    <i class="bi bi-clock-history" style="font-size: 2.5rem; opacity: 0.3;"></i>
+                  </div>
+                </div>
               </div>
             </div>
-            <div class="col-sm-3">
-              <div class="p-3 bg-success-soft rounded-3">
-                <h6 class="text-success mb-1">Completed</h6>
-                <h3 class="mb-0">{{ completed_referrals }}</h3>
+            
+            <div class="col-sm-6 col-lg-3">
+              <div class="stat-card bg-gradient-success rounded-4 p-4 h-100">
+                <div class="d-flex align-items-center justify-content-between">
+                  <div>
+                    <h6 class="text-muted mb-2 fw-semibold">Completed</h6>
+                    <h2 class="mb-0 fw-bold">{{ completed_referrals }}</h2>
+                  </div>
+                  <div class="stat-icon">
+                    <i class="bi bi-check-circle" style="font-size: 2.5rem; opacity: 0.3;"></i>
+                  </div>
+                </div>
               </div>
             </div>
-            <div class="col-sm-3">
-              <div class="p-3 bg-secondary rounded-3 bg-opacity-10">
-                <h6 class="text-secondary mb-1">Pending</h6>
-                <h3 class="mb-0">{{ pending_referrals }}</h3>
+            
+            <div class="col-sm-6 col-lg-3">
+              <div class="stat-card bg-gradient-secondary rounded-4 p-4 h-100">
+                <div class="d-flex align-items-center justify-content-between">
+                  <div>
+                    <h6 class="text-muted mb-2 fw-semibold">Pending</h6>
+                    <h2 class="mb-0 fw-bold">{{ pending_referrals }}</h2>
+                  </div>
+                  <div class="stat-icon">
+                    <i class="bi bi-hourglass-split" style="font-size: 2.5rem; opacity: 0.3;"></i>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- Recent Activity Table -->
-          <h6 class="mb-3">Recent Healthcare Activities</h6>
-          <div class="table-responsive">
-            <table class="table table-hover align-middle">
-              <thead class="bg-light">
-                <tr>
-                  <th>Activity Type</th>
-                  <th>Patient</th>
-                  <th>Status</th>
-                  <th>Date & Time</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% if recent_activities %}
-                  {% for a in recent_activities %}
+          <!-- Recent Activity Section -->
+          <div class="activity-section">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h6 class="mb-0 fw-bold">Recent Healthcare Activities</h6>
+              <a href="#" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            
+            <div class="table-responsive">
+              <table class="table table-hover align-middle">
+                <thead class="bg-light">
                   <tr>
-                    <td><i class="bi bi-{{ a.icon }} text-primary me-2"></i>{{ a.type }}</td>
-                    <td>{{ a.patient }}</td>
-                    <td><span class="badge bg-{{ a.badge_class }}">{{ a.status|title }}</span></td>
-                    <td><small class="text-muted">{{ a.created_at|date:'M d, Y g:i A' }}</small></td>
+                    <th class="border-0 fw-semibold">Activity Type</th>
+                    <th class="border-0 fw-semibold">Patient</th>
+                    <th class="border-0 fw-semibold">Status</th>
+                    <th class="border-0 fw-semibold">Date & Time</th>
                   </tr>
-                  {% endfor %}
-                {% else %}
-                  <tr>
-                    <td colspan="4" class="text-muted">No recent activities.</td>
-                  </tr>
-                {% endif %}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {% if recent_activities %}
+                    {% for a in recent_activities %}
+                    <tr class="border-0">
+                      <td class="py-3">
+                        <div class="d-flex align-items-center">
+                          <div class="activity-icon bg-primary-soft rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                            <i class="bi bi-{{ a.icon }} text-primary"></i>
+                          </div>
+                          <span class="fw-semibold">{{ a.type }}</span>
+                        </div>
+                      </td>
+                      <td class="py-3 fw-semibold">{{ a.patient }}</td>
+                      <td class="py-3">
+                        <span class="badge bg-{{ a.badge_class }} rounded-pill px-3 py-2">{{ a.status|title }}</span>
+                      </td>
+                      <td class="py-3">
+                        <small class="text-muted">{{ a.created_at|date:'M d, Y g:i A' }}</small>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  {% else %}
+                    <tr>
+                      <td colspan="4" class="text-center py-5 text-muted">
+                        <i class="bi bi-inbox display-4 d-block mb-3"></i>
+                        <p class="mb-0">No recent activities found.</p>
+                      </td>
+                    </tr>
+                  {% endif %}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Profile Modal -->
+<div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-primary text-white border-0">
+        <h5 class="modal-title fw-bold" id="editProfileModalLabel">
+          <i class="bi bi-pencil-square me-2"></i>Edit Profile Information
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4">
+        <form id="editProfileForm" method="post" action="{% url 'update_profile' %}">
+          {% csrf_token %}
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label for="id_first_name" class="form-label fw-semibold">First Name</label>
+              <input type="text" class="form-control form-control-lg" id="id_first_name" name="first_name" 
+                     value="{{ request.user.first_name }}" required>
+            </div>
+            <div class="col-md-6">
+              <label for="id_last_name" class="form-label fw-semibold">Last Name</label>
+              <input type="text" class="form-control form-control-lg" id="id_last_name" name="last_name" 
+                     value="{{ request.user.last_name }}" required>
+            </div>
+            <div class="col-12">
+              <label for="id_username" class="form-label fw-semibold">Username</label>
+              <input type="text" class="form-control form-control-lg" id="id_username" name="username" 
+                     value="{{ request.user.username }}" required>
+              <div class="form-text">This will be your login username</div>
+            </div>
+            <div class="col-12">
+              <label for="id_email" class="form-label fw-semibold">Email Address</label>
+              <input type="email" class="form-control form-control-lg" id="id_email" name="email" 
+                     value="{{ request.user.email }}">
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer border-0 p-4">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" form="editProfileForm" class="btn btn-primary">
+          <i class="bi bi-check-lg me-2"></i>Save Changes
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Change Password Modal -->
+<div class="modal fade" id="changePasswordModal" tabindex="-1" aria-labelledby="changePasswordModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-warning text-dark border-0">
+        <h5 class="modal-title fw-bold" id="changePasswordModalLabel">
+          <i class="bi bi-shield-lock me-2"></i>Change Password
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4">
+        <form id="changePasswordForm" method="post" action="{% url 'change_password' %}">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label for="id_old_password" class="form-label fw-semibold">Current Password</label>
+            <div class="input-group">
+              <input type="password" class="form-control form-control-lg" id="id_old_password" name="old_password" required>
+              <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('id_old_password')">
+                <i class="bi bi-eye" id="toggle_old_password"></i>
+              </button>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label for="id_new_password1" class="form-label fw-semibold">New Password</label>
+            <div class="input-group">
+              <input type="password" class="form-control form-control-lg" id="id_new_password1" name="new_password1" required>
+              <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('id_new_password1')">
+                <i class="bi bi-eye" id="toggle_new_password1"></i>
+              </button>
+            </div>
+            <div class="form-text">Password must be at least 8 characters long</div>
+          </div>
+          <div class="mb-3">
+            <label for="id_new_password2" class="form-label fw-semibold">Confirm New Password</label>
+            <div class="input-group">
+              <input type="password" class="form-control form-control-lg" id="id_new_password2" name="new_password2" required>
+              <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('id_new_password2')">
+                <i class="bi bi-eye" id="toggle_new_password2"></i>
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer border-0 p-4">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" form="changePasswordForm" class="btn btn-warning">
+          <i class="bi bi-shield-check me-2"></i>Update Password
+        </button>
       </div>
     </div>
   </div>
@@ -128,14 +327,217 @@
     align-items: center;
     justify-content: center;
     border-radius: 50%;
+    transition: all 0.3s ease;
+  }
+  
+  .avatar-circle:hover {
+    transform: scale(1.05);
+  }
+  
+  /* Soften stat card backgrounds to better match the overall UI */
+  .bg-gradient-primary {
+    background: #e8f0fe;
+    color: #1a73e8;
+  }
+  
+  .bg-gradient-warning {
+    background: #fff4ce;
+    color: #b35c00;
+  }
+  
+  .bg-gradient-success {
+    background: #e6f4ea;
+    color: #188038;
+  }
+  
+  .bg-gradient-secondary {
+    background: #f1f3f5;
+    color: #495057;
+  }
+  
+  .stat-card {
+    transition: all 0.3s ease;
+    border: none;
+  }
+
+  .stat-card .stat-icon i {
+    opacity: 0.25 !important;
+  }
+  
+  .stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+  }
+  
+  .profile-detail-item {
+    transition: all 0.2s ease;
+  }
+  
+  .profile-detail-item:hover {
+    background-color: rgba(13, 110, 253, 0.05);
+    border-radius: 8px;
+    padding: 8px;
+    margin: -8px;
+  }
+  
+  .activity-icon {
+    transition: all 0.3s ease;
+  }
+  
+  .activity-icon:hover {
+    transform: scale(1.1);
+  }
+  
+  .modal-content {
+    border-radius: 16px;
+  }
+  
+  .form-control:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+  }
+  
+  .btn {
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+  }
+  
+  .btn:hover {
+    transform: translateY(-1px);
+  }
+  
+  .card {
+    transition: all 0.3s ease;
+  }
+  
+  .card:hover {
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
   }
 </style>
 
 {% block script %}
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-  // Initialize any necessary interactive features
+  // Initialize tooltips
+  var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+  var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl);
+  });
+  
+  // Form validation
+  const editProfileForm = document.getElementById('editProfileForm');
+  const changePasswordForm = document.getElementById('changePasswordForm');
+  
+  if (editProfileForm) {
+    editProfileForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      // Basic validation
+      const firstName = document.getElementById('id_first_name').value.trim();
+      const lastName = document.getElementById('id_last_name').value.trim();
+      const username = document.getElementById('id_username').value.trim();
+      
+      if (!firstName || !lastName || !username) {
+        showAlert('Please fill in all required fields.', 'warning');
+        return;
+      }
+      
+      if (username.length < 3) {
+        showAlert('Username must be at least 3 characters long.', 'warning');
+        return;
+      }
+      
+      // Submit form
+      this.submit();
+    });
+  }
+  
+  if (changePasswordForm) {
+    changePasswordForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const oldPassword = document.getElementById('id_old_password').value;
+      const newPassword1 = document.getElementById('id_new_password1').value;
+      const newPassword2 = document.getElementById('id_new_password2').value;
+      
+      if (!oldPassword || !newPassword1 || !newPassword2) {
+        showAlert('Please fill in all password fields.', 'warning');
+        return;
+      }
+      
+      if (newPassword1.length < 8) {
+        showAlert('New password must be at least 8 characters long.', 'warning');
+        return;
+      }
+      
+      if (newPassword1 !== newPassword2) {
+        showAlert('New passwords do not match.', 'warning');
+        return;
+      }
+      
+      // Submit form
+      this.submit();
+    });
+  }
+  
+  // Auto-hide alerts
+  setTimeout(function() {
+    const alerts = document.querySelectorAll('.alert');
+    alerts.forEach(function(alert) {
+      if (alert) {
+        const bsAlert = new bootstrap.Alert(alert);
+        bsAlert.close();
+      }
+    });
+  }, 5000);
 });
+
+// Toggle password visibility
+function togglePassword(inputId) {
+  const input = document.getElementById(inputId);
+  const toggleIcon = document.getElementById('toggle_' + inputId);
+  
+  if (input.type === 'password') {
+    input.type = 'text';
+    toggleIcon.className = 'bi bi-eye-slash';
+  } else {
+    input.type = 'password';
+    toggleIcon.className = 'bi bi-eye';
+  }
+}
+
+// Show alert function
+function showAlert(message, type = 'info') {
+  const alertContainer = document.getElementById('alert-container') || createAlertContainer();
+  
+  const alertDiv = document.createElement('div');
+  alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+  alertDiv.innerHTML = `
+    <i class="bi bi-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'} me-2"></i>
+    ${message}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  `;
+  
+  alertContainer.appendChild(alertDiv);
+  
+  // Auto-remove after 5 seconds
+  setTimeout(() => {
+    if (alertDiv.parentNode) {
+      alertDiv.remove();
+    }
+  }, 5000);
+}
+
+// Create alert container if it doesn't exist
+function createAlertContainer() {
+  const container = document.createElement('div');
+  container.id = 'alert-container';
+  container.className = 'position-fixed top-0 end-0 p-3';
+  container.style.zIndex = '9999';
+  document.body.appendChild(container);
+  return container;
+}
 </script>
 {% endblock %}
 {% endblock %}

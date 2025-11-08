@@ -1,10 +1,13 @@
 from django.db import models
 from django.contrib.auth.models import User
 from patients.models import Patient
+from facilities.models import Facility
 
 # this model is for referral table  
 
 class Referral(models.Model):
+
+    facility = models.ForeignKey(Facility, on_delete=models.CASCADE, related_name='referrals')
     referral_id = models.AutoField(primary_key=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
@@ -19,6 +22,7 @@ class Referral(models.Model):
     chief_complaint = models.TextField()
     symptoms = models.TextField()
     work_up_details = models.TextField()
+    ICD_code = models.CharField(max_length=10, null=True, blank=True)
     status = models.CharField(max_length=20, default='pending')
     created_at = models.DateTimeField(auto_now_add=True)
     completed_at = models.DateTimeField(null=True, blank=True)

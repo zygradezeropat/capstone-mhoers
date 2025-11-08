@@ -1,4 +1,5 @@
 from django import forms
+from facilities.models import Facility
 from django.contrib.auth.models import User
 from facilities.models import Facility
 
@@ -15,3 +16,16 @@ class HealthcareProviderForm(forms.Form):
     latitude = forms.FloatField()
     longitude = forms.FloatField()
     
+class FacilityForm(forms.Form):
+    name = forms.CharField(max_length=100)
+    assigned_bhw = forms.CharField(max_length=100)
+    latitude = forms.FloatField()
+    longitude = forms.FloatField()
+
+    def clean_name(self):
+        name = self.cleaned_data['name']
+        # Enforce case-insensitive uniqueness at form level
+        if Facility.objects.filter(name__iexact=name).exists():
+            raise forms.ValidationError("A facility with this name already exists.")
+        return name
+

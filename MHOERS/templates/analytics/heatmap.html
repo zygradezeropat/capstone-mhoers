@@ -20,20 +20,21 @@
         <div class="disease-filter">
           <h6 class="mb-3">Filter by Disease:</h6>
           <div class="d-flex flex-wrap">
-            <span class="disease-badge flu active" data-disease="flu">Pneumonia (J15)</span>
-            <span class="disease-badge cold" data-disease="cold"
+            <span class="disease-badge open-wounds active" data-disease="open_wounds"
               >Open Wounds (T14.1)</span
             >
-            <span class="disease-badge respiratory" data-disease="respiratory"
+            <span class="disease-badge dog-bites" data-disease="dog_bites"
               >Dog Bites (W54.99)</span
             >
             <span
-              class="disease-badge gastrointestinal"
-              data-disease="gastrointestinal"
+              class="disease-badge acute-respiratory"
+              data-disease="acute_respiratory"
               >Acute respiratory infections (J06.9)</span
             >
-            <span class="disease-badge tb" data-disease="malaria"
-              >Tuberculosis (A15.0)</span>
+            <span class="disease-badge pneumonia" data-disease="pneumonia"
+              >Pneumonia (J15)</span>
+            <span class="disease-badge hypertension-level-2" data-disease="hypertension_level_2"
+              >Hypertension Level 2 (I10-1)</span>
               
         </div>
         <div class="disease-filter">
@@ -44,6 +45,24 @@
         </div>
 
         <div id="map" style="height: 400px"></div>
+        
+        <!-- Prediction Summary Table -->
+        <div id="prediction-table-container" class="mt-4" style="display: none;">
+          <h5 class="mb-3">Prediction Summary by Disease and Month</h5>
+          <div class="table-responsive">
+            <table id="prediction-summary-table" class="table table-striped table-bordered table-hover">
+              <thead class="table-primary">
+                <tr>
+                  <th>Disease</th>
+                  <!-- Month columns will be dynamically added here -->
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Rows will be dynamically added here -->
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   </div>

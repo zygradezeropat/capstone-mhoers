@@ -1,0 +1,361 @@
+<!-- Nurse Registration Modal -->
+<div class="modal fade" id="nurseModal" tabindex="-1" role="dialog" aria-labelledby="nurseModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
+    <div class="modal-content modern-modal">
+      <form method="POST" action="" class="nurse-form"> 
+        {% csrf_token %}
+        <div class="modal-header modern-header">
+          <div class="header-content">
+            <div class="icon-wrapper">
+              <i class="bi bi-heart-pulse-fill"></i>
+            </div>
+            <div class="title-content">
+              <h5 class="modal-title" id="nurseModalLabel">Add New Nurse</h5>
+              <p class="modal-subtitle">Register a new nursing professional</p>
+            </div>
+          </div>
+          <button type="button" class="btn-close modern-close" data-bs-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+
+        <div class="modal-body modern-body">
+          {% if messages %}
+            <div class="alert alert-danger modern-alert">
+              <i class="bi bi-exclamation-triangle-fill me-2"></i>
+              {% for message in messages %}
+                <p class="mb-0">{{ message }}</p>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <!-- Personal Information Section -->
+          <div class="form-section">
+            <div class="section-header">
+              <i class="bi bi-person-circle"></i>
+              <h6>Personal Information</h6>
+            </div>
+            <div class="row g-3">
+              <div class="col-md-4">
+                <div class="form-floating">
+                  <input type="text" name="first_name" id="nurse_first_name" class="form-control modern-input" placeholder="First Name" required>
+                  <label for="nurse_first_name"><i class="bi bi-person me-2"></i>First Name</label>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-floating">
+                  <input type="text" name="last_name" id="nurse_last_name" class="form-control modern-input" placeholder="Last Name" required>
+                  <label for="nurse_last_name"><i class="bi bi-person me-2"></i>Last Name</label>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-floating">
+                  <input type="text" name="middle_name" id="nurse_middle_name" class="form-control modern-input" placeholder="Middle Name">
+                  <label for="nurse_middle_name"><i class="bi bi-person me-2"></i>Middle Name</label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Professional Information Section -->
+          <div class="form-section">
+            <div class="section-header">
+              <i class="bi bi-award"></i>
+              <h6>Professional Information</h6>
+            </div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <div class="form-floating">
+                  <input type="text" name="username" id="nurse_username" class="form-control modern-input" placeholder="Username" required>
+                  <label for="nurse_username"><i class="bi bi-at me-2"></i>Username</label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-floating">
+                  <input type="text" name="license_number" id="nurse_license_number" class="form-control modern-input" placeholder="Nursing License Number" required>
+                  <label for="nurse_license_number"><i class="bi bi-shield-check me-2"></i>Nursing License Number</label>
+                </div>
+              </div>
+              <div class="col-12">
+                <div class="form-floating">
+                  <select name="specialization" id="nurse_specialization" class="form-select modern-select" required>
+                    <option value="" disabled selected>Select nursing specialization</option>
+                    <option value="General Nursing">General Nursing</option>
+                    <option value="Pediatric Nursing">Pediatric Nursing</option>
+                    <option value="Critical Care Nursing">Critical Care Nursing</option>
+                    <option value="Emergency Nursing">Emergency Nursing</option>
+                    <option value="Surgical Nursing">Surgical Nursing</option>
+                    <option value="Maternal and Child Health">Maternal and Child Health</option>
+                    <option value="Community Health Nursing">Community Health Nursing</option>
+                    <option value="Mental Health Nursing">Mental Health Nursing</option>
+                    <option value="Geriatric Nursing">Geriatric Nursing</option>
+                    <option value="Oncology Nursing">Oncology Nursing</option>
+                    <option value="Other">Other</option>
+                  </select>
+                  <label for="nurse_specialization"><i class="bi bi-heart-pulse me-2"></i>Nursing Specialization</label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Contact Information Section -->
+          <div class="form-section">
+            <div class="section-header">
+              <i class="bi bi-telephone"></i>
+              <h6>Contact Information</h6>
+            </div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <div class="form-floating">
+                  <input type="email" name="email" id="nurse_email" class="form-control modern-input" placeholder="Email Address" required>
+                  <label for="nurse_email"><i class="bi bi-envelope me-2"></i>Email Address</label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-floating">
+                  <input type="tel" name="phone" id="nurse_phone" class="form-control modern-input" placeholder="Phone Number" required>
+                  <label for="nurse_phone"><i class="bi bi-phone me-2"></i>Phone Number</label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Account Security Section -->
+          <div class="form-section">
+            <div class="section-header">
+              <i class="bi bi-shield-lock"></i>
+              <h6>Account Security</h6>
+            </div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <div class="form-floating">
+                  <input type="password" name="password1" id="nurse_password1" class="form-control modern-input" placeholder="Create Password" required>
+                  <label for="nurse_password1"><i class="bi bi-key me-2"></i>Create Password</label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-floating">
+                  <input type="password" name="password2" id="nurse_password2" class="form-control modern-input" placeholder="Verify Password" required>
+                  <label for="nurse_password2"><i class="bi bi-key-fill me-2"></i>Verify Password</label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer modern-footer">
+          <button type="button" class="btn btn-outline-secondary modern-btn-cancel" data-bs-dismiss="modal">
+            <i class="bi bi-x-circle me-2"></i>Cancel
+          </button>
+          <button type="submit" class="btn btn-primary modern-btn-submit">
+            <i class="bi bi-person-plus me-2"></i>Create Nurse Account
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+.modern-modal {
+  border: none;
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
+
+.modern-header {
+  background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+  color: white;
+  border: none;
+  padding: 2rem;
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.icon-wrapper {
+  width: 60px;
+  height: 60px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+.title-content h5 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.modal-subtitle {
+  font-size: 0.9rem;
+  opacity: 0.9;
+  margin: 0;
+}
+
+.modern-close {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 10px;
+  color: white;
+  font-size: 1.5rem;
+  padding: 0.75rem;
+  opacity: 1;
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1050;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.modern-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+  color: white;
+  transform: scale(1.1);
+}
+
+.modern-close:focus {
+  box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.5);
+  color: white;
+}
+
+.modern-close span {
+  font-size: 1.5rem;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.modern-body {
+  padding: 2rem;
+  background: #f8f9fa;
+}
+
+.form-section {
+  background: white;
+  border-radius: 15px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e9ecef;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #f1f3f4;
+}
+
+.section-header i {
+  color: #dc3545;
+  font-size: 1.2rem;
+}
+
+.section-header h6 {
+  color: #2c3e50;
+  font-weight: 600;
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.modern-input, .modern-select {
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  padding: 1rem 0.75rem;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  background: #f8f9fa;
+}
+
+.modern-input:focus, .modern-select:focus {
+  border-color: #dc3545;
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+  background: white;
+}
+
+.form-floating > label {
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.modern-alert {
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+  color: white;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.modern-footer {
+  background: white;
+  border: none;
+  padding: 1.5rem 2rem;
+  border-top: 1px solid #e9ecef;
+}
+
+.modern-btn-cancel {
+  border: 2px solid #6c757d;
+  border-radius: 10px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.modern-btn-cancel:hover {
+  background: #6c757d;
+  border-color: #6c757d;
+  transform: translateY(-2px);
+}
+
+.modern-btn-submit {
+  background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+  border: none;
+  border-radius: 10px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.modern-btn-submit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(220, 53, 69, 0.4);
+}
+
+@media (max-width: 768px) {
+  .modal-xl {
+    max-width: 95%;
+  }
+  
+  .modern-header {
+    padding: 1.5rem;
+  }
+  
+  .modern-body {
+    padding: 1.5rem;
+  }
+  
+  .header-content {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+</style>

@@ -1,13 +1,15 @@
 .card-counter {
     box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-    margin: 0.5rem;
-    padding: 1.25rem 1rem;
+    margin: 0;
+    padding: 1.5rem 1.25rem;
     background-color: #fff;
-    min-height: 120px;
-    border-radius: 0.5rem;
+    min-height: 130px;
+    border-radius: 0.75rem;
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
+    width: 100%;
+    height: 100%;
 }
 
 .card-counter:hover {
@@ -15,41 +17,60 @@
     transform: translateY(-2px);
 }
 
+
+/* Vibrant solid color cards */
 .card-counter.primary {
-    background: linear-gradient(45deg, #4285f4, #2962ff);
-    color: #FFF;
+    background: #007bff; /* solid blue */
+    color: #ffffff;
 }
 
 .card-counter.danger {
-    background: linear-gradient(45deg, #f44336, #d32f2f); 
-    color: #FFF;
+    background: #fff5f0; /* soft peach */
+    color: #ea580c;
 }
 
 .card-counter.success {
-    background: linear-gradient(45deg, #43a047, #2e7d32);
-    color: #FFF;
+    background: #28a745; /* solid green */
+    color: #ffffff;
 }
 
 .card-counter.info {
-    background: linear-gradient(45deg, #00acc1, #006064);
-    color: #FFF;
+    background: #ff9800; /* solid orange */
+    color: #ffffff;
 }
 
 .card-counter i {
-    font-size: 4rem;
-    opacity: 0.15;
+    font-size: 3.25rem;
+    opacity: 0.2;
     position: absolute;
     left: 1rem;
     bottom: 1rem;
+}
+
+/* Icon colors matching card themes */
+.card-counter.primary i {
+    color: #ffffff;
+    opacity: 0.3;
+}
+
+.card-counter.success i {
+    color: #ffffff;
+    opacity: 0.3;
+}
+
+.card-counter.info i {
+    color: #ffffff;
+    opacity: 0.3;
 }
 
 .card-counter .count-numbers {
     position: absolute;
     right: 1.5rem;
     top: 1.25rem;
-    font-size: 2rem;
-    font-weight: 600;
+    font-size: 2.5rem;
+    font-weight: 700;
     display: block;
+    line-height: 1;
 }
 
 .card-counter .count-name {
@@ -59,8 +80,24 @@
     text-transform: uppercase;
     font-size: 0.875rem;
     letter-spacing: 0.5px;
-    font-weight: 500;
-    opacity: 0.8;
+    font-weight: 600;
+    opacity: 0.9;
+}
+
+/* Responsive card adjustments */
+@media (max-width: 768px) {
+    .card-counter {
+        min-height: 110px;
+        padding: 1.25rem 1rem;
+    }
+    
+    .card-counter .count-numbers {
+        font-size: 2rem;
+    }
+    
+    .card-counter i {
+        font-size: 2.5rem;
+    }
 }
 
 /* Calendar Styles */
@@ -410,11 +447,18 @@
     color: white;
     transform: scale(1.1);
     box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    font-weight: 600;
   }
   .disease-badge.active.flu { background: #28a745; }
   .disease-badge.active.cold { background: #17a2b8; }
   .disease-badge.active.respiratory { background: #dc3545; }
   .disease-badge.active.gastrointestinal { background: #6f42c1; }
+  .disease-badge.active.open-wounds { background: #17a2b8; }
+  .disease-badge.active.dog-bites { background: #dc3545; }
+  .disease-badge.active.acute-respiratory { background: #6f42c1; }
+  .disease-badge.active.pneumonia { background: #28a745; }
+  .disease-badge.active.hypertension-level-1 { background: #ffc107; }
+  .disease-badge.active.hypertension-level-2 { background: #fd7e14; }
   
   /* Month badge specific styling */
   .disease-badge.month-badge {

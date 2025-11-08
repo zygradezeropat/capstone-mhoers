@@ -121,13 +121,15 @@
 
     <main class="main-content">
       {% block content %}{% endblock %}
-      {% if messages %}
-        <div class="alert alert-success">
-          {% for message in messages %}
-            <p>{{ message }}</p>
-          {% endfor %}
-        </div>
-      {% endif %}
+      {% block alerts %}
+        {% if messages %}
+          <div class="alert alert-success">
+            {% for message in messages %}
+              <p>{{ message }}</p>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endblock %}
     </main>
 
     <!-- jQuery and Bootstrap 5 Bundle (Popper + Bootstrap JS) -->

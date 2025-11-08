@@ -4,124 +4,369 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, shrink-to-fit=no"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
     <meta http-equiv="x-ua-compatible" content="ie=edge" />
-
+    <title>MHOERS</title>
     <!-- Font Awesome -->
-    <link
-      rel="stylesheet"
-      href="https://use.fontawesome.com/releases/v5.15.2/css/all.css"
-    />
-    <!-- Google Fonts Roboto -->
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap"
-    />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Bootstrap -->
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-      crossorigin="anonymous"
-    />
-
-    <link rel="stylesheet" href="{% static 'css/login.css' %}" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/login.css' %}?v=2" />
+    <link rel="stylesheet" href="{% static 'css/register.css' %}?v=2" />
   </head>
-  <body>
-    <div class="d-flex justify-content-center align-items-center vh-100">
-      <div class="register-card d-flex flex-row w-100">
-        <!-- Left Image -->
-        <div class="col-md-6 image-side"></div>
 
-        <!-- Right Form -->
-        <div
-          class="col-md-6 form-side d-flex flex-column justify-content-center"
-        >
-          <img
-            src="{% static 'images/newcorellalogo.png' %}"
-            alt="New Corella Logo"
-            class="logo"
-          />
-          <h4 class="mb-4 text-center">Create a MHOERS Account</h4>
+  <body>
+    <div class="register-container">
+      <!-- Background Image -->
+      <div class="background-image"></div>
+      
+      <!-- Register Card -->
+      <div class="register-wrapper">
+        <div class="register-card">
+          <!-- Header -->
+          <div class="register-header">
+            <div class="logo-container">
+              <img src="{% static 'images/newcorellalogo.png' %}" alt="New Corella Logo" class="logo" />
+            </div>
+            <h1 class="app-title">MHOERS</h1>
+            <p class="welcome-text">Create your MHOERS account to get started.</p>
+          </div>
+
+          <!-- Register Form -->
+          <form method="POST" action="{% url 'register' %}" class="register-form">
+            {% csrf_token %}
+            
           {% if messages %}
-          <div class="alert alert-danger text-center py-2">
+            <div class="alert alert-danger">
             {% for message in messages %}
             <p>{{ message }}</p>
             {% endfor %}
           </div>
           {% endif %}
 
-          <form method="POST" action="{% url 'register' %}">
-            {% csrf_token %}
+            <!-- Personal Information Section -->
+            <div class="form-section-title">
+              <h6>Personal Information</h6>
+            </div>
 
-            <!-- Username and Role (side by side) -->
-            <div class="row mb-3">
-              <!-- Username -->
-              <div class="col-md-6">
-                <div class="form-outline">
-                  <label class="form-label" for="username">Username</label>
-                  <input
-                    type="text"
-                    name="username"
-                    id="username"
-                    class="form-control form-control-lg"
-                    required
-                  />
+            <!-- First Name, Last Name, Email and Phone Row -->
+            <div class="form-row">
+              <div class="form-group">
+                <div class="input-wrapper">
+                  <i class="fas fa-user input-icon"></i>
+                  <input type="text" name="firstname" id="firstname" class="form-input" placeholder="First Name" required>
+                </div>
+              </div>
+              <div class="form-group">
+                <div class="input-wrapper">
+                  <i class="fas fa-user input-icon"></i>
+                  <input type="text" name="middlename" id="middlename" class="form-input" placeholder="Middle Name" >
                 </div>
               </div>
 
-              <!-- Role -->
-              <div class="col-md-6">
-                <div class="form-outline">
-                  <label class="form-label" for="role">Role</label>
-                  <select
-                    name="role"
-                    id="role"
-                    class="form-control form-control-lg"
-                    required
-                  >
-                    <option value="" disabled selected>Select your role</option>
-                    <option value="BHW">BHW</option>
-                    <option value="MHO">MHO</option>
-                  </select>
+              <div class="form-group">
+                <div class="input-wrapper">
+                  <i class="fas fa-user input-icon"></i>
+                  <input type="text" name="lastname" id="lastname" class="form-input" placeholder="Last Name" required>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <div class="input-wrapper">
+                  <i class="fas fa-envelope input-icon"></i>
+                  <input type="email" name="email" id="email" class="form-input" placeholder="Email Address" required>
                 </div>
               </div>
             </div>
 
-            <!-- Password -->
-            <div class="form-outline mb-3">
-              <label class="form-label" for="password1">Password</label>
-              <input
-                type="password"
-                name="password1"
-                id="password1"
-                class="form-control form-control-lg"
-                required
-              />
+            <!-- Username and Password Row -->
+            <div class="form-row">
+              <div class="form-group">
+                <div class="input-wrapper">
+                  <i class="fas fa-user input-icon"></i>
+                  <input type="text" name="username" id="username" class="form-input" placeholder="Username" required>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <div class="input-wrapper">
+                  <i class="fas fa-lock input-icon"></i>
+                  <input type="password" name="password1" id="password1" class="form-input" placeholder="Password" required>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <div class="input-wrapper">
+                  <i class="fas fa-lock input-icon"></i>
+                  <input type="password" name="password2" id="password2" class="form-input" placeholder="Confirm Password" required>
+                </div>
+              </div>
             </div>
 
-            <!-- Confirm Password -->
-            <div class="form-outline mb-4">
-              <label class="form-label" for="password2">Confirm Password</label>
-              <input
-                type="password"
-                name="password2"
-                id="password2"
-                class="form-control form-control-lg"
-                required
-              />
+            <!-- Phone and Role Row -->
+            <div class="form-row">
+              <div class="form-group">
+                <div class="input-wrapper">
+                  <i class="fas fa-phone input-icon"></i>
+                  <input type="tel" name="phone" id="phone" class="form-input" placeholder="Phone Number" required>
+                </div>
+              </div>
+
+               <div class="form-group">
+                 <div class="input-wrapper">
+                   <i class="fas fa-user-tag input-icon"></i>
+                   <select name="main_role" id="main_role" class="form-select" required>
+                     <option value="" disabled selected>Select Role</option>
+                     <option value="BHW">BHW</option>
+                     <option value="MHO">MHO</option>
+                   </select>
+                 </div>
+               </div>
+
+               <!-- BHW Sub-role Selection -->
+               <div class="form-group" id="bhw-sub-role" style="display: none;">
+                 <div class="input-wrapper">
+                   <i class="fas fa-user-md input-icon"></i>
+                   <select name="bhw_sub_role" id="bhw_sub_role" class="form-select">
+                     <option value="" disabled selected>Select BHW Type</option>
+                     <option value="BHW">BHW (Barangay Health Worker)</option>
+                     <option value="BHW_NURSE">Nurse</option>
+                   </select>
+                 </div>
+               </div>
+
+               <!-- MHO Sub-role Selection -->
+               <div class="form-group" id="mho-sub-role" style="display: none;">
+                 <div class="input-wrapper">
+                   <i class="fas fa-user-md input-icon"></i>
+                   <select name="mho_sub_role" id="mho_sub_role" class="form-select">
+                     <option value="" disabled selected>Select MHO Type</option>
+                     <option value="MHO_DOCTOR">Doctor</option>
+                     <option value="MHO_NURSE">Nurse</option>
+                   </select>
+                 </div>
+               </div>
             </div>
 
-            <!-- Submit button -->
-            <button type="submit" class="btn btn-success btn-lg w-100">
-              Sign Up
+            <!-- Address Information Section -->
+            <div class="form-section-title">
+              <h6>Address Information</h6>
+            </div>
+
+            <!-- Street Address, City, Barangay, Province and Postal Code Row -->
+            <div class="form-row">
+              <div class="form-group">
+                <div class="input-wrapper">
+                  <i class="fas fa-map-marker-alt input-icon"></i>
+                  <input type="text" name="street_address" id="street_address" class="form-input" placeholder="Street Address" required>
+                </div>
+              </div>
+
+              
+
+              <div class="form-group">
+                <div class="input-wrapper">
+                  <i class="fas fa-home input-icon"></i>
+                  <input type="text" name="barangay" id="barangay" class="form-input" placeholder="Barangay" required>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <div class="input-wrapper">
+                  <i class="fas fa-city input-icon"></i>
+                  <input type="text" name="city" id="city" class="form-input" placeholder="City" required>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <div class="input-wrapper">
+                  <i class="fas fa-map input-icon"></i>
+                  <input type="text" name="province" id="province" class="form-input" placeholder="Province" required>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <div class="input-wrapper">
+                  <i class="fas fa-mail-bulk input-icon"></i>
+                  <input type="text" name="postal_code" id="postal_code" class="form-input" placeholder="Postal Code" required>
+                </div>
+              </div>
+            </div>
+
+            <!-- Professional Information Section -->
+            <div class="form-section-title">
+              <h6>Professional Information</h6>
+            </div>
+
+             <!-- BHW Professional Information -->
+             <div id="bhw-professional" class="professional-section" style="display: none;">
+               <div class="form-row">
+                 <div class="form-group">
+                   <div class="input-wrapper">
+                     <i class="fas fa-id-card input-icon"></i>
+                     <input type="text" name="registration_number" id="registration_number" class="form-input" placeholder="Registration Number">
+                   </div>
+                 </div>
+
+                 <div class="form-group">
+                   <div class="input-wrapper">
+                     <i class="fas fa-calendar-alt input-icon"></i>
+                       <input type="text" name="accreditation_number" id="accreditation_number" class="form-input" placeholder="Accreditation Number">
+                   </div>
+                 </div>
+
+                 <div class="form-group">
+                   <div class="input-wrapper">
+                     <i class="fas fa-map-marker-alt input-icon"></i>
+                     <select name="bhw_assigned_barangay" id="bhw_assigned_barangay" class="form-select">
+                       <option value="" disabled selected>Select Facility</option>
+                       {% for facility in facilities %}
+                       <option value="{{ facility.facility_id }}">{{ facility.name }}</option>
+                       {% endfor %}
+                     </select>
+                   </div>
+                 </div>
+               </div>
+             </div>
+
+             <!-- Nurse Professional Information -->
+             <div id="nurse-professional" class="professional-section" style="display: none;">
+               <div class="form-row">
+                 <div class="form-group">
+                   <div class="input-wrapper">
+                     <i class="fas fa-id-card input-icon"></i>
+                     <input type="text" name="nurse_license_number" id="nurse_license_number" class="form-input" placeholder="Nursing License Number">
+                   </div>
+                 </div>
+
+                 <div class="form-group">
+                   <div class="input-wrapper">
+                     <i class="fas fa-id-card input-icon"></i>
+                     <input type="text" name="prc_license_number" id="prc_license_number" class="form-input" placeholder="PRC License Number">
+                   </div>
+                 </div>
+
+                 <div class="form-group">
+                   <div class="input-wrapper">
+                     <i class="fas fa-map-marker-alt input-icon"></i>
+                     <select name="nurse_assigned_barangay" id="nurse_assigned_barangay" class="form-select">
+                       <option value="" disabled selected>Select Facility</option>
+                       {% for facility in facilities %}
+                       <option value="{{ facility.facility_id }}">{{ facility.name }}</option>
+                       {% endfor %}
+                     </select>
+                   </div>
+                 </div>
+               </div>
+             </div>
+
+            <!-- MHO Doctor Professional Information -->
+             <div id="mho-doctor-professional" class="professional-section" style="display: none;">
+               <div class="form-row">
+                 <div class="form-group">
+                   <div class="input-wrapper">
+                     <i class="fas fa-id-card input-icon"></i>
+                     <input type="text" name="doctor_registration_number" id="doctor_registration_number" class="form-input" placeholder="Medical Registration Number">
+                   </div>
+                 </div>
+
+                 <div class="form-group">
+                   <div class="input-wrapper">
+                     <i class="fas fa-id-card input-icon"></i>
+                     <input type="text" name="doctor_license_number" id="doctor_license_number" class="form-input" placeholder="Medical License Number">
+                   </div>
+                 </div>
+
+                 <div class="form-group">
+                   <div class="input-wrapper">
+                     <i class="fas fa-map-marker-alt input-icon"></i>
+                     <select name="doctor_assigned_barangay" id="doctor_assigned_barangay" class="form-select">
+                       <option value="" disabled selected>Select Facility</option>
+                       {% for facility in facilities %}
+                       <option value="{{ facility.facility_id }}">{{ facility.name }}</option>
+                       {% endfor %}
+                     </select>
+                   </div>
+                 </div>
+               </div>
+
+               <div class="form-row">
+                <div class="form-group">
+                  <div class="input-wrapper">
+                    <i class="fas fa-briefcase input-icon"></i>
+                    <input 
+                      list="specializationList" 
+                      name="medical_specialization" 
+                      id="medical_specialization" 
+                      class="form-input" 
+                      placeholder="Medical Specialization"
+                    >
+                    <datalist id="specializationList">
+                      <option value="General Practitioner">
+                      <option value="Pediatrician">
+                      <option value="Cardiologist">
+                      <option value="Dermatologist">
+                      <option value="Neurologist">
+                      <option value="Obstetrician/Gynecologist">
+                      <option value="Oncologist">
+                      <option value="Orthopedic Surgeon">
+                      <option value="Psychiatrist">
+                      <option value="Radiologist">
+                      <option value="ENT Specialist">
+                      <option value="Urologist">
+                      <option value="Pulmonologist">
+                      <option value="Endocrinologist">
+                      <option value="Ophthalmologist">
+                      <option value="Nephrologist">
+                      <option value="Gastroenterologist">
+                    </datalist>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- MHO Nurse Professional Information -->
+             <div id="mho-nurse-professional" class="professional-section" style="display: none;">
+               <div class="form-row">
+                 <div class="form-group">
+                   <div class="input-wrapper">
+                     <i class="fas fa-id-card input-icon"></i>
+                     <input type="text" name="mho_registration_number" id="mho_registration_number" class="form-input" placeholder="Registration Number">
+                   </div>
+                 </div>
+
+                 <div class="form-group">
+                   <div class="input-wrapper">
+                     <i class="fas fa-id-card input-icon"></i>
+                     <input type="text" name="mho_accreditation_number" id="mho_accreditation_number" class="form-input" placeholder="Accreditation Number">
+                   </div>
+                 </div>
+
+                 <div class="form-group">
+                   <div class="input-wrapper">
+                     <i class="fas fa-map-marker-alt input-icon"></i>
+                     <select name="nurse_assigned_barangay" id="nurse_assigned_barangay" class="form-select">
+                       <option value="" disabled selected>Select Facility</option>
+                       {% for facility in facilities %}
+                       <option value="{{ facility.facility_id }}">{{ facility.name }}</option>
+                       {% endfor %}
+                     </select>
+                   </div>
+                 </div>
+               </div>
+             </div>
+
+            <button type="submit" class="register-button">
+              <span>Sign Up</span>
+              <i class="fas fa-arrow-right"></i>
             </button>
           </form>
 
-          <div class="text-center mt-3">
-            <a href="{% url 'login' %}">Already have an account? Login here</a>
+          <!-- Footer -->
+          <div class="register-footer mt-3">
+             <p>Already have an account? <a href="{% url 'login' %}">Login here</a></p>
           </div>
         </div>
       </div>
@@ -129,5 +374,10 @@
 
     <!-- Bootstrap Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'js/register.js' %}"></script>
+     <!-- Role Selection Script -->
+     <script>
+      
+     </script>
   </body>
 </html>

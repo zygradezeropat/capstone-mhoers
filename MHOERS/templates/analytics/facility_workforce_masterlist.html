@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{% static 'css/admin_dashboard.css' %}">
+
+<style>
+  .report-logo {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+  }
+
+  .btn-print {
+    width: 100%;
+  }
+
+  @media (max-width: 576px) {
+    .report-logo {
+      width: 60px;
+      height: 60px;
+    }
+  }
+
+  @media (min-width: 992px) {
+    .btn-print {
+      width: auto;
+    }
+  }
+
+  .roster-table td, .roster-table th {
+    vertical-align: top;
+  }
+
+  .tag {
+    display: inline-block;
+    padding: 0.1rem 0.4rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    background-color: #e9ecef;
+  }
+</style>
+
+{% include 'components/navbar.html' %}
+
+<div class="container-fluid py-4">
+  <div class="card border-0 shadow-sm">
+    <div class="card-body p-4">
+      <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center mb-4">
+        <div class="flex-grow-1">
+          <div class="d-flex align-items-center justify-content-between flex-wrap mb-3">
+            <img src="{% static 'images/LGU-NEWCORELLA.png' %}" alt="LGU New Corella Logo" class="report-logo mb-3 mb-lg-0">
+            <div class="text-center flex-grow-1 px-lg-4">
+              <h4 class="text-primary mb-1">Facility &amp; Workforce Masterlist</h4>
+              <p class="text-muted mb-0">Accredited personnel roster per facility for licensing &amp; compliance</p>
+              <small class="text-muted">Generated on {{ generated_at|date:'F d, Y h:i A' }}</small>
+            </div>
+            <img src="{% static 'images/MHO-LOGO.png' %}" alt="MHO Logo" class="report-logo mb-3 mb-lg-0 d-none d-sm-block">
+          </div>
+        </div>
+      </div>
+
+      <div class="row d-print-none mb-4">
+        <div class="col-12 d-grid d-lg-flex justify-content-lg-end">
+          <button type="button" class="btn btn-outline-primary btn-print" onclick="printFacilityMasterlist()">
+            <i class="bi bi-printer"></i> Print Masterlist
+          </button>
+        </div>
+      </div>
+
+      <div class="table-responsive" id="rosterTable">
+        <table class="table table-bordered roster-table">
+          <thead class="table-light">
+            <tr>
+              <th style="width: 18%;">Facility</th>
+              <th style="width: 18%;">Assigned BHW</th>
+              <th style="width: 21%;">Barangay Health Workers</th>
+              <th style="width: 21%;">Doctors</th>
+              <th style="width: 22%;">Nurses</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for entry in roster %}
+            <tr>
+              <td>
+                <div class="fw-semibold">{{ entry.facility.name }}</div>
+                {% if entry.facility.latitude and entry.facility.longitude %}
+                  <div class="text-muted small">Lat: {{ entry.facility.latitude }}, Lng: {{ entry.facility.longitude }}</div>
+                {% endif %}
+              </td>
+              <td>
+                {% if entry.facility.assigned_bhw %}
+                  <div>{{ entry.facility.assigned_bhw }}</div>
+                  <div class="text-muted small">(Assigned)</div>
+                {% else %}
+                  <span class="text-muted">No BHW assigned</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if entry.bhws %}
+                  {% for bhw in entry.bhws %}
+                    <div class="mb-2">
+                      <div class="fw-semibold">{{ bhw.first_name }} {{ bhw.last_name }}</div>
+                      <div class="text-muted small">Accreditation #: {{ bhw.accreditationNumber|default:"N/A" }}</div>
+                      <div class="text-muted small">Registration #: {{ bhw.registrationNumber|default:"N/A" }}</div>
+                      <span class="tag">{{ bhw.status }}</span>
+                    </div>
+                  {% endfor %}
+                {% else %}
+                  <span class="text-muted">No accredited BHW on file</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if entry.doctors %}
+                  {% for doctor in entry.doctors %}
+                    <div class="mb-2">
+                      <div class="fw-semibold">Dr. {{ doctor.first_name }} {{ doctor.last_name }}</div>
+                      <div class="text-muted small">Specialization: {{ doctor.specialization|default:"N/A" }}</div>
+                      <div class="text-muted small">License #: {{ doctor.license_number|default:"N/A" }}</div>
+                      <span class="tag">{{ doctor.status }}</span>
+                    </div>
+                  {% endfor %}
+                {% else %}
+                  <span class="text-muted">No accredited doctors on file</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if entry.nurses %}
+                  {% for nurse in entry.nurses %}
+                    <div class="mb-2">
+                      <div class="fw-semibold">Nurse {{ nurse.first_name }} {{ nurse.last_name }}</div>
+                      <div class="text-muted small">PRC #: {{ nurse.prc_license_number|default:"N/A" }}</div>
+                      <div class="text-muted small">Assigned Area: {{ nurse.nursing_assigned_area|default:"N/A" }}</div>
+                      <span class="tag">{{ nurse.status }}</span>
+                    </div>
+                  {% endfor %}
+                {% else %}
+                  <span class="text-muted">No accredited nurses on file</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="5" class="text-center text-muted py-4">No facilities available.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="mt-3">
+        <small class="text-muted d-block">• Status values reflect the latest accreditation workflow (Pending/Approved/Rejected).</small>
+        <small class="text-muted d-block">• Please coordinate with HR for missing personnel records.</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% block script %}
+<script>
+  function printFacilityMasterlist() {
+    const reportTitle = 'Facility & Workforce Masterlist';
+    const generatedAt = '{{ generated_at|date:"F d, Y h:i A" }}';
+    const logoLeft = "{% static 'images/LGU-NEWCORELLA.png' %}";
+    const logoRight = "{% static 'images/MHO-LOGO.png' %}";
+    const tableHtml = document.getElementById('rosterTable')?.innerHTML || '';
+
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>${reportTitle}</title>
+        <style>
+          @page { size: A4 landscape; margin: 10mm; }
+          body { font-family: Arial, sans-serif; margin: 0; padding: 16px; color: #000; }
+          .header { text-align: center; border-bottom: 1px solid #000; padding-bottom: 12px; margin-bottom: 16px; }
+          .header h5, .header h6, .header p { margin: 2px 0; }
+          .logo-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+          .logo-row img { width: 80px; height: 80px; object-fit: contain; }
+          table { width: 100%; border-collapse: collapse; font-size: 12px; }
+          th, td { border: 1px solid #000; padding: 6px 8px; vertical-align: top; }
+          th { background-color: #f8f9fa; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="logo-row">
+            <img src="${logoLeft}" alt="LGU New Corella Logo">
+            <img src="${logoRight}" alt="MHO Logo">
+          </div>
+          <h6>Republic of the Philippines</h6>
+          <h6>Province of Davao del Norte</h6>
+          <h5>Municipality of New Corella</h5>
+          <h6>Municipal Health Office</h6>
+          <p>Purok 5, Poblacion, New Corella | rhunewcorella@yahoo.com | (+63) 970-093-3480</p>
+        </div>
+        <h2 style="text-align:center; margin-bottom: 16px;">${reportTitle}</h2>
+        ${tableHtml}
+        <p style="margin-top: 12px; font-size: 12px;">Generated on ${generatedAt}</p>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.onload = () => {
+      setTimeout(() => {
+        printWindow.focus();
+        printWindow.print();
+        setTimeout(() => printWindow.close(), 100);
+      }, 300);
+    };
+  }
+</script>
+{% endblock %}
+
+{% endblock %}
+

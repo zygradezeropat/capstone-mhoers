@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-%xu_imq+2k=@1!fp%4*34!_e+c%1&#z0xg!)ccg3$n8(n(k7x_
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'testserver']
 
 
 # Application definition
@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'referrals',
     'facilities',
     'channels',
+    'chat',
     
 ]
 
@@ -74,7 +75,9 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'notifications.context_processors.unread_notifications',
                 'notifications.context_processors.message_notification',
-                
+                'accounts.context_processors.pending_users_count',
+                'accounts.context_processors.user_approval_status',
+                'chat.context_processors.chat_context',
             ],
         },
     },
@@ -167,4 +170,8 @@ CACHES = {
 # }
 
 
+
+# IPROG SMS API token configuration
+# Prefer environment variable; fallback to provided token for now
+IPROG_SMS_API_TOKEN = os.getenv('IPROG_SMS_API_TOKEN', 'fceef382dc75566956b0dc4d64f33ade7e599d6b')
 

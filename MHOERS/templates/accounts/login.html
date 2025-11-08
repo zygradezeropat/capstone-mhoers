@@ -343,7 +343,11 @@
 
           <!-- Footer -->
           <div class="login-footer">
-            <p>No account or having trouble logging in? Contact your administrator</p>
+             <p>No account yet?</p>
+             <a href="{% url 'register' %}" class="nav-link {% if active_page == 'assessment' %}active{% endif %}" data-tooltip="Assessment">
+          <i class="bi bi-menu-button-wide"></i>
+          <span class="nav-label">Register Here</span>
+                </a>
           </div>
         </div>
       </div>

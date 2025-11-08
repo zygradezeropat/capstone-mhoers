@@ -4,11 +4,25 @@ from analytics.models import Disease
 from patients.models import Medical_History, Patient
 from referrals.models import Referral
 from facilities.models import Facility
+from accounts.models import BHWRegistration, Doctors, Nurses
 from collections import Counter, defaultdict
 from datetime import datetime, timedelta
-from django.db.models import Count, Q
+from zoneinfo import ZoneInfo
+from django.db.models import Count, Q, Avg, DurationField, ExpressionWrapper, F
+from django.contrib.auth.decorators import login_required
+from django.utils import timezone
+import calendar
 from .models import *
 from django.contrib.auth.models import User
+from django.utils.translation import gettext_lazy as _
+from analytics.ml_utils import predict_disease_peak_for_month
+
+
+SINGAPORE_TZ = ZoneInfo('Asia/Singapore')
+
+
+def now_in_singapore():
+    return timezone.now().astimezone(SINGAPORE_TZ)
 
 def get_disease_diagnosis_counts(request):
     """
@@ -475,6 +489,527 @@ def get_system_usage_data(request):
     
     return JsonResponse(data)
 
+
+
+
+@login_required
+def system_usage_scorecard_report(request):
+    """Printable system usage scorecard by facility and month."""
+
+    now = now_in_singapore()
+
+    def parse_int(value, fallback=None):
+        try:
+            parsed = int(value)
+            return parsed
+        except (TypeError, ValueError):
+            return fallback
+
+    year = parse_int(request.GET.get('year'), now.year) or now.year
+
+    if request.user.is_staff or request.user.is_superuser:
+        facilities_qs = Facility.objects.all().order_by('name')
+    else:
+        facilities_qs = request.user.shared_facilities.all().order_by('name')
+
+    facilities = list(facilities_qs)
+    month_labels = [calendar.month_abbr[i] for i in range(1, 13)]
+
+    scorecard = []
+    summary_referrals = [0] * 12
+    summary_medical = [0] * 12
+
+    for facility in facilities:
+        referrals_per_month = []
+        medical_per_month = []
+        for month_idx in range(1, 13):
+            referral_count = Referral.objects.filter(
+                patient__facility=facility,
+                created_at__year=year,
+                created_at__month=month_idx
+            ).count()
+            medical_count = Medical_History.objects.filter(
+                patient_id__facility=facility,
+                diagnosed_date__year=year,
+                diagnosed_date__month=month_idx
+            ).count()
+            referrals_per_month.append(referral_count)
+            medical_per_month.append(medical_count)
+            summary_referrals[month_idx - 1] += referral_count
+            summary_medical[month_idx - 1] += medical_count
+
+        scorecard.append({
+            'facility': facility,
+            'referrals': referrals_per_month,
+            'medical': medical_per_month,
+            'referrals_total': sum(referrals_per_month),
+            'medical_total': sum(medical_per_month),
+        })
+
+    context = {
+        'year': year,
+        'month_labels': month_labels,
+        'scorecard': scorecard,
+        'summary_referrals': summary_referrals,
+        'summary_medical': summary_medical,
+        'report_generated_at': now,
+    }
+
+    return render(request, 'analytics/system_usage_scorecard.html', context)
+
+
+@login_required
+def morbidity_report(request):
+    """Printable morbidity report summarizing top diagnoses and trends."""
+
+    now = now_in_singapore()
+
+    def parse_int(value, fallback=None):
+        try:
+            parsed = int(value)
+            return parsed
+        except (TypeError, ValueError):
+            return fallback
+
+    year = parse_int(request.GET.get('year'), now.year) or now.year
+    raw_month = parse_int(request.GET.get('month'))
+    month = raw_month if raw_month and 1 <= raw_month <= 12 else None
+
+    # Build base queryset
+    histories = Medical_History.objects.filter(diagnosed_date__year=year)
+    if month:
+        histories = histories.filter(diagnosed_date__month=month)
+
+    # Normalize illnesses similar to API logic
+    disease_names = list(Disease.objects.values_list('name', 'critical_level'))
+    disease_name_map = {name.lower(): {'name': name, 'critical_level': level} for name, level in disease_names}
+
+    normalized_counts = Counter()
+    diagnosis_meta = {}
+    raw_entries = []
+
+    for history in histories.select_related('patient_id', 'patient_id__facility').order_by('-diagnosed_date'):
+        illness = (history.illness_name or '').strip()
+        illness_lc = illness.lower()
+        if illness_lc in ['cat bite', 'dog bite']:
+            normalized = 'possible rabies'
+        elif illness_lc == 'lbm':
+            normalized = 'gastrointestinal issue'
+        else:
+            normalized = illness_lc
+
+        disease_info = disease_name_map.get(normalized, {})
+        display_name = disease_info.get('name') or illness.title() or 'Unspecified'
+        critical_level = disease_info.get('critical_level', 'N/A')
+        diagnosis_meta.setdefault(display_name, critical_level)
+        normalized_counts[display_name] += 1
+
+        raw_entries.append({
+            'patient_name': f"{history.patient_id.first_name} {history.patient_id.last_name}" if history.patient_id else '',
+            'facility': history.patient_id.facility.name if history.patient_id and history.patient_id.facility else '',
+            'diagnosed_date': history.diagnosed_date,
+            'illness_display': display_name,
+            'illness_raw': illness,
+            'notes': history.notes,
+            'advice': history.advice,
+        })
+
+    # Determine top diagnoses (e.g., top 10)
+    top_diagnoses = normalized_counts.most_common(10)
+    total_cases = sum(normalized_counts.values())
+
+    def classify_level(level):
+        level_lower = (level or '').lower()
+        if level_lower == 'high':
+            return 'critical-high', 'danger'
+        if level_lower == 'medium':
+            return 'critical-medium', 'warning'
+        if level_lower == 'low':
+            return 'critical-low', 'success'
+        return '', 'secondary'
+
+    top_diagnoses_rows = []
+    for name, count in top_diagnoses:
+        critical = diagnosis_meta.get(name, 'N/A')
+        row_class, badge_variant = classify_level(critical)
+        percent = round((count / total_cases) * 100, 2) if total_cases else 0
+        top_diagnoses_rows.append({
+            'name': name,
+            'count': count,
+            'critical': critical,
+            'row_class': row_class,
+            'badge_variant': badge_variant,
+            'percent': percent,
+        })
+
+    # Build monthly trend data for chart table
+    monthly_totals = defaultdict(lambda: Counter())
+    for diagnose in histories:
+        illness = (diagnose.illness_name or '').strip()
+        illness_lc = illness.lower()
+        if illness_lc in ['cat bite', 'dog bite']:
+            normalized = 'possible rabies'
+        elif illness_lc == 'lbm':
+            normalized = 'gastrointestinal issue'
+        else:
+            normalized = illness_lc
+
+        disease_info = disease_name_map.get(normalized, {})
+        display_name = disease_info.get('name') or illness.title() or 'Unspecified'
+        key = diagnose.diagnosed_date.strftime('%b')
+        monthly_totals[key][display_name] += 1
+
+    # Build list of months from January to December
+    month_labels = [calendar.month_abbr[i] for i in range(1, 13)]
+
+    # Ensure each month has counts for top diagnosis entries
+    trend_table = []
+    for label, _ in top_diagnoses:
+        row = {
+            'diagnosis': label,
+            'monthly_counts': [monthly_totals[m].get(label, 0) for m in month_labels],
+        }
+        row['total'] = sum(row['monthly_counts'])
+        trend_table.append(row)
+
+    month_name = calendar.month_name[month] if month else 'All Months'
+
+    month_options = [{'value': '', 'label': 'All Months'}]
+    month_options.extend({'value': str(idx), 'label': calendar.month_name[idx]} for idx in range(1, 13))
+
+    context = {
+        'year': year,
+        'month': month,
+        'month_name': month_name,
+        'selected_month_value': str(month) if month else '',
+        'month_options': month_options,
+        'report_generated_at': now,
+        'top_diagnoses': top_diagnoses_rows,
+        'total_cases': total_cases,
+        'trend_table': trend_table,
+        'month_labels': month_labels,
+        'raw_entries': raw_entries[:50],  # limit for print readability
+        'diagnosis_meta': diagnosis_meta,
+    }
+
+    return render(request, 'analytics/morbidity_report.html', context)
+
+
+@login_required
+def facility_workforce_masterlist(request):
+    """Printable facility & workforce roster report."""
+
+    now = now_in_singapore()
+
+    facilities = Facility.objects.all().order_by('name')
+
+    roster = []
+
+    bhw_map = defaultdict(list)
+    for bhw in BHWRegistration.objects.select_related('facility').all().order_by('last_name'):
+        if bhw.facility_id:
+            bhw_map[bhw.facility_id].append(bhw)
+
+    doctor_map = defaultdict(list)
+    for doctor in Doctors.objects.select_related('facility').all().order_by('last_name'):
+        if doctor.facility_id:
+            doctor_map[doctor.facility_id].append(doctor)
+
+    nurse_map = defaultdict(list)
+    for nurse in Nurses.objects.select_related('facility').all().order_by('last_name'):
+        if nurse.facility_id:
+            nurse_map[nurse.facility_id].append(nurse)
+
+    for facility in facilities:
+        roster.append({
+            'facility': facility,
+            'bhws': bhw_map.get(facility.pk, []),
+            'doctors': doctor_map.get(facility.pk, []),
+            'nurses': nurse_map.get(facility.pk, []),
+        })
+
+    context = {
+        'roster': roster,
+        'generated_at': now,
+    }
+
+    return render(request, 'analytics/facility_workforce_masterlist.html', context)
+
+
+
+@login_required
+def barangay_referral_performance_report(request):
+    """Render a printable monthly and year-to-date referral performance summary per facility."""
+
+    now = now_in_singapore()
+
+    def parse_int(value, fallback=None):
+        try:
+            parsed = int(value)
+            return parsed
+        except (TypeError, ValueError):
+            return fallback
+
+    year = parse_int(request.GET.get('year'), now.year) or now.year
+    raw_month = parse_int(request.GET.get('month'), None)
+    month = raw_month if raw_month and 1 <= raw_month <= 12 else None
+
+    month_name = calendar.month_name[month] if month else 'All Months'
+
+    # Determine facilities visible to the current user
+    if request.user.is_staff or request.user.is_superuser:
+        facilities_qs = Facility.objects.all().order_by('name')
+    else:
+        if hasattr(request.user, 'shared_facilities'):
+            facilities_qs = request.user.shared_facilities.all().order_by('name')
+        else:
+            facilities_qs = Facility.objects.filter(users=request.user).order_by('name')
+
+    facilities = list(facilities_qs)
+
+    status_keys = ['pending', 'in-progress', 'completed', 'cancelled']
+    status_labels = {
+        'pending': 'Pending',
+        'in-progress': 'In-Progress',
+        'completed': 'Completed',
+        'cancelled': 'Cancelled',
+    }
+    duration_expr = ExpressionWrapper(F('completed_at') - F('created_at'), output_field=DurationField())
+
+    def duration_to_days(value):
+        if not value:
+            return None
+        return round(value.total_seconds() / 86400, 2)
+
+    facilities_data = []
+
+    for facility in facilities:
+        monthly_filters = {
+            'patient__facility': facility,
+            'created_at__year': year,
+        }
+        if month:
+            monthly_filters['created_at__month'] = month
+
+        monthly_qs = Referral.objects.filter(**monthly_filters)
+
+        ytd_qs = Referral.objects.filter(
+            patient__facility=facility,
+            created_at__year=year,
+        )
+
+        monthly_counts = {status: monthly_qs.filter(status=status).count() for status in status_keys}
+        ytd_counts = {status: ytd_qs.filter(status=status).count() for status in status_keys}
+
+        monthly_total = sum(monthly_counts.values())
+        ytd_total = sum(ytd_counts.values())
+
+        monthly_avg_duration = monthly_qs.filter(status='completed', completed_at__isnull=False).aggregate(
+            avg_duration=Avg(duration_expr)
+        )['avg_duration']
+
+        ytd_avg_duration = ytd_qs.filter(status='completed', completed_at__isnull=False).aggregate(
+            avg_duration=Avg(duration_expr)
+        )['avg_duration']
+
+        facilities_data.append({
+            'facility': facility,
+            'monthly': {
+                'counts': monthly_counts,
+                'total': monthly_total,
+                'avg_days_to_close': duration_to_days(monthly_avg_duration),
+            },
+            'ytd': {
+                'counts': ytd_counts,
+                'total': ytd_total,
+                'avg_days_to_close': duration_to_days(ytd_avg_duration),
+            },
+        })
+
+    facility_ids = [f.pk for f in facilities]
+
+    summary_totals = {
+        'monthly': {status: 0 for status in status_keys},
+        'ytd': {status: 0 for status in status_keys},
+    }
+
+    for entry in facilities_data:
+        for status in status_keys:
+            summary_totals['monthly'][status] += entry['monthly']['counts'][status]
+            summary_totals['ytd'][status] += entry['ytd']['counts'][status]
+
+    summary_totals['monthly']['total'] = sum(summary_totals['monthly'][status] for status in status_keys)
+    summary_totals['ytd']['total'] = sum(summary_totals['ytd'][status] for status in status_keys)
+
+    # Compute overall averages using combined querysets
+    all_monthly_filters = {
+        'patient__facility__in': facility_ids,
+        'created_at__year': year,
+    }
+    if month:
+        all_monthly_filters['created_at__month'] = month
+
+    all_monthly_qs = Referral.objects.filter(**all_monthly_filters) if facility_ids else Referral.objects.none()
+
+    all_ytd_qs = Referral.objects.filter(
+        patient__facility__in=facility_ids,
+        created_at__year=year,
+    ) if facility_ids else Referral.objects.none()
+
+    summary_totals['monthly']['avg_days_to_close'] = duration_to_days(
+        all_monthly_qs.filter(status='completed', completed_at__isnull=False).aggregate(
+            avg_duration=Avg(duration_expr)
+        )['avg_duration']
+    )
+
+    summary_totals['ytd']['avg_days_to_close'] = duration_to_days(
+        all_ytd_qs.filter(status='completed', completed_at__isnull=False).aggregate(
+            avg_duration=Avg(duration_expr)
+        )['avg_duration']
+    )
+
+    # Month and year selection helpers
+    month_options = [{'value': '', 'label': 'All Months'}]
+    month_options.extend({'value': str(idx), 'label': calendar.month_name[idx]} for idx in range(1, 13))
+
+    context = {
+        'facilities_data': facilities_data,
+        'summary_totals': summary_totals,
+        'status_keys': status_keys,
+        'status_labels': status_labels,
+        'monthly_column_span': len(status_keys) + 2,
+        'total_columns': ((len(status_keys) + 2) * 2) + 1,
+        'selected_year': year,
+        'selected_month': month,
+        'selected_month_value': str(month) if month else '',
+        'month_name': month_name,
+        'month_options': month_options,
+        'report_generated_at': now,
+    }
+
+    return render(request, 'analytics/barangay_referral_performance.html', context)
+
+
+@login_required
+def referral_registry_report(request):
+    """Printable referral registry with vital signs and diagnoses."""
+
+    now = now_in_singapore()
+
+    def parse_int(value, fallback=None):
+        try:
+            parsed = int(value)
+            return parsed
+        except (TypeError, ValueError):
+            return fallback
+
+    year = parse_int(request.GET.get('year'), now.year) or now.year
+    raw_month = parse_int(request.GET.get('month'))
+    month = raw_month if raw_month and 1 <= raw_month <= 12 else None
+    facility_id = parse_int(request.GET.get('facility_id'))
+    status_filter = request.GET.get('status') or ''
+
+    # Determine accessible facilities based on user
+    if request.user.is_staff or request.user.is_superuser:
+        facilities_qs = Facility.objects.all().order_by('name')
+    else:
+        facilities_qs = request.user.shared_facilities.all().order_by('name')
+
+    facilities = list(facilities_qs)
+
+    referrals = Referral.objects.select_related('patient', 'patient__facility', 'user').filter(
+        created_at__year=year
+    ).order_by('-created_at')
+
+    if month:
+        referrals = referrals.filter(created_at__month=month)
+
+    if facility_id:
+        referrals = referrals.filter(patient__facility_id=facility_id)
+
+    if status_filter:
+        referrals = referrals.filter(status=status_filter)
+
+    # Prepare registry entries
+    registry_entries = []
+    for referral in referrals:
+        registry_entries.append({
+            'referral_id': referral.referral_id,
+            'created_at': referral.created_at,
+            'facility': referral.patient.facility.name if referral.patient and referral.patient.facility else '',
+            'patient_name': f"{referral.patient.first_name} {referral.patient.last_name}" if referral.patient else '',
+            'patient_id': referral.patient.patients_id if referral.patient else '',
+            'chief_complaint': referral.chief_complaint,
+            'diagnosis': referral.final_diagnosis or referral.initial_diagnosis,
+            'status': referral.status,
+            'weight': referral.weight,
+            'height': referral.height,
+            'bp': f"{referral.bp_systolic}/{referral.bp_diastolic}",
+            'pulse_rate': referral.pulse_rate,
+            'respiratory_rate': referral.respiratory_rate,
+            'temperature': referral.temperature,
+            'oxygen_saturation': referral.oxygen_saturation,
+            'user': referral.user.get_full_name() if referral.user else '',
+        })
+
+    month_name = calendar.month_name[month] if month else 'All Months'
+
+    month_options = [{'value': '', 'label': 'All Months'}]
+    month_options.extend({'value': str(idx), 'label': calendar.month_name[idx]} for idx in range(1, 13))
+
+    status_options = [
+        {'value': '', 'label': 'All Statuses'},
+        {'value': 'pending', 'label': _('Pending')},
+        {'value': 'in-progress', 'label': _('In-Progress')},
+        {'value': 'completed', 'label': _('Completed')},
+        {'value': 'cancelled', 'label': _('Cancelled')},
+    ]
+
+    context = {
+        'entries': registry_entries,
+        'facilities': facilities,
+        'selected_facility': facility_id,
+        'status_options': status_options,
+        'selected_status': status_filter,
+        'year': year,
+        'month': month,
+        'month_name': month_name,
+        'selected_month_value': str(month) if month else '',
+        'month_options': month_options,
+        'report_generated_at': now,
+    }
+
+    return render(request, 'analytics/referral_registry_report.html', context)
+
+
+@login_required
+def get_disease_peak_predictions(request):
+    """
+    API endpoint to get disease peak predictions for 2025.
+    Returns predicted disease peaks for each month.
+    
+    Query parameters:
+        - month: Optional specific month name (e.g., "January")
+        - samples_per_month: Number of samples to simulate (default: 100)
+        - use_db: Use Django database instead of CSV (default: false)
+    
+    Returns:
+        JSON response with predictions for each month or error message
+    """
+    month = request.GET.get('month', None)  # Optional: specific month
+    samples_per_month = int(request.GET.get('samples_per_month', 100))
+    use_db = request.GET.get('use_db', 'false').lower() == 'true'
+    
+    result = predict_disease_peak_for_month(
+        month_name=month,
+        samples_per_month=samples_per_month,
+        use_db=use_db
+    )
+    
+    if "error" in result:
+        return JsonResponse(result, status=400)
+    
+    return JsonResponse(result)
 
 
 

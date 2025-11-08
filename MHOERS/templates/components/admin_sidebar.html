@@ -85,6 +85,9 @@
             <a href="{% url 'user_management' %}" class="nav-link {% if active_page == 'user_management' %}active{% endif %}" data-tooltip="User Management">
               <i class="bi bi-person"></i>
               <span class="nav-label">User Management</span>
+              {% if pending_users_count > 0 %}
+                <span class="notification-badge">{{ pending_users_count }}</span>
+              {% endif %} 
             </a>
           </li>
    

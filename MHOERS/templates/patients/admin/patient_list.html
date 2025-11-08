@@ -84,6 +84,57 @@
       margin-bottom: 10px;
     }
   }
+  
+  /* DataTables Search Field Styling */
+  .dataTables_wrapper .dataTables_filter {
+    text-align: right;
+    float: right;
+    width: 100%;
+    margin-bottom: 0;
+  }
+  
+  .dataTables_wrapper .dataTables_filter label {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-bottom: 0;
+  }
+  
+  .dataTables_wrapper .dataTables_filter input {
+    width: 100% !important;
+    max-width: none;
+    margin-left: 0.5em;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #ced4da;
+    font-size: 0.875rem;
+    flex: 1;
+  }
+  
+  .dataTables_wrapper .dataTables_filter input:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+    outline: none;
+  }
+  
+  @media (max-width: 768px) {
+    .dataTables_wrapper .dataTables_filter {
+      text-align: left;
+      float: none;
+      width: 100%;
+    }
+    
+    .dataTables_wrapper .dataTables_filter label {
+      justify-content: flex-start;
+    }
+    
+    .dataTables_wrapper .dataTables_filter input {
+      width: 100% !important;
+      max-width: 100%;
+      margin-left: 0.5em;
+    }
+  }
 </style>
 
 <!-- Navbar Include --> 
@@ -98,6 +149,7 @@
         <div class="card-body p-4">
           <!-- Global Filter Controls -->
           <div class="tab-content" id="dashboardTabContent">
+            
             <!-- Active Referral Tab -->
             <div class="tab-pane fade {% if active_tab == 'tab1' %}show active{% endif %}" id="tab1" role="tabpanel">
               <div class="table-responsive">
@@ -116,7 +168,7 @@
                   <tbody>
                     {% for r in active_referrals %}
                     <tr data-id="{{ r.referral_id }}" class="align-middle">
-                      <td><h6 class="mb-1 text-dark">{{ r.completed_at}}</h6></td>
+                      <td><h6 class="mb-1 text-dark">{{ r.created_at|date:'Y-m-d' }}</h6></td>
                       <td>
                         <div class="d-flex align-items-center">
                           <div class="avatar-circle bg-success-soft me-3">
@@ -124,7 +176,6 @@
                           </div>
                           <div>
                             <h6 class="mb-1 text-dark">{{ r.patient.first_name }} {{ r.patient.middle_name }} {{ r.patient.last_name }}</h6>
-                            <span class="badge badge-pill badge-light">ID: #{{ r.referral_id }}</span>
                           </div>
                         </div>
                       </td>
@@ -132,11 +183,11 @@
                       <td><i class="bi bi-hospital text-primary me-2"></i>{{ r.patient.facility.name }}</td>
                       <td><i class="bi bi-geo-alt-fill text-danger me-2"></i>{{ r.patient.p_address }}</td>
                       <td>
-                        <span class="badge badge-pill badge-info">
+                        <span class="badge rounded-pill bg-success">
                           {{ predictions|dict_get:r.referral_id|default:'No prediction available'|first }}
                         </span>
                       </td>
-                      <td><span class="badge badge-pill badge-success">Active</span>
+                      <td><span class="badge rounded-pill bg-success">Active</span>
                         {% if r.status == 'in-progress' %}
                           <br>
                           <small class="text-muted">
@@ -212,7 +263,7 @@
                   <tbody>
                     {% for r in referred_referrals %}
                     <tr data-id="{{ r.referral_id }}" class="align-middle">
-                      <td><h6 class="mb-1 text-dark">{{ r.completed_at }}</h6></td>
+                      <td><h6 class="mb-1 text-dark">{% if r.completed_at %}{{ r.completed_at|date:'Y-m-d' }}{% else %}{{ r.created_at|date:'Y-m-d' }}{% endif %}</h6></td>
                       <td>
                         <div class="d-flex align-items-center">
                           <div class="avatar-circle bg-info-soft me-3">
@@ -445,7 +496,7 @@ $(document).ready(function() {
   if (!$.fn.DataTable.isDataTable('#allTable')) {
     const tableConfig = {
       responsive: true,
-      dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+      dom: '<"row mb-3"<"col-sm-12 col-md-3"l><"col-sm-12 col-md-9"f>>' +
            '<"row"<"col-sm-12"tr>>' +
            '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
       language: {
