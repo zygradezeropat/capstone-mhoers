@@ -83,27 +83,67 @@
               <label for="p_address" class="fw-semibold">Address</label>
               <select class="form-control rounded-pill" id="p_address" name="p_address" required>
                 <option value="">Select Address</option>
-
-                {% if facility.name == "BHC - New Cortez" %}
-                    <option value="Prk 1, Central, New Cortez, New Corella">Prk 1, Central, New Cortez, New Corella</option>
-                    <option value="Prk 2, Matin Ao, New Cortez, New Corella">Prk 2, Matin Ao, New Cortez, New Corella</option>
-                    <option value="Prk 3, Kauswagan, New Cortez, New Corella">Prk 3, Kauswagan, New Cortez, New Corella</option>
-                    <option value="Prk 4, Anaman, New Cortez, New Corella">Prk 4, Anaman, New Cortez, New Corella</option>
-                    <option value="Prk 5, Kasilak, New Cortez, New Corella">Prk 5, Kasilak, New Cortez, New Corella</option>
-                    <option value="Prk 6, San Roque, New Cortez, New Corella">Prk 6, San Roque, New Cortez, New Corella</option>
                 
-                {% elif facility.name == "BHW-Carcor" %}
-                    <option value="Prk 1, Carcor">Prk 1, Carcor</option>
-                    <option value="Prk 2, Carcor">Prk 2, Carcor</option>
-                    <option value="Prk 3, Carcor">Prk 3, Carcor</option>
-
-                {% elif facility.name == "Mesaoy" %}
-                    <option value="Prk 1, Mesaoy">Prk 1, Mesaoy</option>
-                    <option value="Prk 2, Mesaoy">Prk 2, Mesaoy</option>
-                    <option value="Prk 3, Mesaoy">Prk 3, Mesaoy</option>
-                    <option value="Prk 4, Mesaoy">Prk 4, Mesaoy</option>
-                {% endif %}
+                <!-- New Cortez Barangay -->
+                <optgroup label="New Cortez">
+                  <option value="Prk 1, Central, New Cortez, New Corella, Davao del Norte">Prk 1, Central, New Cortez, New Corella, Davao del Norte</option>
+                  <option value="Prk 2, Matin Ao, New Cortez, New Corella, Davao del Norte">Prk 2, Matin Ao, New Cortez, New Corella, Davao del Norte</option>
+                  <option value="Prk 3, Kauswagan, New Cortez, New Corella, Davao del Norte">Prk 3, Kauswagan, New Cortez, New Corella, Davao del Norte</option>
+                  <option value="Prk 4, Anaman, New Cortez, New Corella, Davao del Norte">Prk 4, Anaman, New Cortez, New Corella, Davao del Norte</option>
+                  <option value="Prk 5, Kasilak, New Cortez, New Corella, Davao del Norte">Prk 5, Kasilak, New Cortez, New Corella, Davao del Norte</option>
+                  <option value="Prk 6, San Roque, New Cortez, New Corella, Davao del Norte">Prk 6, San Roque, New Cortez, New Corella, Davao del Norte</option>
+                </optgroup>
+                
+                <!-- Carcor Barangay -->
+                <optgroup label="Carcor">
+                  <option value="Prk 1, Carcor, New Corella, Davao del Norte">Prk 1, Carcor, New Corella, Davao del Norte</option>
+                  <option value="Prk 2, Carcor, New Corella, Davao del Norte">Prk 2, Carcor, New Corella, Davao del Norte</option>
+                  <option value="Prk 3, Carcor, New Corella, Davao del Norte">Prk 3, Carcor, New Corella, Davao del Norte</option>
+                </optgroup>
+                
+                <!-- Mesaoy Barangay -->
+                <optgroup label="Mesaoy">
+                  <option value="Prk 1, Mesaoy, New Corella, Davao del Norte">Prk 1, Mesaoy, New Corella, Davao del Norte</option>
+                  <option value="Prk 2, Mesaoy, New Corella, Davao del Norte">Prk 2, Mesaoy, New Corella, Davao del Norte</option>
+                  <option value="Prk 3, Mesaoy, New Corella, Davao del Norte">Prk 3, Mesaoy, New Corella, Davao del Norte</option>
+                  <option value="Prk 4, Mesaoy, New Corella, Davao del Norte">Prk 4, Mesaoy, New Corella, Davao del Norte</option>
+                </optgroup>
+                
+                <!-- Sta. Cruz Barangay -->
+                <optgroup label="Sta. Cruz">
+                  <option value="Sta. Cruz, New Corella, Davao del Norte">Sta. Cruz, New Corella, Davao del Norte</option>
+                </optgroup>
+                
+                <!-- Other Barangays in New Corella -->
+                <optgroup label="Other Barangays">
+                  <option value="Cabidianan, New Corella, Davao del Norte">Cabidianan, New Corella, Davao del Norte</option>
+                  <option value="Del Monte, New Corella, Davao del Norte">Del Monte, New Corella, Davao del Norte</option>
+                  <option value="Del Pilar, New Corella, Davao del Norte">Del Pilar, New Corella, Davao del Norte</option>
+                  <option value="El Salvador, New Corella, Davao del Norte">El Salvador, New Corella, Davao del Norte</option>
+                  <option value="Limba-an, New Corella, Davao del Norte">Limba-an, New Corella, Davao del Norte</option>
+                  <option value="Macgum, New Corella, Davao del Norte">Macgum, New Corella, Davao del Norte</option>
+                  <option value="Mambing, New Corella, Davao del Norte">Mambing, New Corella, Davao del Norte</option>
+                  <option value="New Bohol, New Corella, Davao del Norte">New Bohol, New Corella, Davao del Norte</option>
+                  <option value="New Sambog, New Corella, Davao del Norte">New Sambog, New Corella, Davao del Norte</option>
+                  <option value="Patrocenio, New Corella, Davao del Norte">Patrocenio, New Corella, Davao del Norte</option>
+                  <option value="Poblacion, New Corella, Davao del Norte">Poblacion, New Corella, Davao del Norte</option>
+                  <option value="San Roque, New Corella, Davao del Norte">San Roque, New Corella, Davao del Norte</option>
+                  <option value="Sta. Fe, New Corella, Davao del Norte">Sta. Fe, New Corella, Davao del Norte</option>
+                  <option value="Sto. Niño, New Corella, Davao del Norte">Sto. Niño, New Corella, Davao del Norte</option>
+                  <option value="Suawon, New Corella, Davao del Norte">Suawon, New Corella, Davao del Norte</option>
+                  <option value="San Jose, New Corella, Davao del Norte">San Jose, New Corella, Davao del Norte</option>
+                </optgroup>
+                
+                <!-- Manual Entry Option -->
+                <optgroup label="Other">
+                  <option value="__manual__">Enter Address Manually</option>
+                </optgroup>
               </select>
+              
+              <!-- Manual Address Input (hidden by default) -->
+              <input type="text" class="form-control rounded-pill mt-2" id="p_address_manual" placeholder="Enter complete address manually (e.g., Sitio, Barangay, New Corella, Davao del Norte)" style="display: none;">
+              
+              <small class="text-muted">Select from dropdown or choose "Enter Address Manually" to type your address</small>
 
               {% if form.p_address.errors %}
               <div class="alert alert-danger mt-2 rounded-pill">
@@ -169,13 +209,238 @@
               {% endif %}
             </div>
           </div>
+
+          <!-- Additional Information Section -->
+          <div class="row g-3 mt-3">
+            <div class="col-12">
+              <hr class="my-3">
+              <h6 class="text-muted mb-3">
+                <i class="bi bi-info-circle me-2"></i>Additional Information
+              </h6>
+            </div>
+          </div>
+
+          <div class="row g-3 mt-1">
+            <div class="col-md-6">
+              <label for="civil_status" class="fw-semibold">Civil Status</label>
+              <select class="form-control rounded-pill" id="civil_status" name="civil_status">
+                <option value="">Select Civil Status</option>
+                <option value="Single">Single</option>
+                <option value="Married">Married</option>
+                <option value="Widowed">Widowed</option>
+                <option value="Divorced">Divorced</option>
+                <option value="Separated">Separated</option>
+              </select>
+              {% if form.civil_status.errors %}
+              <div class="alert alert-danger mt-2 rounded-pill">
+                {% for error in form.civil_status.errors %}
+                <p class="mb-0">{{ error }}</p>
+                {% endfor %}
+              </div>
+              {% endif %}
+            </div>
+            
+            <div class="col-md-6">
+              <label for="phic_status" class="fw-semibold">PHIC Status</label>
+              <select class="form-control rounded-pill" id="phic_status" name="phic_status">
+                <option value="">Select PHIC Status</option>
+                <option value="M">Member</option>
+                <option value="D">Dependent</option>
+              </select>
+              {% if form.phic_status.errors %}
+              <div class="alert alert-danger mt-2 rounded-pill">
+                {% for error in form.phic_status.errors %}
+                <p class="mb-0">{{ error }}</p>
+                {% endfor %}
+              </div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="row g-3 mt-1">
+            <div class="col-md-6">
+              <div class="form-check mt-4">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  id="cct_beneficiary"
+                  name="cct_beneficiary"
+                  {% if form.cct_beneficiary.value %}checked{% endif %}
+                />
+                <label class="form-check-label fw-semibold" for="cct_beneficiary">
+                  <i class="bi bi-check-circle me-2"></i>CCT Beneficiary
+                </label>
+              </div>
+              {% if form.cct_beneficiary.errors %}
+              <div class="alert alert-danger mt-2 rounded-pill">
+                {% for error in form.cct_beneficiary.errors %}
+                <p class="mb-0">{{ error }}</p>
+                {% endfor %}
+              </div>
+              {% endif %}
+            </div>
+            
+            <div class="col-md-6">
+              <div class="form-check mt-4">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  id="is_pwd"
+                  name="is_pwd"
+                  {% if form.is_pwd.value %}checked{% endif %}
+                />
+                <label class="form-check-label fw-semibold" for="is_pwd">
+                  <i class="bi bi-person-wheelchair me-2"></i>Person With Disability (PWD)
+                </label>
+              </div>
+              {% if form.is_pwd.errors %}
+              <div class="alert alert-danger mt-2 rounded-pill">
+                {% for error in form.is_pwd.errors %}
+                <p class="mb-0">{{ error }}</p>
+                {% endfor %}
+              </div>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- PhilHealth Information Section -->
+          <div class="row g-3 mt-3">
+            <div class="col-12">
+              <div class="form-check">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  id="is_philhealth_member"
+                  name="is_philhealth_member"
+                  onchange="togglePhilHealthFields()"
+                />
+                <label class="form-check-label fw-semibold" for="is_philhealth_member">
+                  <i class="bi bi-card-checklist me-2"></i>PhilHealth Member
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- PhilHealth Number and Category Fields (hidden by default) -->
+          <div class="row g-3 mt-1" id="philhealthFields" style="display: none;">
+            <div class="col-md-6">
+              <label for="philhealth_number" class="fw-semibold mb-2 d-block">PhilHealth Number</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-card-text"></i></span>
+                <input type="text" class="form-control rounded-pill" id="philhealth_number" name="philhealth_number" placeholder="Enter PhilHealth number">
+              </div>
+              {% if form.philhealth_number.errors %}
+              <div class="alert alert-danger mt-2 rounded-pill">
+                {% for error in form.philhealth_number.errors %}
+                <p class="mb-0">{{ error }}</p>
+                {% endfor %}
+              </div>
+              {% endif %}
+            </div>
+            <div class="col-md-6">
+              <label for="philhealth_category" class="fw-semibold mb-2 d-block">PhilHealth Category</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-tag"></i></span>
+                <select class="form-control rounded-pill" id="philhealth_category" name="philhealth_category">
+                  <option value="">Select Category</option>
+                  <option value="Sponsored">Sponsored</option>
+                  <option value="Self Paying">Self Paying</option>
+                </select>
+              </div>
+              {% if form.philhealth_category.errors %}
+              <div class="alert alert-danger mt-2 rounded-pill">
+                {% for error in form.philhealth_category.errors %}
+                <p class="mb-0">{{ error }}</p>
+                {% endfor %}
+              </div>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Family History Section -->
+          <div class="modal-section-card modal-section-red">
+            <div class="modal-section-header">
+              <i class="bi bi-diagram-3-fill"></i>
+              <h6 class="modal-section-title">Family History</h6>
+            </div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="family_history_hypertension" name="family_history_hypertension" {% if form.family_history_hypertension.value %}checked{% endif %}>
+                  <label class="form-check-label modal-form-label" for="family_history_hypertension">
+                    <i class="bi bi-heart-pulse me-2"></i>Hypertension
+                  </label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="family_history_diabetes" name="family_history_diabetes" {% if form.family_history_diabetes.value %}checked{% endif %}>
+                  <label class="form-check-label modal-form-label" for="family_history_diabetes">
+                    <i class="bi bi-droplet me-2"></i>Diabetes
+                  </label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="family_history_cancer" name="family_history_cancer" {% if form.family_history_cancer.value %}checked{% endif %}>
+                  <label class="form-check-label modal-form-label" for="family_history_cancer">
+                    <i class="bi bi-exclamation-triangle me-2"></i>Cancer
+                  </label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="family_history_asthma" name="family_history_asthma" {% if form.family_history_asthma.value %}checked{% endif %}>
+                  <label class="form-check-label modal-form-label" for="family_history_asthma">
+                    <i class="bi bi-wind me-2"></i>Asthma
+                  </label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="family_history_epilepsy" name="family_history_epilepsy" {% if form.family_history_epilepsy.value %}checked{% endif %}>
+                  <label class="form-check-label modal-form-label" for="family_history_epilepsy">
+                    <i class="bi bi-lightning me-2"></i>Epilepsy
+                  </label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="family_history_tuberculosis" name="family_history_tuberculosis" {% if form.family_history_tuberculosis.value %}checked{% endif %}>
+                  <label class="form-check-label modal-form-label" for="family_history_tuberculosis">
+                    <i class="bi bi-lungs me-2"></i>Tuberculosis
+                  </label>
+                </div>
+              </div>
+              <div class="col-12">
+                <div class="modal-form-group">
+                  <label for="family_history_others" class="modal-form-label">Others (Please specify)</label>
+                  <div class="modal-input-wrapper">
+                    <div class="input-group">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text"><i class="bi bi-list-ul"></i></span>
+                      </div>
+                      <textarea class="form-control" id="family_history_others" name="family_history_others" rows="3" placeholder="Enter other family history..."></textarea>
+                    </div>
+                  </div>
+                  {% if form.family_history_others.errors %}
+                  <div class="alert alert-danger mt-2">
+                    {% for error in form.family_history_others.errors %}
+                    <p class="mb-0">{{ error }}</p>
+                    {% endfor %}
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div class="modal-footer bg-light">
-          <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
             <i class="bi bi-x-circle me-2"></i>Cancel
           </button>
-          <button type="submit" class="btn btn-success rounded-pill px-4">
+          <button type="submit" class="btn btn-success">
             <i class="bi bi-check-circle me-2"></i>Save Patient
           </button>
         </div>
@@ -183,3 +448,91 @@
     </div>
   </div>
 </div>
+
+<script>
+  // Function to toggle PhilHealth fields
+  function togglePhilHealthFields() {
+    const checkbox = document.getElementById('is_philhealth_member');
+    const fieldsContainer = document.getElementById('philhealthFields');
+    const numberField = document.getElementById('philhealth_number');
+    const categoryField = document.getElementById('philhealth_category');
+    
+    if (checkbox && fieldsContainer && numberField && categoryField) {
+      if (checkbox.checked) {
+        fieldsContainer.style.display = '';
+        fieldsContainer.classList.remove('d-none');
+        fieldsContainer.classList.add('d-block');
+        numberField.required = true;
+        categoryField.required = true;
+      } else {
+        fieldsContainer.style.display = 'none';
+        fieldsContainer.classList.add('d-none');
+        fieldsContainer.classList.remove('d-block');
+        numberField.required = false;
+        categoryField.required = false;
+        numberField.value = '';
+        categoryField.value = '';
+      }
+    }
+  }
+
+  // Show/hide dependent fields based on checkbox
+  $(document).ready(function() {
+    // Use event delegation for modal content that may load dynamically
+    $(document).on('change', '#is_philhealth_member', function() {
+      togglePhilHealthFields();
+    });
+    
+    // Initialize when modal is shown (Bootstrap 5)
+    const registerModal = document.getElementById('registerModal');
+    if (registerModal) {
+      registerModal.addEventListener('shown.bs.modal', function() {
+        togglePhilHealthFields();
+      });
+    }
+    
+    // Also use jQuery modal event as fallback
+    $('#registerModal').on('shown.bs.modal', function() {
+      togglePhilHealthFields();
+    });
+    
+    // Initialize on page load if elements exist
+    if (document.getElementById('is_philhealth_member')) {
+      togglePhilHealthFields();
+    }
+    
+    
+    // Handle manual address entry
+    $('#p_address').on('change', function() {
+      if ($(this).val() === '__manual__') {
+        // Show manual input and make it required
+        $('#p_address_manual').show().prop('required', true).attr('name', 'p_address');
+        // Remove name and required from dropdown to prevent conflict
+        $(this).removeAttr('name').removeAttr('required');
+        // Focus on manual input
+        setTimeout(function() {
+          $('#p_address_manual').focus();
+        }, 100);
+      } else if ($(this).val() !== '' && $(this).val() !== '__manual__') {
+        // Hide manual input and remove name/required
+        $('#p_address_manual').hide().removeAttr('name').prop('required', false).val('');
+        // Restore name and required to dropdown
+        $(this).attr('name', 'p_address').prop('required', true);
+      }
+    });
+    
+    // Handle form submission - validate manual address if selected
+    $('form').on('submit', function(e) {
+      var addressSelect = $('#p_address');
+      var manualInput = $('#p_address_manual');
+      
+      // If manual is selected but no value entered, prevent submission
+      if (addressSelect.val() === '__manual__' && (!manualInput.val() || !manualInput.val().trim())) {
+        e.preventDefault();
+        alert('Please enter the address manually.');
+        manualInput.focus();
+        return false;
+      }
+    });
+  });
+</script>

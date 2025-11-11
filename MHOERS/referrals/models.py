@@ -6,6 +6,13 @@ from facilities.models import Facility
 # this model is for referral table  
 
 class Referral(models.Model):
+    REFERRAL_TYPE_CHOICES = [
+        ('Emergency', 'Emergency'),
+        ('Urgent', 'Urgent'),
+        ('Routine', 'Routine'),
+        ('Follow-up', 'Follow-up'),
+        ('Preventive', 'Preventive'),
+    ]
 
     facility = models.ForeignKey(Facility, on_delete=models.CASCADE, related_name='referrals')
     referral_id = models.AutoField(primary_key=True)
@@ -29,6 +36,51 @@ class Referral(models.Model):
     followup_date = models.DateField(null=True, blank=True)
     initial_diagnosis = models.TextField()
     final_diagnosis = models.TextField(null=True, blank=True)
+    
+    # Additional fields from CSV
+    referral_type = models.CharField(max_length=20, choices=REFERRAL_TYPE_CHOICES, blank=True, null=True, verbose_name='Referral Type')
+    cause = models.TextField(blank=True, null=True, verbose_name='Cause')
+    treatments = models.TextField(blank=True, null=True, verbose_name='Treatments')
+    remarks = models.TextField(blank=True, null=True, verbose_name='Remarks')
+    
+    # Lifestyle/Social History
+    is_smoker = models.BooleanField(default=False, verbose_name='Is Smoker')
+    smoking_sticks_per_day = models.IntegerField(blank=True, null=True, verbose_name='Smoking: Sticks/Packs per Day')
+    is_alcoholic = models.BooleanField(default=False, verbose_name='Is Alcoholic')
+    alcohol_bottles_per_year = models.IntegerField(blank=True, null=True, verbose_name='Alcohol: Bottles per Year')
+    family_planning = models.BooleanField(default=False, verbose_name='Family Planning')
+    family_planning_type = models.CharField(
+        max_length=20,
+        choices=[
+            ('DMPA', 'DMPA'),
+            ('IMPLANT', 'IMPLANT'),
+            ('IUD', 'IUD'),
+            ('PILLS', 'PILLS'),
+        ],
+        blank=True, null=True,
+        verbose_name='Family Planning Type'
+    )
+    
+    # Menstrual History (for female patients)
+    menarche = models.IntegerField(blank=True, null=True, verbose_name='Menarche (Age)')
+    sexually_active = models.BooleanField(blank=True, null=True, verbose_name='Sexually Active')
+    number_of_partners = models.IntegerField(blank=True, null=True, verbose_name='Number of Partners')
+    is_menopause = models.BooleanField(blank=True, null=True, verbose_name='Menopause')
+    menopause_age = models.IntegerField(blank=True, null=True, verbose_name='Menopause Age')
+    last_menstrual_period = models.DateField(blank=True, null=True, verbose_name='Last Menstrual Period (LMP)')
+    period_duration = models.IntegerField(blank=True, null=True, verbose_name='Period Duration (Days)')
+    period_interval = models.IntegerField(blank=True, null=True, verbose_name='Period Interval (Days)')
+    pads_per_day = models.IntegerField(blank=True, null=True, verbose_name='Pads per Day')
+    
+    # Pregnancy History (for female patients)
+    is_pregnant = models.BooleanField(blank=True, null=True, verbose_name='Is Pregnant')
+    gravidity = models.IntegerField(blank=True, null=True, verbose_name='Gravidity')
+    parity = models.IntegerField(blank=True, null=True, verbose_name='Parity')
+    delivery_type = models.CharField(max_length=50, blank=True, null=True, verbose_name='Type of Delivery')
+    full_term_births = models.IntegerField(blank=True, null=True, verbose_name='Number of Full Term Births')
+    premature_births = models.IntegerField(blank=True, null=True, verbose_name='Number of Premature Births')
+    abortions = models.IntegerField(blank=True, null=True, verbose_name='Number of Abortions')
+    living_children = models.IntegerField(blank=True, null=True, verbose_name='Number of Living Children')
      
     def __str__(self):
         return f"Referral #{self.referral_id} - {self.patient}"

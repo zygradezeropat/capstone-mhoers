@@ -12,6 +12,7 @@
   {% include 'components/facility/facility_modal.html' %}
   {% include 'components/workers/doctor_modal.html' %}
   {% include 'components/workers/nurse_modal.html' %}
+  {% include 'components/workers/bhw_modal.html' %}
   {% include 'components/tabbar/tabbar.html' with tab1_name="Pending Users" tab1_icon="bi-hourglass-split" tab2_name="Active Users" tab2_icon="bi-people-fill" tab3_name="Accredited BHW" tab3_icon="bi-person-badge" tab4_name="Nurse" tab4_icon="bi-heart-pulse" tab5_name="Doctor" tab5_icon="bi-clipboard2-pulse" %}
 
 
@@ -103,6 +104,12 @@
                       <div class="form-floating">
                         <input type="text" name="assigned_bhw" id="assigned_bhw" class="form-control modern-input" placeholder="Assigned BHW" required>
                         <label for="assigned_bhw"><i class="bi bi-person-badge me-2"></i>Assigned BHW</label>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="form-floating">
+                        <input type="text" name="barangay" id="barangay" class="form-control modern-input" placeholder="Barangay">
+                        <label for="barangay"><i class="bi bi-geo-alt me-2"></i>Barangay</label>
                       </div>
                     </div>
                   </div>
@@ -306,16 +313,18 @@
                       <th>Facility ID</th>
                       <th>Facility Name</th>
                       <th>Assigned BHW</th>
+                      <th>Barangay</th>
                       <th>Status</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {% for facility in facilities %}
-                    <tr class="clickable-row" data-id="{{ facility.facility_id }}" data-facility="{{ facility.name }}" data-bhw="{{ facility.assigned_bhw }}" data-latitude="{{ facility.latitude }}" data-longitude="{{ facility.longitude }}" data-first-name="{{ facility.user_id.first_name }}" data-last-name="{{ facility.user_id.last_name }}">
+                    <tr class="clickable-row" data-id="{{ facility.facility_id }}" data-facility="{{ facility.name }}" data-bhw="{{ facility.assigned_bhw }}" data-barangay="{{ facility.barangay|default:'' }}" data-latitude="{{ facility.latitude }}" data-longitude="{{ facility.longitude }}" data-first-name="{{ facility.user_id.first_name }}" data-last-name="{{ facility.user_id.last_name }}">
                       <td>{{ facility.facility_id }}</td>
                       <td>{{ facility.name }}</td>
                       <td>{{ facility.assigned_bhw }}</td>
+                      <td>{{ facility.barangay|default:"Not specified" }}</td>
                       <td><span class="badge rounded-pill bg-info text-dark">Active</span></td>
                       <td>
                         <div class="d-flex gap-2">
@@ -355,6 +364,10 @@
               <div class="detail-item">
                 <span class="detail-label">Assigned BHW</span>
                 <span id="cardBHW" class="detail-value">Select a facility</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Barangay</span>
+                <span id="cardBarangay" class="detail-value">Select a facility</span>
               </div>
             </div>
           </div>
@@ -884,8 +897,9 @@ document.addEventListener("DOMContentLoaded", function() {
     const typeModal = bootstrap.Modal.getInstance(document.getElementById('providerTypeModal'));
     typeModal.hide();
     
-    // TODO: Show BHW registration modal (to be implemented)
-    alert('BHW registration form will be implemented');
+    // Show the BHW registration modal
+    const bhwModal = new bootstrap.Modal(document.getElementById('bhwModal'));
+    bhwModal.show();
   });
 
   document.getElementById('selectHealthcareProvider').addEventListener('click', function() {
@@ -910,6 +924,7 @@ document.addEventListener("DOMContentLoaded", function() {
         document.getElementById("cardFacilityId").innerText = this.dataset.id;
         document.getElementById("cardFacility").innerText = this.dataset.facility;
         document.getElementById("cardBHW").innerText = this.dataset.bhw;
+        document.getElementById("cardBarangay").innerText = this.dataset.barangay || 'Not specified';
         if (this.dataset.latitude && this.dataset.longitude) {
           document.getElementById("cardLocation").innerText = `${this.dataset.latitude}, ${this.dataset.longitude}`;
         }

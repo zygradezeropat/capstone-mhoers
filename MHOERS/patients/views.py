@@ -117,14 +117,41 @@ def editPatients(request):
             facility = Facility.objects.get(users=user)
             patient = Patient.objects.get(patients_id=patient_id, facility=facility)
             
-            # Update patient information
+            # Update patient information - Basic Info
             patient.first_name = request.POST.get('editFname')
-            patient.middle_name = request.POST.get('editMname')
+            patient.middle_name = request.POST.get('editMname') or None
             patient.last_name = request.POST.get('editLname')
-            patient.p_address = request.POST.get('editAddress')
+            # Handle address - check if manual entry was used
+            address = request.POST.get('editAddress')
+            if not address or address == '__manual__':
+                address = request.POST.get('editAddressManual', '')
+            patient.p_address = address
             patient.p_number = request.POST.get('ePhone')
             patient.date_of_birth = request.POST.get('editBday')
             patient.sex = request.POST.get('eSex')
+            
+            # Additional Information
+            patient.civil_status = request.POST.get('editCivilStatus') or None
+            patient.phic_status = request.POST.get('editPhicStatus') or None
+            patient.cct_beneficiary = request.POST.get('editCctBeneficiary') == 'on'
+            patient.is_pwd = request.POST.get('editIsPwd') == 'on'
+            
+            # PhilHealth Information
+            if request.POST.get('editIsPhilhealthMember') == 'on':
+                patient.philhealth_number = request.POST.get('editPhilhealthNumber') or None
+                patient.philhealth_category = request.POST.get('editPhilhealthCategory') or None
+            else:
+                patient.philhealth_number = None
+                patient.philhealth_category = None
+            
+            # Family History
+            patient.family_history_hypertension = request.POST.get('editFamilyHistoryHypertension') == 'on'
+            patient.family_history_diabetes = request.POST.get('editFamilyHistoryDiabetes') == 'on'
+            patient.family_history_cancer = request.POST.get('editFamilyHistoryCancer') == 'on'
+            patient.family_history_asthma = request.POST.get('editFamilyHistoryAsthma') == 'on'
+            patient.family_history_epilepsy = request.POST.get('editFamilyHistoryEpilepsy') == 'on'
+            patient.family_history_tuberculosis = request.POST.get('editFamilyHistoryTuberculosis') == 'on'
+            patient.family_history_others = request.POST.get('editFamilyHistoryOthers') or None
 
             patient.save()
             messages.success(request, "Patient information updated successfully!")
@@ -287,6 +314,17 @@ def get_patient_details(request, patient_id):
         logger.error(f"Error fetching patient details: {str(e)}")
         return JsonResponse({'error': str(e)}, status=500)
 
+@login_required
+def get_patient_sex(request, patient_id):
+    """API endpoint to get patient sex for conditional form display"""
+    try:
+        patient = Patient.objects.get(patients_id=patient_id)
+        return JsonResponse({'sex': patient.sex})
+    except Patient.DoesNotExist:
+        return JsonResponse({'error': 'Patient not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
 def get_medical_history_followups(request):
     """
     API endpoint to fetch medical history follow-up dates for calendar display.
@@ -388,26 +426,52 @@ def send_today_checkup_sms(request, patient_id: int):
         # Scope patient to current user's facility where applicable
         user = request.user
         try:
-            facility = Facility.objects.get(users=user)
-            patient = Patient.objects.get(patients_id=patient_id, facility=facility)
+            # For staff/admin, allow access to all patients
+            if user.is_staff or user.is_superuser:
+                patient = Patient.objects.get(patients_id=patient_id)
+            else:
+                # For regular users, check facility
+                facility = Facility.objects.get(users=user)
+                patient = Patient.objects.get(patients_id=patient_id, facility=facility)
         except Facility.DoesNotExist:
             return JsonResponse({'ok': False, 'error': 'No facility for user'}, status=403)
         except Patient.DoesNotExist:
             return JsonResponse({'ok': False, 'error': 'Patient not found'}, status=404)
 
-        # Check for any follow-up scheduled today
-        has_today_followup = Medical_History.objects.filter(
-            patient_id=patient,
-            followup_date=today,
-        ).exists()
+        # Check if this is a manual send (allow any follow-up date) or scheduled (only today)
+        manual_send = request.GET.get('manual', 'false').lower() == 'true'
+        
+        if manual_send:
+            # For manual sends, check if patient has any follow-up scheduled (any date)
+            has_followup = Medical_History.objects.filter(
+                patient_id=patient,
+                followup_date__isnull=False,
+            ).order_by('-followup_date').first()
+            
+            if not has_followup:
+                return JsonResponse({'ok': False, 'error': 'No follow-up scheduled for this patient'}, status=200)
+            
+            # Use the most recent follow-up date for the message
+            followup_date = has_followup.followup_date
+            if followup_date == today:
+                message = f"Hi {patient.first_name} {patient.last_name}, this is a reminder of your medical check-up scheduled today."
+            else:
+                message = f"Hi {patient.first_name} {patient.last_name}, this is a reminder of your medical check-up scheduled on {followup_date.strftime('%B %d, %Y')}."
+        else:
+            # For scheduled sends, only send if follow-up is today
+            has_today_followup = Medical_History.objects.filter(
+                patient_id=patient,
+                followup_date=today,
+            ).exists()
 
-        if not has_today_followup:
-            return JsonResponse({'ok': False, 'error': 'No check-up scheduled today'}, status=200)
+            if not has_today_followup:
+                return JsonResponse({'ok': False, 'error': 'No check-up scheduled today'}, status=200)
+            
+            message = f"Hi {patient.first_name} {patient.last_name}, this is a reminder of your medical check-up scheduled today."
 
         # Optional sender_id via query string
         sender_id = request.GET.get('sender_id') or None
 
-        message = f"Hi {patient.first_name} {patient.last_name}, this is a reminder of your medical check-up scheduled today."
         result = send_sms_iprog(patient.p_number, patient.first_name, patient.last_name, message=message, sender_id=sender_id)
         status = 200 if result.get('ok') else 502
         return JsonResponse(result, status=status)

@@ -1,8 +1,85 @@
-  {% extends 'base.html' %}
+{% extends 'base.html' %}
 {% load static %}
 {% block content %}
 
 <link rel="stylesheet" href="{% static 'css/admin_dashboard.css' %}" />
+
+<style>
+  #reportPreviewContainer {
+    animation: fadeIn 0.3s ease;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  #reportContent {
+    padding: 1rem;
+  }
+  
+  #reportContent .container-fluid {
+    padding: 0;
+  }
+  
+  #reportContent img {
+    max-width: 100%;
+    height: auto;
+  }
+  
+  /* Constrain logo size in preview */
+  #reportContent .report-logo {
+    width: 80px !important;
+    height: 80px !important;
+    max-width: 80px !important;
+    max-height: 80px !important;
+    object-fit: contain;
+  }
+  
+  #reportContent table {
+    width: 100%;
+  }
+  
+  /* Preserve original styling */
+  #reportContent * {
+    box-sizing: border-box;
+  }
+  
+  /* Ensure notes section with timestamp is visible in preview */
+  #reportContent .mt-3,
+  #reportContent small.text-muted {
+    display: block !important;
+    visibility: visible !important;
+  }
+  
+  /* Ensure the notes section is not cut off */
+  #reportContent .card-body {
+    padding-bottom: 2rem !important;
+  }
+  
+  /* Print styles - simplified since we use a separate print window */
+  @media print {
+    /* Hide navigation and other page elements if printing from main page */
+    nav,
+    .navbar,
+    header,
+    [role="navigation"],
+    .d-print-none {
+      display: none !important;
+    }
+    
+    /* Hide preview container header buttons when printing */
+    #reportPreviewContainer .card-header {
+      display: none !important;
+    }
+  }
+</style>
 
 <!-- Navbar Include -->
 {% include 'components/navbar.html' %}
@@ -15,12 +92,48 @@
     </div>
   </div>
 
+  <!-- Summary Statistics Cards -->
+  <div class="row mb-4">
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body text-center">
+          <h3 class="text-primary mb-1">0</h3>
+          <p class="text-muted mb-0">Total Referrals</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body text-center">
+          <h3 class="text-warning mb-1">0</h3>
+          <p class="text-muted mb-0">Pending Referrals</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body text-center">
+          <h3 class="text-success mb-1">0</h3>
+          <p class="text-muted mb-0">Completed Referrals</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body text-center">
+          <h3 class="text-info mb-1">0</h3>
+          <p class="text-muted mb-0">Top Diagnoses</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Tab Navigation -->
   <div class="card border-0 shadow-sm rounded-lg mb-4">
     <div class="card-body">
       <ul class="nav nav-pills nav-fill" id="dashboardTab" role="tablist">
         <li class="nav-item">
-          <a class="nav-link active" id="tab1-tab" data-bs-toggle="tab" href="#tab1" role="tab">
+          <a class="nav-link" id="tab1-tab" data-bs-toggle="tab" href="#tab1" role="tab">
             <i class="bi bi-graph-up"></i>
             <span class="ms-2">Referral Statistics</span>
           </a>
@@ -31,31 +144,28 @@
             <span class="ms-2">Common Diagnoses</span>
           </a>
         </li>
-        
         <li class="nav-item">
-          <a class="nav-link" id="tab4-tab" data-bs-toggle="tab" href="#tab4" role="tab">
-            <i class="bi bi-activity"></i>
-            <span class="ms-2">System Usage</span>
+          <a class="nav-link" id="tab3-tab" data-bs-toggle="tab" href="#tab3" role="tab">
+            <i class="bi bi-bar-chart"></i>
+            <span class="ms-2">Barangay Performance</span>
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" id="tab5-tab" data-bs-toggle="tab" href="#tab5" role="tab">
-            <i class="bi bi-file-earmark-arrow-down"></i>
-            <span class="ms-2">Referral Reports</span>
+          <a class="nav-link active" id="tab5-tab" data-bs-toggle="tab" href="#tab5" role="tab">
+            <i class="bi bi-printer"></i>
+            <span class="ms-2">Generate Reports</span>
           </a>
         </li>
-
       </ul>
     </div>
   </div>
 
   <!-- Tab Content -->
   <div class="tab-content" id="dashboardTabContent">
-    
     <!-- Tab 1: Referral Statistics -->
-    <div class="tab-pane fade show active" id="tab1" role="tabpanel">
+    <div class="tab-pane fade" id="tab1" role="tabpanel">
       <div class="card border-0 shadow-sm">
-        <div class="card-body p-4" id="referralStatsSection">
+        <div class="card-body p-4">
           <div class="row align-items-center mb-4">
             <div class="col-md-6">
               <select id="reportViewFilter" class="w-50" style="display: block; width: 100%; padding: 0.375rem 2.25rem 0.375rem 0.75rem; font-size: 1rem; font-weight: 400; line-height: 1.5; color: #212529; background-color: #fff; background-image: url('data:image/svg+xml,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3e%3cpath fill=%27none%27 stroke=%27%23343a40%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27 stroke-width=%272%27 d=%27m2 5 6 6 6-6%27/%3e%3c/svg%3e'); background-repeat: no-repeat; background-position: right 0.75rem center; background-size: 16px 12px; border: 1px solid #ced4da; border-radius: 0.375rem; transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out; -webkit-appearance: none; -moz-appearance: none; appearance: none;">
@@ -63,51 +173,15 @@
                 <option value="yearly">Yearly View</option>
               </select>
             </div>
-            <div class="col-md-6 text-end">
-              <button id="printReferralStatsBtn" class="btn btn-outline-primary">
-                <i class="bi bi-printer"></i> Print This Report
-              </button>
-            </div>
           </div>
-          <div class="d-flex align-items-center justify-content-between mb-3">
-            <h5 class="card-title mb-0">Referrals per Account</h5>
-          </div>
-          <canvas id="referralsPerUserChart" height="90"></canvas>
-          
+          <h5 class="card-title mb-4">Monthly Referral Analytics</h5>
+          <canvas id="monthlyReportChart" height="100"></canvas>
         </div>
       </div>
     </div>
 
     <!-- Tab 2: Common Diagnoses -->
     <div class="tab-pane fade" id="tab2" role="tabpanel">
-      <div class="row mb-3">
-        <div class="col-md-3">
-          <select id="diagnosisYearFilter" class="form-control"></select>
-        </div>
-        <div class="col-md-3">
-          <select id="diagnosisMonthFilter" class="form-control">
-            <option value="">All Months</option>
-            <option value="1">January</option>
-            <option value="2">February</option>
-            <option value="3">March</option>
-            <option value="4">April</option>
-            <option value="5">May</option>
-            <option value="6">June</option>
-            <option value="7">July</option>
-            <option value="8">August</option>
-            <option value="9">September</option>
-            <option value="10">October</option>
-            <option value="11">November</option>
-            <option value="12">December</option>
-          </select>
-        </div>
-        <div class="mb-3 text-end">
-          <button id="printDiagnosesBtn" class="btn btn-outline-primary">
-            <i class="bi bi-printer"></i> Print This Report
-          </button>
-        </div>
-      </div>
-      
       <div class="row g-4">
         <div class="col-md-6">
           <div class="card border-0 shadow-sm h-100">
@@ -128,690 +202,897 @@
               </div>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 3: Barangay Performance -->
+    <div class="tab-pane fade" id="tab3" role="tabpanel">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <h5 class="card-title mb-4">Barangay Performance Analytics</h5>
           
+          <div class="row mb-4">
+            <div class="col-md-6 mb-4">
+              <h6 class="text-muted mb-3">Referral Status Overview</h6>
+              <canvas id="stackedBarangayChart" height="200"></canvas>
+            </div>
+            <div class="col-md-6 mb-4">
+              <h6 class="text-muted mb-3">Completion Rate Analysis</h6>
+              <canvas id="groupedBarangayChart" height="200"></canvas>
+            </div>
+          </div>
+    
         </div>
       </div>
     </div>
+    
 
-   
-    <!-- Tab 4: System Usage -->
-    <div class="tab-pane fade" id="tab4" role="tabpanel">
+    <!-- Tab 5: Reports -->
+    <div class="tab-pane fade show active" id="tab5" role="tabpanel">
       <div class="card border-0 shadow-sm">
         <div class="card-body p-4">
-          <div class="row align-items-center mb-4">
-            <div class="col-md-6">
-              <h5 class="card-title mb-0">System Usage Analytics</h5>
-              <p class="text-muted small mb-0">Track referrals and medical records by facility</p>
+          <h5 class="fw-bold mb-4">Export Referral Reports (CSV)</h5>
+          
+          <form id="exportCsvForm" method="get" action="{% url 'referrals:export_referrals_csv' %}">
+            <div class="row g-3 align-items-end">
+              <div class="col-md-3">
+                <label for="exportFacility" class="form-label small mb-1">Facility</label>
+                <select class="form-select" id="exportFacility" name="facility_id">
+                  <option value="">All Facilities</option>
+                  {% for facility in facilities %}
+                    <option value="{{ facility.facility_id }}">{{ facility.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label for="exportYear" class="form-label small mb-1">Year</label>
+                <input type="number" class="form-control" id="exportYear" name="year" placeholder="e.g. 2025" min="2000" max="2100">
+              </div>
+              <div class="col-md-3">
+                <label for="exportMonth" class="form-label small mb-1">Month</label>
+                <select class="form-select" id="exportMonth" name="month">
+                  <option value="">All</option>
+                  <option value="1">January</option>
+                  <option value="2">February</option>
+                  <option value="3">March</option>
+                  <option value="4">April</option>
+                  <option value="5">May</option>
+                  <option value="6">June</option>
+                  <option value="7">July</option>
+                  <option value="8">August</option>
+                  <option value="9">September</option>
+                  <option value="10">October</option>
+                  <option value="11">November</option>
+                  <option value="12">December</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <button type="submit" class="btn btn-outline-primary w-100">
+                  <i class="bi bi-file-earmark-spreadsheet me-2"></i>Export CSV
+                </button>
+              </div>
             </div>
-            <div class="col-md-3">
-              <label for="systemUsageYearFilter" class="form-label small">Year</label>
-              <select id="systemUsageYearFilter" class="form-select form-select-sm">
-                <option value="2024">2024</option>
-                <option value="2025" selected>2025</option>
-                <option value="2023">2023</option>
-                <option value="2022">2022</option>
-              </select>
+          </form>
+          
+          <p class="text-muted small mt-3 mb-0">
+            <i class="bi bi-info-circle me-1"></i>Tip: Leave fields blank to export all.
+          </p>
+
+          <!-- Printable Reports Section -->
+          <div class="mt-5">
+            <h5 class="fw-bold mb-4">Generate Printable Reports</h5>
+            
+            <div class="row g-3 align-items-end">
+              <div class="col-md-3">
+                <label for="printReportSelect" class="form-label small mb-1">Report Type</label>
+                <select class="form-select" id="printReportSelect">
+                  <option value="">-- Choose a report --</option>
+                  <option value="{% url 'barangay_referral_performance_report' %}">
+                    📄 Barangay Referral Performance Summary
+                  </option>
+                  <option value="{% url 'morbidity_report' %}">
+                    📊 Morbidity & Top-Diagnosis Report
+                  </option>
+                  <option value="{% url 'facility_workforce_masterlist' %}">
+                    👥 Facility & Workforce Masterlist
+                  </option>
+                  <option value="{% url 'referral_registry_report' %}">
+                    ❤️ Referral Registry with Vital Signs
+                  </option>
+                  <option value="{% url 'system_usage_scorecard_report' %}">
+                    📈 System Usage & Adoption Scorecard
+                  </option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label for="printYear" class="form-label small mb-1">Year</label>
+                <input type="number" class="form-control" id="printYear" placeholder="e.g. 2025" min="2000" max="2100">
+              </div>
+              <div class="col-md-3">
+                <label for="printMonth" class="form-label small mb-1">Month</label>
+                <select class="form-select" id="printMonth">
+                  <option value="">All</option>
+                  <option value="1">January</option>
+                  <option value="2">February</option>
+                  <option value="3">March</option>
+                  <option value="4">April</option>
+                  <option value="5">May</option>
+                  <option value="6">June</option>
+                  <option value="7">July</option>
+                  <option value="8">August</option>
+                  <option value="9">September</option>
+                  <option value="10">October</option>
+                  <option value="11">November</option>
+                  <option value="12">December</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <button type="button" class="btn btn-outline-primary w-100" onclick="generatePrintableReport()">
+                  <i class="bi bi-printer me-2"></i>Preview
+                </button>
+              </div>
             </div>
-            <div class="col-md-3 text-end">
-              <button id="printSystemUsageBtn" class="btn btn-outline-primary">
-                <i class="bi bi-printer"></i> Print This Report
-              </button>
+            
+            <p class="text-muted small mt-3 mb-0">
+              <i class="bi bi-info-circle me-1"></i>Tip: Leave fields blank to generate report for all data.
+            </p>
+            
+            <!-- Report Preview Container -->
+            <div id="reportPreviewContainer" class="mt-4" style="display: none;">
+              <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+                  <h6 class="mb-0 fw-bold">
+                    <i class="bi bi-file-earmark-text me-2"></i>Report Preview
+                  </h6>
+                  <div>
+                    <button type="button" class="btn btn-sm btn-outline-primary me-2" onclick="printReportContent()">
+                      <i class="bi bi-printer me-1"></i>Print
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="closeReportPreview()">
+                      <i class="bi bi-x-lg"></i> Close
+                    </button>
+                  </div>
+                </div>
+                <div class="card-body p-0 position-relative" style="max-height: 800px; overflow-y: auto;">
+                  <div id="reportLoadingIndicator" class="text-center p-4" style="display: none;">
+                    <div class="spinner-border text-primary" role="status">
+                      <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Loading report...</p>
+                  </div>
+                  <div id="reportContent" style="display: none;"></div>
+                </div>
+              </div>
             </div>
-          </div>
-          <div class="chart-container" style="position: relative; height: 400px;">
-            <canvas id="systemUsageLogsChart"></canvas>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Tab 5: Referral Reports -->
-    <div class="tab-pane fade" id="tab5" role="tabpanel">
-      <div class="card border-0 shadow-sm">
-        <div class="card-body p-4">
-          <h5 class="card-title mb-4">Export Referral Reports (CSV)</h5>
-          <div class="row g-3 align-items-end mb-3">
-            <div class="col-md-3">
-              <label class="form-label">Facility</label>
-              <select id="reportFacilityFilter" class="form-select">
-                <option value="">All Facilities</option>
-              </select>
-            </div>
-            <div class="col-md-2">
-              <label class="form-label">Year</label>
-              <input id="reportYearFilter" class="form-control" type="number" min="2000" max="2100" placeholder="e.g. 2025" />
-            </div>
-            <div class="col-md-2">
-              <label class="form-label">Month</label>
-              <select id="reportMonthFilter" class="form-select">
-                <option value="">All</option>
-                <option value="1">January</option>
-                <option value="2">February</option>
-                <option value="3">March</option>
-                <option value="4">April</option>
-                <option value="5">May</option>
-                <option value="6">June</option>
-                <option value="7">July</option>
-                <option value="8">August</option>
-                <option value="9">September</option>
-                <option value="10">October</option>
-                <option value="11">November</option>
-                <option value="12">December</option>
-              </select>
-            </div>
-            <div class="col-md-2 text-end">
-              <button id="exportReferralsCsvBtn" class="btn btn-outline-primary w-100">
-                <i class="bi bi-filetype-csv"></i> Export CSV
-              </button>
-            </div>
-          </div>
-          <div class="small text-muted">Tip: Leave fields blank to export all.</div>
-        </div>
-      </div>
-
-      <div class="card border-0 shadow-sm mt-4">
-        <div class="card-body p-4">
-          <h5 class="card-title mb-2">Printable Reports</h5>
-          <p class="text-muted mb-4">Generate ready-to-print summaries for LGU oversight and compliance.</p>
-          <div class="d-flex flex-column flex-md-row gap-2">
-            <a class="btn btn-outline-primary" href="{% url 'barangay_referral_performance_report' %}">
-              <i class="bi bi-file-text"></i> Barangay Referral Performance Summary
-            </a>
-            <a class="btn btn-outline-primary" href="{% url 'morbidity_report' %}">
-              <i class="bi bi-clipboard-data"></i> Morbidity &amp; Top-Diagnosis Report
-            </a>
-            <a class="btn btn-outline-primary" href="{% url 'facility_workforce_masterlist' %}">
-              <i class="bi bi-people"></i> Facility &amp; Workforce Masterlist
-            </a>
-            <a class="btn btn-outline-primary" href="{% url 'referral_registry_report' %}">
-              <i class="bi bi-activity"></i> Referral Registry with Vital Signs
-            </a>
-            <a class="btn btn-outline-primary" href="{% url 'system_usage_scorecard_report' %}">
-              <i class="bi bi-graph-up"></i> System Usage &amp; Adoption Scorecard
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 </div>
 
 {% block script %}
-<script src="{% static 'js/line_chart.js' %}"></script>
-<script src="{% static 'js/topDiagnosedPie_chart.js' %}"></script>
-<script src="{% static 'js/barangay_performance.js' %}"></script>
-<script src="{% static 'js/system_usage.js' %}"></script>
-<script src="{% static 'js/print_report.js' %}"></script>
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="{% static 'js/user/line_chart_user.js' %}"></script>
+<script src="{% static 'js/user/topDiagnosedPie_chart_user.js' %}"></script>
+<script src="{% static 'js/user/barangay_performance_user.js' %}"></script>
+
 <script>
-  // Populate facility and user dropdowns for referral reports
-  async function loadFacilitiesAndUsers() {
-    try {
-      // Facilities
-      const fRes = await fetch('/facilities/api/facilities/');
-      const facilities = fRes.ok ? await fRes.json() : [];
-      const fSelect = document.getElementById('reportFacilityFilter');
-      if (fSelect) {
-        facilities.forEach(f => {
-          const opt = document.createElement('option');
-          opt.value = f.facility_id; // backend now returns facility_id
-          opt.textContent = `${f.name} (${f.assigned_bhw || 'No BHW'})`;
-          fSelect.appendChild(opt);
-        });
-      }
-      // Users derived from facilities' user_id
-      const uSelect = document.getElementById('reportUserFilter');
-      if (uSelect) {
-        const seen = new Set();
-        facilities.forEach(f => {
-          if (f.user_id && !seen.has(f.user_id)) {
-            seen.add(f.user_id);
-            const opt = document.createElement('option');
-            opt.value = f.user_id;
-            opt.textContent = `User #${f.user_id} - ${f.assigned_bhw || f.name}`;
-            uSelect.appendChild(opt);
-          }
-        });
-      }
-    } catch (e) {
-      console.error('Failed to load facilities/users for report filters', e);
+  function generatePrintableReport() {
+    const reportSelect = document.getElementById('printReportSelect');
+    const yearInput = document.getElementById('printYear');
+    const monthSelect = document.getElementById('printMonth');
+    const previewContainer = document.getElementById('reportPreviewContainer');
+    const reportContent = document.getElementById('reportContent');
+    const loadingIndicator = document.getElementById('reportLoadingIndicator');
+    
+    if (!reportSelect.value) {
+      alert('Please select a report type.');
+      return;
     }
-  }
-
-  // Build export URL with query params and trigger download
-  function exportReferralsCsv() {
+    
+    // Build URL with query parameters
+    let url = reportSelect.value;
     const params = new URLSearchParams();
-    const year = document.getElementById('reportYearFilter')?.value.trim();
-    const month = document.getElementById('reportMonthFilter')?.value;
-    const facilityId = document.getElementById('reportFacilityFilter')?.value;
-    const userId = document.getElementById('reportUserFilter')?.value;
-    if (year) params.set('year', year);
-    if (month) params.set('month', month);
-    if (facilityId) params.set('facility_id', facilityId);
-    if (userId) params.set('user_id', userId);
-    const url = `/referral/export/referrals.csv?${params.toString()}`;
-    window.location.href = url;
-  }
-
-  document.addEventListener('DOMContentLoaded', function() {
-    // Expose whether current user is superuser to JS (true/false)
-    const isSuperuser = '{{ request.user.is_superuser|yesno:"true,false" }}' === 'true';
-    loadFacilitiesAndUsers();
-    const btn = document.getElementById('exportReferralsCsvBtn');
-    if (btn) btn.addEventListener('click', exportReferralsCsv);
-
-    // System Usage year filter
-    const systemUsageYearFilter = document.getElementById('systemUsageYearFilter');
-    if (systemUsageYearFilter) {
-      systemUsageYearFilter.addEventListener('change', function() {
-        // Trigger system usage chart reload
-        if (typeof loadSystemUsageData === 'function') {
-          loadSystemUsageData();
+    
+    if (yearInput.value) {
+      params.append('year', yearInput.value);
+    }
+    
+    if (monthSelect.value) {
+      params.append('month', monthSelect.value);
+    }
+    
+    // Append query string if there are any parameters
+    if (params.toString()) {
+      url += '?' + params.toString();
+    }
+    
+    // Show loading indicator
+    loadingIndicator.style.display = 'block';
+    reportContent.style.display = 'none';
+    reportContent.innerHTML = '';
+    previewContainer.style.display = 'block';
+    
+    // Fetch the HTML content
+    console.log('Fetching report from:', url);
+    fetch(url, {
+      method: 'GET',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+      credentials: 'same-origin'
+    })
+    .then(response => {
+      console.log('Response status:', response.status);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.text();
+    })
+    .then(html => {
+      console.log('HTML received, length:', html.length);
+      // Extract the main content from the response
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      
+      // Remove navbar and header elements first
+      const navbars = doc.querySelectorAll('nav, .navbar, header, [role="navigation"]');
+      navbars.forEach(el => el.remove());
+      
+      // Find the container-fluid that contains the report
+      const containerFluid = doc.querySelector('.container-fluid');
+      
+      if (!containerFluid) {
+        throw new Error('Could not find report container');
+      }
+      
+      // Find the card inside container-fluid (this is the actual report)
+      const reportCard = containerFluid.querySelector('.card.border-0.shadow-sm, .card');
+      
+      if (!reportCard) {
+        throw new Error('Could not find report card');
+      }
+      
+      // Clone the report card to preserve original structure
+      const clonedCard = reportCard.cloneNode(true);
+      
+      // Remove filter forms and buttons (but preserve header with logos and title)
+      const forms = clonedCard.querySelectorAll('form.d-print-none, form[method="get"]');
+      forms.forEach(form => {
+        // Only remove if it's a filter form, not part of the header
+        if (!form.closest('.d-flex.align-items-center')) {
+          form.remove();
         }
       });
-    }
-
-    // Print Referral Statistics (chart image + table derived from chart data)
-    const printStatsBtn = document.getElementById('printReferralStatsBtn');
-    if (printStatsBtn) {
-      printStatsBtn.addEventListener('click', function() {
-        const chart = Chart.getChart('referralsPerUserChart');
-        if (!chart) {
-          alert('Please wait for the chart to load before printing.');
-          return;
+      
+      // Remove back buttons and navigation links
+      const backButtons = clonedCard.querySelectorAll('a[href*="report_analytics"], .btn-outline-secondary');
+      backButtons.forEach(btn => {
+        // Only remove if it's clearly a back button, not part of report content
+        if (btn.textContent.includes('Back') || btn.closest('.mb-3')) {
+          btn.closest('.mb-3')?.remove() || btn.remove();
         }
-
-        // Capture chart image
-        const chartImgDataUrl = chart.canvas.toDataURL('image/png', 1.0);
-
-        // Build table from current chart data
-        const labels = chart.data?.labels || [];
-        const values = (chart.data?.datasets?.[0]?.data || []).map(v => Number(v) || 0);
-
-        let total = 0;
-        let tableRows = '';
-        labels.forEach((label, idx) => {
-          const val = values[idx] ?? 0;
-          total += val;
-          tableRows += `
-            <tr>
-              <td style="text-align:center; border:1px solid #000; padding:8px;">${idx + 1}</td>
-              <td style="text-align:left; border:1px solid #000; padding:8px;">${label}</td>
-              <td style="text-align:center; border:1px solid #000; padding:8px;">${val}</td>
-            </tr>
-          `;
-        });
-        tableRows += `
-          <tr>
-            <td colspan="2" style="text-align:right; border:1px solid #000; padding:8px; font-weight:bold;">TOTAL</td>
-            <td style="text-align:center; border:1px solid #000; padding:8px; font-weight:bold;">${total}</td>
-          </tr>
-        `;
-
-        // Print document
-        const printWindow = window.open('', '_blank');
-        printWindow.document.write(`
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <meta charset="utf-8" />
-            <title>Referral Statistics</title>
-            <style>
-              @media print { body { margin: 0; padding: 0; font-family: Arial, sans-serif; } @page { margin: 12mm; size: A4; } }
-              body { margin: 16px; font-family: Arial, sans-serif; color: #000; }
-              .title { text-align: center; color: #dc3545; font-weight: bold; font-size: 18px; margin: 8px 0 16px; text-transform: uppercase; }
-              .section { margin: 12px 0; }
-              .chart-wrap { display: flex; justify-content: center; margin: 12px 0 20px; }
-              .chart-wrap img { max-width: 100%; height: auto; }
-              table { width: 100%; border-collapse: collapse; margin-top: 6px; }
-              th, td { border: 1px solid #000; padding: 8px; }
-              th { background-color: #f8f9fa; font-weight: bold; text-align: center; }
-              .number-col { text-align: center; width: 60px; }
-              .left-col { text-align: left; }
-            </style>
-          </head>
-          <body>
-            <div class="title">REFERRAL STATISTICS (From Current Chart)</div>
-            <div class="section chart-wrap"><img src="${chartImgDataUrl}" alt="Referral Statistics Chart" /></div>
-            <div class="section">
-              <table>
-                <thead>
-                  <tr>
-                    <th class="number-col">NO.</th>
-                    <th class="left-col">LABEL</th>
-                    <th class="number-col">COUNT</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${tableRows}
-                </tbody>
-              </table>
-            </div>
-          </body>
-          </html>
-        `);
-        printWindow.document.close();
-        printWindow.onload = () => {
-          setTimeout(() => {
-            const style = printWindow.document.createElement('style');
-            style.media = 'print';
-            style.textContent = `@page { size: A4 landscape; margin: 10mm; } @media print { html, body { width: 297mm; height: 210mm; } }`;
-            printWindow.document.head.appendChild(style);
-            printWindow.focus();
-            printWindow.print();
-            setTimeout(() => {
-              style.remove();
-              printWindow.close();
-            }, 100);
-          }, 300);
-        };
       });
-    }
-
-    // Print Common Diagnoses section with custom layout
-    const printDiagnosesBtn = document.getElementById('printDiagnosesBtn');
-    if (printDiagnosesBtn) {
-      printDiagnosesBtn.addEventListener('click', async function() {
-        // Get chart data for the table
-        const chart = Chart.getChart('topDiagnosedChart');
-        if (!chart) {
-          alert('Please wait for the chart to load before printing.');
-          return;
+      
+      // Remove print buttons (but keep the report structure and header)
+      const printButtons = clonedCard.querySelectorAll('button[onclick*="print"], button[onclick*="Print"]');
+      printButtons.forEach(btn => {
+        // Check if this button is part of the header section (which has logos)
+        const flexParent = btn.closest('.d-flex');
+        if (flexParent) {
+          // Check if this flex container has logos - if so, it's the header, don't remove
+          const hasLogos = flexParent.querySelector('.report-logo, img[alt*="Logo"]');
+          if (hasLogos) {
+            return; // Skip - this is in the header section, don't remove
+          }
         }
-
-        const labels = chart.data.labels || [];
-        const data = chart.data.datasets[0]?.data || [];
         
-        // Create table rows from chart data
-        let tableRows = '';
-        labels.forEach((label, index) => {
-          const value = data[index] || 0;
-          tableRows += `
-            <tr>
-              <td style="text-align: center; border: 1px solid #000; padding: 8px;">${index + 1}</td>
-              <td style="text-align: left; border: 1px solid #000; padding: 8px;">${label}</td>
-              <td style="text-align: center; border: 1px solid #000; padding: 8px;">${value}</td>
-              <td style="text-align: center; border: 1px solid #000; padding: 8px;">0</td>
-              <td style="text-align: center; border: 1px solid #000; padding: 8px;">${value}</td>
-            </tr>
-          `;
-        });
-
-          const printWindow = window.open('', '_blank');
-        printWindow.document.write(`
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <style>
-              /* Force A4 landscape with consistent printable area */
-              @page { size: A4 landscape; margin: 10mm; }
-              @media print {
-                body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
-                .no-print { display: none; }
-              }
-              html, body { width: 297mm; height: 210mm; }
-              .print-container { padding: 6mm; }
-              .header { display: flex; align-items: center; justify-content: center; margin-bottom: 20px; position: relative; }
-              .header-text { font-size: 12px; line-height: 1.2; margin-bottom: 5px; text-align: center; }
-              .logo { width: 80px; height: 80px; object-fit: contain; position: absolute; }
-              .logo-left { left: 0; }
-              .logo-right { right: 0; }
-              .title { text-align: center; color: #dc3545; font-weight: bold; font-size: 18px; margin: 20px 0; text-transform: uppercase; }
-              .separator { border-top: 1px solid #000; margin: 10px 0; }
-              table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-              th, td { border: 1px solid #000; padding: 8px; }
-              th { background-color: #f8f9fa; font-weight: bold; text-align: center; }
-              .barangay-col { text-align: left; }
-              .number-col { text-align: center; }
-              tr, td, th { page-break-inside: avoid; }
-            </style>
-          </head>
-          <body>
-            <div class="print-container">
-            <div class="header">
-              <img src="/static/images/LGU-NEWCORELLA.png" alt="LGU Logo" class="logo logo-left">
-              <img src="/static/images/MHO-LOGO.png" alt="MHO Logo" class="logo logo-right">
-              <div>
-                <div class="header-text">Republic of the Philippines</div>
-                <div class="header-text">Province of Davao del Norte</div>
-                <div class="header-text">Municipality of New Corella</div>
-                <div class="header-text">Municipal Health Office</div>
-                <div class="header-text">Purok 5, Poblacion, New Corella</div>
-                <div class="header-text">rhunewcorella@yahoo.com</div>
-                <div class="header-text">(+63) 9700933480</div>
-                <div class="header-text">Calendar Year 2025</div>
-              </div>
-            </div>
-            
-            <div class="separator"></div>
-            
-            <div class="title">COMMON DIAGNOSES REPORT LGU NEW CORELLA</div>
-            
-            <table>
-              <thead>
-                <tr>
-                  <th class="number-col">NO.</th>
-                  <th class="barangay-col">DIAGNOSIS</th>
-                  <th class="number-col">ACCREDITED</th>
-                  <th class="number-col">REGISTERED</th>
-                  <th class="number-col">TOTAL</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${tableRows}
-              </tbody>
-            </table>
-          </body>
-          </html>
-        `);
-        printWindow.document.close();
-
-        // Wait for images to load then print
-        printWindow.onload = () => {
-          setTimeout(() => {
-            const style = printWindow.document.createElement('style');
-            style.media = 'print';
-            style.textContent = `@page { size: A4 landscape; margin: 10mm; } @media print { html, body { width: 297mm; height: 210mm; } }`;
-            printWindow.document.head.appendChild(style);
-            printWindow.focus();
-            printWindow.print();
-            setTimeout(() => {
-              style.remove();
-              printWindow.close();
-            }, 100);
-          }, 500);
-        };
-      });
-    }
-
-    // Print System Usage section with custom layout
-    const printSystemUsageBtn = document.getElementById('printSystemUsageBtn');
-    if (printSystemUsageBtn) {
-      printSystemUsageBtn.addEventListener('click', async function() {
-        // Get chart data for the table
-        const chart = Chart.getChart('systemUsageLogsChart');
-        if (!chart) {
-          alert('Please wait for the chart to load before printing.');
-          return;
+        // IMPORTANT: Don't remove if it's near the notes section (which contains timestamp)
+        const notesSection = btn.closest('.mt-3, [class*="notes"]');
+        if (notesSection) {
+          return; // Skip - don't remove buttons near notes section
         }
-
-        const labels = chart.data.labels || [];
-        const data = chart.data.datasets[0]?.data || [];
         
-        // Create table rows from chart data
-        let tableRows = '';
-        labels.forEach((label, index) => {
-          const value = data[index] || 0;
-          tableRows += `
-            <tr>
-              <td style="text-align: center; border: 1px solid #000; padding: 8px;">${index + 1}</td>
-              <td style="text-align: left; border: 1px solid #000; padding: 8px;">${label}</td>
-              <td style="text-align: center; border: 1px solid #000; padding: 8px;">${value}</td>
-              <td style="text-align: center; border: 1px solid #000; padding: 8px;">0</td>
-              <td style="text-align: center; border: 1px solid #000; padding: 8px;">${value}</td>
-            </tr>
-          `;
-        });
-
-        const printWindow = window.open('', '_blank');
-        printWindow.document.write(`
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <style>
-              @media print {
-                body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
-                .no-print { display: none; }
-                @page { margin: 0; }
-              }
-              @page { 
-                margin: 0; 
-                size: A4;
-              }
-              body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
-              .header { display: flex; align-items: center; justify-content: center; margin-bottom: 20px; position: relative; }
-              .header-text { font-size: 12px; line-height: 1.2; margin-bottom: 5px; text-align: center; }
-              .logo { width: 80px; height: 80px; object-fit: contain; position: absolute; }
-              .logo-left { left: 0; }
-              .logo-right { right: 0; }
-              .title { text-align: center; color: #dc3545; font-weight: bold; font-size: 18px; margin: 20px 0; text-transform: uppercase; }
-              .separator { border-top: 1px solid #000; margin: 10px 0; }
-              table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-              th, td { border: 1px solid #000; padding: 8px; }
-              th { background-color: #f8f9fa; font-weight: bold; text-align: center; }
-              .barangay-col { text-align: left; }
-              .number-col { text-align: center; }
-            </style>
-          </head>
-          <body>
-            <div class="header">
-              <img src="/static/images/LGU-NEWCORELLA.png" alt="LGU Logo" class="logo logo-left">
-              <img src="/static/images/MHO-LOGO.png" alt="MHO Logo" class="logo logo-right">
-              <div>
-                <div class="header-text">Republic of the Philippines</div>
-                <div class="header-text">Province of Davao del Norte</div>
-                <div class="header-text">Municipality of New Corella</div>
-                <div class="header-text">Municipal Health Office</div>
-                <div class="header-text">Purok 5, Poblacion, New Corella</div>
-                <div class="header-text">rhunewcorella@yahoo.com</div>
-                <div class="header-text">(+63) 9700933480</div>
-                <div class="header-text">Calendar Year 2025</div>
-              </div>
-            </div>
-            
-            <div class="separator"></div>
-            
-            <div class="title">SYSTEM USAGE REPORT LGU NEW CORELLA</div>
-            
-            <table>
-              <thead>
-                <tr>
-                  <th class="number-col">NO.</th>
-                  <th class="barangay-col">FACILITY</th>
-                  <th class="number-col">ACCREDITED</th>
-                  <th class="number-col">REGISTERED</th>
-                  <th class="number-col">TOTAL</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${tableRows}
-              </tbody>
-            </table>
-          </body>
-          </html>
-        `);
-        printWindow.document.close();
-
-        // Wait for images to load then print
-        printWindow.onload = () => {
-          setTimeout(() => {
-            const style = printWindow.document.createElement('style');
-            style.media = 'print';
-            style.textContent = `@page { size: A4 landscape; margin: 10mm; } @media print { html, body { width: 297mm; height: 210mm; } }`;
-            printWindow.document.head.appendChild(style);
-            printWindow.focus();
-            printWindow.print();
-            setTimeout(() => {
-              style.remove();
-              printWindow.close();
-            }, 100);
-          }, 500);
-        };
-      });
-    }
-
-    // Populate users for stats filter (from facilities API like reports tab)
-    (async function populateStatsUsers(){
-      try {
-        const res = await fetch('/facilities/api/facilities/');
-        const facilities = res.ok ? await res.json() : [];
-        const uSelect = document.getElementById('statsUserFilter');
-        if (uSelect) {
-          const seen = new Set();
-          facilities.forEach(f => {
-            if (f.user_id && !seen.has(f.user_id)) {
-              seen.add(f.user_id);
-              const opt = document.createElement('option');
-              opt.value = f.user_id;
-              opt.textContent = `User #${f.user_id} - ${f.assigned_bhw || f.name}`;
-              uSelect.appendChild(opt);
+        // Remove the button and its parent row/container if it's a print button
+        const parent = btn.closest('.row, .d-grid');
+        if (parent && parent.querySelector('button[onclick*="print"]')) {
+          // Double-check: don't remove if parent contains notes section
+          if (!parent.querySelector('.mt-3, [class*="notes"], small.text-muted')) {
+            parent.remove();
+          }
+        } else if (flexParent && !flexParent.querySelector('.report-logo, img[alt*="Logo"]')) {
+          // Only remove d-flex parent if it doesn't contain logos (not the header)
+          if (flexParent.querySelector('button[onclick*="print"]')) {
+            // Double-check: don't remove if parent contains notes section
+            if (!flexParent.querySelector('.mt-3, [class*="notes"], small.text-muted')) {
+              flexParent.remove();
             }
+          }
+        }
+      });
+      
+      // Verify header section exists before replacing middle section
+      const headerCheck = clonedCard.querySelector('.d-flex.align-items-center');
+      if (!headerCheck) {
+        console.warn('Header section not found in cloned card');
+      }
+      
+      // Replace the middle section with official address information
+      const middleSection = clonedCard.querySelector('.text-center.flex-grow-1.px-lg-4, .text-center');
+      if (middleSection) {
+        middleSection.innerHTML = `
+          <h6 class="mb-1">Republic of the Philippines</h6>
+          <h6 class="mb-1">Province of Davao del Norte</h6>
+          <h5 class="mb-1">Municipality of New Corella</h5>
+          <h6 class="mb-1">Municipal Health Office</h6>
+          <p class="mb-0 text-muted small">Purok 5, Poblacion, New Corella | rhunewcorella@yahoo.com | (+63) 970-093-3480</p>
+        `;
+      } else {
+        console.warn('Middle section not found for address replacement');
+      }
+      
+      // Remove any scripts that might cause issues
+      const scripts = clonedCard.querySelectorAll('script');
+      scripts.forEach(script => script.remove());
+      
+      // Explicitly ensure the notes section (with timestamp) is preserved
+      const notesSection = clonedCard.querySelector('.mt-3, [class*="notes"], small.text-muted');
+      if (!notesSection) {
+        // Try to find any section containing "Generated on" text
+        const allText = clonedCard.textContent || '';
+        if (allText.includes('Generated on')) {
+          console.log('Found "Generated on" text in content');
+        } else {
+          console.warn('Warning: Notes section with timestamp not found in extracted content');
+        }
+      } else {
+        console.log('Notes section found and preserved');
+      }
+      
+      // Get cleaned HTML - preserve the exact structure including header
+      // Use innerHTML to get the card content (which includes card-body with header)
+      let contentHtml = clonedCard.innerHTML;
+      
+      // Verify that logos are present in the extracted content
+      const tempCheck = document.createElement('div');
+      tempCheck.innerHTML = contentHtml;
+      const logoCheck = tempCheck.querySelectorAll('.report-logo, img[alt*="Logo"]');
+      if (logoCheck.length === 0) {
+        console.warn('Warning: No logos found in extracted content');
+      }
+      
+      // Verify notes section with timestamp is in the content
+      const notesCheck = tempCheck.querySelectorAll('small.text-muted, .mt-3');
+      const hasGeneratedOn = Array.from(notesCheck).some(el => 
+        el.textContent && el.textContent.includes('Generated on')
+      );
+      if (!hasGeneratedOn) {
+        console.warn('Warning: "Generated on" timestamp not found in extracted content');
+      } else {
+        console.log('Verified: "Generated on" timestamp is present in content');
+      }
+      
+      if (!contentHtml || contentHtml.trim().length === 0) {
+        throw new Error('Report content is empty');
+      }
+      
+      // Inject the content - this should include the header with logos inside card-body
+      reportContent.innerHTML = contentHtml;
+      loadingIndicator.style.display = 'none';
+      reportContent.style.display = 'block';
+      
+      // Verify timestamp is visible in the preview after injection
+      setTimeout(() => {
+        const injectedContent = reportContent.innerHTML;
+        const hasTimestamp = injectedContent.includes('Generated on');
+        if (!hasTimestamp) {
+          console.error('ERROR: "Generated on" timestamp not found in preview content after injection');
+        } else {
+          console.log('SUCCESS: "Generated on" timestamp is present in preview');
+        }
+        
+        // Scroll to the preview container
+        previewContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        
+        // Also scroll the preview content to show the notes section at the bottom
+        setTimeout(() => {
+          const notesSection = reportContent.querySelector('.mt-3, small.text-muted');
+          if (notesSection) {
+            notesSection.scrollIntoView({ behavior: 'smooth', block: 'end' });
+          }
+        }, 200);
+      }, 100);
+    })
+    .catch(error => {
+      console.error('Error loading report:', error);
+      loadingIndicator.style.display = 'none';
+      reportContent.innerHTML = `
+        <div class="text-center p-4">
+          <i class="bi bi-exclamation-triangle text-warning" style="font-size: 3rem;"></i>
+          <p class="mt-2 text-danger">Error loading report: ${error.message}</p>
+          <button class="btn btn-sm btn-outline-primary mt-2" onclick="generatePrintableReport()">Try Again</button>
+        </div>
+      `;
+      reportContent.style.display = 'block';
+    });
+  }
+  
+  function printReportContent() {
+    const reportContent = document.getElementById('reportContent');
+    if (!reportContent || !reportContent.innerHTML.trim()) {
+      alert('No report preview available. Please generate a report first.');
+      return;
+    }
+    
+    // Get exactly what's shown in the preview - print it as-is
+    let content = reportContent.innerHTML;
+    
+    // Process content to remove excessive spacing and optimize for print
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = content;
+    
+    // Fix logo URLs to absolute paths
+    const allLogos = tempDiv.querySelectorAll('img');
+    allLogos.forEach(logo => {
+      const srcAttr = logo.getAttribute('src');
+      if (srcAttr && srcAttr.startsWith('/')) {
+        logo.setAttribute('src', window.location.origin + srcAttr);
+      }
+    });
+    
+    // Remove forms and buttons that shouldn't print
+    const forms = tempDiv.querySelectorAll('form.d-print-none, form[method="get"]');
+    forms.forEach(form => form.remove());
+    
+    const buttons = tempDiv.querySelectorAll('button, .btn');
+    buttons.forEach(btn => {
+      // Only remove if it's not part of the report content
+      if (!btn.closest('table') && !btn.closest('.card-body')) {
+        btn.remove();
+      }
+    });
+    
+    // Remove empty divs that create blank spaces
+    const emptyDivs = tempDiv.querySelectorAll('div:empty');
+    emptyDivs.forEach(div => {
+      // Only remove if it doesn't have important classes
+      if (!div.classList.contains('clearfix') && !div.hasAttribute('role')) {
+        div.remove();
+      }
+    });
+    
+    // Remove divs with only whitespace
+    const allDivs = tempDiv.querySelectorAll('div');
+    allDivs.forEach(div => {
+      const text = div.textContent || '';
+      const hasVisibleContent = div.querySelector('img, table, h1, h2, h3, h4, h5, h6, p, span, small, th, td');
+      if (!hasVisibleContent && text.trim() === '' && div.children.length === 0) {
+        div.remove();
+      }
+    });
+    
+    // Remove all Notes sections (contains bullet points, notes text, etc.)
+    // First, find and remove notes sections by looking for bullet points and notes indicators
+    const potentialNotesSections = tempDiv.querySelectorAll('div.mt-3, div.mb-3, small.text-muted, small');
+    const notesSectionsToRemove = new Set();
+    
+    potentialNotesSections.forEach(element => {
+      const text = element.textContent || '';
+      // Check for bullet points or common notes text patterns
+      const isNotesSection = text.includes('•') || 
+                            text.includes('Status values') || 
+                            text.includes('Please coordinate') || 
+                            text.includes('Notes:') || 
+                            text.includes('Generated on') || 
+                            text.includes('reflect') ||
+                            text.includes('accreditation') || 
+                            text.includes('personnel records') ||
+                            text.includes('personnel');
+      
+      if (isNotesSection) {
+        // Find the parent container (usually a div with mt-3 or mb-3)
+        const parent = element.closest('div');
+        if (parent) {
+          // Only remove if parent doesn't contain important content like tables
+          const hasTable = parent.querySelector('table');
+          const hasImportantContent = parent.querySelector('h1, h2, h3, h4, h5, h6, img[alt*="Logo"]');
+          if (!hasTable && !hasImportantContent) {
+            notesSectionsToRemove.add(parent);
+          }
+        } else {
+          // If no parent div, remove the element itself if it's a small element
+          if (element.tagName === 'SMALL' || element.classList.contains('text-muted')) {
+            notesSectionsToRemove.add(element);
+          }
+        }
+      }
+    });
+    
+    // Remove all identified notes sections
+    notesSectionsToRemove.forEach(element => {
+      element.remove();
+    });
+    
+    // Balance table column widths - make all columns equal width
+    const tables = tempDiv.querySelectorAll('table');
+    tables.forEach(table => {
+      // Count the number of columns in the first row
+      const firstRow = table.querySelector('thead tr') || table.querySelector('tr');
+      if (firstRow) {
+        const columnCount = firstRow.querySelectorAll('th, td').length;
+        if (columnCount > 0) {
+          // Calculate equal width percentage
+          const columnWidth = (100 / columnCount) + '%';
+          
+          // Apply equal width to all columns
+          const allCells = table.querySelectorAll('th, td');
+          allCells.forEach(cell => {
+            cell.style.width = columnWidth;
+            cell.style.minWidth = columnWidth;
+            cell.style.maxWidth = columnWidth;
           });
         }
-      } catch(e) { console.error('Failed to load users for stats filter', e); }
-    })();
-
-    // Fetch and render referral records table per filters
-    async function fetchAndRenderReferralTable(){
-      const params = new URLSearchParams();
-      const y = document.getElementById('statsYearFilter')?.value.trim();
-      const m = document.getElementById('statsMonthFilter')?.value;
-      const u = document.getElementById('statsUserFilter')?.value;
-      if (y) params.set('year', y);
-      if (m) params.set('month', m);
-      // Admin (superuser) sees all; non-admin filtered by user_id
-      if (!isSuperuser && u) params.set('user_id', u);
-      const url = `/referral/api/referrals/?${params.toString()}`;
-      const tbody = document.getElementById('statsReferralTableBody');
-      if (tbody) tbody.innerHTML = `<tr><td colspan="8" class="text-muted">Loading...</td></tr>`;
-      try {
-        const r = await fetch(url);
-        const json = r.ok ? await r.json() : { results: [] };
-        const rows = (json.results || []).map(item => `
-          <tr>
-            <td>${item.referral_id}</td>
-            <td>${new Date(item.created_at).toLocaleString()}</td>
-            <td>${item.status}</td>
-            <td>${item.facility_name || ''}</td>
-            <td>${item.username || ('User #' + item.user_id)}</td>
-            <td>${item.patient || ('#' + item.patient_id)}</td>
-            <td>${item.chief_complaint || ''}</td>
-            <td>${item.initial_diagnosis || ''}</td>
-          </tr>
-        `).join('');
-        if (tbody) {
-          tbody.innerHTML = rows || `<tr><td colspan="8" class="text-muted">No records found for selected filters.</td></tr>`;
+      }
+    });
+    
+    // No page break - keep everything on one page
+    // Remove any existing page break classes/styles
+    const allTables = tempDiv.querySelectorAll('table');
+    allTables.forEach(table => {
+      table.style.pageBreakBefore = 'auto';
+      table.style.breakBefore = 'auto';
+      table.classList.remove('second-table-page-break');
+      
+      const container = table.closest('.table-responsive') || table.parentElement;
+      if (container) {
+        container.style.pageBreakBefore = 'auto';
+        container.style.breakBefore = 'auto';
+        container.classList.remove('second-table-page-break');
+      }
+    });
+    
+    // Remove any page break wrapper divs
+    const pageBreakWrappers = tempDiv.querySelectorAll('.second-table-page-break, .page-break-before');
+    pageBreakWrappers.forEach(wrapper => {
+      // Unwrap the content
+      const parent = wrapper.parentElement;
+      if (parent) {
+        while (wrapper.firstChild) {
+          parent.insertBefore(wrapper.firstChild, wrapper);
         }
-      } catch(e) {
-        if (tbody) tbody.innerHTML = `<tr><td colspan="8" class="text-danger">Failed to load records.</td></tr>`;
+        wrapper.remove();
+      }
+    });
+    
+    // Add signature lines at the bottom (after the last table) - compact
+    const signatureDiv = document.createElement('div');
+    signatureDiv.style.marginTop = '15px';
+    signatureDiv.style.paddingTop = '10px';
+    signatureDiv.style.pageBreakInside = 'avoid';
+    signatureDiv.innerHTML = `
+      <div style="display: flex; justify-content: space-between; margin-top: 15px; padding-top: 10px; font-size: 9px;">
+        <div style="text-align: left;">
+          <div style="margin-bottom: 30px;"><strong>Prepared by:</strong> _______________</div>
+        </div>
+        <div style="text-align: right;">
+          <div style="margin-bottom: 30px;"><strong>Approved by:</strong> _______________</div>
+        </div>
+      </div>
+    `;
+    
+    // Append signatures after the last table
+    if (allTables.length > 0) {
+      const lastTable = allTables[allTables.length - 1];
+      const lastTableContainer = lastTable.closest('.table-responsive') || lastTable.parentElement;
+      if (lastTableContainer && lastTableContainer.parentElement) {
+        // Insert after the last table container
+        lastTableContainer.parentElement.insertBefore(signatureDiv, lastTableContainer.nextSibling);
+      } else {
+        // Fallback: append to card-body
+        const cardBody = tempDiv.querySelector('.card-body');
+        if (cardBody) {
+          cardBody.appendChild(signatureDiv);
+        } else {
+          tempDiv.appendChild(signatureDiv);
+        }
+      }
+    } else {
+      // If no tables, append to card-body or last element
+      const cardBody = tempDiv.querySelector('.card-body');
+      if (cardBody) {
+        cardBody.appendChild(signatureDiv);
+      } else {
+        tempDiv.appendChild(signatureDiv);
       }
     }
-
-    const applyBtn = document.getElementById('statsApplyFilters');
-    if (applyBtn) applyBtn.addEventListener('click', fetchAndRenderReferralTable);
     
-    // Print the Referral Records table (with LGU/MHO header format)
-    const printStatsTableBtn = document.getElementById('printStatsTableBtn');
-    if (printStatsTableBtn) {
-      printStatsTableBtn.addEventListener('click', function() {
-        const tbody = document.getElementById('statsReferralTableBody');
-        if (!tbody) return;
-        const rowsHtml = tbody.innerHTML || '';
-        const printWindow = window.open('', '_blank');
-        printWindow.document.write(`
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <title>Referral Records</title>
-            <style>
-              /* Force A4 landscape with consistent printable area */
-              @page { size: A4 landscape; margin: 10mm; }
-              @media print {
-                body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
-              }
-              html, body { width: 297mm; height: 210mm; }
-              .print-container { padding: 6mm; }
-              .header { display: flex; align-items: center; justify-content: center; margin-bottom: 20px; position: relative; }
-              .header-text { font-size: 12px; line-height: 1.2; margin-bottom: 5px; text-align: center; }
-              .logo { width: 80px; height: 80px; object-fit: contain; position: absolute; }
-              .logo-left { left: 0; }
-              .logo-right { right: 0; }
-              .title { text-align: center; color: #dc3545; font-weight: bold; font-size: 18px; margin: 20px 0; text-transform: uppercase; }
-              .separator { border-top: 1px solid #000; margin: 10px 0; }
-              table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-              th, td { border: 1px solid #000; padding: 8px; }
-              th { background-color: #f8f9fa; font-weight: bold; text-align: center; }
-              .barangay-col { text-align: left; }
-              .number-col { text-align: center; }
-              tr, td, th { page-break-inside: avoid; }
-            </style>
-          </head>
-          <body>
-            <div class="print-container">
-              <div class="header">
-                <img src="/static/images/LGU-NEWCORELLA.png" alt="LGU Logo" class="logo logo-left">
-                <img src="/static/images/MHO-LOGO.png" alt="MHO Logo" class="logo logo-right">
-                <div>
-                  <div class="header-text">Republic of the Philippines</div>
-                  <div class="header-text">Province of Davao del Norte</div>
-                  <div class="header-text">Municipality of New Corella</div>
-                  <div class="header-text">Municipal Health Office</div>
-                  <div class="header-text">Purok 5, Poblacion, New Corella</div>
-                  <div class="header-text">rhunewcorella@yahoo.com</div>
-                  <div class="header-text">(+63) 9700933480</div>
-                  <div class="header-text">Reporting Period: <span id="printReportPeriod">Calendar Year ____</span></div>
-                </div>
-              </div>
-
-              <div class="separator"></div>
-
-              <div class="title">REFERRAL RECORDS REPORT LGU NEW CORELLA</div>
-
-              <table>
-                <thead>
-                  <tr>
-                    <th class="number-col">ID</th>
-                    <th class="barangay-col">Created</th>
-                    <th class="number-col">Status</th>
-                    <th class="barangay-col">Facility</th>
-                    <th class="barangay-col">User</th>
-                    <th class="barangay-col">Patient</th>
-                    <th class="barangay-col">Chief Complaint</th>
-                    <th class="barangay-col">Initial Diagnosis</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${rowsHtml}
-                </tbody>
-              </table>
-            </div>
-          </body>
-          </html>
-        `);
-        printWindow.document.close();
-        printWindow.onload = () => {
-          setTimeout(() => {
-            const style = printWindow.document.createElement('style');
-            style.media = 'print';
-            style.textContent = '@page { size: A4 landscape; margin: 10mm; } @media print { html, body { width: 297mm; height: 210mm; } }';
-            printWindow.document.head.appendChild(style);
-
-            const yearFilter = document.getElementById('statsYearFilter')?.value.trim();
-            const monthFilter = document.getElementById('statsMonthFilter')?.value;
-            const reportYear = yearFilter || new Date().getFullYear();
-            const monthName = monthFilter ? new Date(0, monthFilter - 1).toLocaleString('en-US', { month: 'long' }) : null;
-            const suggestedTitle = monthName ? `referral_report_${monthName}_${reportYear}` : `referral_report_${reportYear}`;
-            printWindow.document.title = suggestedTitle;
-            const periodSpan = printWindow.document.getElementById('printReportPeriod');
-            if (periodSpan) {
-              periodSpan.textContent = monthName ? `${monthName} ${reportYear}` : `Calendar Year ${reportYear}`;
-            }
-
-            printWindow.focus();
-            printWindow.print();
-            setTimeout(() => {
-              style.remove();
-              printWindow.close();
-            }, 100);
-          }, 300);
-        };
-      });
-    }
-
-    // Initial load of referral records
-    fetchAndRenderReferralTable();
-  });
+    content = tempDiv.innerHTML;
+    
+    // Open print window with clean content
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Report</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+        <style>
+          @page { 
+            size: A4 landscape; 
+            margin: 5mm 5mm;
+            @top-center { content: ""; }
+            @bottom-center { content: ""; }
+            @top-left { content: ""; }
+            @top-right { content: ""; }
+            @bottom-left { content: ""; }
+            @bottom-right { content: ""; }
+          }
+          * {
+            box-sizing: border-box;
+          }
+          body { 
+            font-family: Arial, sans-serif; 
+            margin: 0;
+            padding: 4px;
+            color: #000;
+            font-size: 9px;
+          }
+          .card {
+            border: none !important;
+            box-shadow: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+          .card-body {
+            padding: 4px !important;
+            margin: 0 !important;
+          }
+          /* Reduce spacing in header section - very compact */
+          .d-flex.flex-column,
+          .d-flex.flex-lg-row,
+          .mb-4,
+          .mb-3 {
+            margin-bottom: 4px !important;
+          }
+          .mt-4,
+          .mt-3 {
+            margin-top: 4px !important;
+          }
+          /* Header styling - very compact */
+          .d-flex.align-items-center {
+            margin-bottom: 6px !important;
+            page-break-after: avoid;
+          }
+          .report-logo,
+          img[alt*="Logo"],
+          img[src*="LGU"],
+          img[src*="MHO"] {
+            width: 60px !important;
+            height: 60px !important;
+            max-width: 60px !important;
+            max-height: 60px !important;
+            object-fit: contain;
+          }
+          /* Compact header text */
+          h4, h5, h6 {
+            margin: 2px 0 !important;
+            font-size: 12px !important;
+            line-height: 1.2 !important;
+          }
+          p, small {
+            margin: 1px 0 !important;
+            font-size: 8px !important;
+            line-height: 1.2 !important;
+          }
+          /* Table styling - very compact to fit on one page */
+          .table-responsive {
+            page-break-inside: avoid;
+            margin-top: 4px !important;
+            overflow: visible !important;
+            width: 100% !important;
+          }
+          table {
+            width: 100% !important;
+            max-width: 100% !important;
+            border-collapse: collapse !important;
+            page-break-inside: avoid !important;
+            margin-top: 0 !important;
+            margin-bottom: 4px !important;
+            table-layout: fixed !important;
+            word-wrap: break-word !important;
+            font-size: 8px !important;
+          }
+          thead {
+            display: table-header-group !important;
+            page-break-after: avoid;
+          }
+          tbody {
+            display: table-row-group !important;
+          }
+          tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+            height: auto !important;
+          }
+          th, td {
+            border: 1px solid #000 !important;
+            padding: 3px 4px !important;
+            text-align: center !important;
+            font-size: 8px !important;
+            word-wrap: break-word !important;
+            overflow-wrap: break-word !important;
+            hyphens: auto !important;
+            vertical-align: top !important;
+            box-sizing: border-box !important;
+            overflow: hidden !important;
+            line-height: 1.2 !important;
+          }
+          th {
+            background-color: #f8f9fa !important;
+            font-weight: bold !important;
+            white-space: normal !important;
+            word-wrap: break-word !important;
+            font-size: 9px !important;
+            padding: 4px 4px !important;
+          }
+          td {
+            white-space: normal !important;
+            word-break: break-word !important;
+            font-size: 8px !important;
+          }
+          /* Column widths are set by JavaScript for balanced distribution */
+          /* Ensure inline styles from JavaScript are respected */
+          table th[style*="width"],
+          table td[style*="width"] {
+            /* JavaScript sets width, respect it */
+          }
+          /* Make second column (usually Facility/Diagnosis) left-aligned */
+          table th:nth-child(2),
+          table td:nth-child(2) {
+            text-align: left !important;
+            padding-left: 8px !important;
+          }
+          /* Ensure table doesn't overflow */
+          .table-responsive {
+            max-width: 100% !important;
+            overflow-x: visible !important;
+            width: 100% !important;
+          }
+          /* Notes section - compact */
+          .mt-3 small,
+          .mt-3 .text-muted {
+            margin-top: 4px !important;
+            margin-bottom: 2px !important;
+            font-size: 10px;
+            line-height: 1.3;
+          }
+          /* Hide unnecessary elements */
+          .d-print-none {
+            display: none !important;
+          }
+          .d-none.d-print-block {
+            display: none !important;
+          }
+          /* Remove extra spacing from forms and buttons */
+          form,
+          .btn,
+          .row.g-3 {
+            display: none !important;
+          }
+          /* Ensure content flows properly */
+          .container-fluid {
+            padding: 0 !important;
+            margin: 0 !important;
+          }
+          /* Remove empty spaces and large gaps */
+          div:empty {
+            display: none !important;
+            height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+          /* Ensure table starts close to header */
+          .table-responsive {
+            margin-top: 4px !important;
+          }
+          /* Compact spacing between sections */
+          .flex-grow-1 {
+            margin: 0 !important;
+          }
+          /* Prevent large gaps before table - very compact */
+          .card-body > * {
+            margin-top: 2px !important;
+            margin-bottom: 2px !important;
+          }
+          .card-body > .d-flex:first-child {
+            margin-top: 0 !important;
+            margin-bottom: 4px !important;
+          }
+          .card-body > .table-responsive {
+            margin-top: 4px !important;
+            margin-bottom: 4px !important;
+          }
+          .card-body > .table-responsive:first-of-type {
+            margin-top: 4px !important;
+          }
+          .card-body > .table-responsive + .table-responsive {
+            margin-top: 4px !important;
+          }
+          /* Reduce spacing between heading and table */
+          h4, h5, h6 {
+            margin-bottom: 2px !important;
+          }
+          /* Signature lines styling - compact */
+          div[style*="margin-top: 15px"],
+          div[style*="margin-top: 40px"] {
+            margin-top: 15px !important;
+            padding-top: 10px !important;
+            page-break-inside: avoid;
+            font-size: 9px !important;
+          }
+          div[style*="display: flex"] {
+            display: flex !important;
+            justify-content: space-between !important;
+            width: 100% !important;
+            font-size: 9px !important;
+          }
+          /* No page breaks - keep everything on one page */
+          .second-table-page-break,
+          .page-break-before {
+            page-break-before: auto !important;
+            break-before: auto !important;
+          }
+          /* Ensure tables don't break awkwardly - keep on same page */
+          .table-responsive {
+            page-break-inside: avoid !important;
+            page-break-before: auto !important;
+            page-break-after: auto !important;
+          }
+          table {
+            page-break-inside: avoid !important;
+            page-break-before: auto !important;
+            page-break-after: auto !important;
+          }
+          /* Notes section is removed via JavaScript before printing */
+        </style>
+      </head>
+      <body>
+        ${content}
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+    
+    // Wait for content to load, then print
+    printWindow.onload = function() {
+      setTimeout(function() {
+        printWindow.print();
+        // Close window after printing (optional)
+        // setTimeout(() => printWindow.close(), 100);
+      }, 250);
+    };
+  }
+  
+  function closeReportPreview() {
+    const previewContainer = document.getElementById('reportPreviewContainer');
+    const reportContent = document.getElementById('reportContent');
+    const loadingIndicator = document.getElementById('reportLoadingIndicator');
+    previewContainer.style.display = 'none';
+    reportContent.innerHTML = '';
+    reportContent.style.display = 'none';
+    loadingIndicator.style.display = 'none';
+    // Reset loading indicator HTML
+    loadingIndicator.innerHTML = `
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p class="mt-2 text-muted">Loading report...</p>
+    `;
+  }
 </script>
+
 {% endblock script %}
 
 {% endblock %}

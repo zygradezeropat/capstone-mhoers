@@ -279,6 +279,7 @@ function showFollowupDetailsFromModal(followup, dateString) {
 
 // Function to show follow-up details
 function showFollowupDetails(followup, date) {
+  console.log('showFollowupDetails called with patient_id:', followup.patient_id);
   const modal = document.createElement('div');
   modal.className = 'modal fade';
   modal.id = 'followupModal';
@@ -322,6 +323,13 @@ function showFollowupDetails(followup, date) {
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
           <button 
             type="button" 
+            class="btn btn-info send-sms-reminder" 
+            data-patient-id="${followup.patient_id}"
+            title="Send SMS reminder to patient">
+            <i class="bi bi-send"></i> Send SMS
+          </button>
+          <button 
+            type="button" 
             class="btn btn-primary go-to-assessment" 
             data-patient-id="${followup.patient_id}">
             New Assessment
@@ -338,6 +346,16 @@ function showFollowupDetails(followup, date) {
     keyboard: false
   });
   bootstrapModal.show();
+  
+  // Debug: Verify SMS button exists
+  setTimeout(() => {
+    const smsButton = modal.querySelector('.send-sms-reminder');
+    if (smsButton) {
+      console.log('✓ SMS button found in modal');
+    } else {
+      console.error('✗ SMS button NOT found in modal!');
+    }
+  }, 100);
 
   modal.addEventListener('hidden.bs.modal', function() {
     document.body.removeChild(modal);
@@ -378,6 +396,100 @@ document.addEventListener("click", function (e) {
     }
   }
 });
+
+// SMS reminder button handler
+document.addEventListener("click", function (e) {
+  if (e.target.closest(".send-sms-reminder")) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const button = e.target.closest(".send-sms-reminder");
+    const patientId = button.getAttribute("data-patient-id");
+    const originalText = button.innerHTML;
+    
+    // Disable button and show loading
+    button.disabled = true;
+    button.innerHTML = '<i class="bi bi-hourglass-split"></i> Sending...';
+    
+    // Send SMS request with manual=true to allow sending for any follow-up date
+    fetch(`/patients/api/send-today-checkup-sms/${patientId}/?manual=true`, {
+      method: 'GET',
+      headers: {
+        'X-CSRFToken': getCookie('csrftoken'),
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      credentials: 'same-origin'
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.ok) {
+        button.innerHTML = '<i class="bi bi-check-circle"></i> Sent!';
+        button.classList.remove('btn-info');
+        button.classList.add('btn-success');
+        
+        // Show success message
+        showSMSNotification('SMS reminder sent successfully!', 'success');
+        
+        // Reset button after 3 seconds
+        setTimeout(() => {
+          button.disabled = false;
+          button.innerHTML = originalText;
+          button.classList.remove('btn-success');
+          button.classList.add('btn-info');
+        }, 3000);
+      } else {
+        button.innerHTML = '<i class="bi bi-x-circle"></i> Failed';
+        button.classList.remove('btn-info');
+        button.classList.add('btn-danger');
+        showSMSNotification(data.error || 'Failed to send SMS', 'error');
+        
+        // Reset button after 3 seconds
+        setTimeout(() => {
+          button.disabled = false;
+          button.innerHTML = originalText;
+          button.classList.remove('btn-danger');
+          button.classList.add('btn-info');
+        }, 3000);
+      }
+    })
+    .catch(error => {
+      console.error('Error sending SMS:', error);
+      button.innerHTML = originalText;
+      button.disabled = false;
+      showSMSNotification('Error sending SMS. Please try again.', 'error');
+    });
+  }
+});
+
+// Helper function to show SMS notifications
+function showSMSNotification(message, type) {
+  // Try to use Bootstrap toast if available, otherwise use alert
+  const toastContainer = document.getElementById('toast-container');
+  if (toastContainer) {
+    const toast = document.createElement('div');
+    toast.className = `toast align-items-center text-white bg-${type === 'success' ? 'success' : 'danger'} border-0`;
+    toast.setAttribute('role', 'alert');
+    toast.innerHTML = `
+      <div class="d-flex">
+        <div class="toast-body">${message}</div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    `;
+    toastContainer.appendChild(toast);
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+    toast.addEventListener('hidden.bs.toast', () => {
+      toastContainer.removeChild(toast);
+    });
+  } else {
+    // Fallback to alert
+    if (type === 'success') {
+      alert('✓ ' + message);
+    } else {
+      alert('✗ ' + message);
+    }
+  }
+}
 
 
 function previousMonth() {

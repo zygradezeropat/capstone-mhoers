@@ -34,6 +34,13 @@
 {% include 'components/navbar.html' %}
 
 <div class="container-fluid py-4">
+  <!-- Back Button -->
+  <div class="mb-3 d-print-none">
+    <a href="{% url 'report_analytics' %}#tab5" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i> Back to Analytics Dashboard
+    </a>
+  </div>
+  
   <div class="card border-0 shadow-sm">
     <div class="card-body p-4">
       <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center mb-4">

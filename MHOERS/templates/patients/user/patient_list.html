@@ -70,6 +70,12 @@
                         data-vbdate="{{ patient.date_of_birth|date:'m/d/Y' }}"
                         data-vaddress="{{ patient.p_address }}"
                         data-vsex="{{ patient.sex }}"
+                        data-vsitio="{{ patient.sitio|default:'Not specified' }}"
+                        data-vbarangay="{{ patient.barangay|default:'Not specified' }}"
+                        data-vcivilstatus="{{ patient.civil_status|default:'Not specified' }}"
+                        data-vphicstatus="{% if patient.phic_status == 'M' %}Member{% elif patient.phic_status == 'D' %}Dependent{% else %}Not specified{% endif %}"
+                        data-vcctbeneficiary="{% if patient.cct_beneficiary %}Yes{% else %}No{% endif %}"
+                        data-vispwd="{% if patient.is_pwd %}Yes{% else %}No{% endif %}"
                         data-vreferralcount="{{ patient.referral_count }}"
                         data-vlastreferred="{{ patient.latest_referral_date|date:'M d, Y h:i A' }}"
                         data-bs-toggle="modal"
@@ -81,12 +87,25 @@
                       <button class="btn btn-outline-warning btn-sm rounded-pill edit-button"
                         data-id="{{ patient.patients_id }}"
                         data-firstname="{{ patient.first_name }}"
-                        data-middlename="{{ patient.middle_name }}"
+                        data-middlename="{{ patient.middle_name|default:'' }}"
                         data-lastname="{{ patient.last_name }}"
                         data-eaddress="{{ patient.p_address }}"
                         data-ebday="{{ patient.date_of_birth|date:'Y-m-d' }}"
                         data-enum="{{ patient.p_number }}"
                         data-esex="{{ patient.sex }}"
+                        data-civilstatus="{{ patient.civil_status|default:'' }}"
+                        data-phicstatus="{{ patient.phic_status|default:'' }}"
+                        data-cctbeneficiary="{{ patient.cct_beneficiary|yesno:'true,false' }}"
+                        data-ispwd="{{ patient.is_pwd|yesno:'true,false' }}"
+                        data-philhealthnumber="{{ patient.philhealth_number|default:'' }}"
+                        data-philhealthcategory="{{ patient.philhealth_category|default:'' }}"
+                        data-familyhistoryhypertension="{{ patient.family_history_hypertension|yesno:'true,false' }}"
+                        data-familyhistorydiabetes="{{ patient.family_history_diabetes|yesno:'true,false' }}"
+                        data-familyhistorycancer="{{ patient.family_history_cancer|yesno:'true,false' }}"
+                        data-familyhistoryasthma="{{ patient.family_history_asthma|yesno:'true,false' }}"
+                        data-familyhistoryepilepsy="{{ patient.family_history_epilepsy|yesno:'true,false' }}"
+                        data-familyhistorytuberculosis="{{ patient.family_history_tuberculosis|yesno:'true,false' }}"
+                        data-familyhistoryothers="{{ patient.family_history_others|default:'' }}"
                         data-bs-toggle="modal"
                         data-bs-target="#editPatients">
                         <i class="bi bi-pencil-fill me-1"></i> Edit
@@ -154,6 +173,12 @@
       $('#viewPatientBday').val(button.data('vbdate'));
       $('#viewAddress').val(button.data('vaddress'));
       $('#viewSex').val(button.data('vsex'));
+      $('#viewSitio').val(button.data('vsitio') || 'Not specified');
+      $('#viewBarangay').val(button.data('vbarangay') || 'Not specified');
+      $('#viewCivilStatus').val(button.data('vcivilstatus') || 'Not specified');
+      $('#viewPhicStatus').val(button.data('vphicstatus') || 'Not specified');
+      $('#viewCctBeneficiary').val(button.data('vcctbeneficiary') || 'No');
+      $('#viewIsPwd').val(button.data('vispwd') || 'No');
       $('#viewReferralCount').val(button.data('vreferralcount'));
       $('#viewLastReferred').val(button.data('vlastreferred') || 'Not yet referred');
       $('#referral-id-input').val(button.data('id'));
@@ -192,14 +217,65 @@
     // Edit button logic (delegated)
     $('#patientTable').on('click', '.edit-button', function () {
       const button = $(this);
+      
+      // Basic Information
+      $('#edit-patient-id').val(button.data('id'));
       $('#editFname').val(button.data('firstname'));
-      $('#editMname').val(button.data('middlename'));
+      $('#editMname').val(button.data('middlename') || '');
       $('#editLname').val(button.data('lastname'));
       $('#editAddress').val(button.data('eaddress'));
       $('#editBday').val(button.data('ebday'));
       $('#ePhone').val(button.data('enum'));
       $('#eSex').val(button.data('esex'));
-      $('#referral-id-input').val(button.data('id'));
+      
+      // Additional Information
+      $('#editCivilStatus').val(button.data('civilstatus') || '');
+      $('#editPhicStatus').val(button.data('phicstatus') || '');
+      $('#editCctBeneficiary').prop('checked', button.data('cctbeneficiary') === 'true');
+      $('#editIsPwd').prop('checked', button.data('ispwd') === 'true');
+      
+      // PhilHealth Information
+      const philhealthNumber = button.data('philhealthnumber') || '';
+      const philhealthCategory = button.data('philhealthcategory') || '';
+      if (philhealthNumber || philhealthCategory) {
+        $('#editIsPhilhealthMember').prop('checked', true);
+        toggleEditPhilHealthFields();
+        $('#editPhilhealthNumber').val(philhealthNumber);
+        $('#editPhilhealthCategory').val(philhealthCategory);
+      } else {
+        $('#editIsPhilhealthMember').prop('checked', false);
+        toggleEditPhilHealthFields();
+      }
+      
+      // Family History
+      $('#editFamilyHistoryHypertension').prop('checked', button.data('familyhistoryhypertension') === 'true');
+      $('#editFamilyHistoryDiabetes').prop('checked', button.data('familyhistorydiabetes') === 'true');
+      $('#editFamilyHistoryCancer').prop('checked', button.data('familyhistorycancer') === 'true');
+      $('#editFamilyHistoryAsthma').prop('checked', button.data('familyhistoryasthma') === 'true');
+      $('#editFamilyHistoryEpilepsy').prop('checked', button.data('familyhistoryepilepsy') === 'true');
+      $('#editFamilyHistoryTuberculosis').prop('checked', button.data('familyhistorytuberculosis') === 'true');
+      $('#editFamilyHistoryOthers').val(button.data('familyhistoryothers') || '');
+      
+      // Handle address dropdown - check if address is in dropdown or needs manual entry
+      const address = button.data('eaddress');
+      if (address) {
+        const addressSelect = $('#editAddress');
+        const addressOptions = addressSelect.find('option');
+        let found = false;
+        addressOptions.each(function() {
+          if ($(this).val() === address) {
+            found = true;
+            return false;
+          }
+        });
+        if (!found && address !== '__manual__') {
+          // Address not in dropdown, use manual entry
+          addressSelect.val('__manual__').trigger('change');
+          $('#editAddressManual').val(address);
+        } else {
+          addressSelect.val(address);
+        }
+      }
     });
 
 

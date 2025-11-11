@@ -1,4 +1,5 @@
 from accounts.models import BHWRegistration, Doctors, Nurses
+from referrals.models import Referral
 
 def pending_users_count(request):
     """Context processor to add pending users count to all templates"""
@@ -58,4 +59,29 @@ def user_approval_status(request):
     return {
         'is_approved': is_approved,
         'is_pending': is_pending,
+    }
+
+
+def active_referrals_count(request):
+    """Context processor to add active referrals count to all templates"""
+    if request.user.is_authenticated:
+        if request.user.is_staff or request.user.is_superuser:
+            # For staff/admin, count all active referrals
+            active_count = Referral.objects.filter(status__in=['pending', 'in-progress']).count()
+        else:
+            # For regular users, count active referrals from their assigned facilities
+            user_facilities = request.user.shared_facilities.all()
+            if user_facilities.exists():
+                from django.db.models import Q
+                active_count = Referral.objects.filter(
+                    Q(facility__in=user_facilities) | Q(patient__facility__in=user_facilities),
+                    status__in=['pending', 'in-progress']
+                ).count()
+            else:
+                active_count = 0
+        return {
+            'active_referrals_count': active_count,
+        }
+    return {
+        'active_referrals_count': 0,
     }

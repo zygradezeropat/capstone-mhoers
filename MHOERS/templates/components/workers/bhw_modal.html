@@ -1,0 +1,422 @@
+<!-- BHW Registration Modal -->
+<div class="modal fade" id="bhwModal" tabindex="-1" role="dialog" aria-labelledby="bhwModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
+    <div class="modal-content modern-modal">
+      <form method="POST" action="{% url 'create_bhw' %}" class="bhw-form"> 
+        {% csrf_token %}
+        <div class="modal-header modern-header">
+          <div class="header-content">
+            <div class="icon-wrapper">
+              <i class="bi bi-person-badge-fill"></i>
+            </div>
+            <div class="title-content">
+              <h5 class="modal-title" id="bhwModalLabel">Add New BHW</h5>
+              <p class="modal-subtitle">Register a new Barangay Health Worker</p>
+            </div>
+          </div>
+          <button type="button" class="btn-close modern-close" data-bs-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+
+        <div class="modal-body modern-body">
+          {% if messages %}
+            <div class="alert alert-danger modern-alert">
+              <i class="bi bi-exclamation-triangle-fill me-2"></i>
+              {% for message in messages %}
+                <p class="mb-0">{{ message }}</p>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <!-- Personal Information Section -->
+          <div class="form-section">
+            <div class="section-header">
+              <i class="bi bi-person-circle"></i>
+              <h6>Personal Information</h6>
+            </div>
+            <div class="row g-3">
+              <div class="col-md-4">
+                <div class="form-floating">
+                  <input type="text" name="first_name" id="bhw_first_name" class="form-control modern-input" placeholder="First Name" required>
+                  <label for="bhw_first_name"><i class="bi bi-person me-2"></i>First Name</label>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-floating">
+                  <input type="text" name="last_name" id="bhw_last_name" class="form-control modern-input" placeholder="Last Name" required>
+                  <label for="bhw_last_name"><i class="bi bi-person me-2"></i>Last Name</label>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-floating">
+                  <input type="text" name="middle_name" id="bhw_middle_name" class="form-control modern-input" placeholder="Middle Name">
+                  <label for="bhw_middle_name"><i class="bi bi-person me-2"></i>Middle Name</label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Professional Information Section -->
+          <div class="form-section">
+            <div class="section-header">
+              <i class="bi bi-award"></i>
+              <h6>Professional Information</h6>
+            </div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <div class="form-floating">
+                  <input type="text" name="accreditation_number" id="bhw_accreditation_number" class="form-control modern-input" placeholder="Accreditation Number" required>
+                  <label for="bhw_accreditation_number"><i class="bi bi-shield-check me-2"></i>Accreditation Number</label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-floating">
+                  <input type="text" name="registration_number" id="bhw_registration_number" class="form-control modern-input" placeholder="Registration Number" required>
+                  <label for="bhw_registration_number"><i class="bi bi-card-checklist me-2"></i>Registration Number</label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-floating">
+                  <select name="bhw_sub_role" id="bhw_sub_role" class="form-select modern-select" required>
+                    <option value="" disabled selected>Select BHW Type</option>
+                    <option value="BHW">BHW (Barangay Health Worker)</option>
+                    <option value="BHW_NURSE">Nurse</option>
+                  </select>
+                  <label for="bhw_sub_role"><i class="bi bi-person-badge me-2"></i>BHW Type</label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-floating">
+                  <select name="facility" id="bhw_facility" class="form-select modern-select">
+                    <option value="" disabled selected>Select Assigned Facility (Optional)</option>
+                    {% for facility in facilities %}
+                      <option value="{{ facility.facility_id }}">{{ facility.name }}</option>
+                    {% endfor %}
+                  </select>
+                  <label for="bhw_facility"><i class="bi bi-building me-2"></i>Assigned Facility</label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Contact Information Section -->
+          <div class="form-section">
+            <div class="section-header">
+              <i class="bi bi-telephone"></i>
+              <h6>Contact Information</h6>
+            </div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <div class="form-floating">
+                  <input type="tel" name="phone" id="bhw_phone" class="form-control modern-input" placeholder="Phone Number" required>
+                  <label for="bhw_phone"><i class="bi bi-phone me-2"></i>Phone Number</label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-floating">
+                  <input type="email" name="email" id="bhw_email" class="form-control modern-input" placeholder="Email Address">
+                  <label for="bhw_email"><i class="bi bi-envelope me-2"></i>Email Address (Optional)</label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Address Information Section -->
+          <div class="form-section">
+            <div class="section-header">
+              <i class="bi bi-geo-alt"></i>
+              <h6>Address Information</h6>
+            </div>
+            <div class="row g-3">
+              <div class="col-md-12">
+                <div class="form-floating">
+                  <input type="text" name="street_address" id="bhw_street_address" class="form-control modern-input" placeholder="Street Address">
+                  <label for="bhw_street_address"><i class="bi bi-house me-2"></i>Street Address</label>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-floating">
+                  <input type="text" name="barangay" id="bhw_barangay" class="form-control modern-input" placeholder="Barangay" required>
+                  <label for="bhw_barangay"><i class="bi bi-geo-alt me-2"></i>Barangay</label>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-floating">
+                  <input type="text" name="city" id="bhw_city" class="form-control modern-input" placeholder="City">
+                  <label for="bhw_city"><i class="bi bi-building me-2"></i>City</label>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-floating">
+                  <input type="text" name="province" id="bhw_province" class="form-control modern-input" placeholder="Province">
+                  <label for="bhw_province"><i class="bi bi-map me-2"></i>Province</label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-floating">
+                  <input type="text" name="postal_code" id="bhw_postal_code" class="form-control modern-input" placeholder="Postal Code">
+                  <label for="bhw_postal_code"><i class="bi bi-mailbox me-2"></i>Postal Code</label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-floating">
+                  <input type="text" name="assigned_barangay" id="bhw_assigned_barangay" class="form-control modern-input" placeholder="Assigned Barangay">
+                  <label for="bhw_assigned_barangay"><i class="bi bi-pin-map me-2"></i>Assigned Barangay (Optional)</label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Account Security Section -->
+          <div class="form-section">
+            <div class="section-header">
+              <i class="bi bi-shield-lock"></i>
+              <h6>Account Security</h6>
+            </div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <div class="form-floating">
+                  <input type="text" name="username" id="bhw_username" class="form-control modern-input" placeholder="Username" required>
+                  <label for="bhw_username"><i class="bi bi-at me-2"></i>Username</label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-floating">
+                  <input type="email" name="email_account" id="bhw_email_account" class="form-control modern-input" placeholder="Email for Account" required>
+                  <label for="bhw_email_account"><i class="bi bi-envelope me-2"></i>Email for Account</label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-floating">
+                  <input type="password" name="password1" id="bhw_password1" class="form-control modern-input" placeholder="Create Password" required>
+                  <label for="bhw_password1"><i class="bi bi-key me-2"></i>Create Password</label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-floating">
+                  <input type="password" name="password2" id="bhw_password2" class="form-control modern-input" placeholder="Verify Password" required>
+                  <label for="bhw_password2"><i class="bi bi-key-fill me-2"></i>Verify Password</label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer modern-footer">
+          <button type="button" class="btn btn-outline-secondary modern-btn-cancel" data-bs-dismiss="modal">
+            <i class="bi bi-x-circle me-2"></i>Cancel
+          </button>
+          <button type="submit" class="btn btn-primary modern-btn-submit">
+            <i class="bi bi-person-plus me-2"></i>Create BHW Account
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+.modern-modal {
+  border: none;
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
+
+.modern-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 2rem;
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.icon-wrapper {
+  width: 60px;
+  height: 60px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+.title-content h5 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.modal-subtitle {
+  font-size: 0.9rem;
+  opacity: 0.9;
+  margin: 0;
+}
+
+.modern-close {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 10px;
+  color: white;
+  font-size: 1.5rem;
+  padding: 0.75rem;
+  opacity: 1;
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1050;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.modern-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+  color: white;
+  transform: scale(1.1);
+}
+
+.modern-close:focus {
+  box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.5);
+  color: white;
+}
+
+.modern-close span {
+  font-size: 1.5rem;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.modern-body {
+  padding: 2rem;
+  background: #f8f9fa;
+}
+
+.form-section {
+  background: white;
+  border-radius: 15px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e9ecef;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #f1f3f4;
+}
+
+.section-header i {
+  color: #667eea;
+  font-size: 1.2rem;
+}
+
+.section-header h6 {
+  color: #2c3e50;
+  font-weight: 600;
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.modern-input, .modern-select {
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  padding: 1rem 0.75rem;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  background: #f8f9fa;
+}
+
+.modern-input:focus, .modern-select:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+  background: white;
+}
+
+.form-floating > label {
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.modern-alert {
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+  color: white;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.modern-footer {
+  background: white;
+  border: none;
+  padding: 1.5rem 2rem;
+  border-top: 1px solid #e9ecef;
+}
+
+.modern-btn-cancel {
+  border: 2px solid #6c757d;
+  border-radius: 10px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.modern-btn-cancel:hover {
+  background: #6c757d;
+  border-color: #6c757d;
+  transform: translateY(-2px);
+}
+
+.modern-btn-submit {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 10px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.modern-btn-submit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+@media (max-width: 768px) {
+  .modal-xl {
+    max-width: 95%;
+  }
+  
+  .modern-header {
+    padding: 1.5rem;
+  }
+  
+  .modern-body {
+    padding: 1.5rem;
+  }
+  
+  .header-content {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+</style>
+

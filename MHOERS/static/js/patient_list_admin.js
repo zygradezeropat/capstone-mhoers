@@ -8,54 +8,58 @@ $(document).ready(function() {
   // Initialize DataTables with modern styling
   const tableConfig = {
     responsive: true,
-    dom: '<"row"<"col-sm-12 col-md-6"f>>' +
-         '<"row"<"col-sm-12"tr>>',
+    dom: '<"row mb-3"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+         '<"row"<"col-sm-12"tr>>' +
+         '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
     language: {
       search: "_INPUT_",
-      searchPlaceholder: "Search patient records..."
+      searchPlaceholder: "Search records..."
     },
-    paging: false,
-    info: false,
+    pageLength: 10,
     order: [[0, 'asc']],
     columnDefs: [
       { 
         targets: -1, 
         orderable: false 
-      },
-      {
-        targets: 0,
-        type: 'string',
-        render: function(data, type, row) {
-          if (type === 'sort') {
-            // Extract the ID number from the badge text for sorting
-            const idMatch = data.match(/ID: #(\d+)/);
-            return idMatch ? idMatch[1] : '';
-          }
-          return data;
-        }
       }
     ]
   };
 
-  if ($("#activeTable").length) {
+  // Initialize Active Table
+  if ($("#activeTable").length && !$.fn.DataTable.isDataTable('#activeTable')) {
     $("#activeTable").DataTable(tableConfig);
   }
-  if ($("#referredTable").length) {
+
+  // Initialize Referred Table
+  if ($("#referredTable").length && !$.fn.DataTable.isDataTable('#referredTable')) {
     $("#referredTable").DataTable(tableConfig);
   }
-  if ($("#allTable").length) {
+
+  // Initialize All Patients Table
+  if ($("#allTable").length && !$.fn.DataTable.isDataTable('#allTable')) {
     $("#allTable").DataTable(tableConfig);
   }
 
   // Button click events for View, Edit, Delete using event delegation
   $(document).on('click', '.edit-button', function() {
     const button = $(this);
+    
+    // Debug: Log data attributes to verify they're being read
+    console.log('Lifestyle data from database:', {
+      isSmoker: button.attr('data-is-smoker'),
+      smokingSticks: button.attr('data-smoking-sticks'),
+      isAlcoholic: button.attr('data-is-alcoholic'),
+      alcoholBottles: button.attr('data-alcohol-bottles'),
+      familyPlanning: button.attr('data-family-planning'),
+      familyPlanningType: button.attr('data-family-planning-type')
+    });
     $('#editPatientName').val(button.data('patient'));
     $('#editReferralDate').val(button.data('date'));
     $('#editReferFrom').val(button.data('from'));
     $('#editReferTo').val(button.data('to'));
     $('#editStatus').val(button.data('status'));
-    $('#editSex').val(button.data('sex'));
+    const sex = button.data('sex');
+    $('#editSex').val(sex);
     $('#editHeight').val(button.data('height'));
     $('#editWeight').val(button.data('weight'));
     $('#editTemperature').val(button.data('temperature'));
@@ -66,7 +70,65 @@ $(document).ready(function() {
     $('#editSymptoms').val(button.data('symptoms'));
     $('#editworkUp').val(button.data('workup'));
     $('#editDisease').val(button.data('disease'));
+    $('#editIcdCode').val(button.data('icd-code') || '');
+    
+    // Lifestyle/Social History fields - pulled from database
+    // Read raw attribute value (Django yesno filter outputs "True" or "False" as strings)
+    const isSmokerAttr = button.attr('data-is-smoker');
+    const isSmoker = isSmokerAttr === 'True';
+    $('#editIsSmoker').prop('checked', isSmoker);
+    const smokingSticks = button.attr('data-smoking-sticks') || '';
+    $('#editSmokingSticks').val(smokingSticks);
+    $('#editSmokingSticks').prop('disabled', !isSmoker);
+    
+    const isAlcoholicAttr = button.attr('data-is-alcoholic');
+    const isAlcoholic = isAlcoholicAttr === 'True';
+    $('#editIsAlcoholic').prop('checked', isAlcoholic);
+    const alcoholBottles = button.attr('data-alcohol-bottles') || '';
+    $('#editAlcoholBottles').val(alcoholBottles);
+    $('#editAlcoholBottles').prop('disabled', !isAlcoholic);
+    
+    const isFamilyPlanningAttr = button.attr('data-family-planning');
+    const isFamilyPlanning = isFamilyPlanningAttr === 'True';
+    $('#editFamilyPlanning').prop('checked', isFamilyPlanning);
+    const familyPlanningType = button.attr('data-family-planning-type') || '';
+    $('#editFamilyPlanningType').val(familyPlanningType);
+    $('#editFamilyPlanningType').prop('disabled', !isFamilyPlanning);
+    
+    // Menstrual History fields
+    $('#editMenarche').val(button.data('menarche') || '');
+    $('#editSexuallyActive').prop('checked', button.data('sexually-active') === true || button.data('sexually-active') === 'True');
+    $('#editNumberOfPartners').val(button.data('number-of-partners') || '');
+    $('#editIsMenopause').prop('checked', button.data('is-menopause') === true || button.data('is-menopause') === 'True');
+    $('#editMenopauseAge').val(button.data('menopause-age') || '');
+    const lmp = button.data('last-menstrual-period');
+    if (lmp) {
+      $('#editLastMenstrualPeriod').val(lmp);
+    }
+    $('#editPeriodDuration').val(button.data('period-duration') || '');
+    $('#editPeriodInterval').val(button.data('period-interval') || '');
+    $('#editPadsPerDay').val(button.data('pads-per-day') || '');
+    
+    // Pregnancy History fields
+    $('#editIsPregnant').prop('checked', button.data('is-pregnant') === true || button.data('is-pregnant') === 'True');
+    $('#editGravidity').val(button.data('gravidity') || '');
+    $('#editParity').val(button.data('parity') || '');
+    $('#editDeliveryType').val(button.data('delivery-type') || '');
+    $('#editFullTermBirths').val(button.data('full-term-births') || '');
+    $('#editPrematureBirths').val(button.data('premature-births') || '');
+    $('#editAbortions').val(button.data('abortions') || '');
+    $('#editLivingChildren').val(button.data('living-children') || '');
+    
     $('#referral-id-edit-input').val(button.data('id'));
+    
+    // Show/hide menstrual and pregnancy sections based on sex
+    if (sex && sex.toLowerCase() === 'female') {
+      $('#menstrualHistorySection').show();
+      $('#pregnancyHistorySection').show();
+    } else {
+      $('#menstrualHistorySection').hide();
+      $('#pregnancyHistorySection').hide();
+    }
   }); 
 
   $(document).on('click', '.delete-button', function() {

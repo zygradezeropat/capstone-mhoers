@@ -68,6 +68,9 @@ tmp/
 *.bak
 *.backup
 MHOERS.backup/
+MHOERS/backups/
+*.sql
+*.sql.gz
 
 # OS specific
 Thumbs.db

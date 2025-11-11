@@ -1715,7 +1715,7 @@ def predict_barangay_disease_peak_2025(target_barangays=None, csv_2023_path=None
                     'Disease': disease,
                     'Year': 2025,
                     'Month': m,
-                    'Predicted_Cases': max(0, round(p, 2))
+                    'Predicted_Cases': max(0, int(round(p)))
                 })
     
     if not predictions:
@@ -1752,12 +1752,13 @@ def predict_barangay_disease_peak_2025(target_barangays=None, csv_2023_path=None
             # Get all diseases for this month
             all_diseases = {}
             for _, row in month_data.iterrows():
-                all_diseases[row['Disease']] = row['Predicted_Cases']
+                # Convert to Python native types for JSON serialization
+                all_diseases[str(row['Disease'])] = int(row['Predicted_Cases'])
             
             if not peak.empty:
                 results[barangay][month] = {
-                    'peak_disease': peak.iloc[0]['Disease'],
-                    'peak_cases': peak.iloc[0]['Predicted_Cases'],
+                    'peak_disease': str(peak.iloc[0]['Disease']),
+                    'peak_cases': int(peak.iloc[0]['Predicted_Cases']),
                     'all_diseases': all_diseases
                 }
             else:

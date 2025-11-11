@@ -50,23 +50,57 @@ body {
 /* Desktop collapse toggle button */
 .sidebar-toggle-desktop {
   position: absolute;
-  top: 1rem;
-  right: 1rem;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%) translateX(50%);
   background: rgba(255,255,255,0.1);
   border: none;
-  border-radius: 6px;
-  padding: 0.5rem;
+  border-radius: 8px;
+  padding: 0;
   color: white;
-  font-size: 1rem;
+  font-size: 1.25rem;
   cursor: pointer;
   transition: all 0.3s ease;
-  z-index: 10;
-  display: block;
+  z-index: 101;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin: 0;
+  pointer-events: auto !important;
 }
 
 .sidebar-toggle-desktop:hover {
   background: rgba(255,255,255,0.2);
-  transform: scale(1.05);
+  transform: translateY(-50%) translateX(50%) scale(1.05);
+}
+
+.sidebar-toggle-desktop i {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* Nav item with collapse button */
+.nav-item-with-collapse {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.nav-item-with-collapse .nav-link {
+  padding-right: 3.5rem; /* Make room for collapse button */
+  flex: 1;
+  display: flex;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+  pointer-events: auto;
+  max-width: calc(100% - 50px); /* Prevent nav-link from covering button */
 }
 
 /* Hide desktop toggle button on mobile */
@@ -148,7 +182,13 @@ body {
 
 .sidebar.collapsed .sidebar-toggle-desktop {
   right: 0.5rem;
-  top: 0.5rem;
+  width: 28px;
+  height: 28px;
+  padding: 0.4rem;
+}
+
+.sidebar.collapsed .nav-item-with-collapse .nav-link {
+  padding-right: 0.5rem;
 }
 
 .sidebar.collapsed .header-logo {

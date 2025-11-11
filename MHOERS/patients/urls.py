@@ -11,6 +11,7 @@ from .views import (
     monthly_referral_counts_by_user,
     get_medical_history_followups,
     send_today_checkup_sms,
+    get_patient_sex,
 )
 
 urlpatterns = [
@@ -25,4 +26,5 @@ urlpatterns = [
     path('api/referral-counts-by-user/', monthly_referral_counts_by_user, name='referral_counts_by_user'),
     path('api/medical-history-followups/', get_medical_history_followups, name='medical_history_followups'),
     path('api/send-today-checkup-sms/<int:patient_id>/', send_today_checkup_sms, name='send_today_checkup_sms'),
+    path('get-patient-sex/<int:patient_id>/', get_patient_sex, name='get_patient_sex'),
 ]

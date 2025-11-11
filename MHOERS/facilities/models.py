@@ -5,6 +5,7 @@ class Facility(models.Model):
     facility_id = models.AutoField(primary_key=True)  
     name = models.CharField(max_length=100, unique=True)
     assigned_bhw = models.CharField(max_length=100)
+    barangay = models.CharField(max_length=100, blank=True, null=True)
     latitude = models.FloatField() 
     longitude = models.FloatField()
     users = models.ManyToManyField(User, related_name='shared_facilities')

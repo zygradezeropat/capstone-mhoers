@@ -9,17 +9,16 @@ class Disease(models.Model):
         ('medium', 'Medium'),
         ('low', 'Low'),
     ]
-
+    
     name = models.CharField(max_length=100, unique=True)  # Disease name (e.g., 'Flu')
+    icd_code = models.CharField(max_length=10, unique=True) # ICD code of the disease
     description = models.TextField()  # Detailed description of the disease
-    symptoms = models.TextField()  # Symptoms associated with the disease
     critical_level = models.CharField(
         max_length=10,
         choices=CRITICALITY_CHOICES,
         default='medium',
         help_text="Level of urgency for this disease"
     )
-    time_caters = models.FloatField()
 
     def __str__(self):
         return self.name

@@ -19,6 +19,7 @@ class HealthcareProviderForm(forms.Form):
 class FacilityForm(forms.Form):
     name = forms.CharField(max_length=100)
     assigned_bhw = forms.CharField(max_length=100)
+    barangay = forms.CharField(max_length=100, required=False)
     latitude = forms.FloatField()
     longitude = forms.FloatField()
 

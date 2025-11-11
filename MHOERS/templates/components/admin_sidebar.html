@@ -17,10 +17,6 @@
         <span class="username">{{ request.user.username }}</span>
       </div>
     </div>
-    <!-- Desktop collapse toggle button -->
-    <button class="sidebar-toggle-desktop" id="sidebarToggleDesktop">
-      <i class="bi bi-chevron-left" id="collapseIcon"></i>
-    </button>
     
     <!-- Close button for mobile -->
     <button class="sidebar-close" id="sidebarClose">
@@ -59,19 +55,26 @@
             <a href="{% url 'referrals:patient_list' %}" class="nav-link {% if active_page == 'patient_list' %}active{% endif %}" data-tooltip="Patients Referral">
               <i class="bi bi-menu-button-wide"></i>
               <span class="nav-label">Patients</span>
+              {% if active_referrals_count > 0 %}
+                <span class="notification-badge">{{ active_referrals_count }}</span>
+              {% endif %}
             </a>
           </li>
 
 
-          <li class="nav-item">
+          <li class="nav-item nav-item-with-collapse">
             <a
-              href="{% url 'health_facilities' %}"
-              class="nav-link {% if active_page == 'health_facilities' %}active{% endif %}"
-              data-tooltip="Health Facilities"
+              href="{% url 'diseases' %}"
+              class="nav-link {% if active_page == 'diseases' %}active{% endif %}"
+              data-tooltip="Diseases"
             >
-              <i class="bi bi-person-add"></i>
-              <span class="nav-label">Health Facilities</span>
+              <i class="bi bi-virus"></i>
+              <span class="nav-label">Diseases</span>
             </a>
+            <!-- Desktop collapse toggle button -->
+            <button class="sidebar-toggle-desktop" id="sidebarToggleDesktop" data-tooltip="Collapse Sidebar" type="button">
+              <i class="bi bi-chevron-left" id="collapseIcon"></i>
+            </button>
           </li>
           
           <li class="nav-item">

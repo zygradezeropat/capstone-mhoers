@@ -36,163 +36,203 @@
   <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
     <div class="modal-content shadow-xl border-0">
       <!-- Modal Header -->
-      <div class="modal-header bg-success text-white py-3">
+      <div class="modal-header bg-primary text-white py-3">
         <h5 class="modal-title mb-0" id="viewReferralLabel">
-          <i class="bi bi-person-lines-fill mr-2"></i>View Referral Details
+          <i class="bi bi-check-square mr-2"></i>View Referral Details
         </h5>
         <button type="button" class="btn-close btn-close-white close text-white" data-bs-dismiss="modal" data-dismiss="modal" aria-label="Close"></button>
       </div>
       <!-- Modal Body -->
       <div class="modal-body p-4">
-        <div class="row mb-12">
-          <div class="col-md-4">
-            <label class="font-weight-bold text-muted" for="viewPatientName">Patient Name</label>
-            <div class="input-group">
-              <div class="input-group-prepend">
-                <span class="input-group-text"><i class="bi bi-person"></i></span>
-              </div>
-              <input type="text" class="form-control bg-light" id="viewPatientName" disabled value="{{ patients.patient_id }}">
-            </div>
-          </div>
-          <div class="col-md-4">
-            <label class="font-weight-bold text-muted" for="viewReferralDate">Referral Date</label>
-            <div class="input-group">
-              <div class="input-group-prepend">
-                <span class="input-group-text"><i class="bi bi-calendar"></i></span>
-              </div>
-              <input type="text" class="form-control bg-light" id="viewReferralDate" disabled>
-            </div>
-          </div>
-
-          <div class="col-md-4">
-            <label class="font-weight-bold text-muted" for="viewStatus">Referral Status</label>
-            <div class="input-group">
-              <div class="input-group-prepend">
-                <span class="input-group-text"><i class="bi bi-info-circle"></i></span>
-              </div>
-              <input type="text" class="form-control bg-light" id="viewStatus" disabled>
-            </div>
-          </div>
-
-        </div>
-
+        {% load static %}
+        <link rel="stylesheet" href="{% static 'css/referral_modal_modern.css' %}">
         
-        <div class="row mb-12">
+        <!-- Patient Information Section -->
+        <div class="referral-section-card patient-info-section">
+          <div class="referral-section-header">
+            <i class="bi bi-person-fill"></i>
+            <h6 class="referral-section-title">Patient Information</h6>
+          </div>
+          <div class="row">
           <div class="col-md-4">
-            <label class="font-weight-bold text-muted" for="viewReferFrom">Refer From</label>
-            <div class="input-group">
-              <div class="input-group-prepend">
-                <span class="input-group-text"><i class="bi bi-arrow-left"></i></span>
-              </div>
-              <input type="text" class="form-control bg-light" id="viewReferFrom" disabled>
+              <div class="modern-form-group">
+                <label class="modern-form-label" for="viewPatientName">Patient Name</label>
+                <div class="modern-input-wrapper">
+            <input type="text" class="form-control bg-light" id="viewPatientName" disabled value="{{ patients.patient_id }}">
+                </div>
             </div>
           </div>
           <div class="col-md-4">
-            <label class="font-weight-bold text-muted" for="viewReferTo">Refer To</label>
-            <div class="input-group">
-              <div class="input-group-prepend">
-                <span class="input-group-text"><i class="bi bi-arrow-right"></i></span>
-              </div>
-              <input type="text" class="form-control bg-light" id="viewReferTo" disabled>
-            </div>
+              <div class="modern-form-group">
+                <label class="modern-form-label" for="viewReferralDate">Referral Date</label>
+                <div class="modern-input-wrapper">
+            <input type="text" class="form-control bg-light" id="viewReferralDate" disabled>
           </div>
-
+              </div>
+            </div>
           <div class="col-md-4">
-            <label class="font-weight-bold text-muted" for="viewSex">Sex</label>
-            <div class="input-group">
-              <div class="input-group-prepend">
-                <span class="input-group-text"><i class="bi bi-person"></i></span>
-              </div>
-              <input type="text" class="form-control bg-light" id="viewSex" disabled>
-            </div>
+              <div class="modern-form-group">
+                <label class="modern-form-label" for="viewStatus">Referral Status</label>
+                <div class="modern-input-wrapper">
+            <input type="text" class="form-control bg-light" id="viewStatus" disabled>
           </div>
-
+              </div>
         </div>
-        <div class="row mb-12">
           <div class="col-md-4">
-            <label class="font-weight-bold text-muted" for="viewHeight">Height by CM</label>
-            <div class="input-group">
-              <div class="input-group-prepend">
-                <span class="input-group-text"><i class="bi bi-info-circle"></i></span>
-              </div>
-              <input type="text" class="form-control bg-light" id="viewheight" disabled>
+              <div class="modern-form-group">
+                <label class="modern-form-label" for="viewReferFrom">Refer From</label>
+                <div class="modern-input-wrapper">
+            <input type="text" class="form-control bg-light" id="viewReferFrom" disabled>
+                </div>
             </div>
           </div>
-
           <div class="col-md-4">
-            <label class="font-weight-bold text-muted" for="viewHeight">Weight by KG</label>
-            <div class="input-group">
-              <div class="input-group-prepend">
-                <span class="input-group-text"><i class="bi bi-info-circle"></i></span>
-              </div>
-              <input type="text" class="form-control bg-light" id="viewWeight" disabled>
-            </div>
+              <div class="modern-form-group">
+                <label class="modern-form-label" for="viewReferTo">Refer To</label>
+                <div class="modern-input-wrapper">
+            <input type="text" class="form-control bg-light" id="viewReferTo" disabled>
           </div>
-
-          <div class="col-md-4">
-            <label class="font-weight-bold text-muted" for="viewHeight">Temperature by Celcius</label>
-            <div class="input-group">
-              <div class="input-group-prepend">
-                <span class="input-group-text"><i class="bi bi-info-circle"></i></span>
               </div>
-              <input type="text" class="form-control bg-light" id="viewtemperature" disabled>
+            </div>
+          <div class="col-md-4">
+              <div class="modern-form-group">
+                <label class="modern-form-label" for="viewSex">Sex</label>
+                <div class="modern-input-wrapper">
+            <input type="text" class="form-control bg-light" id="viewSex" disabled>
+          </div>
+              </div>
+        </div>
+          <div class="col-md-4">
+              <div class="modern-form-group">
+                <label class="modern-form-label" for="viewheight">Height (CM)</label>
+                <div class="modern-input-wrapper">
+            <input type="text" class="form-control bg-light" id="viewheight" disabled>
+          </div>
+              </div>
+            </div>
+          <div class="col-md-4">
+              <div class="modern-form-group">
+                <label class="modern-form-label" for="viewWeight">Weight (KG)</label>
+                <div class="modern-input-wrapper">
+            <input type="text" class="form-control bg-light" id="viewWeight" disabled>
+          </div>
+              </div>
             </div>
           </div>
         </div>
 
-        <div class="row mb-12">
+        <!-- Vital Signs Section -->
+        <div class="referral-section-card vitals-section">
+          <div class="referral-section-header">
+            <i class="bi bi-heart-pulse-fill"></i>
+            <h6 class="referral-section-title">Vital Signs</h6>
+          </div>
+          <div class="row">
           <div class="col-md-4">
-            <label class="font-weight-bold text-muted" for="viewSystolic">BP Systolic</label>
+              <div class="modern-form-group">
+                <label class="modern-form-label" for="viewtemperature">Temperature (°C)</label>
+                <div class="modern-input-wrapper">
             <div class="input-group">
               <div class="input-group-prepend">
-                <span class="input-group-text"><i class="bi bi-info-circle"></i></span>
+                      <span class="input-group-text"><i class="bi bi-thermometer-half"></i></span>
+                    </div>
+                    <input type="text" class="form-control bg-light" id="viewtemperature" disabled>
+                  </div>
+                </div>
               </div>
+            </div>
+            <div class="col-md-4">
+              <div class="modern-form-group">
+                <label class="modern-form-label" for="viewbpsystolic">BP Systolic</label>
+                <div class="modern-input-wrapper">
+                  <div class="input-group">
+                    <div class="input-group-prepend">
+                      <span class="input-group-text"><i class="bi bi-heart-pulse"></i></span>
+                    </div>
               <input type="text" class="form-control bg-light" id="viewbpsystolic" disabled>
+                  </div>
+                </div>
             </div>
           </div>
-
           <div class="col-md-4">
-            <label class="font-weight-bold text-muted" for="viewDiastolic">BP Diastolic</label>
+              <div class="modern-form-group">
+                <label class="modern-form-label" for="viewbpdiastolic">BP Diastolic</label>
+                <div class="modern-input-wrapper">
+            <div class="input-group">
+              <div class="input-group-prepend">
+                      <span class="input-group-text"><i class="bi bi-heart-pulse"></i></span>
+                    </div>
+                    <input type="text" class="form-control bg-light" id="viewbpdiastolic" disabled>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="modern-form-group">
+                <label class="modern-form-label" for="viewrespiratory">Respiratory Rate (/min)</label>
+                <div class="modern-input-wrapper">
+                  <div class="input-group">
+                    <div class="input-group-prepend">
+                      <span class="input-group-text"><i class="bi bi-wind"></i></span>
+                    </div>
+                    <input type="text" class="form-control bg-light" id="viewrespiratory" disabled>
+                  </div>
+                </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+              <div class="modern-form-group">
+                <label class="modern-form-label" for="viewdisease">Possible Disease</label>
+                <div class="modern-input-wrapper">
             <div class="input-group">
               <div class="input-group-prepend">
                 <span class="input-group-text"><i class="bi bi-info-circle"></i></span>
+                    </div>
+                    <input type="text" class="form-control bg-light" id="viewdisease" disabled>
+                  </div>
+                </div>
               </div>
-              <input type="text" class="form-control bg-light" id="viewbpdiastolic" disabled>
-            </div>
-          </div>
-
-          <div class="col-md-4">
-            <label class="font-weight-bold text-muted" for="viewRespiratory">Respiratory Rate</label>
-            <div class="input-group">
-              <div class="input-group-prepend">
-                <span class="input-group-text"><i class="bi bi-info-circle"></i></span>
-              </div>
-              <input type="text" class="form-control bg-light" id="viewrespiratory" disabled>
             </div>
           </div>
         </div>
 
-        <div class="row mb-12">
+        <!-- Clinical Notes Section -->
+        <div class="referral-section-card clinical-notes-section">
+          <div class="referral-section-header">
+            <i class="bi bi-clipboard-pulse-fill"></i>
+            <h6 class="referral-section-title">Clinical Notes</h6>
+          </div>
+          <div class="row">
           <div class="col-md-4">
-            <label class="font-weight-bold text-muted" for="viewcomplaint">Complaint</label>
+              <div class="modern-form-group">
+                <label class="modern-form-label" for="viewNotes">Complaint</label>
+                <div class="modern-input-wrapper">
             <div class="input-group">
               <div class="input-group-prepend">
                 <span class="input-group-text"><i class="bi bi-clipboard-pulse"></i></span>
               </div>
               <textarea class="form-control bg-light" id="viewNotes" rows="3" disabled></textarea>
+                  </div>
+                </div>
             </div>
           </div>
           <div class="col-md-4">
-            <label class="font-weight-bold text-muted" for="viewsymptoms">Symptoms</label>
+              <div class="modern-form-group">
+                <label class="modern-form-label" for="viewSymptoms">Symptoms</label>
+                <div class="modern-input-wrapper">
             <div class="input-group">
               <div class="input-group-prepend">
                 <span class="input-group-text"><i class="bi bi-clipboard-check"></i></span>
               </div>
               <textarea class="form-control bg-light" id="viewSymptoms" rows="3" disabled></textarea>
+                  </div>
+                </div>
             </div>
           </div>
           <div class="col-md-4">
-            <label class="font-weight-bold text-muted" for="workUp">Work Up</label>
+              <div class="modern-form-group">
+                <label class="modern-form-label" for="viewWorkUp">Work Up</label>
+                <div class="modern-input-wrapper">
             <div class="input-group">
               <div class="input-group-prepend">
                 <span class="input-group-text"><i class="bi bi-clipboard-pulse"></i></span>
@@ -201,15 +241,6 @@
             </div>
           </div>
         </div>
-
-        <div class="row mb-12">
-          <div class="col-md-12">
-            <label class="font-weight-bold text-muted" for="viewdisease">Possible Disease</label>
-            <div class="input-group">
-              <div class="input-group-prepend">
-                <span class="input-group-text"><i class="bi bi-info-circle"></i></span>
-              </div>
-              <input type="text" class="form-control bg-light" id="viewdisease" disabled>
             </div>
           </div>
         </div>
@@ -219,7 +250,7 @@
       <div class="modal-footer bg-light py-3">
         <form method="POST" action="{% url 'referrals:update_referral_status' %}">
           {% csrf_token %}
-          <input type="hidden" name="referral_id" id="referral-id-input">
+          <input type="hidden" name="referral_id" id="view-referral-id-input">
           <button type="submit" class="btn btn-success">
             <i class="bi bi-check-circle mr-2"></i>Referred
           </button>
@@ -243,172 +274,642 @@
       <!-- Modal Header -->
       <div class="modal-header bg-primary text-white py-3">
         <h5 class="modal-title mb-0" id="editReferralLabel">
-          <i class="bi bi-pencil-square mr-2"></i>Referral Active
+          <i class="bi bi-check-square mr-2"></i>Referral Active
         </h5>
         <button type="button" class="btn-close btn-close-white close text-white" data-bs-dismiss="modal" data-dismiss="modal" aria-label="Close"></button>
       </div>
       <!-- Modal Body -->
       <div class="modal-body p-4">
+        {% load static %}
+        <link rel="stylesheet" href="{% static 'css/referral_modal_modern.css' %}">
+        
+        <!-- Form Progress Indicator -->
+        <div class="form-progress">
+          <div class="form-progress-bar" style="width: 0%"></div>
+        </div>
+        
         <form id="editReferralForm" method="POST" action="{% url 'referrals:referred_referral_status' %}">
           {% csrf_token %}
-          <div class="row mb-12">
+          <!-- Patient Information Section -->
+          <div class="referral-section-card patient-info-section">
+            <div class="referral-section-header">
+              <i class="bi bi-person-fill"></i>
+              <h6 class="referral-section-title">Patient Information</h6>
+            </div>
+            <div class="row">
             <div class="col-md-4">
-              <label class="font-weight-bold text-muted" for="editPatientName">Patient Name</label>
-              <div class="input-group">
-                <div class="input-group-prepend">
-                  <span class="input-group-text"><i class="bi bi-person"></i></span>
-                </div>
-                <input type="text" class="form-control bg-light" id="editPatientName" value="{{ patients.patient_id }}" disabled>
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="editPatientName">Patient Name</label>
+                  <div class="modern-input-wrapper">
+              <input type="text" class="form-control bg-light" id="editPatientName" value="{{ patients.patient_id }}" disabled>
+                  </div>
               </div>
             </div>
             <div class="col-md-4">
-              <label class="font-weight-bold text-muted" for="editReferralDate">Referral Date</label>
-              <div class="input-group">
-                <div class="input-group-prepend">
-                  <span class="input-group-text"><i class="bi bi-calendar"></i></span>
-                </div>
-                <input type="datetime-local" class="form-control bg-light" id="editReferralDate" disabled>
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="editReferralDate">Referral Date</label>
+                  <div class="modern-input-wrapper">
+              <input type="datetime-local" class="form-control bg-light" id="editReferralDate" disabled>
+                  </div>
               </div>
             </div>
             <div class="col-md-4">
-              <label class="font-weight-bold text-muted" for="editReferFrom">Refer From</label>
-              <div class="input-group">
-                <div class="input-group-prepend">
-                  <span class="input-group-text"><i class="bi bi-arrow-left"></i></span>
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="editReferFrom">Refer From</label>
+                  <div class="modern-input-wrapper">
+              <input type="text" class="form-control bg-light" id="editReferFrom" disabled>
+            </div>
+          </div>
+              </div>
+            <div class="col-md-4">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="editSex">Sex</label>
+                  <div class="modern-input-wrapper">
+              <input type="text" class="form-control bg-light" id="editSex" disabled>
+                  </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="editHeight">Height (CM)</label>
+                  <div class="modern-input-wrapper">
+              <input type="text" class="form-control bg-light" id="editHeight" disabled>
+                  </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="editWeight">Weight (KG)</label>
+                  <div class="modern-input-wrapper">
+              <input type="text" class="form-control bg-light" id="editWeight" disabled>
+                  </div>
                 </div>
-                <input type="text" class="form-control bg-light" id="editReferFrom" disabled>
               </div>
             </div>
           </div>
 
-          <div class="row mb-12">
-            <div class="col-md-4">
-              <label class="font-weight-bold text-muted" for="editSex">Sex</label>
-              <div class="input-group">
-                <div class="input-group-prepend">
-                  <span class="input-group-text"><i class="bi bi-person"></i></span>
-                </div>
-                <input type="text" class="form-control bg-light" id="editSex" disabled>
-              </div>
+          <!-- Vital Signs Section -->
+          <div class="referral-section-card vitals-section">
+            <div class="referral-section-header">
+              <i class="bi bi-heart-pulse-fill"></i>
+              <h6 class="referral-section-title">Vital Signs</h6>
             </div>
+            <div class="row">
             <div class="col-md-4">
-              <label class="font-weight-bold text-muted" for="editHeight">Height by CM</label>
-              <div class="input-group">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="editTemperature">
+                    Temperature (°C)
+                    <i class="bi bi-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Normal: 36.1-37.2°C"></i>
+                  </label>
+                  <div class="modern-input-wrapper">
+                    <div class="input-group vital-sign-wrapper">
                 <div class="input-group-prepend">
-                  <span class="input-group-text"><i class="bi bi-info-circle"></i></span>
-                </div>
-                <input type="text" class="form-control bg-light" id="editHeight" disabled>
-              </div>
-            </div>
-            <div class="col-md-4">
-              <label class="font-weight-bold text-muted" for="editWeight">Weight by KG</label>
-              <div class="input-group">
-                <div class="input-group-prepend">
-                  <span class="input-group-text"><i class="bi bi-info-circle"></i></span>
-                </div>
-                <input type="text" class="form-control bg-light" id="editWeight" disabled>
-              </div>
-            </div>
-          </div>
-
-          <div class="row mb-12">
-            <div class="col-md-4">
-              <label class="font-weight-bold text-muted" for="editTemperature">Temperature by Celcius</label>
-              <div class="input-group">
-                <div class="input-group-prepend">
-                  <span class="input-group-text"><i class="bi bi-info-circle"></i></span>
+                        <span class="input-group-text"><i class="bi bi-thermometer-half"></i></span>
                 </div>
                 <input type="text" class="form-control bg-light" id="editTemperature" disabled>
+                      <span class="vital-indicator"></span>
+                    </div>
+                  </div>
               </div>
             </div>
             <div class="col-md-4">
-              <label class="font-weight-bold text-muted" for="editBpSystolic">Blood Pressure</label>
-              <div class="input-group">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="editBpSystolic">
+                    Blood Pressure (mmHg)
+                    <i class="bi bi-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Normal: 90-120/60-80 mmHg"></i>
+                  </label>
+                  <div class="modern-input-wrapper">
+                    <div class="input-group vital-sign-wrapper">
                 <div class="input-group-prepend">
-                  <span class="input-group-text"><i class="bi bi-info-circle"></i></span>
+                        <span class="input-group-text"><i class="bi bi-heart-pulse"></i></span>
                 </div>
                 <input type="text" class="form-control bg-light" id="editBpSystolic" disabled>
+                      <span class="vital-indicator"></span>
+                    </div>
+                  </div>
               </div>
             </div>
             <div class="col-md-4">
-              <label class="font-weight-bold text-muted" for="editRespiratory">Respiratory Rate</label>
-              <div class="input-group">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="editRespiratory">
+                    Respiratory Rate (/min)
+                    <i class="bi bi-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Normal: 12-20/min"></i>
+                  </label>
+                  <div class="modern-input-wrapper">
+                    <div class="input-group vital-sign-wrapper">
                 <div class="input-group-prepend">
-                  <span class="input-group-text"><i class="bi bi-info-circle"></i></span>
+                        <span class="input-group-text"><i class="bi bi-wind"></i></span>
+                      </div>
+                      <input type="text" class="form-control bg-light" id="editRespiratory" disabled>
+                      <span class="vital-indicator"></span>
+                    </div>
+                  </div>
                 </div>
-                <input type="text" class="form-control bg-light" id="editRespiratory" disabled>
               </div>
             </div>
           </div>
 
-          <div class="row mb-12">
+          <!-- Clinical Notes Section -->
+          <div class="referral-section-card clinical-notes-section">
+            <div class="referral-section-header">
+              <i class="bi bi-clipboard-pulse-fill"></i>
+              <h6 class="referral-section-title">Clinical Notes</h6>
+            </div>
+            <div class="row">
             <div class="col-md-4">
-              <label class="font-weight-bold text-muted" for="editComplaint">Complaint</label>
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="editComplaint">Complaint</label>
+                  <div class="modern-input-wrapper">
               <div class="input-group">
                 <div class="input-group-prepend">
                   <span class="input-group-text"><i class="bi bi-clipboard-pulse"></i></span>
                 </div>
-                <textarea class="form-control bg-light" id="editNotes" rows="3"></textarea>
+                      <textarea class="form-control bg-light" id="editNotes" rows="3" disabled></textarea>
+                    </div>
+                  </div>
               </div>
             </div>
             <div class="col-md-4">
-              <label class="font-weight-bold text-muted" for="editSymptoms">Symptoms</label>
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="editSymptoms">Symptoms</label>
+                  <div class="modern-input-wrapper">
               <div class="input-group">
                 <div class="input-group-prepend">
                   <span class="input-group-text"><i class="bi bi-clipboard-check"></i></span>
                 </div>
                 <textarea class="form-control bg-light" id="editSymptoms" rows="3" disabled></textarea>
+                    </div>
+                  </div>
               </div>
             </div>
             <div class="col-md-4">
-              <label class="font-weight-bold text-muted" for="editworkUp">Work Up</label>
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="editworkUp">Work Up</label>
+                  <div class="modern-input-wrapper">
               <div class="input-group">
                 <div class="input-group-prepend">
                   <span class="input-group-text"><i class="bi bi-clipboard-pulse"></i></span>
                 </div>
                 <textarea class="form-control bg-light" id="editworkUp" rows="3" disabled></textarea>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
-          <div class="row mb-12 mt-4">
-
+          <!-- MHO Actions Section -->
+          <div class="referral-section-card actions-section">
+            <div class="referral-section-header">
+              <i class="bi bi-journal-text"></i>
+              <h6 class="referral-section-title">MHO Notes & Actions</h6>
+            </div>
+            <div class="row">
+              <div class="col-md-4">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="editMhoFindings">
+                    Findings
+                    <i class="bi bi-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Enter clinical findings and observations"></i>
+                  </label>
+                  <div class="modern-input-wrapper">
+                    <div class="input-group">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                      </div>
+                      <textarea class="form-control" id="editMhoFindings" name="editMhoFindings" rows="3" placeholder="Type findings here..."></textarea>
+                    </div>
+                  </div>
+                </div>
+              </div>
             <div class="col-md-4">
-              <label class="font-weight-bold text-muted" for="editMhoNote">Findings</label>
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="editMhoNote">
+                    MHO Note / Actions
+                    <i class="bi bi-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Document actions taken and notes"></i>
+                  </label>
+                  <div class="modern-input-wrapper">
               <div class="input-group">
                 <div class="input-group-prepend">
                   <span class="input-group-text"><i class="bi bi-journal-text"></i></span>
+                      </div>
+                      <textarea class="form-control" id="editMhoNote" name="editMhoNote" rows="3" placeholder="Type notes here..."></textarea>
+                    </div>
+                  </div>
                 </div>
-                <textarea for="note" class="form-control bg-light" id="editMhoFindings" name="editMhoFindings" rows="3" placeholder="Type here.." ></textarea>
+              </div>
+              <div class="col-md-4">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="editMhoAdvice">
+                    Advice
+                    <i class="bi bi-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Provide recommendations and advice"></i>
+                  </label>
+                  <div class="modern-input-wrapper">
+                    <div class="input-group">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text"><i class="bi bi-lightbulb"></i></span>
+                      </div>
+                      <textarea class="form-control" id="editMhoAdvice" name="editMhoAdvice" rows="3" placeholder="Type advice here..."></textarea>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="editIcdCode">
+                    ICD Code
+                    <i class="bi bi-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Enter or select ICD-10 code"></i>
+                  </label>
+                  <div class="modern-input-wrapper">
+                    <div class="input-group">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text"><i class="bi bi-code-square"></i></span>
+                      </div>
+                      <input type="text" class="form-control" id="editIcdCode" name="editIcdCode" list="icdCodeOptions" placeholder="Select or type ICD code" autocomplete="off">
+                      <datalist id="icdCodeOptions">
+                        <option value="A00-B99">A00-B99 - Certain infectious and parasitic diseases</option>
+                        <option value="C00-D49">C00-D49 - Neoplasms</option>
+                        <option value="D50-D89">D50-D89 - Diseases of the blood and immune system</option>
+                        <option value="E00-E89">E00-E89 - Endocrine, nutritional and metabolic diseases</option>
+                        <option value="F01-F99">F01-F99 - Mental, behavioral and neurodevelopmental disorders</option>
+                        <option value="G00-G99">G00-G99 - Diseases of the nervous system</option>
+                        <option value="H00-H59">H00-H59 - Diseases of the eye and adnexa</option>
+                        <option value="H60-H95">H60-H95 - Diseases of the ear and mastoid process</option>
+                        <option value="I00-I99">I00-I99 - Diseases of the circulatory system</option>
+                        <option value="J00-J99">J00-J99 - Diseases of the respiratory system</option>
+                        <option value="K00-K95">K00-K95 - Diseases of the digestive system</option>
+                        <option value="L00-L99">L00-L99 - Diseases of the skin and subcutaneous tissue</option>
+                        <option value="M00-M99">M00-M99 - Diseases of the musculoskeletal system and connective tissue</option>
+                        <option value="N00-N99">N00-N99 - Diseases of the genitourinary system</option>
+                        <option value="O00-O9A">O00-O9A - Pregnancy, childbirth and the puerperium</option>
+                        <option value="P00-P96">P00-P96 - Certain conditions originating in the perinatal period</option>
+                        <option value="Q00-Q99">Q00-Q99 - Congenital malformations, deformations and chromosomal abnormalities</option>
+                        <option value="R00-R94">R00-R94 - Symptoms, signs and abnormal clinical and laboratory findings</option>
+                        <option value="S00-T88">S00-T88 - Injury, poisoning and certain other consequences of external causes</option>
+                        <option value="U00-U85">U00-U85 - Codes for special purposes</option>
+                        <option value="V00-Y99">V00-Y99 - External causes of morbidity</option>
+                        <option value="Z00-Z99">Z00-Z99 - Factors influencing health status and contact with health services</option>
+                        <option value="T14.1">T14.1 - Open Wounds</option>
+                        <option value="W54.99">W54.99 - Dog Bites</option>
+                        <option value="J06.9">J06.9 - Acute respiratory infections</option>
+                        <option value="J15">J15 - Pneumonia</option>
+                        <option value="I10.1">I10.1 - Hypertension Level 2</option>
+                        <option value="J18.9">J18.9 - Pneumonia, unspecified organism</option>
+                        <option value="K59.00">K59.00 - Constipation, unspecified</option>
+                        <option value="M79.3">M79.3 - Panniculitis, unspecified</option>
+                        <option value="R50.9">R50.9 - Fever, unspecified</option>
+                        <option value="R06.02">R06.02 - Shortness of breath</option>
+                        <option value="R51">R51 - Headache</option>
+                        <option value="K92.2">K92.2 - Gastrointestinal hemorrhage, unspecified</option>
+                        <option value="N39.0">N39.0 - Urinary tract infection, site not specified</option>
+                        <option value="E11.9">E11.9 - Type 2 diabetes mellitus without complications</option>
+                        <option value="I20.9">I20.9 - Angina pectoris, unspecified</option>
+                        <option value="Z00.00">Z00.00 - Encounter for general adult medical examination without abnormal findings</option>
+                      </datalist>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="editFollowup">
+                    Follow Up Date (if applicable)
+                    <i class="bi bi-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Schedule a follow-up appointment"></i>
+                  </label>
+                  <div class="modern-input-wrapper">
+                    <div class="input-group">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text"><i class="bi bi-calendar-check"></i></span>
+                      </div>
+                      <input type="date" class="form-control" id="editFollowup" name="editFollowup" placeholder="Select follow-up date">
+                    </div>
+                  </div>
+                </div>
+              </div>
               </div>
             </div>
 
-            <div class="col-md-4">
-              <label class="font-weight-bold text-muted" for="editMhoNote">MHO Note / Actions</label>
+          <!-- Lifestyle & Social History Section -->
+          <div class="referral-section-card" style="border-left: 4px solid #6f42c1;">
+            <div class="referral-section-header">
+              <i class="bi bi-heart-pulse-fill" style="color: #6f42c1;"></i>
+              <h6 class="referral-section-title">Lifestyle & Social History</h6>
+            </div>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="editIsSmoker">
+                    Smoker
+                    <i class="bi bi-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Is the patient a smoker?"></i>
+                  </label>
+                  <div class="form-check mt-2">
+                    <input class="form-check-input" type="checkbox" id="editIsSmoker" name="editIsSmoker">
+                    <label class="form-check-label" for="editIsSmoker">Yes</label>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="editSmokingSticks">Sticks/Packs per Day</label>
+                  <div class="modern-input-wrapper">
+                    <div class="input-group">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text"><i class="bi bi-cigar"></i></span>
+                      </div>
+                      <input type="number" class="form-control" id="editSmokingSticks" name="editSmokingSticks" min="0" placeholder="Enter number" disabled>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="editIsAlcoholic">
+                    Alcoholic
+                    <i class="bi bi-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Does the patient consume alcohol?"></i>
+                  </label>
+                  <div class="form-check mt-2">
+                    <input class="form-check-input" type="checkbox" id="editIsAlcoholic" name="editIsAlcoholic">
+                    <label class="form-check-label" for="editIsAlcoholic">Yes</label>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="editAlcoholBottles">Bottles per Year</label>
+                  <div class="modern-input-wrapper">
+                    <div class="input-group">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text"><i class="bi bi-cup-straw"></i></span>
+                      </div>
+                      <input type="number" class="form-control" id="editAlcoholBottles" name="editAlcoholBottles" min="0" placeholder="Enter number" disabled>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="editFamilyPlanning">
+                    Family Planning
+                    <i class="bi bi-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Is the patient using family planning?"></i>
+                  </label>
+                  <div class="form-check mt-2">
+                    <input class="form-check-input" type="checkbox" id="editFamilyPlanning" name="editFamilyPlanning">
+                    <label class="form-check-label" for="editFamilyPlanning">Yes</label>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="editFamilyPlanningType">Family Planning Type</label>
+                  <div class="modern-input-wrapper">
               <div class="input-group">
                 <div class="input-group-prepend">
-                  <span class="input-group-text"><i class="bi bi-journal-text"></i></span>
+                        <span class="input-group-text"><i class="bi bi-heart"></i></span>
+                      </div>
+                      <select class="form-control" id="editFamilyPlanningType" name="editFamilyPlanningType" disabled>
+                        <option value="">Select Type</option>
+                        <option value="DMPA">DMPA</option>
+                        <option value="IMPLANT">IMPLANT</option>
+                        <option value="IUD">IUD</option>
+                        <option value="PILLS">PILLS</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
-                <textarea for="note" class="form-control bg-light" id="editMhoNote" name="editMhoNote" rows="3" placeholder="Type here.." ></textarea>
+              </div>
               </div>
             </div>
 
+          <!-- Menstrual History Section (for Female patients) -->
+          <div class="referral-section-card" id="menstrualHistorySection" style="border-left: 4px solid #e91e63; display: none;">
+            <div class="referral-section-header">
+              <i class="bi bi-calendar-heart-fill" style="color: #e91e63;"></i>
+              <h6 class="referral-section-title">Menstrual History</h6>
+            </div>
+            <div class="row">
+              <div class="col-md-4">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="editMenarche">Menarche (Age)</label>
+                  <div class="modern-input-wrapper">
+                    <div class="input-group">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text"><i class="bi bi-calendar"></i></span>
+                      </div>
+                      <input type="number" class="form-control" id="editMenarche" name="editMenarche" min="0" max="20" placeholder="Age">
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="editSexuallyActive">
+                    Sexually Active
+                  </label>
+                  <div class="form-check mt-2">
+                    <input class="form-check-input" type="checkbox" id="editSexuallyActive" name="editSexuallyActive">
+                    <label class="form-check-label" for="editSexuallyActive">Yes</label>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="editNumberOfPartners">Number of Partners</label>
+                  <div class="modern-input-wrapper">
+                    <div class="input-group">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text"><i class="bi bi-people"></i></span>
+                      </div>
+                      <input type="number" class="form-control" id="editNumberOfPartners" name="editNumberOfPartners" min="0" placeholder="Enter number">
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="editIsMenopause">
+                    Menopause
+                  </label>
+                  <div class="form-check mt-2">
+                    <input class="form-check-input" type="checkbox" id="editIsMenopause" name="editIsMenopause">
+                    <label class="form-check-label" for="editIsMenopause">Yes</label>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="editMenopauseAge">Menopause Age</label>
+                  <div class="modern-input-wrapper">
+                    <div class="input-group">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text"><i class="bi bi-calendar"></i></span>
+                      </div>
+                      <input type="number" class="form-control" id="editMenopauseAge" name="editMenopauseAge" min="0" max="100" placeholder="Age">
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="editLastMenstrualPeriod">Last Menstrual Period (LMP)</label>
+                  <div class="modern-input-wrapper">
+                    <div class="input-group">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
+                      </div>
+                      <input type="date" class="form-control" id="editLastMenstrualPeriod" name="editLastMenstrualPeriod">
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="editPeriodDuration">Period Duration (Days)</label>
+                  <div class="modern-input-wrapper">
+                    <div class="input-group">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text"><i class="bi bi-clock"></i></span>
+                      </div>
+                      <input type="number" class="form-control" id="editPeriodDuration" name="editPeriodDuration" min="0" placeholder="Days">
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="editPeriodInterval">Period Interval (Days)</label>
+                  <div class="modern-input-wrapper">
+                    <div class="input-group">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text"><i class="bi bi-calendar-range"></i></span>
+                      </div>
+                      <input type="number" class="form-control" id="editPeriodInterval" name="editPeriodInterval" min="0" placeholder="Days between">
+                    </div>
+                  </div>
+                </div>
+              </div>
             <div class="col-md-4">
-              <label class="font-weight-bold text-muted" for="editMhoAdvice">Advice</label>
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="editPadsPerDay">Pads per Day</label>
+                  <div class="modern-input-wrapper">
               <div class="input-group">
                 <div class="input-group-prepend">
-                  <span class="input-group-text"><i class="bi bi-journal-text"></i></span>
+                        <span class="input-group-text"><i class="bi bi-123"></i></span>
+                      </div>
+                      <input type="number" class="form-control" id="editPadsPerDay" name="editPadsPerDay" min="0" placeholder="Number">
+                    </div>
+                  </div>
                 </div>
-                <textarea for="advice" class="form-control bg-light" id="editMhoAdvice" name="editMhoAdvice" rows="3" placeholder="Type here.." ></textarea>
               </div>
             </div>
-            <div class="col-md-12">
-              <label class="font-weight-bold text-muted" for="editFollowup">Follow Up Date (if applicable)</label>
+          </div>
+
+          <!-- Pregnancy History Section (for Female patients) -->
+          <div class="referral-section-card" id="pregnancyHistorySection" style="border-left: 4px solid #ff6b9d; display: none;">
+            <div class="referral-section-header">
+              <i class="bi bi-heart-fill" style="color: #ff6b9d;"></i>
+              <h6 class="referral-section-title">Pregnancy History</h6>
+            </div>
+            <div class="row">
+              <div class="col-md-4">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="editIsPregnant">
+                    Currently Pregnant
+                  </label>
+                  <div class="form-check mt-2">
+                    <input class="form-check-input" type="checkbox" id="editIsPregnant" name="editIsPregnant">
+                    <label class="form-check-label" for="editIsPregnant">Yes</label>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="editGravidity">Gravidity</label>
+                  <div class="modern-input-wrapper">
+                    <div class="input-group">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text"><i class="bi bi-123"></i></span>
+                      </div>
+                      <input type="number" class="form-control" id="editGravidity" name="editGravidity" min="0" placeholder="Number of pregnancies">
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="editParity">Parity</label>
+                  <div class="modern-input-wrapper">
+                    <div class="input-group">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text"><i class="bi bi-123"></i></span>
+                      </div>
+                      <input type="number" class="form-control" id="editParity" name="editParity" min="0" placeholder="Number of births">
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="editDeliveryType">Type of Delivery</label>
+                  <div class="modern-input-wrapper">
+                    <div class="input-group">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text"><i class="bi bi-hospital"></i></span>
+                      </div>
+                      <input type="text" class="form-control" id="editDeliveryType" name="editDeliveryType" placeholder="e.g., Normal, CS">
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="editFullTermBirths">Full Term Births</label>
+                  <div class="modern-input-wrapper">
+                    <div class="input-group">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text"><i class="bi bi-check-circle"></i></span>
+                      </div>
+                      <input type="number" class="form-control" id="editFullTermBirths" name="editFullTermBirths" min="0" placeholder="Number">
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="editPrematureBirths">Premature Births</label>
+                  <div class="modern-input-wrapper">
+                    <div class="input-group">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text"><i class="bi bi-exclamation-circle"></i></span>
+                      </div>
+                      <input type="number" class="form-control" id="editPrematureBirths" name="editPrematureBirths" min="0" placeholder="Number">
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="editAbortions">Abortions</label>
+                  <div class="modern-input-wrapper">
+                    <div class="input-group">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text"><i class="bi bi-x-circle"></i></span>
+                      </div>
+                      <input type="number" class="form-control" id="editAbortions" name="editAbortions" min="0" placeholder="Number">
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="editLivingChildren">Living Children</label>
+                  <div class="modern-input-wrapper">
               <div class="input-group">
                 <div class="input-group-prepend">
-                  <span class="input-group-text"><i class="bi bi-calendar"></i></span>
+                        <span class="input-group-text"><i class="bi bi-heart-fill"></i></span>
+                      </div>
+                      <input type="number" class="form-control" id="editLivingChildren" name="editLivingChildren" min="0" placeholder="Number">
+                    </div>
+                  </div>
                 </div>
-                <input type="date" class="form-control bg-light" id="editFollowup" name="editFollowup" placeholder="Select follow-up date">
               </div>
             </div>
           </div>          
@@ -417,19 +918,33 @@
       
 
       <!-- Modal Footer -->
-      <div class="modal-footer bg-light py-3">
+      <div class="modal-footer bg-light py-3 d-flex justify-content-between align-items-center">
+        <div class="text-muted small">
+          <i class="bi bi-keyboard"></i> Shortcuts: <kbd>Ctrl+S</kbd> Save Draft | <kbd>Ctrl+Enter</kbd> Submit
+        </div>
+        <div>
         <input type="hidden" name="referral_id_r" id="referral-id-edit-input">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-dismiss="modal">
+          <button type="button" class="btn btn-secondary modern-btn" data-bs-dismiss="modal" data-dismiss="modal">
           <i class="bi bi-x-circle mr-2"></i>Cancel
         </button>
-        <button type="submit" class="btn btn-success">
+          <button type="submit" class="btn btn-success modern-btn">
           <i class="bi bi-check-circle mr-2"></i>Done Referred
         </button>
+        </div>
       </div>
     </form>
     </div>
   </div>
 </div>
+
+<!-- Include Modern JavaScript -->
+<script src="{% static 'js/referral_modal_modern.js' %}"></script>
+<script>
+  // Initialize tooltips
+  $(document).ready(function() {
+    $('[data-bs-toggle="tooltip"]').tooltip();
+  });
+</script>
 
 <!-- End of Edit Referral Modal -->
 
@@ -467,3 +982,4 @@
   </div>
 </div>
 <!-- End of Reject Referral Modal -->
+

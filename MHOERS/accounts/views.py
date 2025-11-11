@@ -27,6 +27,7 @@ def profile(request):
     - total/pending/in-progress/completed referrals (shared per facility)
     - assigned facility info
     - recent referral activities
+    - If user is staff/admin, show all activities across all facilities
     """
     # Get the facility (or facilities) that this user is assigned to
     facilities = request.user.shared_facilities.all()
@@ -34,18 +35,25 @@ def profile(request):
     # Just in case a user belongs to multiple facilities
     facility = facilities.first() if facilities.exists() else None
 
-    # Get referrals for all facilities the user belongs to
-    user_referrals = Referral.objects.filter(facility__in=facilities)
+    # If user is staff/admin, get referrals from ALL facilities
+    # Otherwise, get referrals only from their assigned facilities
+    if request.user.is_staff or request.user.is_superuser:
+        # Staff/admin can see all referrals across all facilities
+        user_referrals = Referral.objects.all()
+        facility = None  # Not assigned to a specific facility
+    else:
+        # Regular users see only their facility's referrals
+        user_referrals = Referral.objects.filter(facility__in=facilities)
 
-    # Referral stats shared within facility
+    # Referral stats
     total_referrals = user_referrals.count()
     pending_referrals = user_referrals.filter(status='pending').count()
     active_referrals = user_referrals.filter(status='in-progress').count()
     completed_referrals = user_referrals.filter(status='completed').count()
 
-    # Recent 10 referrals for this facility
+    # Recent 10 referrals
     recent_referrals = (
-        user_referrals.select_related('patient', 'facility')
+        user_referrals.select_related('patient', 'patient__facility', 'facility')
         .order_by('-created_at')[:10]
     )
 
@@ -69,6 +77,13 @@ def profile(request):
         if hasattr(r.patient, 'last_name'):
             patient_name = f"{r.patient.first_name} {r.patient.last_name}".strip()
 
+        # Get facility name - check both referral.facility and patient.facility
+        facility_name = "No Facility"
+        if r.facility:
+            facility_name = r.facility.name
+        elif r.patient and r.patient.facility:
+            facility_name = r.patient.facility.name
+
         recent_activities.append({
             'type': activity_type,
             'icon': activity_icon,
@@ -76,8 +91,20 @@ def profile(request):
             'status': r.status,
             'badge_class': badge_class,
             'created_at': r.created_at,
-            'facility': r.facility.name if r.facility else "No Facility",
+            'facility': facility_name,
         })
+
+    # Get user consent information
+    from .models import UserConsent, AccountDeletionRequest
+    try:
+        user_consent = request.user.consent
+    except UserConsent.DoesNotExist:
+        user_consent = None
+    
+    try:
+        deletion_request = request.user.deletion_request
+    except AccountDeletionRequest.DoesNotExist:
+        deletion_request = None
 
     context = {
         'active_page': 'profile',
@@ -87,6 +114,8 @@ def profile(request):
         'active_referrals': active_referrals,
         'completed_referrals': completed_referrals,
         'recent_activities': recent_activities,
+        'user_consent': user_consent,
+        'deletion_request': deletion_request,
     }
     return render(request, 'accounts/profile.html', context)
 
@@ -208,7 +237,79 @@ def health_facilities(request):
 @login_required
 @never_cache
 def report_analytics(request):
-    return render(request, 'analytics/report_analytics.html', {'active_page': 'report_analytics'})
+    from facilities.models import Facility
+    
+    # Get facilities based on user permissions
+    if request.user.is_staff or request.user.is_superuser:
+        facilities = Facility.objects.all().order_by('name')
+    else:
+        facilities = request.user.shared_facilities.all().order_by('name')
+    
+    return render(request, 'analytics/report_analytics.html', {
+        'active_page': 'report_analytics',
+        'facilities': facilities
+    })
+
+@login_required
+@never_cache
+def diseases(request):
+    from analytics.models import Disease
+    
+    diseases = Disease.objects.all().order_by('icd_code')
+    
+    return render(request, 'analytics/diseases.html', {
+        'active_page': 'diseases',
+        'diseases': diseases
+    })
+
+@login_required
+@never_cache
+def add_disease(request):
+    from analytics.models import Disease
+    from django.contrib import messages
+    
+    if request.method == 'POST':
+        try:
+            icd_code = request.POST.get('icd_code', '').strip()
+            name = request.POST.get('name', '').strip()
+            description = request.POST.get('description', '').strip()
+            critical_level = request.POST.get('critical_level', 'medium')
+            
+            # Validate required fields
+            if not all([icd_code, name, description]):
+                messages.error(request, "All required fields must be filled.")
+                return redirect('diseases')
+            
+            # Validate critical level
+            if critical_level not in ['high', 'medium', 'low']:
+                critical_level = 'medium'
+            
+            # Check if ICD code already exists
+            if Disease.objects.filter(icd_code=icd_code).exists():
+                messages.error(request, f"Disease with ICD code '{icd_code}' already exists.")
+                return redirect('diseases')
+            
+            # Check if name already exists
+            if Disease.objects.filter(name=name).exists():
+                messages.error(request, f"Disease '{name}' already exists.")
+                return redirect('diseases')
+            
+            # Create new disease
+            disease = Disease.objects.create(
+                icd_code=icd_code,
+                name=name,
+                description=description,
+                critical_level=critical_level
+            )
+            
+            messages.success(request, f"Disease '{name}' (ICD: {icd_code}) has been successfully added!")
+            return redirect('diseases')
+            
+        except Exception as e:
+            messages.error(request, f"Error adding disease: {str(e)}")
+            return redirect('diseases')
+    
+    return redirect('diseases')
 
 def heatmap(request):
     return render(request, 'analytics/heatmap.html', {'active_page': 'heatmap'})
@@ -330,11 +431,25 @@ def user_login(request):
                                      Doctors.objects.filter(user=user).exists(), 
                                      Nurses.objects.filter(user=user).exists()]):
                 login(request, user)
+                # Log the login
+                from .models import LoginLog
+                LoginLog.objects.create(
+                    user=user,
+                    ip_address=request.META.get('REMOTE_ADDR'),
+                    user_agent=request.META.get('HTTP_USER_AGENT', '')[:255]
+                )
                 return redirect('admin_dashboard' if user.is_staff else 'home')
             
             # If pending, allow login but redirect to pending dashboard
             if is_pending:
                 login(request, user)
+                # Log the login
+                from .models import LoginLog
+                LoginLog.objects.create(
+                    user=user,
+                    ip_address=request.META.get('REMOTE_ADDR'),
+                    user_agent=request.META.get('HTTP_USER_AGENT', '')[:255]
+                )
                 return redirect('pending_dashboard')
             
             # Fallback: block if neither approved nor pending
@@ -410,6 +525,116 @@ def create_doctor(request):
     return redirect('user_management')
 
 
+@login_required
+def create_bhw(request):
+    if request.method == 'POST':
+        try:
+            # Get form data
+            first_name = request.POST.get('first_name')
+            last_name = request.POST.get('last_name')
+            middle_name = request.POST.get('middle_name', '')
+            phone = request.POST.get('phone')
+            email = request.POST.get('email_account') or request.POST.get('email', '')
+            username = request.POST.get('username')
+            password1 = request.POST.get('password1')
+            password2 = request.POST.get('password2')
+            accreditation_number = request.POST.get('accreditation_number')
+            registration_number = request.POST.get('registration_number')
+            bhw_sub_role = request.POST.get('bhw_sub_role')
+            facility_id = request.POST.get('facility', '')
+            street_address = request.POST.get('street_address', '')
+            barangay = request.POST.get('barangay', '')
+            city = request.POST.get('city', '')
+            province = request.POST.get('province', '')
+            postal_code = request.POST.get('postal_code', '')
+            assigned_barangay = request.POST.get('assigned_barangay', '')
+            
+            # Validate required fields
+            if not all([first_name, last_name, phone, username, password1, password2, 
+                       accreditation_number, registration_number, bhw_sub_role, barangay]):
+                messages.error(request, "All required fields must be filled.")
+                return redirect('user_management')
+            
+            # Validate passwords
+            if password1 != password2:
+                messages.error(request, "Passwords do not match.")
+                return redirect('user_management')
+            
+            # Check if username already exists
+            if User.objects.filter(username=username).exists():
+                messages.error(request, "Username already taken.")
+                return redirect('user_management')
+            
+            # Check if email already exists (if provided)
+            if email and User.objects.filter(email=email).exists():
+                messages.error(request, "Email already registered.")
+                return redirect('user_management')
+            
+            # Get facility if provided
+            facility = None
+            if facility_id:
+                try:
+                    facility = Facility.objects.get(facility_id=facility_id)
+                    if not assigned_barangay:
+                        assigned_barangay = facility.name
+                except Facility.DoesNotExist:
+                    pass
+            
+            # Create User account
+            user = User.objects.create_user(
+                username=username,
+                password=password1,
+                email=email,
+                first_name=first_name,
+                last_name=last_name,
+            )
+            
+            # Create BHW registration
+            bhw_registration = BHWRegistration.objects.create(
+                user=user,
+                first_name=first_name,
+                last_name=last_name,
+                middle_name=middle_name,
+                phone=phone,
+                street_address=street_address,
+                barangay=barangay,
+                city=city,
+                province=province,
+                postal_code=postal_code,
+                accreditationNumber=accreditation_number,
+                registrationNumber=registration_number,
+                bhw_sub_role=bhw_sub_role,
+                assigned_barangay=assigned_barangay,
+                facility=facility,
+                status='APPROVED',  # Auto-approve when created by admin
+                approved_by=request.user,
+                approved_at=timezone.now(),
+                created_at=timezone.now()
+            )
+            
+            # Add to BHW group
+            try:
+                bhw_group = Group.objects.get(name='BHW')
+            except Group.DoesNotExist:
+                bhw_group = Group.objects.create(name='BHW')
+            
+            user.groups.add(bhw_group)
+            
+            # Add user to facility if provided
+            if facility:
+                facility.users.add(user)
+            
+            messages.success(request, f"BHW {first_name} {last_name} has been successfully registered!")
+            return redirect('user_management')
+            
+        except Exception as e:
+            messages.error(request, f"Error creating BHW: {str(e)}")
+            print(f"Error details: {str(e)}")
+            return redirect('user_management')
+    
+    return redirect('user_management')
+
+
 def register(request):
     if request.method == 'POST':
         # Get basic user information
@@ -450,6 +675,18 @@ def register(request):
             messages.error(request, "Username already taken.")
             return redirect('register')
 
+        # Validate consent checkboxes
+        privacy_policy = request.POST.get('privacy_policy')
+        data_processing = request.POST.get('data_processing')
+        
+        if not privacy_policy:
+            messages.error(request, "You must accept the Privacy Policy to register.")
+            return redirect('register')
+        
+        if not data_processing:
+            messages.error(request, "You must consent to data processing to register.")
+            return redirect('register')
+
         try:
             # Create User account with hashed password
             user = User.objects.create_user(
@@ -457,6 +694,18 @@ def register(request):
                 password=password1,
                 first_name=first_name,
                 last_name=last_name,
+            )
+            
+            # Create consent record
+            from .models import UserConsent
+            UserConsent.objects.create(
+                user=user,
+                privacy_policy_accepted=True,
+                privacy_policy_accepted_at=timezone.now(),
+                data_processing_consent=True,
+                data_processing_consent_at=timezone.now(),
+                marketing_consent=bool(request.POST.get('marketing_consent', False)),
+                consent_version='1.0'
             )
             
             # Determine the final role and create appropriate profile
@@ -809,5 +1058,115 @@ def change_password(request):
             
         except Exception as e:
             messages.error(request, f'Error changing password: {str(e)}')
+    
+    return redirect('profile')
+
+
+def privacy_policy(request):
+    """Display privacy policy page"""
+    return render(request, 'accounts/privacy_policy.html', {'active_page': 'privacy_policy'})
+
+
+@login_required
+@never_cache
+def manage_consent(request):
+    """Manage user consent preferences"""
+    from .models import UserConsent
+    from .forms import ConsentForm
+    from datetime import timedelta
+    
+    # Get or create consent record
+    consent, created = UserConsent.objects.get_or_create(user=request.user)
+    
+    if request.method == 'POST':
+        form = ConsentForm(request.POST, instance=consent)
+        if form.is_valid():
+            consent_obj = form.save(commit=False)
+            
+            # Update timestamps if consent changed
+            if consent_obj.privacy_policy_accepted and not consent.privacy_policy_accepted:
+                consent_obj.privacy_policy_accepted_at = timezone.now()
+            if consent_obj.data_processing_consent and not consent.data_processing_consent:
+                consent_obj.data_processing_consent_at = timezone.now()
+            
+            consent_obj.consent_version = '1.0'  # Update when policy changes
+            consent_obj.save()
+            
+            messages.success(request, 'Consent preferences updated successfully!')
+            return redirect('profile')
+    else:
+        form = ConsentForm(instance=consent)
+    
+    return render(request, 'accounts/manage_consent.html', {
+        'form': form,
+        'consent': consent,
+        'active_page': 'profile'
+    })
+
+
+@login_required
+@never_cache
+def request_account_deletion(request):
+    """Handle account deletion requests (GDPR Right to be Forgotten)"""
+    from .models import AccountDeletionRequest
+    from .forms import AccountDeletionRequestForm
+    from datetime import timedelta
+    
+    # Check if user already has a pending deletion request
+    existing_request = AccountDeletionRequest.objects.filter(
+        user=request.user,
+        status__in=['PENDING', 'PROCESSING']
+    ).first()
+    
+    if existing_request:
+        messages.warning(request, 'You already have a pending account deletion request.')
+        return redirect('profile')
+    
+    if request.method == 'POST':
+        form = AccountDeletionRequestForm(request.POST)
+        if form.is_valid():
+            # Create deletion request
+            deletion_request = AccountDeletionRequest.objects.create(
+                user=request.user,
+                status='PENDING',
+                scheduled_deletion_date=timezone.now() + timedelta(days=30)  # 30-day grace period
+            )
+            
+            # TODO: Send confirmation email to user
+            # TODO: Send notification to administrators
+            
+            messages.success(
+                request,
+                'Your account deletion request has been received. Your account will be deleted after 30 days. '
+                'You can cancel this request from your profile page.'
+            )
+            return redirect('profile')
+    else:
+        form = AccountDeletionRequestForm()
+    
+    return render(request, 'accounts/request_deletion.html', {
+        'form': form,
+        'active_page': 'profile'
+    })
+
+
+@login_required
+@never_cache
+def cancel_deletion_request(request):
+    """Cancel a pending account deletion request"""
+    from .models import AccountDeletionRequest
+    
+    deletion_request = AccountDeletionRequest.objects.filter(
+        user=request.user,
+        status__in=['PENDING', 'PROCESSING']
+    ).first()
+    
+    if deletion_request:
+        deletion_request.status = 'CANCELLED'
+        deletion_request.cancellation_reason = 'Cancelled by user'
+        deletion_request.save()
+        messages.success(request, 'Account deletion request has been cancelled.')
+    else:
+        messages.error(request, 'No pending deletion request found.')
     
     return redirect('profile')

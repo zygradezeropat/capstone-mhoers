@@ -69,6 +69,7 @@ def create_facility(request):
                 Facility.objects.create(
                     name=name,
                     assigned_bhw=form.cleaned_data['assigned_bhw'],
+                    barangay=form.cleaned_data.get('barangay', ''),
                     latitude=form.cleaned_data['latitude'],
                     longitude=form.cleaned_data['longitude']
                 )
@@ -87,6 +88,7 @@ def facility_list(request):
         'facility_id': facility.facility_id,
         'name': facility.name,
         'assigned_bhw': facility.assigned_bhw,
+        'barangay': facility.barangay or '',
         'latitude': facility.latitude,
         'longitude': facility.longitude,
         'user_ids': [user.id for user in facility.users.all()]
@@ -111,6 +113,7 @@ def update_facility(request):
 
             facility.name = new_name
             facility.assigned_bhw = f"{request.POST.get('first_name')} {request.POST.get('last_name')}"
+            facility.barangay = request.POST.get('barangay', '')
             facility.latitude = float(request.POST.get('latitude'))
             facility.longitude = float(request.POST.get('longitude'))
             facility.save()

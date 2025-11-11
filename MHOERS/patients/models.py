@@ -4,6 +4,19 @@ from facilities.models import Facility
 from datetime import date
 
 class Patient(models.Model):
+    CIVIL_STATUS_CHOICES = [
+        ('Single', 'Single'),
+        ('Married', 'Married'),
+        ('Widowed', 'Widowed'),
+        ('Divorced', 'Divorced'),
+        ('Separated', 'Separated'),
+    ]
+    
+    PHIC_STATUS_CHOICES = [
+        ('M', 'Member'),
+        ('D', 'Dependent'),
+    ]
+    
     patients_id = models.AutoField(primary_key=True)
     first_name = models.CharField(max_length=50)
     middle_name = models.CharField(max_length=50, blank=True, null=True)
@@ -14,6 +27,37 @@ class Patient(models.Model):
     date_of_birth = models.DateField(default=date.today)
     sex = models.CharField(max_length=15)
     facility = models.ForeignKey(Facility, on_delete=models.SET_NULL, null=True, blank=True)
+    
+    # Additional fields from CSV
+    cct_beneficiary = models.BooleanField(default=False, verbose_name='CCT Beneficiary')
+    phic_status = models.CharField(max_length=1, choices=PHIC_STATUS_CHOICES, blank=True, null=True, verbose_name='PHIC Status')
+    civil_status = models.CharField(max_length=20, choices=CIVIL_STATUS_CHOICES, blank=True, null=True, verbose_name='Civil Status')
+    is_pwd = models.BooleanField(default=False, verbose_name='Person With Disability')
+    sitio = models.CharField(max_length=100, blank=True, null=True, verbose_name='Sitio')
+    barangay = models.CharField(max_length=100, blank=True, null=True, verbose_name='Barangay')
+    
+    # PhilHealth Information
+    philhealth_number = models.CharField(max_length=50, blank=True, null=True, verbose_name='PhilHealth Number')
+    philhealth_category = models.CharField(
+        max_length=20,
+        choices=[('Sponsored', 'Sponsored'), ('Self Paying', 'Self Paying')],
+        blank=True, null=True,
+        verbose_name='PhilHealth Category'
+    )
+    private_company_name = models.CharField(max_length=100, blank=True, null=True, verbose_name='Private Company Name')
+    is_dependent = models.BooleanField(default=False, verbose_name='Is Dependent')
+    dependent_member_name = models.CharField(max_length=200, blank=True, null=True, verbose_name='Dependent Member Name')
+    dependent_member_birthday = models.DateField(blank=True, null=True, verbose_name='Dependent Member Birthday')
+    dependent_philhealth_no = models.CharField(max_length=50, blank=True, null=True, verbose_name='Dependent PhilHealth Number')
+    
+    # Family History
+    family_history_hypertension = models.BooleanField(default=False, verbose_name='Family History: Hypertension')
+    family_history_diabetes = models.BooleanField(default=False, verbose_name='Family History: Diabetes')
+    family_history_cancer = models.BooleanField(default=False, verbose_name='Family History: Cancer')
+    family_history_asthma = models.BooleanField(default=False, verbose_name='Family History: Asthma')
+    family_history_epilepsy = models.BooleanField(default=False, verbose_name='Family History: Epilepsy')
+    family_history_tuberculosis = models.BooleanField(default=False, verbose_name='Family History: Tuberculosis')
+    family_history_others = models.TextField(blank=True, null=True, verbose_name='Family History: Others')
     
     @property
     def age(self): 

@@ -4,7 +4,7 @@
 
 <link rel="stylesheet" href="{% static 'css/dashboard.css' %}" />
 {% include 'components/navbar.html' %}
-{% include 'components/tabbar/tabbar.html' with tab1_name="Gen. Patient Info" tab2_name="Vital Signs" tab3_name="Chief Complaint" tab4_name="Work Up Done" %}
+{% include 'components/tabbar/tabbar.html' with tab1_name="Gen. Patient Info" tab2_name="Additional Info" tab3_name="Chief Complaint" tab4_name="Work Up Done" tab5_name="Vital Signs" show_pending_fallback=False %}
 {% include 'components/patients/addpatients.html' %}
 
 <style>
@@ -59,8 +59,184 @@ ul#dashboardTab.nav .nav-link {
 
 
 
-        <!-- Tab 2: Vital Signs -->
+        <!-- Tab 2: Additional Information -->
         <div class="tab-pane fade" id="tab2" role="tabpanel">
+          <h5 class="text-primary mb-4"><i class="bi bi-info-circle"></i> Additional Referral Information</h5>
+
+          <!-- Lifestyle & Social History Section -->
+          <div class="card border-0 bg-light mb-4" style="border-left: 4px solid #6f42c1;">
+            <div class="card-body">
+              <h6 class="text-primary mb-3">
+                <i class="bi bi-heart-pulse-fill" style="color: #6f42c1;"></i> Lifestyle & Social History
+              </h6>
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="is_smoker" name="is_smoker">
+                    <label class="form-check-label" for="is_smoker">Smoker</label>
+                  </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label text-muted">Sticks/Packs per Day</label>
+                  <input type="number" class="form-control" id="smoking_sticks_per_day" name="smoking_sticks_per_day" min="0" placeholder="Enter number" disabled>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="is_alcoholic" name="is_alcoholic">
+                    <label class="form-check-label" for="is_alcoholic">Alcoholic</label>
+                  </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label text-muted">Bottles per Year</label>
+                  <input type="number" class="form-control" id="alcohol_bottles_per_year" name="alcohol_bottles_per_year" min="0" placeholder="Enter number" disabled>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="family_planning" name="family_planning">
+                    <label class="form-check-label" for="family_planning">Family Planning</label>
+                  </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label text-muted">Family Planning Type</label>
+                  <select class="form-control" id="family_planning_type" name="family_planning_type" disabled>
+                    <option value="">Select Type</option>
+                    <option value="DMPA">DMPA</option>
+                    <option value="IMPLANT">IMPLANT</option>
+                    <option value="IUD">IUD</option>
+                    <option value="PILLS">PILLS</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Menstrual History Section (for Female patients) -->
+          <div class="card border-0 bg-light mb-4" id="menstrualHistoryCard" style="border-left: 4px solid #e91e63; display: none;">
+            <div class="card-body">
+              <h6 class="text-primary mb-3">
+                <i class="bi bi-calendar-heart-fill" style="color: #e91e63;"></i> Menstrual History
+              </h6>
+              <div class="row">
+                <div class="col-md-4 mb-3">
+                  <label class="form-label text-muted">Menarche (Age)</label>
+                  <input type="number" class="form-control" id="menarche" name="menarche" min="0" max="20" placeholder="Age">
+                </div>
+                <div class="col-md-4 mb-3">
+                  <div class="form-check mt-4">
+                    <input class="form-check-input" type="checkbox" id="sexually_active" name="sexually_active">
+                    <label class="form-check-label" for="sexually_active">Sexually Active</label>
+                  </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                  <label class="form-label text-muted">Number of Partners</label>
+                  <input type="number" class="form-control" id="number_of_partners" name="number_of_partners" min="0" placeholder="Enter number">
+                </div>
+                <div class="col-md-4 mb-3">
+                  <div class="form-check mt-4">
+                    <input class="form-check-input" type="checkbox" id="is_menopause" name="is_menopause">
+                    <label class="form-check-label" for="is_menopause">Menopause</label>
+                  </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                  <label class="form-label text-muted">Menopause Age</label>
+                  <input type="number" class="form-control" id="menopause_age" name="menopause_age" min="0" max="100" placeholder="Age">
+                </div>
+                <div class="col-md-4 mb-3">
+                  <label class="form-label text-muted">Last Menstrual Period (LMP)</label>
+                  <input type="date" class="form-control" id="last_menstrual_period" name="last_menstrual_period">
+                </div>
+                <div class="col-md-4 mb-3">
+                  <label class="form-label text-muted">Period Duration (Days)</label>
+                  <input type="number" class="form-control" id="period_duration" name="period_duration" min="0" placeholder="Days">
+                </div>
+                <div class="col-md-4 mb-3">
+                  <label class="form-label text-muted">Period Interval (Days)</label>
+                  <input type="number" class="form-control" id="period_interval" name="period_interval" min="0" placeholder="Days between">
+                </div>
+                <div class="col-md-4 mb-3">
+                  <label class="form-label text-muted">Pads per Day</label>
+                  <input type="number" class="form-control" id="pads_per_day" name="pads_per_day" min="0" placeholder="Number">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pregnancy History Section (for Female patients) -->
+          <div class="card border-0 bg-light mb-4" id="pregnancyHistoryCard" style="border-left: 4px solid #ff6b9d; display: none;">
+            <div class="card-body">
+              <h6 class="text-primary mb-3">
+                <i class="bi bi-heart-fill" style="color: #ff6b9d;"></i> Pregnancy History
+              </h6>
+              <div class="row">
+                <div class="col-md-4 mb-3">
+                  <div class="form-check mt-4">
+                    <input class="form-check-input" type="checkbox" id="is_pregnant" name="is_pregnant">
+                    <label class="form-check-label" for="is_pregnant">Currently Pregnant</label>
+                  </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                  <label class="form-label text-muted">Gravidity</label>
+                  <input type="number" class="form-control" id="gravidity" name="gravidity" min="0" placeholder="Number of pregnancies">
+                </div>
+                <div class="col-md-4 mb-3">
+                  <label class="form-label text-muted">Parity</label>
+                  <input type="number" class="form-control" id="parity" name="parity" min="0" placeholder="Number of births">
+                </div>
+                <div class="col-md-4 mb-3">
+                  <label class="form-label text-muted">Type of Delivery</label>
+                  <input type="text" class="form-control" id="delivery_type" name="delivery_type" placeholder="e.g., Normal, CS">
+                </div>
+                <div class="col-md-4 mb-3">
+                  <label class="form-label text-muted">Full Term Births</label>
+                  <input type="number" class="form-control" id="full_term_births" name="full_term_births" min="0" placeholder="Number">
+                </div>
+                <div class="col-md-4 mb-3">
+                  <label class="form-label text-muted">Premature Births</label>
+                  <input type="number" class="form-control" id="premature_births" name="premature_births" min="0" placeholder="Number">
+                </div>
+                <div class="col-md-4 mb-3">
+                  <label class="form-label text-muted">Abortions</label>
+                  <input type="number" class="form-control" id="abortions" name="abortions" min="0" placeholder="Number">
+                </div>
+                <div class="col-md-4 mb-3">
+                  <label class="form-label text-muted">Living Children</label>
+                  <input type="number" class="form-control" id="living_children" name="living_children" min="0" placeholder="Number">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 3: Chief Complaint -->
+        <div class="tab-pane fade" id="tab3" role="tabpanel">
+          <h5 class="text-primary mb-4"><i class="bi bi-clipboard2-pulse"></i> Patient Complaints</h5>
+          <div class="card border-0 bg-light mb-4">
+            <div class="card-body">
+              <label class="form-label text-muted">Chief Complaint</label>
+              <textarea class="form-control" name="chief_complaint" rows="3" required placeholder="Enter the main complaint"></textarea>
+            </div>
+          </div>
+          <div class="card border-0 bg-light">
+            <div class="card-body">
+              <label class="form-label text-muted">Detailed Symptoms</label>
+              <textarea class="form-control" name="symptoms" rows="4" placeholder="Enter detailed symptoms"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 4: Work Up Done -->
+        <div class="tab-pane fade" id="tab4" role="tabpanel">
+          <h5 class="text-primary mb-4"><i class="bi bi-journal-medical"></i> Medical Procedures</h5>
+          <div class="card border-0 bg-light">
+            <div class="card-body">
+              <label class="form-label text-muted">Work Up Procedures Done</label>
+              <textarea class="form-control" name="work_up_details" rows="4" placeholder="Enter work up procedures performed"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 5: Vital Signs -->
+        <div class="tab-pane fade" id="tab5" role="tabpanel">
           <h5 class="text-primary mb-4"><i class="bi bi-heart-pulse"></i> Patient Vital Signs</h5>
           <div class="row mb-4">
             <div class="col-md-3">
@@ -126,34 +302,6 @@ ul#dashboardTab.nav .nav-link {
                   <input type="number" class="form-control form-control-lg" step="1" min="0" max="100" required name="oxygen_saturation" placeholder="" />
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Tab 3: Chief Complaint -->
-        <div class="tab-pane fade" id="tab3" role="tabpanel">
-          <h5 class="text-primary mb-4"><i class="bi bi-clipboard2-pulse"></i> Patient Complaints</h5>
-          <div class="card border-0 bg-light mb-4">
-            <div class="card-body">
-              <label class="form-label text-muted">Chief Complaint</label>
-              <textarea class="form-control" name="chief_complaint" rows="3" required placeholder="Enter the main complaint"></textarea>
-            </div>
-          </div>
-          <div class="card border-0 bg-light">
-            <div class="card-body">
-              <label class="form-label text-muted">Detailed Symptoms</label>
-              <textarea class="form-control" name="symptoms" rows="4" placeholder="Enter detailed symptoms"></textarea>
-            </div>
-          </div>
-        </div>
-
-        <!-- Tab 4: Work Up Done -->
-        <div class="tab-pane fade" id="tab4" role="tabpanel">
-          <h5 class="text-primary mb-4"><i class="bi bi-journal-medical"></i> Medical Procedures</h5>
-          <div class="card border-0 bg-light">
-            <div class="card-body">
-              <label class="form-label text-muted">Work Up Procedures Done</label>
-              <textarea class="form-control" name="work_up_details" rows="4" placeholder="Enter work up procedures performed"></textarea>
             </div>
           </div>
         </div>
@@ -305,11 +453,76 @@ ul#dashboardTab.nav .nav-link {
       // Set the preselected value if we have one
       {% if patient_id and selected_patient %}
         $('#patientSelect').val("{{ selected_patient.patients_id }}").trigger('change');
+        // Check patient sex for preselected patient
+        checkPatientSex('{{ selected_patient.sex }}');
       {% endif %}
+
+      // Listen for patient selection changes
+      $('#patientSelect').on('select2:select', function (e) {
+        const patientId = e.params.data.id;
+        // Fetch patient sex via AJAX
+        fetchPatientSex(patientId);
+      });
+
+      // Listen for patient clearing
+      $('#patientSelect').on('select2:clear', function (e) {
+        // Hide menstrual and pregnancy sections when patient is cleared
+        $('#menstrualHistoryCard, #pregnancyHistoryCard').hide();
+      });
 
     } else {
       console.error("jQuery or Select2 not loaded");
     }
+
+    // Function to fetch patient sex from server
+    function fetchPatientSex(patientId) {
+      if (!patientId) {
+        $('#menstrualHistoryCard, #pregnancyHistoryCard').hide();
+        return;
+      }
+      
+      fetch(`/patients/get-patient-sex/${patientId}/`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.sex) {
+            checkPatientSex(data.sex);
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching patient sex:', error);
+        });
+    }
+
+    // Function to check patient sex and show/hide sections
+    function checkPatientSex(sex) {
+      if (sex && sex.toLowerCase() === 'female') {
+        $('#menstrualHistoryCard, #pregnancyHistoryCard').show();
+      } else {
+        $('#menstrualHistoryCard, #pregnancyHistoryCard').hide();
+      }
+    }
+
+    // Handle conditional enabling of lifestyle fields
+    $('#is_smoker').on('change', function() {
+      $('#smoking_sticks_per_day').prop('disabled', !$(this).is(':checked'));
+      if (!$(this).is(':checked')) {
+        $('#smoking_sticks_per_day').val('');
+      }
+    });
+
+    $('#is_alcoholic').on('change', function() {
+      $('#alcohol_bottles_per_year').prop('disabled', !$(this).is(':checked'));
+      if (!$(this).is(':checked')) {
+        $('#alcohol_bottles_per_year').val('');
+      }
+    });
+
+    $('#family_planning').on('change', function() {
+      $('#family_planning_type').prop('disabled', !$(this).is(':checked'));
+      if (!$(this).is(':checked')) {
+        $('#family_planning_type').val('');
+      }
+    });
 
     function showTab(index) {
       tabs.forEach((tab, i) => {

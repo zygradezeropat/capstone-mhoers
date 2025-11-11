@@ -52,6 +52,22 @@
   .nav-tabs .nav-link i {
     font-size: 1.1rem;
   }
+
+  .notification-badge {
+    background-color: #dc3545;
+    color: white;
+    border-radius: 50%;
+    padding: 0.25em 0.5em;
+    font-size: 0.75rem;
+    font-weight: bold;
+    min-width: 1.5em;
+    height: 1.5em;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 0.25rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
 </style>
 <ul class="nav nav-tabs" id="dashboardTab" role="tablist">
   {% if tab1_name %}
@@ -59,10 +75,19 @@
     <button class="nav-link {% if active_tab == 'tab1' or not active_tab %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab1" type="button" role="tab">
       <i class="bi {{ tab1_icon|default:'bi-clock-history' }}"></i>
       {{ tab1_name }}
-      <span> </span>
-      {% if pending_users_count > 0 %}
-                <span class="notification-badge">{{ pending_users_count }}</span>
+      {% if active_page != 'assessment' %}
+        {% if tab1_count is not None and tab1_count != '' %}
+          {% if tab1_count >= 0 %}
+            <span class="notification-badge">{{ tab1_count }}</span>
           {% endif %}
+        {% else %}
+          {% if show_pending_fallback|default:True %}
+            {% if pending_users_count > 0 %}
+              <span class="notification-badge">{{ pending_users_count }}</span>
+            {% endif %}
+          {% endif %}
+        {% endif %}
+      {% endif %}
     </button>
   </li>
   {% endif %}

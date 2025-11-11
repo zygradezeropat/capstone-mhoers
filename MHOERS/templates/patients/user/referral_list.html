@@ -5,10 +5,17 @@
 
 
 <link rel="stylesheet" href="{% static 'css/dashboard.css' %}" />
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css" />
 
 <!-- Navbar Include -->
 {% include 'components/navbar.html' %}
-{% include 'components/tabbar/tabbar.html' with tab1_name="Active Referral" tab2_name="Referred" %}
+{% include 'components/tabbar/tabbar.html' with tab1_name="Active Referral" tab1_count=active_count tab2_name="Referred" tab2_count=referred_count tab3_name="All Patients" tab3_count=patients_count|default:0 %}
+
+<!-- Patient Modals -->
+{% include 'components/patients/addpatients.html' %}
+{% include 'components/patients/viewpatients.html' %}
+{% include 'components/patients/editpatients.html' %}
+{% include 'components/patients/deletepatients.html' %}
 
 <div class="container-fluid py-4">
   <div class="row">
@@ -40,14 +47,14 @@
                             </div>
                             <div>
                               <h6 class="mb-1 text-dark">{{ r.patient.first_name }} {{ r.patient.middle_name }} {{ r.patient.last_name }}</h6>
-                              <span class="badge badge-pill badge-light">ID: #{{ r.referral_id }}</span>
+                      
                             </div>
                           </div>
                         </td>
                         <td><i class="bi bi-telephone-fill text-primary me-2"></i>{{ r.patient.p_number }}</td>
                         <td><i class="bi bi-calendar3 text-success me-2"></i>{{ r.patient.age }}</td>
                         <td><i class="bi bi-geo-alt-fill text-danger me-2"></i>{{ r.patient.p_address }}</td>
-                        <td><span class="badge badge-pill badge-success">Active</span>
+                        <td><span class="badge bg-success">Active</span>
                           {% if r.status == 'in-progress' %}
                             <br>
                             <small class="text-muted">
@@ -137,14 +144,13 @@
                             </div>
                             <div>
                               <h6 class="mb-1 text-dark">{{ r.patient.first_name }} {{ r.patient.middle_name }} {{ r.patient.last_name }}</h6>
-                              <span class="badge badge-pill badge-light">ID: #{{ r.referral_id }}</span>
                             </div>
                           </div>
                         </td>
                         <td><i class="bi bi-telephone-fill text-primary me-2"></i>{{ r.patient.p_number }}</td>
                         <td><i class="bi bi-calendar3 text-success me-2"></i>{{ r.patient.age }}</td>
                         <td><i class="bi bi-geo-alt-fill text-danger me-2"></i>{{ r.patient.p_address }}</td>
-                        <td><span class="badge badge-pill badge-info">Referred</span>
+                        <td><span class="badge bg-success">Referred</span>
                           {% if r.status == 'completed' %}
                             <br>
                             <small class="text-muted">
@@ -180,28 +186,117 @@
                   </tbody>
                 </table>
               </div>
-              {% if referred_referrals.paginator.count %}
-              <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3">
-                <small class="text-muted">
-                  Showing {{ referred_referrals.start_index }}&ndash;{{ referred_referrals.end_index }} of {{ referred_referrals.paginator.count }}
-                </small>
-                {% if referred_referrals.has_other_pages %}
-                <nav>
-                  <ul class="pagination pagination-sm mb-0">
-                    <li class="page-item {% if not referred_referrals.has_previous %}disabled{% endif %}">
-                      <a class="page-link" href="{% if referred_referrals.has_previous %}?referred_page={{ referred_referrals.previous_page_number }}&tab=tab2{% else %}#{% endif %}" aria-label="Previous">&laquo;</a>
-                    </li>
-                    {% for page_num in referred_referrals.paginator.page_range %}
-                      <li class="page-item {% if page_num == referred_referrals.number %}active{% endif %}">
-                        <a class="page-link" href="?referred_page={{ page_num }}&tab=tab2">{{ page_num }}</a>
-                      </li>
+            </div>
+
+            <!-- All Patients Tab -->
+            <div class="tab-pane fade {% if active_tab == 'tab3' %}show active{% endif %}" id="tab3" role="tabpanel">
+              <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="mb-0 text-primary">All Patients</h5>
+                <button class="btn btn-success shadow-sm" data-bs-toggle="modal" data-bs-target="#registerModal">
+                  <i class="bi bi-person-plus-fill"></i>
+                  <span class="ml-2">Add Patient</span>
+                </button>
+              </div>
+
+              {% if patients %}
+              <div class="table-responsive">
+                <table id="allPatientsTable" class="table table-hover align-middle">
+                  <thead class="bg-light">
+                    <tr>
+                      <th>Patient Information</th>
+                      <th>Age</th>
+                      <th>Location</th>
+                      <th>Sex</th>
+                      <th>Contact</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for patient in patients %}
+                    <tr data-id="{{ patient.patients_id }}">
+                      <td>
+                        <div class="d-flex align-items-center">
+                          <div class="avatar-circle bg-primary-soft me-3">
+                            <i class="bi bi-person-circle text-primary fs-4"></i>
+                          </div>
+                          <div>
+                            <h6 class="mb-1 text-dark">{{ patient.first_name }} {{ patient.middle_name }} {{ patient.last_name }}</h6>
+                            <span class="badge badge-pill badge-light">ID: #{{ patient.patients_id }}</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td><i class="bi bi-calendar3 text-success me-2"></i>{{ patient.age }}</td>
+                      <td><i class="bi bi-geo-alt-fill text-danger me-2"></i>{{ patient.p_address }}</td>
+                      <td><i class="bi bi-gender-ambiguous text-info me-2"></i>{{ patient.sex }}</td>
+                      <td><i class="bi bi-telephone-fill text-primary me-2"></i>{{ patient.p_number }}</td>
+                      <td>
+                        <div class="btn-group">
+                          <!-- View Button -->
+                          <button class="btn btn-outline-primary btn-sm rounded-pill view-button"
+                            data-id="{{ patient.patients_id }}"
+                            data-vpatient="{{ patient.first_name }} {{ patient.middle_name }} {{ patient.last_name }}"
+                            data-vbdate="{{ patient.date_of_birth|date:'m/d/Y' }}"
+                            data-vaddress="{{ patient.p_address }}"
+                            data-vsex="{{ patient.sex }}"
+                            data-vsitio="{{ patient.sitio|default:'Not specified' }}"
+                            data-vbarangay="{{ patient.barangay|default:'Not specified' }}"
+                            data-vcivilstatus="{{ patient.civil_status|default:'Not specified' }}"
+                            data-vphicstatus="{% if patient.phic_status == 'M' %}Member{% elif patient.phic_status == 'D' %}Dependent{% else %}Not specified{% endif %}"
+                            data-vcctbeneficiary="{% if patient.cct_beneficiary %}Yes{% else %}No{% endif %}"
+                            data-vispwd="{% if patient.is_pwd %}Yes{% else %}No{% endif %}"
+                            data-vreferralcount="{{ patient.referral_count }}"
+                            data-vlastreferred="{{ patient.latest_referral_date|date:'M d, Y h:i A' }}"
+                            data-bs-toggle="modal"
+                            data-bs-target="#viewPatients">
+                            <i class="bi bi-eye-fill me-1"></i> View
+                          </button>
+
+                          <!-- Edit Button -->
+                          <button class="btn btn-outline-warning btn-sm rounded-pill edit-button"
+                            data-id="{{ patient.patients_id }}"
+                            data-firstname="{{ patient.first_name }}"
+                            data-middlename="{{ patient.middle_name|default:'' }}"
+                            data-lastname="{{ patient.last_name }}"
+                            data-eaddress="{{ patient.p_address }}"
+                            data-ebday="{{ patient.date_of_birth|date:'Y-m-d' }}"
+                            data-enum="{{ patient.p_number }}"
+                            data-esex="{{ patient.sex }}"
+                            data-civilstatus="{{ patient.civil_status|default:'' }}"
+                            data-phicstatus="{{ patient.phic_status|default:'' }}"
+                            data-cctbeneficiary="{{ patient.cct_beneficiary|yesno:'true,false' }}"
+                            data-ispwd="{{ patient.is_pwd|yesno:'true,false' }}"
+                            data-philhealthnumber="{{ patient.philhealth_number|default:'' }}"
+                            data-philhealthcategory="{{ patient.philhealth_category|default:'' }}"
+                            data-familyhistoryhypertension="{{ patient.family_history_hypertension|yesno:'true,false' }}"
+                            data-familyhistorydiabetes="{{ patient.family_history_diabetes|yesno:'true,false' }}"
+                            data-familyhistorycancer="{{ patient.family_history_cancer|yesno:'true,false' }}"
+                            data-familyhistoryasthma="{{ patient.family_history_asthma|yesno:'true,false' }}"
+                            data-familyhistoryepilepsy="{{ patient.family_history_epilepsy|yesno:'true,false' }}"
+                            data-familyhistorytuberculosis="{{ patient.family_history_tuberculosis|yesno:'true,false' }}"
+                            data-familyhistoryothers="{{ patient.family_history_others|default:'' }}"
+                            data-bs-toggle="modal"
+                            data-bs-target="#editPatients">
+                            <i class="bi bi-pencil-fill me-1"></i> Edit
+                          </button>
+
+                          <!-- Delete Button -->
+                          <button class="btn btn-outline-danger btn-sm rounded-pill delete-button"
+                            data-id="{{ patient.patients_id }}"
+                            data-patient="{{ patient.first_name }}"
+                            data-bs-toggle="modal"
+                            data-bs-target="#deletePatient">
+                            <i class="bi bi-trash-fill me-1"></i> Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
                     {% endfor %}
-                    <li class="page-item {% if not referred_referrals.has_next %}disabled{% endif %}">
-                      <a class="page-link" href="{% if referred_referrals.has_next %}?referred_page={{ referred_referrals.next_page_number }}&tab=tab2{% else %}#{% endif %}" aria-label="Next">&raquo;</a>
-                    </li>
-                  </ul>
-                </nav>
-                {% endif %}
+                  </tbody>
+                </table>
+              </div>
+              {% else %}
+              <div class="alert alert-primary" role="alert">
+                <i class="bi bi-info-circle mr-2"></i>No patients found.
               </div>
               {% endif %}
             </div>
@@ -303,8 +398,10 @@
 
 <script>
 $(document).ready(function() {
-  // Initialize DataTables with modern styling
-  const tableConfig = {
+  let referredTableInitialized = false;
+  
+  // Initialize DataTables for activeTable (tab1) - keep minimal config
+  const activeTableConfig = {
     responsive: true,
     paging: false,
     info: false,
@@ -312,8 +409,99 @@ $(document).ready(function() {
     ordering: false
   };
 
-  $("#activeTable").DataTable(tableConfig);
-  $("#referredTable").DataTable(tableConfig);
+  $("#activeTable").DataTable(activeTableConfig);
+
+  // Initialize DataTables for referredTable (tab2) with full features
+  const referredTableConfig = {
+    responsive: true,
+    paging: true,
+    pageLength: 10,
+    lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+    searching: true,
+    ordering: true,
+    order: [[0, 'asc']],
+    language: {
+      search: "Search:",
+      lengthMenu: "Show _MENU_ entries",
+      info: "Showing _START_ to _END_ of _TOTAL_ entries",
+      infoEmpty: "Showing 0 to 0 of 0 entries",
+      infoFiltered: "(filtered from _MAX_ total entries)",
+      paginate: {
+        first: "First",
+        last: "Last",
+        next: "Next",
+        previous: "Previous"
+      }
+    },
+    columnDefs: [
+      { orderable: false, targets: [5] } // Disable sorting on Action column
+    ]
+  };
+
+  // Initialize referredTable when tab2 is shown
+  function initReferredTable() {
+    if (!referredTableInitialized && $('#tab2').hasClass('show')) {
+      $("#referredTable").DataTable(referredTableConfig);
+      referredTableInitialized = true;
+    }
+  }
+
+  // Check if tab2 is active on page load
+  if ($('#tab2').hasClass('show')) {
+    initReferredTable();
+  }
+
+  let allPatientsTableInitialized = false;
+
+  // Initialize DataTables for allPatientsTable (tab3) with full features
+  const allPatientsTableConfig = {
+    responsive: true,
+    paging: true,
+    pageLength: 10,
+    lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+    searching: true,
+    ordering: true,
+    order: [[0, "asc"]],
+    language: {
+      search: "Search:",
+      lengthMenu: "Show _MENU_ entries",
+      info: "Showing _START_ to _END_ of _TOTAL_ entries",
+      infoEmpty: "Showing 0 to 0 of 0 entries",
+      infoFiltered: "(filtered from _MAX_ total entries)",
+      paginate: {
+        first: "First",
+        last: "Last",
+        next: "Next",
+        previous: "Previous"
+      }
+    },
+    columnDefs: [
+      { orderable: false, targets: [5] } // Disable sorting on Actions column
+    ]
+  };
+
+  // Initialize allPatientsTable when tab3 is shown
+  function initAllPatientsTable() {
+    if (!allPatientsTableInitialized && $('#tab3').hasClass('show')) {
+      $("#allPatientsTable").DataTable(allPatientsTableConfig);
+      allPatientsTableInitialized = true;
+    }
+  }
+
+  // Check if tab3 is active on page load
+  if ($('#tab3').hasClass('show')) {
+    initAllPatientsTable();
+  }
+
+  // Initialize when tabs are shown via Bootstrap tab event
+  $(document).on('shown.bs.tab', 'button[data-bs-toggle="tab"], a[data-bs-toggle="tab"]', function (e) {
+    const target = $(e.target).attr('data-bs-target') || $(e.target).attr('href');
+    if (target === '#tab2' && !referredTableInitialized) {
+      initReferredTable();
+    } else if (target === '#tab3' && !allPatientsTableInitialized) {
+      initAllPatientsTable();
+    }
+  });
 
   // Use event delegation to handle dynamically created elements
   $(document).on('click', '.MedicalDetails', function() {
@@ -362,6 +550,130 @@ $(document).ready(function() {
     $('#viewMedicalSex').val('');
     $('#viewMedicalReason').val('');
     $('#viewDisease').val('');
+  });
+
+  // All Patients Tab - View button logic (delegated to table to survive DataTables redraws)
+  $(document).on('click', '#allPatientsTable .view-button', function () {
+    const button = $(this);
+    $('#viewPatientName').val(button.data('vpatient'));
+    $('#viewPatientBday').val(button.data('vbdate'));
+    $('#viewAddress').val(button.data('vaddress'));
+    $('#viewSex').val(button.data('vsex'));
+    $('#viewSitio').val(button.data('vsitio') || 'Not specified');
+    $('#viewBarangay').val(button.data('vbarangay') || 'Not specified');
+    $('#viewCivilStatus').val(button.data('vcivilstatus') || 'Not specified');
+    $('#viewPhicStatus').val(button.data('vphicstatus') || 'Not specified');
+    $('#viewCctBeneficiary').val(button.data('vcctbeneficiary') || 'No');
+    $('#viewIsPwd').val(button.data('vispwd') || 'No');
+    $('#viewReferralCount').val(button.data('vreferralcount'));
+    $('#viewLastReferred').val(button.data('vlastreferred') || 'Not yet referred');
+    $('#referral-id-input').val(button.data('id'));
+
+    // Load referral history into the view modal
+    const patientId = button.data('id');
+    const historyContainer = $('#viewReferralHistory');
+    if (historyContainer.length) {
+      historyContainer.html('<div class="text-muted">Loading history...</div>');
+      $.ajax({
+        url: `/referral/patient/${patientId}/history/`,
+        method: 'GET',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        success: function(data) {
+          const items = (data.referrals || []).map(r => {
+            const date = new Date(r.created_at).toLocaleString();
+            return `
+              <div class="mb-2 p-2 bg-white rounded border">
+                <div class="d-flex justify-content-between">
+                  <div><strong>#${r.referral_id}</strong> - ${r.status}</div>
+                  <small class="text-muted">${date}</small>
+                </div>
+                <div class="small text-muted">CC: ${r.chief_complaint || 'N/A'}</div>
+                <div class="small">Diagnosis: <strong>${r.illness_name || r.initial_diagnosis || 'N/A'}</strong></div>
+              </div>`;
+          }).join('');
+          historyContainer.html(items || '<div class="text-muted">No referral history found.</div>');
+        },
+        error: function() {
+          historyContainer.html('<div class="text-danger">Failed to load referral history.</div>');
+        }
+      });
+    }
+  });
+
+  // All Patients Tab - Edit button logic (delegated)
+  $(document).on('click', '#allPatientsTable .edit-button', function () {
+    const button = $(this);
+    
+    // Basic Information
+    $('#edit-patient-id').val(button.data('id'));
+    $('#editFname').val(button.data('firstname'));
+    $('#editMname').val(button.data('middlename') || '');
+    $('#editLname').val(button.data('lastname'));
+    $('#editAddress').val(button.data('eaddress'));
+    $('#editBday').val(button.data('ebday'));
+    $('#ePhone').val(button.data('enum'));
+    $('#eSex').val(button.data('esex'));
+    
+    // Additional Information
+    $('#editCivilStatus').val(button.data('civilstatus') || '');
+    $('#editPhicStatus').val(button.data('phicstatus') || '');
+    $('#editCctBeneficiary').prop('checked', button.data('cctbeneficiary') === 'true');
+    $('#editIsPwd').prop('checked', button.data('ispwd') === 'true');
+    
+    // PhilHealth Information
+    const philhealthNumber = button.data('philhealthnumber') || '';
+    const philhealthCategory = button.data('philhealthcategory') || '';
+    if (philhealthNumber || philhealthCategory) {
+      $('#editIsPhilhealthMember').prop('checked', true);
+      if (typeof toggleEditPhilHealthFields === 'function') {
+        toggleEditPhilHealthFields();
+      }
+      $('#editPhilhealthNumber').val(philhealthNumber);
+      $('#editPhilhealthCategory').val(philhealthCategory);
+    } else {
+      $('#editIsPhilhealthMember').prop('checked', false);
+      if (typeof toggleEditPhilHealthFields === 'function') {
+        toggleEditPhilHealthFields();
+      }
+    }
+    
+    // Family History
+    $('#editFamilyHistoryHypertension').prop('checked', button.data('familyhistoryhypertension') === 'true');
+    $('#editFamilyHistoryDiabetes').prop('checked', button.data('familyhistorydiabetes') === 'true');
+    $('#editFamilyHistoryCancer').prop('checked', button.data('familyhistorycancer') === 'true');
+    $('#editFamilyHistoryAsthma').prop('checked', button.data('familyhistoryasthma') === 'true');
+    $('#editFamilyHistoryEpilepsy').prop('checked', button.data('familyhistoryepilepsy') === 'true');
+    $('#editFamilyHistoryTuberculosis').prop('checked', button.data('familyhistorytuberculosis') === 'true');
+    $('#editFamilyHistoryOthers').val(button.data('familyhistoryothers') || '');
+    
+    // Handle address dropdown - check if address is in dropdown or needs manual entry
+    const address = button.data('eaddress');
+    if (address) {
+      const addressSelect = $('#editAddress');
+      const addressOptions = addressSelect.find('option');
+      let found = false;
+      addressOptions.each(function() {
+        if ($(this).val() === address) {
+          found = true;
+          return false;
+        }
+      });
+      if (!found && address !== '__manual__') {
+        // Address not in dropdown, use manual entry
+        addressSelect.val('__manual__').trigger('change');
+        $('#editAddressManual').val(address);
+      } else {
+        addressSelect.val(address);
+      }
+    }
+  });
+
+  // All Patients Tab - Delete button logic (delegated)
+  $(document).on('click', '#allPatientsTable .delete-button', function () {
+    const button = $(this);
+    const patientName = button.data('patient');
+    $('#deletePatientId').val(button.data('id'));
+    $('#delete-confirmation').text(`Are you sure you want to delete ${patientName} record?`);
   });
 });
 </script>

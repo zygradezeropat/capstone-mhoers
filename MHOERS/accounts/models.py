@@ -3,6 +3,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from facilities.models import Facility
 from datetime import datetime
+from django.utils import timezone
 
 # This extends the User model to associate a user with a specific facility
 class UserProfile(models.Model):
@@ -138,3 +139,69 @@ class Nurses(models.Model):
 
     def __str__(self): 
         return f"Nurse {self.first_name} {self.last_name}"
+
+
+class UserConsent(models.Model):
+    """Model to track user privacy and data processing consent"""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='consent')
+    privacy_policy_accepted = models.BooleanField(default=False)
+    privacy_policy_accepted_at = models.DateTimeField(null=True, blank=True)
+    data_processing_consent = models.BooleanField(default=False)
+    data_processing_consent_at = models.DateTimeField(null=True, blank=True)
+    marketing_consent = models.BooleanField(default=False, help_text="Consent for marketing communications")
+    consent_version = models.CharField(max_length=20, default='1.0', help_text="Version of privacy policy accepted")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "User Consent"
+        verbose_name_plural = "User Consents"
+    
+    def __str__(self):
+        return f"Consent for {self.user.username}"
+
+
+class AccountDeletionRequest(models.Model):
+    """Model to track user requests for account deletion (GDPR Right to be Forgotten)"""
+    STATUS_CHOICES = [
+        ('PENDING', 'Pending'),
+        ('PROCESSING', 'Processing'),
+        ('COMPLETED', 'Completed'),
+        ('CANCELLED', 'Cancelled'),
+    ]
+    
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='deletion_request')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
+    requested_at = models.DateTimeField(auto_now_add=True)
+    scheduled_deletion_date = models.DateTimeField(null=True, blank=True, help_text="Date when account will be deleted (typically 30 days after request)")
+    completed_at = models.DateTimeField(null=True, blank=True)
+    cancellation_reason = models.TextField(blank=True, help_text="Reason if deletion was cancelled")
+    notes = models.TextField(blank=True, help_text="Administrative notes")
+    
+    class Meta:
+        verbose_name = "Account Deletion Request"
+        verbose_name_plural = "Account Deletion Requests"
+        ordering = ['-requested_at']
+    
+    def __str__(self):
+        return f"Deletion request for {self.user.username} - {self.status}"
+
+
+class LoginLog(models.Model):
+    """Model to track user login events"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='login_logs')
+    login_time = models.DateTimeField(auto_now_add=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.CharField(max_length=255, blank=True)
+    
+    class Meta:
+        verbose_name = "Login Log"
+        verbose_name_plural = "Login Logs"
+        ordering = ['-login_time']
+        indexes = [
+            models.Index(fields=['-login_time']),
+            models.Index(fields=['user', '-login_time']),
+        ]
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.login_time}"

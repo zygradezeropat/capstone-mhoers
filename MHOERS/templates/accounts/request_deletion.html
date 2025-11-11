@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/admin_dashboard.css' %}" />
+
+<!-- Navbar -->
+{% include 'components/navbar.html' %}
+
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="text-primary mb-1 fw-bold">Request Account Deletion</h2>
+            <p class="text-muted mb-0">Request permanent deletion of your account and data</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card border-warning">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="bi bi-exclamation-triangle me-2"></i>Important Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <div class="alert alert-danger">
+                        <h6><i class="bi bi-exclamation-circle me-2"></i>Warning: This action cannot be undone!</h6>
+                        <p class="mb-0">
+                            Requesting account deletion will permanently remove:
+                        </p>
+                        <ul class="mb-0 mt-2">
+                            <li>Your user account and profile information</li>
+                            <li>All personal data associated with your account</li>
+                            <li>Access to the MHOERS system</li>
+                        </ul>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <h6><i class="bi bi-info-circle me-2"></i>Deletion Process</h6>
+                        <ul class="mb-0">
+                            <li>Your account will be scheduled for deletion 30 days after your request</li>
+                            <li>You will receive a confirmation email</li>
+                            <li>You can cancel this request anytime before the deletion date</li>
+                            <li>Some data may be retained as required by healthcare regulations</li>
+                        </ul>
+                    </div>
+
+                    <form method="POST">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <div class="form-check">
+                                {{ form.confirm_deletion }}
+                                <label class="form-check-label" for="{{ form.confirm_deletion.id_for_label }}">
+                                    {{ form.confirm_deletion.label }}
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-danger" onclick="return confirm('Are you absolutely sure you want to request account deletion? This action cannot be undone.');">
+                                <i class="bi bi-trash me-2"></i>Request Account Deletion
+                            </button>
+                            <a href="{% url 'profile' %}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left me-2"></i>Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-body">
+                    <h6 class="card-title">Need Help?</h6>
+                    <p class="card-text">
+                        If you have concerns about your data or account, please contact the system administrator 
+                        before requesting deletion. We may be able to address your concerns without deleting your account.
+                    </p>
+                    <a href="{% url 'privacy_policy' %}" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-file-text me-2"></i>View Privacy Policy
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

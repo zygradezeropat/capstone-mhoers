@@ -27,13 +27,38 @@ def now_in_singapore():
 def get_disease_diagnosis_counts(request):
     """
     API endpoint to return disease diagnosis counts for charting.
-    - X-axis: Disease names (from Disease model)
-    - Y-axis: Number of diagnoses (from Medical_History.illness_name)
-    - Non-matching illness_name are grouped as 'Others'
-    - All comparisons are case-insensitive (e.g., 'Flu' = 'fLu')
-    - 'cat bite' and 'dog bite' (case-insensitive) are counted as 'Possible Rabies'
-    - 'LBM' (case-insensitive) is counted as 'Gastrointestinal Issue'
+    - Shows only the 5 capstone diseases: Open Wounds, Dog Bites, Acute respiratory infections, Pneumonia, Hypertension Level 2
+    - All other diseases are grouped as 'Others'
+    - All comparisons are case-insensitive
     """
+    
+    # Define the 5 capstone diseases
+    CAPSTONE_DISEASES = {
+        'open wounds': 'Open Wounds (T14.1)',
+        't14.1': 'Open Wounds (T14.1)',
+        'dog bites': 'Dog Bites (W54.99)',
+        'w54.99': 'Dog Bites (W54.99)',
+        'dog bite': 'Dog Bites (W54.99)',
+        'cat bite': 'Dog Bites (W54.99)',  # Also map cat bites to dog bites
+        'acute respiratory infections': 'Acute respiratory infections (J06.9)',
+        'j06.9': 'Acute respiratory infections (J06.9)',
+        'respiratory infection': 'Acute respiratory infections (J06.9)',
+        'pneumonia': 'Pneumonia (J15)',
+        'j15': 'Pneumonia (J15)',
+        'hypertension level 2': 'Hypertension Level 2 (I10-1)',
+        'i10-1': 'Hypertension Level 2 (I10-1)',
+        'i10.1': 'Hypertension Level 2 (I10-1)',
+        'hypertension': 'Hypertension Level 2 (I10-1)',
+    }
+    
+    # Disease display names in order
+    DISEASE_ORDER = [
+        'Open Wounds (T14.1)',
+        'Dog Bites (W54.99)',
+        'Acute respiratory infections (J06.9)',
+        'Pneumonia (J15)',
+        'Hypertension Level 2 (I10-1)',
+    ]
     
     year = request.GET.get('year')
     month = request.GET.get('month')
@@ -42,53 +67,51 @@ def get_disease_diagnosis_counts(request):
         illness_qs = illness_qs.filter(diagnosed_date__year=year)
     if month:
         illness_qs = illness_qs.filter(diagnosed_date__month=month)
-    # Get all Disease names (case-insensitive mapping)
-    disease_names = list(Disease.objects.values_list('name', flat=True))
-    disease_name_map = {name.lower(): name for name in disease_names}
+    
     # Get all illness_name counts
     illness_names = list(illness_qs.values_list('illness_name', flat=True))
     
-    # Normalize illness names: map 'cat bite'/'dog bite' to 'Possible Rabies', 'LBM' to 'Gastrointestinal Issue', all lowercased
-    normalized = []
-    for name in illness_names:
-        if name and name.strip().lower() in ["cat bite", "dog bite"]:
-            normalized.append("possible rabies")
-        elif name and name.strip().lower() == "lbm":
-            normalized.append("gastrointestinal issue")
-        elif name:
-            normalized.append(name.strip().lower())
-    illness_counts = Counter(normalized)
-
-    # Prepare data (case-insensitive)
-    data = {disease_name_map[k]: 0 for k in disease_name_map}
-    possible_rabies_count = 0
-    gastrointestinal_issue_count = 0
+    # Initialize counts for the 5 diseases
+    data = {disease: 0 for disease in DISEASE_ORDER}
     others_count = 0
-    for illness, count in illness_counts.items():
-        if illness == "possible rabies":
-            possible_rabies_count += count
-        elif illness == "gastrointestinal issue":
-            gastrointestinal_issue_count += count
-        elif illness in disease_name_map:
-            data[disease_name_map[illness]] += count
-        else:
-            others_count += count
-    if possible_rabies_count > 0:
-        if "possible rabies" in disease_name_map:
-            data[disease_name_map["possible rabies"]] += possible_rabies_count
-        else:
-            data["Possible Rabies"] = possible_rabies_count
-    if gastrointestinal_issue_count > 0:
-        if "gastrointestinal issue" in disease_name_map:
-            data[disease_name_map["gastrointestinal issue"]] += gastrointestinal_issue_count
-        else:
-            data["Gastrointestinal Issue"] = gastrointestinal_issue_count
+    
+    # Count illnesses and map to capstone diseases
+    for name in illness_names:
+        if not name:
+            others_count += 1
+            continue
+        
+        name_lower = name.strip().lower()
+        matched = False
+        
+        # Check if illness name matches any capstone disease
+        # Priority: Check ICD codes first, then disease names
+        for key, disease_label in CAPSTONE_DISEASES.items():
+            # For ICD codes, check for exact match or code in the name
+            if key in ['t14.1', 'w54.99', 'j06.9', 'j15', 'i10-1', 'i10.1']:
+                if key in name_lower:
+                    data[disease_label] += 1
+                    matched = True
+                    break
+            # For disease names, check if key is contained in the illness name
+            elif key in name_lower:
+                data[disease_label] += 1
+                matched = True
+                break
+        
+        if not matched:
+            others_count += 1
+    
+    # Add Others if there's any count
     if others_count > 0:
         data['Others'] = others_count
+    else:
+        data['Others'] = 0
 
-    # Prepare response
-    labels = list(data.keys())
-    counts = list(data.values())
+    # Prepare response in the specified order
+    labels = DISEASE_ORDER + ['Others']
+    counts = [data.get(label, 0) for label in labels]
+    
     return JsonResponse({
         'labels': labels,
         'counts': counts
@@ -98,10 +121,38 @@ def get_monthly_diagnosis_trends(request):
     """
     API endpoint to return monthly diagnosis trends for each disease.
     Returns a dict with:
-      - months: list of YYYY-MM (always Jan to Jun of current year)
-      - diseases: list of disease names
+      - months: list of YYYY-MM (always Jan to Dec of current year)
+      - diseases: list of disease names (5 capstone diseases + Others)
       - data: {disease_name: [count_per_month, ...]}
     """
+    # Define the 5 capstone diseases
+    CAPSTONE_DISEASES = {
+        'open wounds': 'Open Wounds (T14.1)',
+        't14.1': 'Open Wounds (T14.1)',
+        'dog bites': 'Dog Bites (W54.99)',
+        'w54.99': 'Dog Bites (W54.99)',
+        'dog bite': 'Dog Bites (W54.99)',
+        'cat bite': 'Dog Bites (W54.99)',  # Also map cat bites to dog bites
+        'acute respiratory infections': 'Acute respiratory infections (J06.9)',
+        'j06.9': 'Acute respiratory infections (J06.9)',
+        'respiratory infection': 'Acute respiratory infections (J06.9)',
+        'pneumonia': 'Pneumonia (J15)',
+        'j15': 'Pneumonia (J15)',
+        'hypertension level 2': 'Hypertension Level 2 (I10-1)',
+        'i10-1': 'Hypertension Level 2 (I10-1)',
+        'i10.1': 'Hypertension Level 2 (I10-1)',
+        'hypertension': 'Hypertension Level 2 (I10-1)',
+    }
+    
+    # Disease display names in order
+    DISEASE_ORDER = [
+        'Open Wounds (T14.1)',
+        'Dog Bites (W54.99)',
+        'Acute respiratory infections (J06.9)',
+        'Pneumonia (J15)',
+        'Hypertension Level 2 (I10-1)',
+    ]
+    
     year = request.GET.get('year')
     month = request.GET.get('month')
     now = datetime.now()
@@ -110,54 +161,55 @@ def get_monthly_diagnosis_trends(request):
         months = [f"{year}-{'%02d' % int(month)}"]
     else:
         months = [f"{year}-{'%02d' % m}" for m in range(1, 13)]
-    # Get all Disease names (case-insensitive mapping)
-    disease_names = list(Disease.objects.values_list('name', flat=True))
-    disease_name_map = {name.lower(): name for name in disease_names}
+    
     illness_records = Medical_History.objects.all()
     illness_records = illness_records.filter(diagnosed_date__year=year)
     if month:
         illness_records = illness_records.filter(diagnosed_date__month=month)
     illness_records = illness_records.values_list('illness_name', 'diagnosed_date')
 
-    # Prepare data structure
-    data = defaultdict(lambda: [0] * len(months))
+    # Initialize data structure for the 5 diseases + Others
+    data = {disease: [0] * len(months) for disease in DISEASE_ORDER}
+    others_data = [0] * len(months)
+    
+    # Process each illness record
     for illness, date in illness_records:
         if not illness or not date:
             continue
-        # Normalize illness name
-        illness_lc = illness.strip().lower()
-        if illness_lc in ["cat bite", "dog bite"]:
-            illness_lc = "possible rabies"
-        elif illness_lc == "lbm":
-            illness_lc = "gastrointestinal issue"
+        
         # Get month string
         month_str = date.strftime("%Y-%m")
         if month_str not in months:
-            continue  # Only count Jan-Jun of current year
-        if illness_lc in disease_name_map:
-            disease_label = disease_name_map[illness_lc]
-        elif illness_lc == "possible rabies":
-            disease_label = disease_name_map.get("possible rabies", "Possible Rabies")
-        elif illness_lc == "gastrointestinal issue":
-            disease_label = disease_name_map.get("gastrointestinal issue", "Gastrointestinal Issue")
-        else:
-            disease_label = "Others"
-        month_idx = months.index(month_str)
-        data[disease_label][month_idx] += 1
-
-    # Ensure all diseases in disease_names are present
-    for d in disease_names:
-        if d not in data:
-            data[d] = [0] * len(months)
-    # Ensure 'Possible Rabies', 'Gastrointestinal Issue', 'Others' are present if needed
-    for extra in ["Possible Rabies", "Gastrointestinal Issue", "Others"]:
-        if extra in data:
             continue
-        data[extra] = [0] * len(months)
+        
+        month_idx = months.index(month_str)
+        illness_lc = illness.strip().lower()
+        matched = False
+        
+        # Check if illness name matches any capstone disease
+        # Priority: Check ICD codes first, then disease names
+        for key, disease_label in CAPSTONE_DISEASES.items():
+            # For ICD codes, check for exact match or code in the name
+            if key in ['t14.1', 'w54.99', 'j06.9', 'j15', 'i10-1', 'i10.1']:
+                if key in illness_lc:
+                    data[disease_label][month_idx] += 1
+                    matched = True
+                    break
+            # For disease names, check if key is contained in the illness name
+            elif key in illness_lc:
+                data[disease_label][month_idx] += 1
+                matched = True
+                break
+        
+        if not matched:
+            others_data[month_idx] += 1
+    
+    # Add Others to data
+    data['Others'] = others_data
 
     return JsonResponse({
         'months': months,
-        'diseases': list(data.keys()),
+        'diseases': DISEASE_ORDER + ['Others'],
         'data': data
     })
 
@@ -219,64 +271,134 @@ def get_referral_statistics(request):
     """
     API endpoint to return referral statistics for the current user's facilities.
     Returns monthly and yearly referral data.
+    For non-staff users, returns only their own referrals from their assigned facilities.
     """
     year = int(request.GET.get('year', datetime.now().year))    
     view_type = request.GET.get('view_type', 'monthly')
 
-    if request.user.is_staff:  # or request.user.role == 'MHO'
-        facilities = Facility.objects.all()   # compare ALL barangays
+    if request.user.is_staff or request.user.is_superuser:
+        # Staff/admin: get all facilities
+        facilities = Facility.objects.all()
+        # Get referrals from all facilities
+        referrals_qs = Referral.objects.all()
     else:
-        facilities = request.user.facilities.all()  # only user's barangays
-
-
-    if not facilities.exists():
-        return JsonResponse({'error': 'No facilities linked to this user'}, status=400)
+        # Non-staff users: get their assigned facilities
+        facilities = request.user.shared_facilities.all()
+        # Get only referrals created by this user or from their assigned facilities
+        from django.db.models import Q
+        referrals_qs = Referral.objects.filter(
+            Q(user=request.user) | 
+            Q(facility__in=facilities) | 
+            Q(patient__facility__in=facilities)
+        )
 
     if view_type == 'monthly':
         months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
                   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
-        data = {}
-        for facility in facilities:
-            facility_data = []
+        # For non-staff users, show a single dataset with their referrals
+        if not request.user.is_staff and not request.user.is_superuser:
+            user_data = []
             for month_num in range(1, 13):
-                count = Referral.objects.filter(
-                    patient__facility=facility,
+                count = referrals_qs.filter(
                     created_at__year=year,
                     created_at__month=month_num,
                 ).count()
-                facility_data.append(count)
-            data[facility.name] = facility_data
+                user_data.append(count)
+            
+            return JsonResponse({
+                'labels': months,
+                'datasets': [
+                    {
+                        'label': 'My Referrals',
+                        'data': user_data,
+                        'backgroundColor': '#4e73df',
+                        'borderColor': '#4e73df',
+                        'borderRadius': 10,
+                        'barThickness': 20,
+                    }
+                ]
+            })
+        else:
+            # Staff/admin: show data by facility
+            data = {}
+            for facility in facilities:
+                facility_data = []
+                for month_num in range(1, 13):
+                    count = Referral.objects.filter(
+                        patient__facility=facility,
+                        created_at__year=year,
+                        created_at__month=month_num,
+                    ).count()
+                    facility_data.append(count)
+                data[facility.name] = facility_data
+
+            return JsonResponse({
+                'labels': months,
+                'datasets': [
+                    {
+                        'label': facility_name,
+                        'data': facility_data,
+                        'backgroundColor': f'#{hash(facility_name) % 0xFFFFFF:06x}',
+                        'borderRadius': 10,
+                        'barThickness': 20,
+                    }
+                    for facility_name, facility_data in data.items()
+                ]
+            })
 
     else:  # yearly
         years = [year - 3, year - 2, year - 1, year]
-        months = [str(y) for y in years]
+        year_labels = [str(y) for y in years]
 
-        data = {}
-        for facility in facilities:
-            facility_data = []
+        # For non-staff users, show a single dataset with their referrals
+        if not request.user.is_staff and not request.user.is_superuser:
+            user_data = []
             for year_val in years:
-                count = Referral.objects.filter(
-                    patient__facility=facility,
+                count = referrals_qs.filter(
                     created_at__year=year_val,
                 ).count()
-                facility_data.append(count)
-            data[facility.name] = facility_data
+                user_data.append(count)
+            
+            return JsonResponse({
+                'labels': year_labels,
+                'datasets': [
+                    {
+                        'label': 'My Referrals',
+                        'data': user_data,
+                        'backgroundColor': '#4e73df',
+                        'borderColor': '#4e73df',
+                        'borderRadius': 10,
+                        'barThickness': 20,
+                    }
+                ]
+            })
+        else:
+            # Staff/admin: show data by facility
+            data = {}
+            for facility in facilities:
+                facility_data = []
+                for year_val in years:
+                    count = Referral.objects.filter(
+                        patient__facility=facility,
+                        created_at__year=year_val,
+                    ).count()
+                    facility_data.append(count)
+                data[facility.name] = facility_data
 
-    # ✅ Return only the current user’s facilities in chart format
-    return JsonResponse({
-        'labels': months,
-        'datasets': [
-            {
-                'label': facility_name,
-                'data': facility_data,
-                'backgroundColor': f'#{hash(facility_name) % 0xFFFFFF:06x}',
-                'borderRadius': 10,
-                'barThickness': 20,
-            }
-            for facility_name, facility_data in data.items()
-        ]
-    })
+            return JsonResponse({
+                'labels': year_labels,
+                'datasets': [
+                    {
+                        'label': facility_name,
+                        'data': facility_data,
+                        'backgroundColor': f'#{hash(facility_name) % 0xFFFFFF:06x}',
+                        'borderRadius': 10,
+                        'barThickness': 20,
+                    }
+                    for facility_name, facility_data in data.items()
+                ]
+            })
 
 
 def get_barangay_performance(request):
@@ -417,21 +539,27 @@ def get_user_referral_summary(request):
 def get_system_usage_data(request):
     """
     API endpoint to return system usage data for analytics.
-    Tracks user activity through referrals, medical histories, and other system interactions.
+    Tracks logins and reports generated per barangay/facility.
     """
+    from django.contrib.auth.models import User
+    from django.db.models import Q, Count
+    from django.utils import timezone
+    from calendar import monthrange
+    
     year = int(request.GET.get('year', datetime.now().year))
     month = request.GET.get('month')
     
-    # Get all facilities
-    facilities = Facility.objects.all()
+    # Get all facilities (barangays)
+    facilities = Facility.objects.all().order_by('name')
     
-    # Prepare months data
+    # Prepare months data - show first 6 months or all 12
     if month:
         months = [datetime(year, int(month), 1).strftime('%b')]
         month_nums = [int(month)]
     else:
-        months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-        month_nums = list(range(1, 13))
+        # Show first 6 months for the chart (Jan-Jun)
+        months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']
+        month_nums = list(range(1, 7))
     
     # Initialize data structure
     data = {
@@ -439,52 +567,107 @@ def get_system_usage_data(request):
         'datasets': []
     }
     
-    # Colors for different facility types
-    colors = ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#6f42c1', '#fd7e14', '#20c997']
+    # Color scheme matching the original chart
+    login_colors = {
+        'Carcor': '#4e73df',
+        'Mesaoy': '#1cc88a',
+        'New Cortez': '#36b9cc',
+        'Sta. Cruz': '#f6c23e',
+    }
+    
+    report_colors = {
+        'Carcor': '#ff6347',
+        'Mesaoy': '#ff4500',
+        'New Cortez': '#ff8c00',
+        'Sta. Cruz': '#ffb6c1',
+    }
+    
+    # Default colors if facility name doesn't match
+    default_login_colors = ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#6f42c1', '#fd7e14', '#20c997']
+    default_report_colors = ['#ff6347', '#ff4500', '#ff8c00', '#ffb6c1', '#e74a3b', '#6f42c1', '#fd7e14', '#20c997']
     
     for idx, facility in enumerate(facilities):
         facility_name = facility.name
-        color = colors[idx % len(colors)]
+        login_color = login_colors.get(facility_name, default_login_colors[idx % len(default_login_colors)])
+        report_color = report_colors.get(facility_name, default_report_colors[idx % len(default_report_colors)])
         
-        # Track referrals created per month
-        referral_data = []
+        # Track logins per month
+        # Count users associated with this facility who logged in during each month
+        login_data = []
         for month_num in month_nums:
-            count = Referral.objects.filter(
+            # Get start and end of month (timezone-aware)
+            start_date = timezone.make_aware(datetime(year, month_num, 1))
+            if month_num == 12:
+                end_date = timezone.make_aware(datetime(year + 1, 1, 1))
+            else:
+                end_date = timezone.make_aware(datetime(year, month_num + 1, 1))
+            
+            # Count logins from LoginLog model for users associated with this facility
+            # Users can be linked via shared_facilities or via BHWRegistration/Doctors/Nurses
+            try:
+                from accounts.models import LoginLog
+                
+                # Get users associated with this facility
+                facility_users = User.objects.filter(
+                    Q(shared_facilities=facility) |
+                    Q(bhwregistration__facility=facility) |
+                    Q(doctors__facility=facility) |
+                    Q(nurses__facility=facility)
+                ).distinct()
+                
+                # Count login events from LoginLog model for these users in this month
+                login_count = LoginLog.objects.filter(
+                    user__in=facility_users,
+                    login_time__gte=start_date,
+                    login_time__lt=end_date
+                ).count()
+            except (ImportError, AttributeError) as e:
+                # Fallback if LoginLog model doesn't exist or isn't available
+                print(f"Warning: Could not load LoginLog: {e}")
+                login_count = 0
+            
+            login_data.append(login_count)
+        
+        # Track reports generated per month
+        # Count accesses to report endpoints (system_usage_scorecard, morbidity_report, etc.)
+        # Since we don't have a report log, we'll use referral and medical history creation as proxy
+        # for report generation activity
+        report_data = []
+        for month_num in month_nums:
+            # Count referrals created (as proxy for referral reports)
+            referral_count = Referral.objects.filter(
                 patient__facility=facility,
                 created_at__year=year,
                 created_at__month=month_num
             ).count()
-            referral_data.append(count)
-        
-        # Track medical histories created per month
-        medical_data = []
-        for month_num in month_nums:
-            count = Medical_History.objects.filter(
-                patient__facility=facility,
+            
+            # Count medical histories created (as proxy for morbidity reports)
+            medical_count = Medical_History.objects.filter(
+                patient_id__facility=facility,
                 diagnosed_date__year=year,
                 diagnosed_date__month=month_num
             ).count()
-            medical_data.append(count)
+            
+            # Reports generated = sum of referrals and medical records (as they generate reports)
+            report_count = referral_count + medical_count
+            report_data.append(report_count)
         
-        # Add referral dataset
+        # Add login dataset
         data['datasets'].append({
-            'label': f'{facility_name} - Referrals',
-            'data': referral_data,
-            'borderColor': color,
-            'backgroundColor': color + '20',  # Add transparency
+            'label': f'{facility_name} - Logins',
+            'data': login_data,
+            'borderColor': login_color,
             'fill': False,
             'tension': 0.1,
         })
         
-        # Add medical history dataset
+        # Add reports generated dataset
         data['datasets'].append({
-            'label': f'{facility_name} - Medical Records',
-            'data': medical_data,
-            'borderColor': color,
-            'backgroundColor': color + '40',  # Add more transparency
+            'label': f'{facility_name} - Reports Generated',
+            'data': report_data,
+            'borderColor': report_color,
             'fill': False,
             'tension': 0.1,
-            'borderDash': [5, 5],  # Dashed line to differentiate
         })
     
     return JsonResponse(data)

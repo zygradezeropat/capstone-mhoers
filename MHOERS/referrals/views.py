@@ -18,7 +18,7 @@ from analytics.ml_utils import predict_disease_for_referral, random_forest_regre
 from analytics.model_manager import MLModelManager
 from analytics.batch_predictor import BatchPredictor
 from .query_optimizer import ReferralQueryOptimizer
-from django.db.models import Count
+from django.db.models import Count, Q, OuterRef, Subquery
 from django.contrib.auth.models import Group, User
 from django.db.models.functions import TruncMonth
 from django.utils.dateformat import DateFormat
@@ -236,6 +236,58 @@ def referred_referral_status(request):
         referral.followup_date = followup_date
         referral.final_diagnosis = mho_findings  # Save findings to final_diagnosis field
         referral.completed_at = timezone.now()
+        
+        # Save ICD code
+        referral.ICD_code = request.POST.get('editIcdCode', '')
+        
+        # Save Lifestyle/Social History fields
+        referral.is_smoker = request.POST.get('editIsSmoker') == 'on'
+        smoking_sticks = request.POST.get('editSmokingSticks', '')
+        referral.smoking_sticks_per_day = int(smoking_sticks) if smoking_sticks else None
+        referral.is_alcoholic = request.POST.get('editIsAlcoholic') == 'on'
+        alcohol_bottles = request.POST.get('editAlcoholBottles', '')
+        referral.alcohol_bottles_per_year = int(alcohol_bottles) if alcohol_bottles else None
+        referral.family_planning = request.POST.get('editFamilyPlanning') == 'on'
+        referral.family_planning_type = request.POST.get('editFamilyPlanningType', '')
+        
+        # Save Menstrual History fields
+        menarche_val = request.POST.get('editMenarche', '')
+        referral.menarche = int(menarche_val) if menarche_val else None
+        referral.sexually_active = request.POST.get('editSexuallyActive') == 'on'
+        partners_val = request.POST.get('editNumberOfPartners', '')
+        referral.number_of_partners = int(partners_val) if partners_val else None
+        referral.is_menopause = request.POST.get('editIsMenopause') == 'on'
+        menopause_age_val = request.POST.get('editMenopauseAge', '')
+        referral.menopause_age = int(menopause_age_val) if menopause_age_val else None
+        lmp_str = request.POST.get('editLastMenstrualPeriod', '')
+        if lmp_str:
+            try:
+                referral.last_menstrual_period = datetime.strptime(lmp_str, '%Y-%m-%d').date()
+            except ValueError:
+                pass
+        period_duration_val = request.POST.get('editPeriodDuration', '')
+        referral.period_duration = int(period_duration_val) if period_duration_val else None
+        period_interval_val = request.POST.get('editPeriodInterval', '')
+        referral.period_interval = int(period_interval_val) if period_interval_val else None
+        pads_val = request.POST.get('editPadsPerDay', '')
+        referral.pads_per_day = int(pads_val) if pads_val else None
+        
+        # Save Pregnancy History fields
+        referral.is_pregnant = request.POST.get('editIsPregnant') == 'on'
+        gravidity_val = request.POST.get('editGravidity', '')
+        referral.gravidity = int(gravidity_val) if gravidity_val else None
+        parity_val = request.POST.get('editParity', '')
+        referral.parity = int(parity_val) if parity_val else None
+        referral.delivery_type = request.POST.get('editDeliveryType', '')
+        full_term_val = request.POST.get('editFullTermBirths', '')
+        referral.full_term_births = int(full_term_val) if full_term_val else None
+        premature_val = request.POST.get('editPrematureBirths', '')
+        referral.premature_births = int(premature_val) if premature_val else None
+        abortions_val = request.POST.get('editAbortions', '')
+        referral.abortions = int(abortions_val) if abortions_val else None
+        living_children_val = request.POST.get('editLivingChildren', '')
+        referral.living_children = int(living_children_val) if living_children_val else None
+        
         referral.save()
 
         # ✅ Send notification to user (BHW) - they receive referral completed notifications
@@ -312,17 +364,44 @@ def delete_referral(request):
 @login_required
 @never_cache
 def referral_list(request):
+    # Get user's assigned facilities
     user_facilities = request.user.shared_facilities.all()
+    
+    # If user has no facilities, return empty queryset
+    if not user_facilities.exists():
+        active_qs = Referral.objects.none()
+        referred_qs = Referral.objects.none()
+        patients_qs = Patient.objects.none()
+    else:
+        # Filter referrals by user's assigned facilities
+        # Check both referral facility and patient facility to ensure we only show referrals for patients in user's facilities
+        active_qs = Referral.objects.filter(
+            Q(facility__in=user_facilities) | Q(patient__facility__in=user_facilities),
+            status__in=['pending', 'in-progress']
+        ).select_related('patient', 'patient__facility', 'patient__user').order_by('-created_at')
 
-    active_qs = Referral.objects.filter(
-        facility__in=user_facilities,
-        status='in-progress'
-    ).select_related('patient', 'patient__facility', 'patient__user').order_by('-created_at')
+        referred_qs = Referral.objects.filter(
+            Q(facility__in=user_facilities) | Q(patient__facility__in=user_facilities),
+            status='completed'
+        ).select_related('patient', 'patient__facility', 'patient__user').order_by('-completed_at', '-created_at')
 
-    referred_qs = Referral.objects.filter(
-        facility__in=user_facilities,
-        status='completed'
-    ).select_related('patient', 'patient__facility', 'patient__user').order_by('-completed_at', '-created_at')
+        # Get all patients from user's assigned facilities (all barangays)
+        latest_referral_subquery = Referral.objects.filter(
+            patient=OuterRef('pk')
+        ).order_by('-created_at')
+        
+        patients_qs = Patient.objects.filter(
+            facility__in=user_facilities
+        ).annotate(
+            referral_count=Count('referral'),
+            latest_referral_id=Subquery(latest_referral_subquery.values('referral_id')[:1]),
+            latest_referral_date=Subquery(latest_referral_subquery.values('created_at')[:1]),
+        ).order_by('first_name', 'last_name')
+
+    # Get total counts for badges
+    active_count = active_qs.count() if user_facilities.exists() else 0
+    referred_count = referred_qs.count() if user_facilities.exists() else 0
+    patients_count = patients_qs.count() if user_facilities.exists() else 0
 
     active_page_number = request.GET.get('active_page') or 1
     referred_page_number = request.GET.get('referred_page') or 1
@@ -335,14 +414,24 @@ def referral_list(request):
 
     active_tab = request.GET.get('tab')
     if not active_tab:
-        active_tab = 'tab2' if request.GET.get('referred_page') else 'tab1'
+        if request.GET.get('referred_page'):
+            active_tab = 'tab2'
+        elif request.GET.get('patients_page'):
+            active_tab = 'tab3'
+        else:
+            active_tab = 'tab1'
 
     return render(request, 'patients/user/referral_list.html', {
         'active_page': 'referral_list',
         'active_referrals': active_page,
         'referred_referrals': referred_page,
+        'patients': patients_qs,  # All patients from all facilities
         'predictions': predictions,
         'active_tab': active_tab,
+        # Count badges for tabs
+        'active_count': active_count,
+        'referred_count': referred_count,
+        'patients_count': patients_count,
     })
 
 @login_required 
@@ -356,6 +445,13 @@ def admin_patient_list(request):
 
     patients_qs = ReferralQueryOptimizer.get_patients_with_referral_count().order_by('first_name', 'last_name')
     facilities = Facility.objects.all()
+
+    # Get total counts for badges
+    from patients.models import Medical_History
+    active_count = active_qs.count()
+    referred_count = referred_qs.count()
+    patients_count = patients_qs.count()
+    medical_history_count = Medical_History.objects.count()
 
     active_page = Paginator(active_qs, 10).get_page(request.GET.get('active_page') or 1)
     referred_page = Paginator(referred_qs, 10).get_page(request.GET.get('referred_page') or 1)
@@ -382,6 +478,11 @@ def admin_patient_list(request):
         'referred_referrals': referred_page,
         'predictions': predictions,
         'training_result': {"status": "Models loaded from cache"},
+        # Count badges for tabs
+        'active_count': active_count,
+        'referred_count': referred_count,
+        'patients_count': patients_count,
+        'medical_history_count': medical_history_count,
     })
     
     

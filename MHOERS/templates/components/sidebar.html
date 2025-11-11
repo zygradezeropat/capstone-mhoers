@@ -56,6 +56,9 @@
           >
             <i class="bi bi-person-add"></i>
             <span class="nav-label">Referral</span>
+            {% if active_referrals_count > 0 %}
+              <span class="notification-badge">{{ active_referrals_count }}</span>
+            {% endif %}
           </a> 
         </li>
 

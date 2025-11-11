@@ -77,6 +77,7 @@ TEMPLATES = [
                 'notifications.context_processors.message_notification',
                 'accounts.context_processors.pending_users_count',
                 'accounts.context_processors.user_approval_status',
+                'accounts.context_processors.active_referrals_count',
                 'chat.context_processors.chat_context',
             ],
         },
