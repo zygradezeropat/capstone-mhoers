@@ -958,12 +958,8 @@ document.addEventListener("DOMContentLoaded", function() {
     return new bootstrap.Tooltip(tooltipTriggerEl);
   });
 
-  // Auto-open register modal if there are error messages rendered inside it
-  const modalHasMessages = document.querySelector('#registerModal .modern-alert');
-  if (modalHasMessages) {
-    const registerModal = new bootstrap.Modal(document.getElementById('registerModal'));
-    registerModal.show();
-  }
+  // Auto-open register modal disabled - modal should only open when user explicitly clicks "Add Healthcare Provider"
+  // This prevents the modal from appearing after user approval/rejection actions
 
   // Function to initialize the map
   function initializeMap() {

@@ -77,7 +77,7 @@
       {{ tab1_name }}
       {% if active_page != 'assessment' %}
         {% if tab1_count is not None and tab1_count != '' %}
-          {% if tab1_count >= 0 %}
+          {% if tab1_count|add:0 > 0 %}
             <span class="notification-badge">{{ tab1_count }}</span>
           {% endif %}
         {% else %}

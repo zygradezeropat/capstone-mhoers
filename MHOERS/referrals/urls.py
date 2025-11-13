@@ -7,6 +7,7 @@ app_name = 'referrals'
 urlpatterns = [
     path('create/', views.create_referral, name='create_referral'),
     path('assessment/', views.assessment, name='assessment'),
+    path('get-latest-referral/<str:patient_id>/', views.get_latest_referral, name='get_latest_referral'),
     path('referral_list/', views.referral_list, name='referral_list'),
     path('patients/', views.admin_patient_list, name='patient_list'),
     path('update-referral/', views.update_referral_status, name='update_referral_status'),

@@ -68,15 +68,34 @@
       <div class="dropdown">
         <button class="notification-btn dropdown-toggle position-relative" id="notificationDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
           <i class="bi bi-bell notification-icon"></i>
-          {% if unread_count > 0 %}
+          {% if unread_count > 0 or pending_users_count > 0 %}
             <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-              {{ unread_count }}
+              {% if unread_count > 0 and pending_users_count > 0 %}
+                {{ unread_count|add:pending_users_count }}
+              {% elif unread_count > 0 %}
+                {{ unread_count }}
+              {% else %}
+                {{ pending_users_count }}
+              {% endif %}
               <span class="sr-only">unread messages</span>
             </span>
           {% endif %}
         </button>
         <div class="dropdown-menu dropdown-menu-right shadow" aria-labelledby="notificationDropdown">
           <h6 class="dropdown-header">Notifications</h6>
+          {% if pending_users_count > 0 %}
+            <li>
+              <a class="dropdown-item d-flex justify-content-between align-items-start bg-light border-start border-3 border-warning" href="{% url 'user_management' %}?active_tab=tab1">
+                <div>
+                  <i class="bi bi-person-check-fill text-warning me-2"></i>
+                  <span class="fw-medium text-dark">Account Approval Needed:</span>
+                  <span class="text-secondary">{{ pending_users_count }} account{{ pending_users_count|pluralize }} pending approval</span>
+                </div>
+                <span class="badge bg-warning text-dark ms-2">{{ pending_users_count }}</span>
+              </a>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+          {% endif %}
           <li>
             <a class="dropdown-item d-flex justify-content-between align-items-start" href="#">
               <div>

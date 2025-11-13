@@ -251,106 +251,82 @@
 
             <!-- All Patients Tab -->
             <div class="tab-pane fade {% if active_tab == 'tab3' %}show active{% endif %}" id="tab3" role="tabpanel">
-              <div class="row">
-                <!-- Patient List Column -->
-                <div class="col-md-6">
-                  <div class="table-responsive">
-                    <table id="allTable" class="table table-hover align-middle">
-                      <thead class="bg-light">
-                        <tr>
-                          <th>Patient Name</th>
-                          <th>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {% for r in patients %}
-                        <tr data-id="{{ r.patients_id }}" class="align-middle patient-row" style="cursor: pointer;">
-                          <td>
-                            <div class="d-flex align-items-center">
-                              <div class="avatar-circle bg-primary-soft me-3">
-                                <i class="bi bi-person-circle text-primary fs-4"></i>
-                              </div>
-                              <div>
-                                <h6 class="mb-1 text-dark">{{ r.first_name }} {{ r.middle_name }} {{ r.last_name }}</h6>
-                              </div>
-                            </div>
-                          </td>
-                          <td>
-                            <button class="btn btn-outline-danger btn-sm rounded-pill delete-button"
-                              data-id="{{ r.patients_id }}"
-                              data-patient="{{ r.first_name }} {{ r.middle_name }} {{ r.last_name }}"
-                              data-toggle="modal"
-                              data-target="#deleteReferralModal">
-                              <i class="bi bi-trash me-1"></i> Delete
-                            </button>
-                          </td>
-                        </tr>
-                        {% endfor %}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
-                <!-- Patient Details Column -->
-                <div class="col-md-6">
-                  <div id="patientDetails" class="card border-0 shadow-sm h-100">
-                    <div class="card-body p-4">
-                      <div class="text-center mb-4" id="noPatientSelected">
-                        <i class="bi bi-person-circle text-muted" style="font-size: 4rem;"></i>
-                        <h5 class="mt-3 text-muted">Select a patient to view details</h5>
-                      </div>
-                      <div id="patientInfo" style="display: none;">
-                        <h4 class="mb-4 text-primary">Patient Information</h4>
-                        <div class="row mb-3">
-                          <div class="col-md-6">
-                            <label class="font-weight-bold text-muted">Full Name</label>
-                            <p id="detailName" class="mb-0"></p>
+              <div class="table-responsive">
+                <table id="allTable" class="table table-hover align-middle">
+                  <thead class="bg-light">
+                    <tr>
+                      <th>Patient Information</th>
+                      <th>Age</th>
+                      <th>Location</th>
+                      <th>Sex</th>
+                      <th>Contact</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for r in patients %}
+                    <tr data-id="{{ r.patients_id }}" 
+                        class="align-middle patient-row" 
+                        style="cursor: pointer;"
+                        data-first-name="{{ r.first_name }}"
+                        data-middle-name="{{ r.middle_name|default:'' }}"
+                        data-last-name="{{ r.last_name }}"
+                        data-patient-id="{{ r.patients_id }}"
+                        data-date-of-birth="{{ r.date_of_birth|date:'Y-m-d' }}"
+                        data-age="{{ r.age }}"
+                        data-sex="{{ r.sex }}"
+                        data-address="{{ r.p_address }}"
+                        data-phone="{{ r.p_number }}"
+                        data-facility="{{ r.facility.name|default:'N/A' }}"
+                        data-referral-count="{{ r.referral_count|default:0 }}"
+                        data-sitio="{{ r.sitio|default:'N/A' }}"
+                        data-barangay="{{ r.barangay|default:'N/A' }}"
+                        data-civil-status="{{ r.civil_status|default:'N/A' }}"
+                        data-phic-status="{{ r.get_phic_status_display|default:'N/A' }}"
+                        data-cct-beneficiary="{% if r.cct_beneficiary %}Yes{% else %}No{% endif %}"
+                        data-is-pwd="{% if r.is_pwd %}Yes{% else %}No{% endif %}"
+                        data-philhealth-number="{{ r.philhealth_number|default:'N/A' }}"
+                        data-philhealth-category="{{ r.philhealth_category|default:'N/A' }}"
+                        data-private-company="{{ r.private_company_name|default:'N/A' }}"
+                        data-is-dependent="{% if r.is_dependent %}Yes{% else %}No{% endif %}"
+                        data-dependent-member="{{ r.dependent_member_name|default:'N/A' }}"
+                        data-dependent-birthday="{{ r.dependent_member_birthday|date:'Y-m-d'|default:'N/A' }}"
+                        data-dependent-philhealth="{{ r.dependent_philhealth_no|default:'N/A' }}"
+                        data-family-history-hypertension="{% if r.family_history_hypertension %}Yes{% else %}No{% endif %}"
+                        data-family-history-diabetes="{% if r.family_history_diabetes %}Yes{% else %}No{% endif %}"
+                        data-family-history-cancer="{% if r.family_history_cancer %}Yes{% else %}No{% endif %}"
+                        data-family-history-asthma="{% if r.family_history_asthma %}Yes{% else %}No{% endif %}"
+                        data-family-history-epilepsy="{% if r.family_history_epilepsy %}Yes{% else %}No{% endif %}"
+                        data-family-history-tuberculosis="{% if r.family_history_tuberculosis %}Yes{% else %}No{% endif %}"
+                        data-family-history-others="{{ r.family_history_others|default:'N/A' }}">
+                      <td>
+                        <div class="d-flex align-items-center">
+                          <div class="avatar-circle bg-primary-soft me-3">
+                            <i class="bi bi-person-circle text-primary fs-4"></i>
                           </div>
-                          <div class="col-md-6">
-                            <label class="font-weight-bold text-muted">Patient ID</label>
-                            <p id="detailId" class="mb-0"></p>
+                          <div>
+                            <h6 class="mb-1 text-dark">{{ r.first_name }} {{ r.middle_name }} {{ r.last_name }}</h6>
+                           
                           </div>
                         </div>
-                        <div class="row mb-3">
-                          <div class="col-md-6">
-                            <label class="font-weight-bold text-muted">Date of Birth</label>
-                            <p id="detailBirth" class="mb-0"></p>
-                          </div>
-                          <div class="col-md-6">
-                            <label class="font-weight-bold text-muted">Sex</label>
-                            <p id="detailSex" class="mb-0"></p>
-                          </div>
-                        </div>
-                        <div class="row mb-3">
-                          <div class="col-md-6">
-                            <label class="font-weight-bold text-muted">Address</label>
-                            <p id="detailAddress" class="mb-0"></p>
-                          </div>
-                          <div class="col-md-6">
-                            <label class="font-weight-bold text-muted">Phone Number</label>
-                            <p id="detailPhone" class="mb-0"></p>
-                          </div>
-                        </div>
-                        <div class="row mb-3">
-                          <div class="col-md-6">
-                            <label class="font-weight-bold text-muted">Facility</label>
-                            <p id="detailFacility" class="mb-0"></p>
-                          </div>
-                          <div class="col-md-6">
-                            <label class="font-weight-bold text-muted">Referral Count</label>
-                            <p id="detailReferralCount" class="mb-0"></p>
-                          </div>
-                        </div>
-                        <div class="row">
-                          <div class="col-12">
-                            <label class="font-weight-bold text-muted">Predicted Disease</label>
-                            <p id="detailDisease" class="mb-0"></p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                      </td>
+                      <td><i class="bi bi-calendar3 text-success me-2"></i>{{ r.age }}</td>
+                      <td><i class="bi bi-geo-alt-fill text-danger me-2"></i>{{ r.p_address|truncatewords:5 }}</td>
+                      <td><i class="bi bi-gender-ambiguous text-info me-2"></i>{{ r.sex }}</td>
+                      <td><i class="bi bi-telephone-fill text-primary me-2"></i>{{ r.p_number }}</td>
+                      <td>
+                        <button class="btn btn-outline-danger btn-sm rounded-pill delete-button"
+                          data-id="{{ r.patients_id }}"
+                          data-patient="{{ r.first_name }} {{ r.middle_name }} {{ r.last_name }}"
+                          data-toggle="modal"
+                          data-target="#deleteReferralModal">
+                          <i class="bi bi-trash me-1"></i> Delete
+                        </button>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
               </div>
             </div>
             <!-- End of All Patients Tab -->
@@ -362,6 +338,189 @@
       <!-- end 0f Medical History Tab -->
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Patient Details Modal -->
+<div class="modal fade" id="patientDetailsModal" tabindex="-1" aria-labelledby="patientDetailsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content shadow-lg border-0">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="patientDetailsModalLabel">
+          <i class="bi bi-person-lines-fill me-2"></i>Patient Information
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4">
+        <!-- Basic Information -->
+        <div class="row mb-4">
+          <div class="col-12">
+            <h6 class="text-primary border-bottom pb-2 mb-3"><i class="bi bi-person me-2"></i>Basic Information</h6>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="font-weight-bold text-muted small">Full Name</label>
+            <input type="text" class="form-control bg-light" id="modalPatientName" readonly>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="font-weight-bold text-muted small">Patient ID</label>
+            <input type="text" class="form-control bg-light" id="modalPatientId" readonly>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="font-weight-bold text-muted small">Date of Birth</label>
+            <input type="text" class="form-control bg-light" id="modalDateOfBirth" readonly>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="font-weight-bold text-muted small">Age</label>
+            <input type="text" class="form-control bg-light" id="modalAge" readonly>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="font-weight-bold text-muted small">Sex</label>
+            <input type="text" class="form-control bg-light" id="modalSex" readonly>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="font-weight-bold text-muted small">Civil Status</label>
+            <input type="text" class="form-control bg-light" id="modalCivilStatus" readonly>
+          </div>
+        </div>
+
+        <!-- Contact Information -->
+        <div class="row mb-4">
+          <div class="col-12">
+            <h6 class="text-primary border-bottom pb-2 mb-3"><i class="bi bi-telephone me-2"></i>Contact Information</h6>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="font-weight-bold text-muted small">Address</label>
+            <input type="text" class="form-control bg-light" id="modalAddress" readonly>
+          </div>
+          <div class="col-md-3 mb-3">
+            <label class="font-weight-bold text-muted small">Sitio</label>
+            <input type="text" class="form-control bg-light" id="modalSitio" readonly>
+          </div>
+          <div class="col-md-3 mb-3">
+            <label class="font-weight-bold text-muted small">Barangay</label>
+            <input type="text" class="form-control bg-light" id="modalBarangay" readonly>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="font-weight-bold text-muted small">Phone Number</label>
+            <input type="text" class="form-control bg-light" id="modalPhone" readonly>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="font-weight-bold text-muted small">Facility</label>
+            <input type="text" class="form-control bg-light" id="modalFacility" readonly>
+          </div>
+        </div>
+
+        <!-- PhilHealth Information -->
+        <div class="row mb-4">
+          <div class="col-12">
+            <h6 class="text-primary border-bottom pb-2 mb-3"><i class="bi bi-card-checklist me-2"></i>PhilHealth Information</h6>
+          </div>
+          <div class="col-md-3 mb-3">
+            <label class="font-weight-bold text-muted small">PHIC Status</label>
+            <input type="text" class="form-control bg-light" id="modalPhicStatus" readonly>
+          </div>
+          <div class="col-md-3 mb-3">
+            <label class="font-weight-bold text-muted small">PhilHealth Number</label>
+            <input type="text" class="form-control bg-light" id="modalPhilhealthNumber" readonly>
+          </div>
+          <div class="col-md-3 mb-3">
+            <label class="font-weight-bold text-muted small">PhilHealth Category</label>
+            <input type="text" class="form-control bg-light" id="modalPhilhealthCategory" readonly>
+          </div>
+          <div class="col-md-3 mb-3">
+            <label class="font-weight-bold text-muted small">Private Company</label>
+            <input type="text" class="form-control bg-light" id="modalPrivateCompany" readonly>
+          </div>
+          <div class="col-md-3 mb-3">
+            <label class="font-weight-bold text-muted small">Is Dependent</label>
+            <input type="text" class="form-control bg-light" id="modalIsDependent" readonly>
+          </div>
+          <div class="col-md-3 mb-3">
+            <label class="font-weight-bold text-muted small">Dependent Member Name</label>
+            <input type="text" class="form-control bg-light" id="modalDependentMember" readonly>
+          </div>
+          <div class="col-md-3 mb-3">
+            <label class="font-weight-bold text-muted small">Dependent Birthday</label>
+            <input type="text" class="form-control bg-light" id="modalDependentBirthday" readonly>
+          </div>
+          <div class="col-md-3 mb-3">
+            <label class="font-weight-bold text-muted small">Dependent PhilHealth No.</label>
+            <input type="text" class="form-control bg-light" id="modalDependentPhilhealth" readonly>
+          </div>
+        </div>
+
+        <!-- Additional Information -->
+        <div class="row mb-4">
+          <div class="col-12">
+            <h6 class="text-primary border-bottom pb-2 mb-3"><i class="bi bi-info-circle me-2"></i>Additional Information</h6>
+          </div>
+          <div class="col-md-3 mb-3">
+            <label class="font-weight-bold text-muted small">CCT Beneficiary</label>
+            <input type="text" class="form-control bg-light" id="modalCctBeneficiary" readonly>
+          </div>
+          <div class="col-md-3 mb-3">
+            <label class="font-weight-bold text-muted small">Person With Disability (PWD)</label>
+            <input type="text" class="form-control bg-light" id="modalIsPwd" readonly>
+          </div>
+          <div class="col-md-3 mb-3">
+            <label class="font-weight-bold text-muted small">Referral Count</label>
+            <input type="text" class="form-control bg-light" id="modalReferralCount" readonly>
+          </div>
+        </div>
+
+        <!-- Family History -->
+        <div class="row mb-4">
+          <div class="col-12">
+            <h6 class="text-primary border-bottom pb-2 mb-3"><i class="bi bi-diagram-3 me-2"></i>Family History</h6>
+          </div>
+          <div class="col-md-6 mb-3">
+            <div class="row">
+              <div class="col-6">
+                <label class="font-weight-bold text-muted small">Hypertension</label>
+                <input type="text" class="form-control bg-light" id="modalFamilyHypertension" readonly>
+              </div>
+              <div class="col-6">
+                <label class="font-weight-bold text-muted small">Diabetes</label>
+                <input type="text" class="form-control bg-light" id="modalFamilyDiabetes" readonly>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <div class="row">
+              <div class="col-6">
+                <label class="font-weight-bold text-muted small">Cancer</label>
+                <input type="text" class="form-control bg-light" id="modalFamilyCancer" readonly>
+              </div>
+              <div class="col-6">
+                <label class="font-weight-bold text-muted small">Asthma</label>
+                <input type="text" class="form-control bg-light" id="modalFamilyAsthma" readonly>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <div class="row">
+              <div class="col-6">
+                <label class="font-weight-bold text-muted small">Epilepsy</label>
+                <input type="text" class="form-control bg-light" id="modalFamilyEpilepsy" readonly>
+              </div>
+              <div class="col-6">
+                <label class="font-weight-bold text-muted small">Tuberculosis</label>
+                <input type="text" class="form-control bg-light" id="modalFamilyTuberculosis" readonly>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="font-weight-bold text-muted small">Others</label>
+            <input type="text" class="form-control bg-light" id="modalFamilyOthers" readonly>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer bg-light">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="bi bi-arrow-left me-2"></i>Close
+        </button>
       </div>
     </div>
   </div>
@@ -407,34 +566,67 @@ $(document).ready(function() {
   // DataTables are initialized in patient_list_admin.js
   // This script handles additional functionality
 
-  // Handle patient row click
-  $(document).on('click', '.patient-row', function() {
-    const row = $(this);
-    const patientId = row.data('id');
+  // Handle patient row click - open modal with patient details
+  // Only target patient rows in the All Patients tab (#allTable), not medical history tab
+  $(document).on('click', '#allTable .patient-row', function(e) {
+    // Don't trigger if clicking on the delete button
+    if ($(e.target).closest('.delete-button').length) {
+      return;
+    }
     
-    // Remove active class from all rows
-    $('.patient-row').removeClass('table-primary');
+    const row = $(this);
+    
+    // Remove active class from all rows in the All Patients table only
+    $('#allTable .patient-row').removeClass('table-primary');
     // Add active class to clicked row
     row.addClass('table-primary');
 
-    // Show patient info and hide no selection message
-    $('#noPatientSelected').hide();
-    $('#patientInfo').show();
+    // Populate modal with patient data
+    const firstName = row.data('first-name') || '';
+    const middleName = row.data('middle-name') || '';
+    const lastName = row.data('last-name') || '';
+    const fullName = `${firstName} ${middleName} ${lastName}`.trim();
+    
+    $('#modalPatientName').val(fullName);
+    $('#modalPatientId').val('#' + (row.data('patient-id') || 'N/A'));
+    $('#modalDateOfBirth').val(row.data('date-of-birth') || 'N/A');
+    $('#modalAge').val(row.data('age') || 'N/A');
+    $('#modalSex').val(row.data('sex') || 'N/A');
+    $('#modalCivilStatus').val(row.data('civil-status') || 'N/A');
+    $('#modalAddress').val(row.data('address') || 'N/A');
+    $('#modalSitio').val(row.data('sitio') || 'N/A');
+    $('#modalBarangay').val(row.data('barangay') || 'N/A');
+    $('#modalPhone').val(row.data('phone') || 'N/A');
+    $('#modalFacility').val(row.data('facility') || 'N/A');
+    $('#modalPhicStatus').val(row.data('phic-status') || 'N/A');
+    $('#modalPhilhealthNumber').val(row.data('philhealth-number') || 'N/A');
+    $('#modalPhilhealthCategory').val(row.data('philhealth-category') || 'N/A');
+    $('#modalPrivateCompany').val(row.data('private-company') || 'N/A');
+    $('#modalIsDependent').val(row.data('is-dependent') || 'N/A');
+    $('#modalDependentMember').val(row.data('dependent-member') || 'N/A');
+    $('#modalDependentBirthday').val(row.data('dependent-birthday') || 'N/A');
+    $('#modalDependentPhilhealth').val(row.data('dependent-philhealth') || 'N/A');
+    $('#modalCctBeneficiary').val(row.data('cct-beneficiary') || 'N/A');
+    $('#modalIsPwd').val(row.data('is-pwd') || 'N/A');
+    $('#modalReferralCount').val(row.data('referral-count') || '0');
+    $('#modalFamilyHypertension').val(row.data('family-history-hypertension') || 'N/A');
+    $('#modalFamilyDiabetes').val(row.data('family-history-diabetes') || 'N/A');
+    $('#modalFamilyCancer').val(row.data('family-history-cancer') || 'N/A');
+    $('#modalFamilyAsthma').val(row.data('family-history-asthma') || 'N/A');
+    $('#modalFamilyEpilepsy').val(row.data('family-history-epilepsy') || 'N/A');
+    $('#modalFamilyTuberculosis').val(row.data('family-history-tuberculosis') || 'N/A');
+    $('#modalFamilyOthers').val(row.data('family-history-others') || 'N/A');
 
-    // Update patient details
-    $('#detailName').text(row.find('h6').text());
-    $('#detailId').text('ID: #' + patientId);
-    $('#detailBirth').text(row.find('.view-button').data('birth'));
-    $('#detailSex').text(row.find('.view-button').data('sex'));
-    $('#detailAddress').text(row.find('.view-button').data('address'));
-    $('#detailPhone').text(row.find('.view-button').data('phone'));
-    $('#detailFacility').text(row.find('.view-button').data('facility'));
-    $('#detailReferralCount').text(row.find('.view-button').data('referral-count'));
-    $('#detailDisease').text(row.find('.view-button').data('disease'));
+    // Show the modal
+    const modalEl = document.getElementById('patientDetailsModal');
+    if (modalEl) {
+      const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+      modal.show();
+    }
   });
 
-  // Handle delete button click
-  $(document).on('click', '.delete-button', function(e) {
+  // Handle delete button click - only for All Patients tab
+  $(document).on('click', '#allTable .delete-button', function(e) {
     e.stopPropagation(); // Prevent row click when clicking delete button
     const button = $(this);
     const patientName = button.data('patient');

@@ -109,8 +109,8 @@
           
           <!-- Modern Stats Grid -->
           <div class="row g-3 mb-5">
-            <div class="col-sm-6 col-lg-3">
-              <div class="stat-card bg-gradient-primary rounded-4 p-4 h-100">
+            <div class="col-sm-6 col-lg-4">
+              <div class="stat-card bg-gradient-danger rounded-4 p-4 h-100">
                 <div class="d-flex align-items-center justify-content-between">
                   <div>
                     <h6 class="text-muted mb-2 fw-semibold">Total Referrals</h6>
@@ -123,7 +123,7 @@
               </div>
             </div>
             
-            <div class="col-sm-6 col-lg-3">
+            <div class="col-sm-6 col-lg-4">
               <div class="stat-card bg-gradient-warning rounded-4 p-4 h-100">
                 <div class="d-flex align-items-center justify-content-between">
                   <div>
@@ -137,7 +137,7 @@
               </div>
             </div>
             
-            <div class="col-sm-6 col-lg-3">
+            <div class="col-sm-6 col-lg-4">
               <div class="stat-card bg-gradient-success rounded-4 p-4 h-100">
                 <div class="d-flex align-items-center justify-content-between">
                   <div>
@@ -146,20 +146,6 @@
                   </div>
                   <div class="stat-icon">
                     <i class="bi bi-check-circle" style="font-size: 2.5rem; opacity: 0.3;"></i>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div class="col-sm-6 col-lg-3">
-              <div class="stat-card bg-gradient-secondary rounded-4 p-4 h-100">
-                <div class="d-flex align-items-center justify-content-between">
-                  <div>
-                    <h6 class="text-muted mb-2 fw-semibold">Pending</h6>
-                    <h2 class="mb-0 fw-bold">{{ pending_referrals }}</h2>
-                  </div>
-                  <div class="stat-icon">
-                    <i class="bi bi-hourglass-split" style="font-size: 2.5rem; opacity: 0.3;"></i>
                   </div>
                 </div>
               </div>
@@ -346,11 +332,6 @@
               <input type="text" class="form-control form-control-lg" id="id_username" name="username" 
                      value="{{ request.user.username }}" required>
               <div class="form-text">This will be your login username</div>
-            </div>
-            <div class="col-12">
-              <label for="id_email" class="form-label fw-semibold">Email Address</label>
-              <input type="email" class="form-control form-control-lg" id="id_email" name="email" 
-                     value="{{ request.user.email }}">
             </div>
           </div>
         </form>

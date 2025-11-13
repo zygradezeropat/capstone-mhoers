@@ -86,14 +86,16 @@
       <div class="d-none d-print-block mb-4">
         <div class="text-center border-bottom pb-3">
           <div class="d-flex align-items-center justify-content-between mb-2">
-            <img src="{% static 'images/LGU-NEWCORELLA.png' %}" alt="LGU New Corella Logo" class="report-logo">
-            <img src="{% static 'images/MHO-LOGO.png' %}" alt="MHO Logo" class="report-logo">
+            <img src="{% static 'images/LGU-NEWCORELLA.png' %}" alt="LGU New Corella Logo" class="report-logo" style="width: 80px; height: 80px; object-fit: contain; flex-shrink: 0;">
+            <div class="flex-grow-1 px-3">
+              <h6 class="mb-1">Republic of the Philippines</h6>
+              <h6 class="mb-1">Province of Davao del Norte</h6>
+              <h5 class="fw-bold mb-1">Municipality of New Corella</h5>
+              <h6 class="mb-1">Municipal Health Office</h6>
+              <p class="mb-0 small">Purok 5, Poblacion, New Corella | rhunewcorella@yahoo.com | (+63) 970-093-3480</p>
+            </div>
+            <img src="{% static 'images/MHO-LOGO.png' %}" alt="MHO Logo" class="report-logo" style="width: 80px; height: 80px; object-fit: contain; flex-shrink: 0;">
           </div>
-          <h6 class="mb-1">Republic of the Philippines</h6>
-          <h6 class="mb-1">Province of Davao del Norte</h6>
-          <h5 class="fw-bold mb-1">Municipality of New Corella</h5>
-          <h6 class="mb-1">Municipal Health Office</h6>
-          <p class="mb-0 small">Purok 5, Poblacion, New Corella | rhunewcorella@yahoo.com | (+63) 970-093-3480</p>
         </div>
       </div>
 
@@ -208,7 +210,6 @@
     // Get the actual content from the page
     const printHeader = document.querySelector('.d-print-block');
     const tableContainer = document.querySelector('.table-responsive');
-    const notesSection = document.querySelector('.mt-3');
     
     if (!tableContainer) {
       window.print();
@@ -216,23 +217,14 @@
     }
     
     // Clone elements to preserve structure
-    const headerClone = printHeader ? printHeader.cloneNode(true) : null;
     const tableClone = tableContainer.cloneNode(true);
-    const notesClone = notesSection ? notesSection.cloneNode(true) : null;
     
-    // Remove d-none class from header and clean up
-    if (headerClone) {
-      headerClone.classList.remove('d-none', 'd-print-block');
-      headerClone.classList.add('d-block');
-      // Remove mb-4 class that adds extra spacing
-      headerClone.classList.remove('mb-4');
-    }
+    // Remove any d-print-block headers from the cloned table content (to prevent duplication)
+    const printHeadersInClone = tableClone.querySelectorAll('.d-print-block, .print-header');
+    printHeadersInClone.forEach(header => header.remove());
     
-    // Fix logo URLs in all cloned elements
-    const allImages = [headerClone, tableClone, notesClone]
-      .filter(el => el !== null)
-      .flatMap(el => Array.from(el.querySelectorAll('img')));
-    
+    // Fix logo URLs in cloned elements
+    const allImages = tableClone.querySelectorAll('img');
     allImages.forEach(img => {
       const src = img.getAttribute('src');
       if (src && src.startsWith('/')) {
@@ -240,15 +232,14 @@
       }
     });
     
-    // Get HTML content
+    // Get HTML content (notes are excluded)
     const tableHtml = tableClone.innerHTML;
-    const notesHtml = notesClone ? notesClone.innerHTML : '';
 
     // Create header HTML with proper structure
     const headerHtml = `
       <div class="print-header">
         <div class="logo-container">
-          <img src="${logoLeft}" alt="LGU New Corella Logo">
+          <img src="${logoLeft}" alt="LGU New Corella Logo" style="width: 80px; height: 80px; object-fit: contain; flex-shrink: 0;">
           <div class="header-text">
             <h6>Republic of the Philippines</h6>
             <h6>Province of Davao del Norte</h6>
@@ -256,7 +247,7 @@
             <h6>Municipal Health Office</h6>
             <p>Purok 5, Poblacion, New Corella | rhunewcorella@yahoo.com | (+63) 970-093-3480</p>
           </div>
-          <img src="${logoRight}" alt="MHO Logo">
+          <img src="${logoRight}" alt="MHO Logo" style="width: 80px; height: 80px; object-fit: contain; flex-shrink: 0;">
         </div>
       </div>
     `;
@@ -373,15 +364,6 @@
             overflow: visible;
             width: 100%;
           }
-          .print-notes {
-            margin-top: 20px;
-            font-size: 12pt;
-            page-break-inside: avoid;
-          }
-          .print-notes small {
-            display: block;
-            margin: 3px 0;
-          }
           @media print {
             @page {
               size: A4 landscape;
@@ -423,10 +405,6 @@
             tbody tr {
               page-break-inside: avoid;
             }
-            .print-notes {
-              page-break-inside: avoid;
-              page-break-before: avoid;
-            }
           }
         </style>
       </head>
@@ -434,9 +412,6 @@
         ${headerHtml}
         <div class="content-wrapper" style="margin-top: 10px;">
           ${tableHtml}
-        </div>
-        <div class="print-notes">
-          ${notesHtml}
         </div>
       </body>
       </html>

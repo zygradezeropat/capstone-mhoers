@@ -86,9 +86,15 @@
       
         {% if request.user.is_authenticated %}
           {% if request.user.is_staff or request.user.is_superuser %}
-            {% if unread_count > 0 %}
+            {% if unread_count > 0 or pending_users_count > 0 %}
               <span class="position-absolute top-0 end-0 translate-middle badge rounded-pill bg-danger">
-                {{ unread_count }}
+                {% if unread_count > 0 and pending_users_count > 0 %}
+                  {{ unread_count|add:pending_users_count }}
+                {% elif unread_count > 0 %}
+                  {{ unread_count }}
+                {% else %}
+                  {{ pending_users_count }}
+                {% endif %}
                 <span class="visually-hidden"></span>
               </span>
             {% endif %}
@@ -105,6 +111,26 @@
       
         
         <ul class="dropdown-menu dropdown-menu-end shadow border-0" aria-labelledby="notificationDropdown">
+          {% if request.user.is_staff or request.user.is_superuser %}
+            {% if pending_users_count > 0 %}
+              <li>
+                <a class="dropdown-item py-3 bg-light border-start border-3 border-warning" href="{% url 'user_management' %}?active_tab=tab1">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                      <i class="bi bi-person-check-fill text-warning me-2"></i>
+                      <span class="fw-medium text-dark">Account Approval Needed:</span>
+                      <span class="text-secondary">{{ pending_users_count }} account{{ pending_users_count|pluralize }} pending approval</span>
+                    </div>
+                    <span class="badge bg-warning text-dark ms-3">{{ pending_users_count }}</span>
+                  </div>
+                </a>
+              </li>
+              {% if messages_notif %}
+                <li><hr class="dropdown-divider my-0"></li>
+              {% endif %}
+            {% endif %}
+          {% endif %}
+          
           {% for notif in messages_notif %}
             <li>
               <a class="dropdown-item py-3" href="{% url 'notifications:mark_notification_read' notif.notification_id %}">
@@ -119,11 +145,13 @@
               </a>
             </li> 
           {% empty %}
-            <li>
-              <div class="dropdown-item text-center py-3 text-muted">
-                <i class="bi bi-inbox me-2"></i>No notifications
-              </div>
-            </li>
+            {% if not request.user.is_staff and not request.user.is_superuser or pending_users_count == 0 %}
+              <li>
+                <div class="dropdown-item text-center py-3 text-muted">
+                  <i class="bi bi-inbox me-2"></i>No notifications
+                </div>
+              </li>
+            {% endif %}
           {% endfor %} 
           
           <li><hr class="dropdown-divider my-0"></li>

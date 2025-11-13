@@ -337,13 +337,18 @@ def user_report(request):
     illness_counts = Counter(medical_histories.values_list('illness_name', flat=True))
     top_diagnoses = dict(illness_counts.most_common(5))
     
+    # Get facilities associated with the user
+    from facilities.models import Facility
+    facilities = Facility.objects.filter(users=user).distinct()
+    
     context = {
         'active_page': 'user_report',
         'total_referrals': total_referrals,
         'pending_referrals': pending_referrals,
         'completed_referrals': completed_referrals,
         'top_diagnoses': top_diagnoses,
-        'current_year': current_year
+        'current_year': current_year,
+        'facilities': facilities
     }
     
     return render(request, 'analytics/user_report.html', context)

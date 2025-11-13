@@ -5,6 +5,144 @@
 {% block content %} 
 
 <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+<style>
+  /* Calendar Styles - Ensure calendar fits within card */
+  .calendar-main {
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+  }
+  
+  .calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+    width: 100%;
+  }
+  
+  .calendar-header h2 {
+    margin: 0;
+    flex: 1;
+    min-width: 200px;
+    font-size: 1.5rem;
+  }
+  
+  .calendar-nav {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  
+  .calendar-grid {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: visible;
+  }
+  
+  .calendar-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0;
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+  
+  .calendar-weekday {
+    text-align: center;
+    font-weight: 600;
+    padding: 0.5rem;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    font-size: 0.875rem;
+  }
+  
+  .calendar-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0;
+    width: 100%;
+  }
+  
+  .calendar-day {
+    min-height: 80px;
+    border: 1px solid #dee2e6;
+    padding: 0.5rem;
+    background-color: #fff;
+    position: relative;
+    overflow: hidden;
+    word-wrap: break-word;
+  }
+  
+  .calendar-day.other-month {
+    background-color: #f8f9fa;
+    color: #adb5bd;
+  }
+  
+  .calendar-day.today {
+    background-color: #e7f3ff;
+    border: 2px solid #0d6efd;
+  }
+  
+  .calendar-day span {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+  }
+  
+  .followup-indicators {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin-top: 0.25rem;
+  }
+  
+  .followup-indicator {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    background-color: #0d6efd;
+    color: white;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    word-wrap: break-word;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  .followup-indicator:hover {
+    background-color: #0b5ed7;
+  }
+  
+  .followup-text {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .calendar-day {
+      min-height: 60px;
+      padding: 0.25rem;
+      font-size: 0.75rem;
+    }
+    
+    .calendar-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    
+    .calendar-nav {
+      width: 100%;
+      justify-content: flex-start;
+    }
+  }
+</style>
 
 <!-- Navbar Include -->
 {% include 'components/navbar.html' %}
@@ -64,9 +202,9 @@
             <div class="calendar-header">
               <h2 id="currentMonth"></h2>
               <div class="calendar-nav">
-                <button class="btn btn-secondary" onclick="previousMonth()">Previous</button>
-                <button class="btn btn-primary" onclick="goToToday()">Today</button>
-                <button class="btn btn-secondary" onclick="nextMonth()">Next</button>
+                <button class="btn btn-secondary btn-sm" onclick="previousMonth()">Previous</button>
+                <button class="btn btn-primary btn-sm" onclick="goToToday()">Today</button>
+                <button class="btn btn-secondary btn-sm" onclick="nextMonth()">Next</button>
               </div>
             </div>
             <div class="calendar-grid" id="calendarGrid">

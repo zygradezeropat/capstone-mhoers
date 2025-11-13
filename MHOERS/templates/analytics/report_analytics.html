@@ -92,44 +92,8 @@
     </div>
   </div>
 
-  <!-- Summary Statistics Cards -->
-  <div class="row mb-4">
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm">
-        <div class="card-body text-center">
-          <h3 class="text-primary mb-1">0</h3>
-          <p class="text-muted mb-0">Total Referrals</p>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm">
-        <div class="card-body text-center">
-          <h3 class="text-warning mb-1">0</h3>
-          <p class="text-muted mb-0">Pending Referrals</p>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm">
-        <div class="card-body text-center">
-          <h3 class="text-success mb-1">0</h3>
-          <p class="text-muted mb-0">Completed Referrals</p>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm">
-        <div class="card-body text-center">
-          <h3 class="text-info mb-1">0</h3>
-          <p class="text-muted mb-0">Top Diagnoses</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- Tab Navigation -->
-  {% include 'components/tabbar/tabbar.html' with tab1_name="Referral Statistics" tab1_icon="bi-graph-up" tab2_name="Common Diagnoses" tab2_icon="bi-clipboard2-pulse" tab3_name="Barangay Performance" tab3_icon="bi-bar-chart" tab5_name="Generate Reports" tab5_icon="bi-printer" active_tab="tab5" %}
+  {% include 'components/tabbar/tabbar.html' with tab1_name="Referral Statistics" tab1_icon="bi-graph-up" tab1_count=0 tab2_name="Common Diagnoses" tab2_icon="bi-clipboard2-pulse" tab3_name="Barangay Performance" tab3_icon="bi-bar-chart" tab5_name="Generate Reports" tab5_icon="bi-printer" active_tab="tab5" show_pending_fallback=False %}
 
   <!-- Tab Content -->
   <div class="tab-content" id="dashboardTabContent">

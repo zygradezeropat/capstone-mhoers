@@ -64,6 +64,7 @@ def assessment(request):
     user = request.user
     patient_id = None  
     selected_patient = None
+    latest_referral = None
 
     # If POST, get patient_id securely
     if request.method == "POST":
@@ -73,6 +74,10 @@ def assessment(request):
     if patient_id:
         try:
             selected_patient = Patient.objects.get(patients_id=patient_id)
+            # Get the latest referral for this patient to populate form fields
+            latest_referral = Referral.objects.filter(
+                patient=selected_patient
+            ).order_by('-created_at').first()
         except Patient.DoesNotExist:
             selected_patient = None
 
@@ -89,8 +94,51 @@ def assessment(request):
         "patients": patients,
         "patient_id": patient_id,  # send selected patient to template
         "selected_patient": selected_patient,
+        "latest_referral": latest_referral,  # send latest referral data
         "facility": facility,
     })
+
+@login_required
+def get_latest_referral(request, patient_id):
+    """Get the latest referral data for a patient to populate form fields"""
+    try:
+        patient = get_object_or_404(Patient, patients_id=patient_id)
+        latest_referral = Referral.objects.filter(
+            patient=patient
+        ).order_by('-created_at').first()
+        
+        if latest_referral:
+            return JsonResponse({
+                'success': True,
+                'referral': {
+                    'is_smoker': latest_referral.is_smoker,
+                    'smoking_sticks_per_day': latest_referral.smoking_sticks_per_day,
+                    'is_alcoholic': latest_referral.is_alcoholic,
+                    'alcohol_bottles_per_year': latest_referral.alcohol_bottles_per_year,
+                    'family_planning': latest_referral.family_planning,
+                    'family_planning_type': latest_referral.family_planning_type,
+                    'menarche': latest_referral.menarche,
+                    'sexually_active': latest_referral.sexually_active,
+                    'number_of_partners': latest_referral.number_of_partners,
+                    'is_menopause': latest_referral.is_menopause,
+                    'menopause_age': latest_referral.menopause_age,
+                    'last_menstrual_period': latest_referral.last_menstrual_period.strftime('%Y-%m-%d') if latest_referral.last_menstrual_period else None,
+                    'period_duration': latest_referral.period_duration,
+                    'period_interval': latest_referral.period_interval,
+                    'pads_per_day': latest_referral.pads_per_day,
+                }
+            })
+        else:
+            return JsonResponse({
+                'success': True,
+                'referral': None
+            })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
 
 @login_required
 def create_referral(request):

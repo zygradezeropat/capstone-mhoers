@@ -44,7 +44,7 @@ def _nurse_pre_save(sender, instance: Nurses, **kwargs):
 
 def _send_approval_sms_async(phone_number: str, first_name: str, last_name: str):
     message = (
-        "your account approve, you can log in it by using the credentials you inputted"
+        "Your Account has been approved, You Can Now Log in by Using the Correct Credentials"
     )
     # Fire-and-forget; result is not used here
     send_sms_iprog(phone_number, first_name, last_name, message=message, sender_id="MHO-NewCorella")

@@ -455,6 +455,10 @@ ul#dashboardTab.nav .nav-link {
         $('#patientSelect').val("{{ selected_patient.patients_id }}").trigger('change');
         // Check patient sex for preselected patient
         checkPatientSex('{{ selected_patient.sex }}');
+        // Fetch latest referral data for preselected patient after a short delay to ensure DOM is ready
+        setTimeout(function() {
+          fetchReferralData("{{ selected_patient.patients_id }}");
+        }, 500);
       {% endif %}
 
       // Listen for patient selection changes
@@ -462,12 +466,18 @@ ul#dashboardTab.nav .nav-link {
         const patientId = e.params.data.id;
         // Fetch patient sex via AJAX
         fetchPatientSex(patientId);
+        // Fetch latest referral data for this patient after a short delay
+        setTimeout(function() {
+          fetchReferralData(patientId);
+        }, 300);
       });
 
       // Listen for patient clearing
       $('#patientSelect').on('select2:clear', function (e) {
         // Hide menstrual and pregnancy sections when patient is cleared
         $('#menstrualHistoryCard, #pregnancyHistoryCard').hide();
+        // Clear referral fields
+        clearReferralFields();
       });
 
     } else {
@@ -500,6 +510,132 @@ ul#dashboardTab.nav .nav-link {
       } else {
         $('#menstrualHistoryCard, #pregnancyHistoryCard').hide();
       }
+    }
+
+    // Function to fetch referral data for a patient
+    function fetchReferralData(patientId) {
+      if (!patientId) {
+        clearReferralFields();
+        return;
+      }
+      
+      const url = `{% url 'referrals:get_latest_referral' 'PATIENT_ID' %}`.replace('PATIENT_ID', patientId);
+      console.log('Fetching referral data from:', url);
+      
+      fetch(url)
+        .then(response => {
+          console.log('Response status:', response.status);
+          return response.json();
+        })
+        .then(data => {
+          console.log('Referral data received:', data);
+          if (data.success && data.referral) {
+            console.log('Populating form with referral data:', data.referral);
+            populateFormFromReferral(data.referral);
+          } else {
+            console.log('No referral data found for patient');
+            clearReferralFields();
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching referral data:', error);
+          clearReferralFields();
+        });
+    }
+
+    // Function to populate form fields from referral data
+    function populateFormFromReferral(referralData) {
+      console.log('populateFormFromReferral called with:', referralData);
+      
+      // Lifestyle & Social History
+      // Handle is_smoker
+      const isSmoker = referralData.is_smoker === true || referralData.is_smoker === 'true' || referralData.is_smoker === 1;
+      console.log('is_smoker value:', referralData.is_smoker, 'converted to:', isSmoker);
+      
+      if ($('#is_smoker').length) {
+        $('#is_smoker').prop('checked', isSmoker).trigger('change');
+        $('#smoking_sticks_per_day').prop('disabled', !isSmoker);
+        if (referralData.smoking_sticks_per_day !== null && referralData.smoking_sticks_per_day !== undefined) {
+          console.log('Setting smoking_sticks_per_day to:', referralData.smoking_sticks_per_day);
+          $('#smoking_sticks_per_day').val(referralData.smoking_sticks_per_day);
+        }
+      } else {
+        console.error('is_smoker checkbox not found in DOM');
+      }
+      
+      // Handle is_alcoholic
+      const isAlcoholic = referralData.is_alcoholic === true || referralData.is_alcoholic === 'true' || referralData.is_alcoholic === 1;
+      if ($('#is_alcoholic').length) {
+        $('#is_alcoholic').prop('checked', isAlcoholic).trigger('change');
+        $('#alcohol_bottles_per_year').prop('disabled', !isAlcoholic);
+        if (referralData.alcohol_bottles_per_year !== null && referralData.alcohol_bottles_per_year !== undefined) {
+          $('#alcohol_bottles_per_year').val(referralData.alcohol_bottles_per_year);
+        }
+      }
+      
+      // Handle family_planning
+      const familyPlanning = referralData.family_planning === true || referralData.family_planning === 'true' || referralData.family_planning === 1;
+      if ($('#family_planning').length) {
+        $('#family_planning').prop('checked', familyPlanning).trigger('change');
+        $('#family_planning_type').prop('disabled', !familyPlanning);
+        if (referralData.family_planning_type) {
+          $('#family_planning_type').val(referralData.family_planning_type);
+        }
+      }
+
+      // Menstrual History
+      if (referralData.menarche !== null && referralData.menarche !== undefined) {
+        $('#menarche').val(referralData.menarche);
+      }
+      
+      // Handle sexually_active
+      const sexuallyActive = referralData.sexually_active === true || referralData.sexually_active === 'true' || referralData.sexually_active === 1;
+      if ($('#sexually_active').length && referralData.sexually_active !== undefined && referralData.sexually_active !== null) {
+        $('#sexually_active').prop('checked', sexuallyActive);
+      }
+      
+      if (referralData.number_of_partners !== null && referralData.number_of_partners !== undefined) {
+        $('#number_of_partners').val(referralData.number_of_partners);
+      }
+      
+      // Handle is_menopause
+      const isMenopause = referralData.is_menopause === true || referralData.is_menopause === 'true' || referralData.is_menopause === 1;
+      if ($('#is_menopause').length && referralData.is_menopause !== undefined && referralData.is_menopause !== null) {
+        $('#is_menopause').prop('checked', isMenopause);
+      }
+      
+      if (referralData.menopause_age !== null && referralData.menopause_age !== undefined) {
+        $('#menopause_age').val(referralData.menopause_age);
+      }
+      
+      if (referralData.last_menstrual_period) {
+        $('#last_menstrual_period').val(referralData.last_menstrual_period);
+      }
+      
+      if (referralData.period_duration !== null && referralData.period_duration !== undefined) {
+        $('#period_duration').val(referralData.period_duration);
+      }
+      
+      if (referralData.period_interval !== null && referralData.period_interval !== undefined) {
+        $('#period_interval').val(referralData.period_interval);
+      }
+      
+      if (referralData.pads_per_day !== null && referralData.pads_per_day !== undefined) {
+        $('#pads_per_day').val(referralData.pads_per_day);
+      }
+    }
+
+    // Function to clear referral fields
+    function clearReferralFields() {
+      // Clear lifestyle fields
+      $('#is_smoker, #is_alcoholic, #family_planning').prop('checked', false);
+      $('#smoking_sticks_per_day, #alcohol_bottles_per_year').val('').prop('disabled', true);
+      $('#family_planning_type').val('').prop('disabled', true);
+      
+      // Clear menstrual history fields
+      $('#menarche, #number_of_partners, #menopause_age, #period_duration, #period_interval, #pads_per_day').val('');
+      $('#sexually_active, #is_menopause').prop('checked', false);
+      $('#last_menstrual_period').val('');
     }
 
     // Handle conditional enabling of lifestyle fields

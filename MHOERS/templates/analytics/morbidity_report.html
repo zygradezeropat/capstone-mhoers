@@ -71,13 +71,15 @@
       <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center mb-4">
         <div class="flex-grow-1">
           <div class="d-flex align-items-center justify-content-between flex-wrap mb-3">
-            <img src="{% static 'images/LGU-NEWCORELLA.png' %}" alt="LGU New Corella Logo" class="report-logo mb-3 mb-lg-0">
+            <img src="{% static 'images/LGU-NEWCORELLA.png' %}" alt="LGU New Corella Logo" class="report-logo mb-3 mb-lg-0" style="width: 80px; height: 80px; object-fit: contain; flex-shrink: 0;">
             <div class="text-center flex-grow-1 px-lg-4">
-              <h4 class="text-primary mb-1">Morbidity &amp; Top-Diagnosis Report</h4>
-              <p class="text-muted mb-0">Summary of reported illnesses with DOH Form 48 compliance mapping</p>
-              <small class="text-muted">Reporting Period: {{ month_name }} {{ year }}</small>
+              <h6 class="mb-1">Republic of the Philippines</h6>
+              <h6 class="mb-1">Province of Davao del Norte</h6>
+              <h5 class="fw-bold mb-1">Municipality of New Corella</h5>
+              <h6 class="mb-1">Municipal Health Office</h6>
+              <p class="mb-0 small text-muted">Purok 5, Poblacion, New Corella | rhunewcorella@yahoo.com | (+63) 970-093-3480</p>
             </div>
-            <img src="{% static 'images/MHO-LOGO.png' %}" alt="MHO Logo" class="report-logo mb-3 mb-lg-0 d-none d-sm-block">
+            <img src="{% static 'images/MHO-LOGO.png' %}" alt="MHO Logo" class="report-logo mb-3 mb-lg-0 d-none d-sm-block" style="width: 80px; height: 80px; object-fit: contain; flex-shrink: 0;">
           </div>
         </div>
       </div>
@@ -263,6 +265,12 @@
     const printHiddenElements = containerClone.querySelectorAll('.d-print-none, form, .btn, .mb-3.d-print-none');
     printHiddenElements.forEach(el => el.remove());
     
+    // Remove notes section from print output
+    const notesSection = containerClone.querySelector('.notes-list, .mt-3.notes-list');
+    if (notesSection) {
+      notesSection.remove();
+    }
+    
     // Get all inline styles from the page (all <style> blocks in the template)
     const allStyleTags = document.querySelectorAll('style');
     let inlineStyles = '';
@@ -372,6 +380,34 @@
             page-break-after: avoid;
             page-break-inside: avoid;
           }
+          .print-header .d-flex {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+          }
+          .print-header img.report-logo {
+            width: 80px !important;
+            height: 80px !important;
+            object-fit: contain;
+            flex-shrink: 0;
+          }
+          .print-header .text-center {
+            flex: 1;
+            padding: 0 15px;
+            text-align: center;
+          }
+          .print-header h5,
+          .print-header h6 {
+            margin: 1px 0;
+            line-height: 1.2;
+            font-weight: bold;
+            font-size: 12pt;
+          }
+          .print-header p {
+            margin: 2px 0;
+            line-height: 1.2;
+            font-size: 11pt;
+          }
           .content-wrapper {
             position: relative;
             margin-top: 100px;
@@ -426,6 +462,34 @@
               padding: 8px 15mm;
               margin: 0;
               border-bottom: 2px solid #000;
+            }
+            .print-header .d-flex {
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+            }
+            .print-header img.report-logo {
+              width: 80px !important;
+              height: 80px !important;
+              object-fit: contain;
+              flex-shrink: 0;
+            }
+            .print-header .text-center {
+              flex: 1;
+              padding: 0 15px;
+              text-align: center;
+            }
+            .print-header h5,
+            .print-header h6 {
+              margin: 1px 0;
+              line-height: 1.2;
+              font-weight: bold;
+              font-size: 12pt;
+            }
+            .print-header p {
+              margin: 2px 0;
+              line-height: 1.2;
+              font-size: 11pt;
             }
             .content-wrapper {
               margin-top: 0;

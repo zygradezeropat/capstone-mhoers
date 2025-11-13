@@ -87,43 +87,143 @@
     </div>
     
 
-    <!-- Tab 4: Reports -->
+    <!-- Tab 5: Reports -->
     <div class="tab-pane fade" id="tab5" role="tabpanel">
       <div class="card border-0 shadow-sm">
         <div class="card-body p-4">
-          <h5 class="card-title mb-4">Generate Reports</h5>
-          <div class="mb-4">
-            <label class="form-label">Select Reports to Generate:</label>
-            <div class="row g-3">
-              <div class="col-md-6">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="reportTab1" name="printSelection">
-                  <label class="form-check-label" for="reportTab1">Common Diagnoses Report</label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="reportTab2" name="printSelection">
-                  <label class="form-check-label" for="reportTab2">Barangay Performance Report</label>
-                </div>
+          <h5 class="fw-bold mb-4">Export Referral Reports (CSV)</h5>
+          
+          <form id="exportCsvForm" method="get" action="{% url 'referrals:export_referrals_csv' %}">
+            <div class="row g-3 align-items-end">
+              <div class="col-md-3">
+                <label for="exportFacility" class="form-label small mb-1">Facility</label>
+                <select class="form-select" id="exportFacility" name="facility_id">
+                  <option value="">All Facilities</option>
+                  {% for facility in facilities %}
+                    <option value="{{ facility.facility_id }}">{{ facility.name }}</option>
+                  {% endfor %}
+                </select>
               </div>
-              <div class="col-md-6">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="reportTab3" name="printSelection">
-                  <label class="form-check-label" for="reportTab3">Referral Statistics Report</label>
+              <div class="col-md-3">
+                <label for="exportYear" class="form-label small mb-1">Year</label>
+                <input type="number" class="form-control" id="exportYear" name="year" placeholder="e.g. 2025" min="2000" max="2100">
+              </div>
+              <div class="col-md-3">
+                <label for="exportMonth" class="form-label small mb-1">Month</label>
+                <select class="form-select" id="exportMonth" name="month">
+                  <option value="">All</option>
+                  <option value="1">January</option>
+                  <option value="2">February</option>
+                  <option value="3">March</option>
+                  <option value="4">April</option>
+                  <option value="5">May</option>
+                  <option value="6">June</option>
+                  <option value="7">July</option>
+                  <option value="8">August</option>
+                  <option value="9">September</option>
+                  <option value="10">October</option>
+                  <option value="11">November</option>
+                  <option value="12">December</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <button type="submit" class="btn btn-outline-primary w-100">
+                  <i class="bi bi-file-earmark-spreadsheet me-2"></i>Export CSV
+                </button>
+              </div>
+            </div>
+          </form>
+          
+          <p class="text-muted small mt-3 mb-0">
+            <i class="bi bi-info-circle me-1"></i>Tip: Leave fields blank to export all.
+          </p>
+
+          <!-- Printable Reports Section -->
+          <div class="mt-5">
+            <h5 class="fw-bold mb-4">Generate Printable Reports</h5>
+            
+            <div class="row g-3 align-items-end">
+              <div class="col-md-3">
+                <label for="printReportSelect" class="form-label small mb-1">Report Type</label>
+                <select class="form-select" id="printReportSelect">
+                  <option value="">-- Choose a report --</option>
+                  <option value="{% url 'barangay_referral_performance_report' %}">
+                    📄 Barangay Referral Performance Summary
+                  </option>
+                  <option value="{% url 'morbidity_report' %}">
+                    📊 Morbidity & Top-Diagnosis Report
+                  </option>
+                  <option value="{% url 'facility_workforce_masterlist' %}">
+                    👥 Facility & Workforce Masterlist
+                  </option>
+                  <option value="{% url 'referral_registry_report' %}">
+                    ❤️ Referral Registry with Vital Signs
+                  </option>
+                  <option value="{% url 'system_usage_scorecard_report' %}">
+                    📈 System Usage & Adoption Scorecard
+                  </option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label for="printYear" class="form-label small mb-1">Year</label>
+                <input type="number" class="form-control" id="printYear" placeholder="e.g. 2025" min="2000" max="2100">
+              </div>
+              <div class="col-md-3">
+                <label for="printMonth" class="form-label small mb-1">Month</label>
+                <select class="form-select" id="printMonth">
+                  <option value="">All</option>
+                  <option value="1">January</option>
+                  <option value="2">February</option>
+                  <option value="3">March</option>
+                  <option value="4">April</option>
+                  <option value="5">May</option>
+                  <option value="6">June</option>
+                  <option value="7">July</option>
+                  <option value="8">August</option>
+                  <option value="9">September</option>
+                  <option value="10">October</option>
+                  <option value="11">November</option>
+                  <option value="12">December</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <button type="button" class="btn btn-outline-primary w-100" onclick="generatePrintableReport()">
+                  <i class="bi bi-printer me-2"></i>Preview
+                </button>
+              </div>
+            </div>
+            
+            <p class="text-muted small mt-3 mb-0">
+              <i class="bi bi-info-circle me-1"></i>Tip: Leave fields blank to generate report for all data.
+            </p>
+            
+            <!-- Report Preview Container -->
+            <div id="reportPreviewContainer" class="mt-4" style="display: none;">
+              <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+                  <h6 class="mb-0 fw-bold">
+                    <i class="bi bi-file-earmark-text me-2"></i>Report Preview
+                  </h6>
+                  <div>
+                    <button type="button" class="btn btn-sm btn-outline-primary me-2" onclick="printReportContent()">
+                      <i class="bi bi-printer me-1"></i>Print
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="closeReportPreview()">
+                      <i class="bi bi-x-lg"></i> Close
+                    </button>
+                  </div>
                 </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="reportTab4" name="printSelection">
-                  <label class="form-check-label" for="reportTab4">Complete Analytics Report</label>
+                <div class="card-body p-0 position-relative" style="max-height: 800px; overflow-y: auto;">
+                  <div id="reportLoadingIndicator" class="text-center p-4" style="display: none;">
+                    <div class="spinner-border text-primary" role="status">
+                      <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Loading report...</p>
+                  </div>
+                  <div id="reportContent" style="display: none;"></div>
                 </div>
               </div>
             </div>
-          </div>
-          <div class="d-grid gap-2">
-            <button id="printReportButton" class="btn btn-primary" disabled>
-              <i class="bi bi-file-earmark-pdf me-2"></i>Generate Selected Reports
-            </button>
-          </div>
-          <div class="mt-4">
-            <canvas id="printReportsChart" height="150"></canvas>
           </div>
         </div>
       </div>
@@ -136,6 +236,337 @@
 <script src="{% static 'js/user/line_chart_user.js' %}"></script>
 <script src="{% static 'js/user/topDiagnosedPie_chart_user.js' %}"></script>
 <script src="{% static 'js/user/barangay_performance_user.js' %}"></script>
+
+<script>
+  function generatePrintableReport() {
+    const reportSelect = document.getElementById('printReportSelect');
+    const yearInput = document.getElementById('printYear');
+    const monthSelect = document.getElementById('printMonth');
+    const previewContainer = document.getElementById('reportPreviewContainer');
+    const reportContent = document.getElementById('reportContent');
+    const loadingIndicator = document.getElementById('reportLoadingIndicator');
+    
+    if (!reportSelect.value) {
+      alert('Please select a report type.');
+      return;
+    }
+    
+    // Build URL with query parameters
+    let url = reportSelect.value;
+    const params = new URLSearchParams();
+    
+    // Add user_id parameter to filter by logged-in user
+    params.append('user_id', {{ request.user.id }});
+    
+    if (yearInput.value) {
+      params.append('year', yearInput.value);
+    }
+    
+    if (monthSelect.value) {
+      params.append('month', monthSelect.value);
+    }
+    
+    // Append query string if there are any parameters
+    if (params.toString()) {
+      url += '?' + params.toString();
+    }
+    
+    // Show loading indicator
+    loadingIndicator.style.display = 'block';
+    reportContent.style.display = 'none';
+    reportContent.innerHTML = '';
+    previewContainer.style.display = 'block';
+    
+    // Fetch the HTML content
+    console.log('Fetching report from:', url);
+    fetch(url, {
+      method: 'GET',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+      credentials: 'same-origin'
+    })
+    .then(response => {
+      console.log('Response status:', response.status);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.text();
+    })
+    .then(html => {
+      console.log('HTML received, length:', html.length);
+      // Extract the main content from the response
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      
+      // Remove navbar and header elements first
+      const navbars = doc.querySelectorAll('nav, .navbar, header, [role="navigation"]');
+      navbars.forEach(el => el.remove());
+      
+      // Find the container-fluid that contains the report
+      const containerFluid = doc.querySelector('.container-fluid');
+      
+      if (!containerFluid) {
+        throw new Error('Could not find report container');
+      }
+      
+      // Find the card inside container-fluid (this is the actual report)
+      const reportCard = containerFluid.querySelector('.card.border-0.shadow-sm, .card');
+      
+      if (!reportCard) {
+        throw new Error('Could not find report card');
+      }
+      
+      // Clone the report card to preserve original structure
+      const clonedCard = reportCard.cloneNode(true);
+      
+      // Remove any d-print-block headers from cloned content to prevent duplication
+      const printHeadersInClone = clonedCard.querySelectorAll('.d-print-block, .print-header');
+      printHeadersInClone.forEach(header => {
+        // Only remove if it's a standalone header, not part of the main header structure
+        if (!header.closest('.d-flex.align-items-center')) {
+          header.remove();
+        }
+      });
+      
+      // Remove notes section from print output
+      const notesSections = clonedCard.querySelectorAll('.notes-list, .mt-3.notes-list, .print-notes, .mt-3 small');
+      notesSections.forEach(notes => {
+        // Check if it's a notes section (contains "Notes:" or "Generated on" text)
+        const notesText = notes.textContent || '';
+        if (notesText.includes('Notes:') || notesText.includes('Generated on') || notesText.includes('Counts reflect')) {
+          notes.remove();
+        }
+      });
+      
+      // Remove filter forms and buttons (but preserve header with logos and title)
+      const forms = clonedCard.querySelectorAll('form.d-print-none, form[method="get"]');
+      forms.forEach(form => {
+        // Only remove if it's a filter form, not part of the header
+        if (!form.closest('.d-flex.align-items-center')) {
+          form.remove();
+        }
+      });
+      
+      // Remove back buttons and navigation links
+      const backButtons = clonedCard.querySelectorAll('a[href*="report_analytics"], .btn-outline-secondary');
+      backButtons.forEach(btn => {
+        // Only remove if it's clearly a back button, not part of report content
+        if (btn.textContent.includes('Back') || btn.closest('.mb-3')) {
+          btn.closest('.mb-3')?.remove() || btn.remove();
+        }
+      });
+      
+      // Remove print buttons (but keep the report structure and header)
+      const printButtons = clonedCard.querySelectorAll('button[onclick*="print"], button[onclick*="Print"]');
+      printButtons.forEach(btn => {
+        // Check if this button is part of the header section (which has logos)
+        const flexParent = btn.closest('.d-flex');
+        if (flexParent) {
+          // Check if this flex container has logos - if so, it's the header, don't remove
+          const hasLogos = flexParent.querySelector('.report-logo, img[alt*="Logo"]');
+          if (hasLogos) {
+            return; // Skip - this is in the header section, don't remove
+          }
+        }
+        
+        // IMPORTANT: Don't remove if it's near the notes section (which contains timestamp)
+        const notesSection = btn.closest('.mt-3, [class*="notes"]');
+        if (notesSection) {
+          return; // Skip - don't remove buttons near notes section
+        }
+        
+        // Remove the button and its parent row/container if it's a print button
+        const parent = btn.closest('.row, .d-grid');
+        if (parent && parent.querySelector('button[onclick*="print"]')) {
+          // Double-check: don't remove if parent contains notes section
+          if (!parent.querySelector('.mt-3, [class*="notes"], small.text-muted')) {
+            parent.remove();
+          }
+        } else if (flexParent && !flexParent.querySelector('.report-logo, img[alt*="Logo"]')) {
+          // Only remove d-flex parent if it doesn't contain logos (not the header)
+          if (flexParent.querySelector('button[onclick*="print"]')) {
+            // Double-check: don't remove if parent contains notes section
+            if (!flexParent.querySelector('.mt-3, [class*="notes"], small.text-muted')) {
+              flexParent.remove();
+            }
+          }
+        }
+      });
+      
+      // Verify header section exists before replacing middle section
+      const headerCheck = clonedCard.querySelector('.d-flex.align-items-center');
+      if (!headerCheck) {
+        console.warn('Header section not found in cloned card');
+      }
+      
+      // Replace the middle section with official address information
+      const middleSection = clonedCard.querySelector('.text-center.flex-grow-1.px-lg-4, .text-center');
+      if (middleSection) {
+        middleSection.innerHTML = `
+          <h6 class="mb-1">Republic of the Philippines</h6>
+          <h6 class="mb-1">Province of Davao del Norte</h6>
+          <h5 class="mb-1">Municipality of New Corella</h5>
+          <h6 class="mb-1">Municipal Health Office</h6>
+          <p class="mb-0 text-muted small">Purok 5, Poblacion, New Corella | rhunewcorella@yahoo.com | (+63) 970-093-3480</p>
+        `;
+      } else {
+        console.warn('Middle section not found for address replacement');
+      }
+      
+      // Fix logo sizes in the cloned card
+      const logos = clonedCard.querySelectorAll('img.report-logo, img[alt*="Logo"]');
+      logos.forEach(logo => {
+        logo.style.width = '80px';
+        logo.style.height = '80px';
+        logo.style.objectFit = 'contain';
+        logo.style.flexShrink = '0';
+      });
+      
+      // Remove any scripts that might cause issues
+      const scripts = clonedCard.querySelectorAll('script');
+      scripts.forEach(script => script.remove());
+      
+      // Get cleaned HTML - preserve the exact structure including header
+      let contentHtml = clonedCard.innerHTML;
+      
+      if (!contentHtml || contentHtml.trim().length === 0) {
+        throw new Error('Report content is empty');
+      }
+      
+      // Hide loading indicator and show content
+      loadingIndicator.style.display = 'none';
+      reportContent.innerHTML = contentHtml;
+      reportContent.style.display = 'block';
+      
+      console.log('Report preview loaded successfully');
+    })
+    .catch(error => {
+      console.error('Error loading report:', error);
+      loadingIndicator.style.display = 'none';
+      reportContent.innerHTML = `
+        <div class="alert alert-danger m-4" role="alert">
+          <h6 class="alert-heading">Error Loading Report</h6>
+          <p class="mb-0">${error.message}</p>
+        </div>
+      `;
+      reportContent.style.display = 'block';
+    });
+  }
+
+  function printReportContent() {
+    const reportContent = document.getElementById('reportContent');
+    if (!reportContent || reportContent.style.display === 'none') {
+      alert('No report content to print. Please generate a report first.');
+      return;
+    }
+    
+    const printWindow = window.open('', '_blank');
+    const origin = window.location.origin;
+    const adminDashboardCss = origin + "{% static 'css/admin_dashboard.css' %}";
+    
+    // Get all inline styles from the page
+    const allStyleTags = document.querySelectorAll('style');
+    let inlineStyles = '';
+    allStyleTags.forEach(styleTag => {
+      if (styleTag.innerHTML) {
+        let styleContent = styleTag.innerHTML;
+        styleContent = styleContent.replace(/`/g, '\\`');
+        styleContent = styleContent.replace(/\$\{/g, '\\${');
+        inlineStyles += styleContent + '\n';
+      }
+    });
+    
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Report Print</title>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
+        <link rel="stylesheet" href="${adminDashboardCss}" />
+        <style>
+          ${inlineStyles}
+          @page { 
+            size: A4 landscape; 
+            margin: 20mm 15mm;
+          }
+          body { 
+            font-family: Arial, sans-serif !important; 
+            font-size: 12pt;
+            margin: 0; 
+            padding: 10px; 
+            color: #000;
+            line-height: 1.4;
+            background: white;
+          }
+          .print-header img.report-logo,
+          img.report-logo,
+          img[alt*="Logo"] {
+            width: 80px !important;
+            height: 80px !important;
+            object-fit: contain;
+            flex-shrink: 0;
+          }
+          .d-flex.align-items-center img {
+            width: 80px !important;
+            height: 80px !important;
+            object-fit: contain;
+            flex-shrink: 0;
+          }
+          @media print {
+            @page {
+              size: A4 landscape;
+              margin: 20mm 15mm;
+            }
+            body {
+              margin: 0;
+              padding: 10px;
+            }
+            .print-header img.report-logo,
+            img.report-logo,
+            img[alt*="Logo"] {
+              width: 80px !important;
+              height: 80px !important;
+              object-fit: contain;
+              flex-shrink: 0;
+            }
+            .d-flex.align-items-center img {
+              width: 80px !important;
+              height: 80px !important;
+              object-fit: contain;
+              flex-shrink: 0;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        ${reportContent.innerHTML}
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.onload = () => {
+      setTimeout(() => {
+        printWindow.focus();
+        printWindow.print();
+        setTimeout(() => printWindow.close(), 100);
+      }, 300);
+    };
+  }
+
+  function closeReportPreview() {
+    const previewContainer = document.getElementById('reportPreviewContainer');
+    const reportContent = document.getElementById('reportContent');
+    const loadingIndicator = document.getElementById('reportLoadingIndicator');
+    
+    previewContainer.style.display = 'none';
+    reportContent.style.display = 'none';
+    reportContent.innerHTML = '';
+    loadingIndicator.style.display = 'none';
+  }
+</script>
 
 {% endblock script %}
 

@@ -689,9 +689,14 @@ def system_usage_scorecard_report(request):
             return fallback
 
     year = parse_int(request.GET.get('year'), now.year) or now.year
+    user_id = parse_int(request.GET.get('user_id'))
 
     if request.user.is_staff or request.user.is_superuser:
-        facilities_qs = Facility.objects.all().order_by('name')
+        # If user_id is provided, filter facilities to those associated with that user
+        if user_id:
+            facilities_qs = Facility.objects.filter(users__id=user_id).distinct().order_by('name')
+        else:
+            facilities_qs = Facility.objects.all().order_by('name')
     else:
         facilities_qs = request.user.shared_facilities.all().order_by('name')
 
@@ -706,16 +711,25 @@ def system_usage_scorecard_report(request):
         referrals_per_month = []
         medical_per_month = []
         for month_idx in range(1, 13):
-            referral_count = Referral.objects.filter(
-                patient__facility=facility,
-                created_at__year=year,
-                created_at__month=month_idx
-            ).count()
-            medical_count = Medical_History.objects.filter(
-                patient_id__facility=facility,
-                diagnosed_date__year=year,
-                diagnosed_date__month=month_idx
-            ).count()
+            referral_filters = {
+                'patient__facility': facility,
+                'created_at__year': year,
+                'created_at__month': month_idx
+            }
+            # Filter by user_id if provided
+            if user_id:
+                referral_filters['user_id'] = user_id
+            referral_count = Referral.objects.filter(**referral_filters).count()
+            
+            medical_filters = {
+                'patient_id__facility': facility,
+                'diagnosed_date__year': year,
+                'diagnosed_date__month': month_idx
+            }
+            # Filter by user_id if provided
+            if user_id:
+                medical_filters['user_id'] = user_id
+            medical_count = Medical_History.objects.filter(**medical_filters).count()
             referrals_per_month.append(referral_count)
             medical_per_month.append(medical_count)
             summary_referrals[month_idx - 1] += referral_count
@@ -757,11 +771,15 @@ def morbidity_report(request):
     year = parse_int(request.GET.get('year'), now.year) or now.year
     raw_month = parse_int(request.GET.get('month'))
     month = raw_month if raw_month and 1 <= raw_month <= 12 else None
+    user_id = parse_int(request.GET.get('user_id'))
 
     # Build base queryset
     histories = Medical_History.objects.filter(diagnosed_date__year=year)
     if month:
         histories = histories.filter(diagnosed_date__month=month)
+    # Filter by user_id if provided (for user-specific reports)
+    if user_id:
+        histories = histories.filter(user_id=user_id)
 
     # Normalize illnesses similar to API logic
     disease_names = list(Disease.objects.values_list('name', 'critical_level'))
@@ -936,12 +954,17 @@ def barangay_referral_performance_report(request):
     year = parse_int(request.GET.get('year'), now.year) or now.year
     raw_month = parse_int(request.GET.get('month'), None)
     month = raw_month if raw_month and 1 <= raw_month <= 12 else None
+    user_id = parse_int(request.GET.get('user_id'))
 
     month_name = calendar.month_name[month] if month else 'All Months'
 
     # Determine facilities visible to the current user
     if request.user.is_staff or request.user.is_superuser:
-        facilities_qs = Facility.objects.all().order_by('name')
+        # If user_id is provided, filter facilities to those associated with that user
+        if user_id:
+            facilities_qs = Facility.objects.filter(users__id=user_id).distinct().order_by('name')
+        else:
+            facilities_qs = Facility.objects.all().order_by('name')
     else:
         if hasattr(request.user, 'shared_facilities'):
             facilities_qs = request.user.shared_facilities.all().order_by('name')
@@ -973,13 +996,21 @@ def barangay_referral_performance_report(request):
         }
         if month:
             monthly_filters['created_at__month'] = month
+        # Filter by user_id if provided
+        if user_id:
+            monthly_filters['user_id'] = user_id
 
         monthly_qs = Referral.objects.filter(**monthly_filters)
 
-        ytd_qs = Referral.objects.filter(
-            patient__facility=facility,
-            created_at__year=year,
-        )
+        ytd_filters = {
+            'patient__facility': facility,
+            'created_at__year': year,
+        }
+        # Filter by user_id if provided
+        if user_id:
+            ytd_filters['user_id'] = user_id
+        
+        ytd_qs = Referral.objects.filter(**ytd_filters)
 
         monthly_counts = {status: monthly_qs.filter(status=status).count() for status in status_keys}
         ytd_counts = {status: ytd_qs.filter(status=status).count() for status in status_keys}
@@ -1031,13 +1062,21 @@ def barangay_referral_performance_report(request):
     }
     if month:
         all_monthly_filters['created_at__month'] = month
+    # Filter by user_id if provided
+    if user_id:
+        all_monthly_filters['user_id'] = user_id
 
     all_monthly_qs = Referral.objects.filter(**all_monthly_filters) if facility_ids else Referral.objects.none()
 
-    all_ytd_qs = Referral.objects.filter(
-        patient__facility__in=facility_ids,
-        created_at__year=year,
-    ) if facility_ids else Referral.objects.none()
+    all_ytd_filters = {
+        'patient__facility__in': facility_ids,
+        'created_at__year': year,
+    }
+    # Filter by user_id if provided
+    if user_id:
+        all_ytd_filters['user_id'] = user_id
+    
+    all_ytd_qs = Referral.objects.filter(**all_ytd_filters) if facility_ids else Referral.objects.none()
 
     summary_totals['monthly']['avg_days_to_close'] = duration_to_days(
         all_monthly_qs.filter(status='completed', completed_at__isnull=False).aggregate(
@@ -1091,10 +1130,15 @@ def referral_registry_report(request):
     month = raw_month if raw_month and 1 <= raw_month <= 12 else None
     facility_id = parse_int(request.GET.get('facility_id'))
     status_filter = request.GET.get('status') or ''
+    user_id = parse_int(request.GET.get('user_id'))
 
     # Determine accessible facilities based on user
     if request.user.is_staff or request.user.is_superuser:
-        facilities_qs = Facility.objects.all().order_by('name')
+        # If user_id is provided, filter facilities to those associated with that user
+        if user_id:
+            facilities_qs = Facility.objects.filter(users__id=user_id).distinct().order_by('name')
+        else:
+            facilities_qs = Facility.objects.all().order_by('name')
     else:
         facilities_qs = request.user.shared_facilities.all().order_by('name')
 
@@ -1112,6 +1156,10 @@ def referral_registry_report(request):
 
     if status_filter:
         referrals = referrals.filter(status=status_filter)
+    
+    # Filter by user_id if provided (for user-specific reports)
+    if user_id:
+        referrals = referrals.filter(user_id=user_id)
 
     # Prepare registry entries
     registry_entries = []
@@ -1170,6 +1218,7 @@ def get_disease_peak_predictions(request):
     """
     API endpoint to get disease peak predictions for 2025.
     Returns predicted disease peaks for each month.
+    Uses caching to avoid regenerating predictions.
     
     Query parameters:
         - month: Optional specific month name (e.g., "January")
@@ -1179,10 +1228,30 @@ def get_disease_peak_predictions(request):
     Returns:
         JSON response with predictions for each month or error message
     """
+    from django.core.cache import cache
+    import hashlib
+    
     month = request.GET.get('month', None)  # Optional: specific month
     samples_per_month = int(request.GET.get('samples_per_month', 100))
     use_db = request.GET.get('use_db', 'false').lower() == 'true'
     
+    # Create cache key based on parameters
+    cache_key_parts = ['disease_peak_predictions', str(use_db), str(samples_per_month)]
+    if month:
+        cache_key_parts.append(month)
+    else:
+        cache_key_parts.append('all_months')
+    cache_key = hashlib.md5('_'.join(cache_key_parts).encode()).hexdigest()
+    
+    # Check cache first
+    cached_result = cache.get(cache_key)
+    if cached_result:
+        return JsonResponse({
+            **cached_result,
+            "cached": True
+        })
+    
+    # Generate predictions
     result = predict_disease_peak_for_month(
         month_name=month,
         samples_per_month=samples_per_month,
@@ -1192,6 +1261,9 @@ def get_disease_peak_predictions(request):
     if "error" in result:
         return JsonResponse(result, status=400)
     
+    # Cache predictions for 1 hour
+    cache.set(cache_key, result, 3600)  # 1 hour
+    
     return JsonResponse(result)
 
 
@@ -1199,21 +1271,66 @@ def get_disease_peak_predictions(request):
 def train_barangay_disease_peak_model_api(request):
     """
     API endpoint to train barangay-based disease peak prediction model.
+    Uses caching to avoid retraining if models already exist.
     
     Query parameters:
         - use_db: Use Django database instead of CSV (default: false)
         - allowed_icd: Comma-separated list of ICD codes (optional)
+        - force_retrain: Force retraining even if cached (default: false)
     
     Returns:
         JSON response with training status
     """
+    from django.core.cache import cache
+    import hashlib
+    import os
+    
     use_db = request.GET.get('use_db', 'false').lower() == 'true'
     allowed_icd_param = request.GET.get('allowed_icd', None)
+    force_retrain = request.GET.get('force_retrain', 'false').lower() == 'true'
     
     allowed_icd = None
     if allowed_icd_param:
         allowed_icd = [code.strip() for code in allowed_icd_param.split(',')]
     
+    # Create cache key based on parameters
+    cache_key_parts = ['train_barangay_model', str(use_db)]
+    if allowed_icd:
+        cache_key_parts.append(','.join(sorted(allowed_icd)))
+    cache_key = hashlib.md5('_'.join(cache_key_parts).encode()).hexdigest()
+    
+    # Check if models exist on disk and are cached
+    from analytics.ml_utils import get_ml_models_path
+    models_dir = get_ml_models_path()
+    model_path = os.path.join(models_dir, 'barangay_disease_peak_models.pkl')
+    metadata_path = os.path.join(models_dir, 'barangay_disease_peak_metadata.pkl')
+    
+    # Check cache first (unless force_retrain is True)
+    if not force_retrain:
+        cached_result = cache.get(cache_key)
+        if cached_result:
+            # Verify models still exist on disk
+            if os.path.exists(model_path) and os.path.exists(metadata_path):
+                return JsonResponse({
+                    **cached_result,
+                    "cached": True,
+                    "message": "Using cached training result. Models already exist."
+                })
+    
+    # Check if models exist on disk (even if not in cache)
+    if not force_retrain and os.path.exists(model_path) and os.path.exists(metadata_path):
+        # Models exist, return success without retraining
+        result = {
+            "status": "Models already exist",
+            "models_saved_to": model_path,
+            "metadata_saved_to": metadata_path,
+            "message": "Models already trained and saved. Use force_retrain=true to retrain."
+        }
+        # Cache the result for 24 hours
+        cache.set(cache_key, result, 86400)  # 24 hours
+        return JsonResponse(result)
+    
+    # Train the model
     result = train_barangay_disease_peak_model(
         use_db=use_db,
         allowed_icd=allowed_icd
@@ -1221,6 +1338,19 @@ def train_barangay_disease_peak_model_api(request):
     
     if "error" in result:
         return JsonResponse(result, status=400)
+    
+    # Cache the result for 24 hours
+    cache.set(cache_key, result, 86400)  # 24 hours
+    
+    # Invalidate prediction caches since models have been retrained
+    # Clear all barangay prediction caches
+    cache_keys_to_clear = [
+        'barangay_predictions',
+        'disease_peak_predictions'
+    ]
+    # Note: We can't easily clear all keys with a pattern in LocMemCache,
+    # but the cache will expire naturally. For production with Redis,
+    # you could use cache.delete_pattern('barangay_predictions*')
     
     return JsonResponse(result)
 
@@ -1230,6 +1360,7 @@ def get_barangay_disease_peak_predictions(request):
     """
     API endpoint to get barangay-based disease peak predictions for 2025.
     Returns predicted disease peaks for each barangay per month.
+    Uses caching to avoid regenerating predictions.
     
     Query parameters:
         - barangays: Comma-separated list of barangay names to filter (optional)
@@ -1238,6 +1369,9 @@ def get_barangay_disease_peak_predictions(request):
     Returns:
         JSON response with predictions per barangay per month
     """
+    from django.core.cache import cache
+    import hashlib
+    
     barangays_param = request.GET.get('barangays', None)
     use_db = request.GET.get('use_db', 'false').lower() == 'true'
     
@@ -1245,6 +1379,23 @@ def get_barangay_disease_peak_predictions(request):
     if barangays_param:
         target_barangays = [b.strip() for b in barangays_param.split(',')]
     
+    # Create cache key based on parameters
+    cache_key_parts = ['barangay_predictions', str(use_db)]
+    if target_barangays:
+        cache_key_parts.append(','.join(sorted(target_barangays)))
+    else:
+        cache_key_parts.append('all')
+    cache_key = hashlib.md5('_'.join(cache_key_parts).encode()).hexdigest()
+    
+    # Check cache first
+    cached_result = cache.get(cache_key)
+    if cached_result:
+        return JsonResponse({
+            **cached_result,
+            "cached": True
+        })
+    
+    # Generate predictions
     result = predict_barangay_disease_peak_2025(
         target_barangays=target_barangays,
         use_db=use_db
@@ -1252,6 +1403,9 @@ def get_barangay_disease_peak_predictions(request):
     
     if "error" in result:
         return JsonResponse(result, status=400)
+    
+    # Cache predictions for 1 hour (predictions don't change unless model is retrained)
+    cache.set(cache_key, result, 3600)  # 1 hour
     
     return JsonResponse(result)
 
