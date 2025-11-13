@@ -22,8 +22,8 @@ class Conversation(models.Model):
         return self.participants.exclude(id=current_user.id).first()
     
     def get_last_message(self):
-        """Get the last message in this conversation"""
-        return self.messages.last()
+        """Get the last message in this conversation (excluding deleted messages)"""
+        return self.messages.filter(is_deleted=False).last()
 
 
 class Message(models.Model):
@@ -34,6 +34,9 @@ class Message(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     is_read = models.BooleanField(default=False)
     read_at = models.DateTimeField(null=True, blank=True)
+    is_deleted = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    deleted_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='deleted_messages')
     
     class Meta:
         ordering = ['created_at']
@@ -47,6 +50,13 @@ class Message(models.Model):
             self.is_read = True
             self.read_at = timezone.now()
             self.save()
+    
+    def delete_message(self, user):
+        """Soft delete the message"""
+        self.is_deleted = True
+        self.deleted_at = timezone.now()
+        self.deleted_by = user
+        self.save()
 
 
 class MessageNotification(models.Model):

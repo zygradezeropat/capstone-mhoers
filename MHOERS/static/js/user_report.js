@@ -75,14 +75,95 @@ function generateReports(selectedReports) {
         <head>
             <title>MHO-ERS Reports</title>
             <style>
-                body { font-family: Arial, sans-serif; margin: 20px; }
-                .header { text-align: center; margin-bottom: 20px; }
-                .report-section { margin-bottom: 30px; page-break-after: always; }
-                .chart-container { margin: 20px 0; }
-                .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #666; }
+                @page { 
+                    size: A4 landscape; 
+                    margin: 20mm 15mm;
+                }
+                * {
+                    font-family: Arial, sans-serif !important;
+                }
+                body { 
+                    font-family: Arial, sans-serif; 
+                    font-size: 12pt;
+                    margin: 0;
+                    padding: 20px;
+                    color: #000;
+                    line-height: 1.5;
+                }
+                .header { 
+                    text-align: center; 
+                    margin-bottom: 30px;
+                    border-bottom: 2px solid #333;
+                    padding-bottom: 15px;
+                }
+                .header h1 {
+                    font-size: 18pt;
+                    font-weight: bold;
+                    margin: 0 0 10px 0;
+                    color: #000;
+                }
+                .header p {
+                    font-size: 12pt;
+                    margin: 5px 0;
+                    color: #666;
+                }
+                .report-section { 
+                    margin-bottom: 40px; 
+                    page-break-after: always;
+                }
+                .report-section h2 {
+                    font-size: 14pt;
+                    font-weight: bold;
+                    margin: 20px 0 15px 0;
+                    color: #000;
+                    border-bottom: 1px solid #ccc;
+                    padding-bottom: 8px;
+                }
+                .report-section h3 {
+                    font-size: 12pt;
+                    font-weight: bold;
+                    margin: 15px 0 10px 0;
+                    color: #000;
+                }
+                .chart-container { 
+                    margin: 20px 0; 
+                }
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    font-size: 12pt;
+                    margin: 15px 0;
+                }
+                th, td {
+                    border: 1px solid #000;
+                    padding: 8px 10px;
+                    text-align: left;
+                    font-size: 12pt;
+                }
+                th {
+                    background-color: #f5f5f5;
+                    font-weight: bold;
+                    text-align: center;
+                }
+                .footer { 
+                    text-align: center; 
+                    margin-top: 30px; 
+                    padding-top: 15px;
+                    border-top: 1px solid #ccc;
+                    font-size: 11pt; 
+                    color: #666; 
+                }
                 @media print {
                     .no-print { display: none; }
                     .page-break { page-break-before: always; }
+                    body { 
+                        margin: 0;
+                        padding: 15px;
+                    }
+                    @page {
+                        size: A4 landscape;
+                        margin: 20mm 15mm;
+                    }
                 }
             </style>
         </head>

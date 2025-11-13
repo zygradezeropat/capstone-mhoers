@@ -200,17 +200,106 @@
         <meta charset="utf-8">
         <title>${reportTitle}</title>
         <style>
-          @page { size: A4 landscape; margin: 10mm; }
-          body { font-family: Arial, sans-serif; margin: 0; padding: 16px; color: #000; }
-          .header { text-align: center; border-bottom: 1px solid #000; padding-bottom: 12px; margin-bottom: 16px; }
-          .header h5, .header h6, .header p { margin: 2px 0; }
-          .logo-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-          .logo-row img { width: 80px; height: 80px; object-fit: contain; }
-          table { width: 100%; border-collapse: collapse; font-size: 12px; }
-          th, td { border: 1px solid #000; padding: 6px 8px; vertical-align: top; }
-          th { background-color: #f8f9fa; }
-          .signature-container { margin-top: 32px; display: flex; justify-content: space-around; }
-          .signature-line { border-top: 1px solid #000; width: 220px; text-align: center; padding-top: 8px; }
+          @page { 
+            size: A4 landscape; 
+            margin: 20mm 15mm;
+          }
+          * {
+            font-family: Arial, sans-serif !important;
+          }
+          @media print {
+            @page {
+              size: A4 landscape;
+              margin: 20mm 15mm;
+            }
+            body {
+              margin: 0;
+              padding: 10px;
+            }
+          }
+          body { 
+            font-family: Arial, sans-serif; 
+            font-size: 12pt;
+            margin: 0; 
+            padding: 16px; 
+            color: #000;
+            line-height: 1.5;
+          }
+          .header { 
+            text-align: center; 
+            border-bottom: 2px solid #000; 
+            padding-bottom: 8px; 
+            margin-bottom: 15px; 
+          }
+          .header h5, .header h6 { 
+            font-family: Arial, sans-serif;
+            font-size: 12pt;
+            margin: 1px 0;
+            font-weight: bold;
+            line-height: 1.2;
+          }
+          .header p {
+            font-family: Arial, sans-serif;
+            font-size: 12pt;
+            margin: 1px 0;
+            line-height: 1.2;
+          }
+          .logo-row { 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            margin-bottom: 8px; 
+          }
+          .logo-row img { 
+            width: 80px; 
+            height: 80px; 
+            object-fit: contain; 
+          }
+          h2 {
+            font-family: Arial, sans-serif;
+            font-size: 16pt;
+            font-weight: bold;
+            color: #000;
+          }
+          p {
+            font-family: Arial, sans-serif;
+            font-size: 12pt;
+          }
+          table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            font-size: 12pt;
+            font-family: Arial, sans-serif;
+            margin: 15px 0;
+          }
+          th, td { 
+            border: 1px solid #000; 
+            padding: 8px 10px; 
+            font-size: 12pt;
+            font-family: Arial, sans-serif;
+            vertical-align: top; 
+          }
+          th { 
+            background-color: #f5f5f5;
+            font-weight: bold;
+            text-align: center;
+          }
+          td {
+            text-align: left;
+          }
+          .signature-container { 
+            margin-top: 40px; 
+            display: flex; 
+            justify-content: space-around; 
+          }
+          .signature-line { 
+            border-top: 1px solid #000; 
+            width: 220px; 
+            text-align: center; 
+            padding-top: 8px;
+            font-family: Arial, sans-serif;
+            font-size: 12pt;
+          }
         </style>
       </head>
       <body>

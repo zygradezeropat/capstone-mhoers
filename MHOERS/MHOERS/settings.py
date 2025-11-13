@@ -85,6 +85,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'MHOERS.wsgi.application'
+ASGI_APPLICATION = 'MHOERS.asgi.application'
 
 
 # Database
@@ -175,4 +176,21 @@ CACHES = {
 # IPROG SMS API token configuration
 # Prefer environment variable; fallback to provided token for now
 IPROG_SMS_API_TOKEN = os.getenv('IPROG_SMS_API_TOKEN', 'fceef382dc75566956b0dc4d64f33ade7e599d6b')
+
+# Django Channels configuration
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],
+        },
+    },
+}
+
+# Fallback to in-memory channel layer if Redis is not available
+# CHANNEL_LAYERS = {
+#     'default': {
+#         'BACKEND': 'channels.layers.InMemoryChannelLayer',
+#     },
+# }
 

@@ -108,85 +108,54 @@
         </div>
       </form>
 
-      <div class="row g-4">
-        <div class="col-lg-5">
-          <div class="card border-0 shadow-sm h-100">
+      <div class="row">
+        <div class="col-12">
+          <div class="card border-0 shadow-sm print-page-end">
             <div class="card-body">
-              <h5 class="card-title d-flex justify-content-between align-items-center">
-                <span>Top Diagnoses</span>
-                <span class="badge bg-primary">Total Cases: {{ total_cases }}</span>
-              </h5>
-              {% if top_diagnoses %}
-                <div class="table-responsive" id="topDiagnosesTable">
-                  <table class="table table-sm table-bordered align-middle">
-                    <thead class="table-light">
-                      <tr>
-                        <th>#</th>
-                        <th>Diagnosis</th>
-                        <th>Criticality</th>
-                        <th class="text-end">Cases</th>
-                        <th class="text-end">% Share</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {% for row in top_diagnoses %}
-                      <tr class="{{ row.row_class }}">
-                        <td>{{ forloop.counter }}</td>
-                        <td>{{ row.name }}</td>
-                        <td>
-                          <span class="badge badge-critical bg-{{ row.badge_variant }}">{{ row.critical|default:'N/A' }}</span>
-                        </td>
-                        <td class="text-end">{{ row.count }}</td>
-                        <td class="text-end">{{ row.percent }}%</td>
-                      </tr>
-                      {% endfor %}
-                    </tbody>
-                  </table>
+              <div class="row">
+                <div class="col-12">
+                  <h5 class="card-title d-flex justify-content-between align-items-center">
+                    <span>Top Diagnoses</span>
+                    <span class="badge bg-primary">Total Cases: {{ total_cases }}</span>
+                  </h5>
+                  {% if top_diagnoses %}
+                    <div class="table-responsive" id="topDiagnosesTable">
+                      <table class="table table-sm table-bordered align-middle">
+                        <thead class="table-light">
+                          <tr>
+                            <th>#</th>
+                            <th>Diagnosis</th>
+                            <th>Criticality</th>
+                            <th class="text-end">Cases</th>
+                            <th class="text-end">% Share</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {% for row in top_diagnoses %}
+                          <tr class="{{ row.row_class }}">
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ row.name }}</td>
+                            <td>
+                              <span class="badge badge-critical bg-{{ row.badge_variant }}">{{ row.critical|default:'N/A' }}</span>
+                            </td>
+                            <td class="text-end">{{ row.count }}</td>
+                            <td class="text-end">{{ row.percent }}%</td>
+                          </tr>
+                          {% endfor %}
+                        </tbody>
+                      </table>
+                    </div>
+                  {% else %}
+                    <p class="text-muted mb-0">No morbidity records found for the selected period.</p>
+                  {% endif %}
                 </div>
-              {% else %}
-                <p class="text-muted mb-0">No morbidity records found for the selected period.</p>
-              {% endif %}
-            </div>
-          </div>
-        </div>
-        <div class="col-lg-7">
-          <div class="card border-0 shadow-sm h-100">
-            <div class="card-body">
-              <h5 class="card-title">Monthly Trend (Top Diagnoses)</h5>
-              {% if trend_table %}
-                <div class="table-responsive" id="trendTable">
-                  <table class="table table-sm table-bordered align-middle">
-                    <thead class="table-light">
-                      <tr>
-                        <th>Diagnosis</th>
-                        {% for label in month_labels %}
-                          <th class="text-center">{{ label }}</th>
-                        {% endfor %}
-                        <th class="text-end">Total</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {% for row in trend_table %}
-                      <tr>
-                        <td>{{ row.diagnosis }}</td>
-                        {% for val in row.monthly_counts %}
-                          <td class="text-center">{{ val }}</td>
-                        {% endfor %}
-                        <td class="text-end">{{ row.total }}</td>
-                      </tr>
-                      {% endfor %}
-                    </tbody>
-                  </table>
-                </div>
-              {% else %}
-                <p class="text-muted mb-0">No trend data available.</p>
-              {% endif %}
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="card border-0 shadow-sm mt-4">
+      <div class="card border-0 shadow-sm mt-4 print-new-page">
         <div class="card-body">
           <h5 class="card-title">Recent Morbidity Entries</h5>
           {% if raw_entries %}
@@ -226,6 +195,40 @@
         </div>
       </div>
 
+      <div class="card border-0 shadow-sm mt-4 print-new-page">
+        <div class="card-body">
+          <h5 class="card-title">Monthly Trend (Top Diagnoses)</h5>
+          {% if trend_table %}
+            <div class="table-responsive" id="trendTable">
+              <table class="table table-sm table-bordered align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th>Diagnosis</th>
+                    {% for label in month_labels %}
+                      <th class="text-center">{{ label }}</th>
+                    {% endfor %}
+                    <th class="text-end">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for row in trend_table %}
+                  <tr>
+                    <td>{{ row.diagnosis }}</td>
+                    {% for val in row.monthly_counts %}
+                      <td class="text-center">{{ val }}</td>
+                    {% endfor %}
+                    <td class="text-end">{{ row.total }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <p class="text-muted mb-0">No trend data available.</p>
+          {% endif %}
+        </div>
+      </div>
+
       <div class="mt-3 notes-list">
         <strong>Notes:</strong>
         <div>• “Possible Rabies” consolidates dog/cat bite incidents in compliance with DOH Form 48.</div>
@@ -241,16 +244,85 @@
 <script>
   function printMorbidityReport() {
     const reportTitle = 'Morbidity & Top-Diagnosis Report';
-    const period = '{{ month_name }} {{ year }}';
-    const generatedAt = '{{ report_generated_at|date:"F d, Y h:i A" }}';
-    const logoLeft = "{% static 'images/LGU-NEWCORELLA.png' %}";
-    const logoRight = "{% static 'images/MHO-LOGO.png' %}";
+    const origin = window.location.origin;
+    const adminDashboardCss = origin + "{% static 'css/admin_dashboard.css' %}";
 
-    const topTable = document.getElementById('topDiagnosesTable');
-    const trendTable = document.getElementById('trendTable');
+    // Clone the main container that holds all the content (the outer card-body that contains everything)
+    // Select the first card-body that's a direct child of the main card (not nested cards)
+    const mainCard = document.querySelector('.container-fluid .card.border-0.shadow-sm');
+    const mainContainer = mainCard ? mainCard.querySelector(':scope > .card-body') : null;
+    if (!mainContainer) {
+      window.print();
+      return;
+    }
 
-    const topTableHtml = topTable ? topTable.innerHTML : '';
-    const trendTableHtml = trendTable ? trendTable.innerHTML : '';
+    // Clone the entire container structure
+    const containerClone = mainContainer.cloneNode(true);
+
+    // Remove print-hidden elements (forms, buttons, etc.)
+    const printHiddenElements = containerClone.querySelectorAll('.d-print-none, form, .btn, .mb-3.d-print-none');
+    printHiddenElements.forEach(el => el.remove());
+    
+    // Get all inline styles from the page (all <style> blocks in the template)
+    const allStyleTags = document.querySelectorAll('style');
+    let inlineStyles = '';
+    allStyleTags.forEach(styleTag => {
+      if (styleTag.innerHTML) {
+        // Escape backticks and ${} to prevent template literal issues
+        let styleContent = styleTag.innerHTML;
+        styleContent = styleContent.replace(/`/g, '\\`');
+        styleContent = styleContent.replace(/\$\{/g, '\\${');
+        inlineStyles += styleContent + '\n';
+      }
+    });
+
+    // Fix all image sources to absolute URLs
+    const allImages = containerClone.querySelectorAll('img');
+    allImages.forEach(img => {
+      const src = img.getAttribute('src');
+      if (src) {
+        if (src.startsWith('/')) {
+          img.setAttribute('src', origin + src);
+        } else if (src.startsWith('{% static')) {
+          // Handle Django static template tags that might be in src
+          const staticPath = src.match(/'([^']+)'/);
+          if (staticPath) {
+            img.setAttribute('src', origin + staticPath[1]);
+          }
+        }
+      }
+    });
+
+    // Get the header section (the logo and title area) - the wrapper div
+    const headerWrapper = containerClone.querySelector('.d-flex.flex-column.flex-lg-row.justify-content-between.align-items-lg-center.mb-4');
+    const headerClone = headerWrapper ? headerWrapper.cloneNode(true) : null;
+
+    // Remove the header from content since we'll use it separately
+    if (headerWrapper) {
+      headerWrapper.remove();
+    }
+
+    // Fix header images
+    if (headerClone) {
+      const headerImages = headerClone.querySelectorAll('img');
+      headerImages.forEach(img => {
+        const src = img.getAttribute('src');
+        if (src) {
+          if (src.startsWith('/')) {
+            img.setAttribute('src', origin + src);
+          } else if (!src.startsWith('http')) {
+            // Handle relative paths
+            img.setAttribute('src', origin + (src.startsWith('/') ? src : '/' + src));
+          }
+        }
+      });
+    }
+
+    // Get the content HTML (without the header)
+    const contentHtml = containerClone.innerHTML;
+
+    // Create header HTML for fixed printing
+    const headerHtml = headerClone ? headerClone.outerHTML : '';
 
     const printWindow = window.open('', '_blank');
     printWindow.document.write(`
@@ -259,130 +331,154 @@
       <head>
         <meta charset="utf-8">
         <title>${reportTitle}</title>
+        <!-- Bootstrap 5.3.2 -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+        <!-- Bootstrap Icons -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
+        <!-- Font Awesome -->
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" />
+        <!-- Google Fonts -->
+        <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600&family=Roboto:wght@400;500&display=swap" rel="stylesheet" />
+        <!-- Custom CSS -->
+        <link rel="stylesheet" href="${adminDashboardCss}" />
         <style>
+          /* Inline styles from the template */
+          ${inlineStyles}
+          
+          /* Print-specific overrides */
           @page { 
             size: A4 landscape; 
-            margin: 15mm 10mm;
-            @top-center { content: ""; }
-            @bottom-center { content: ""; }
+            margin: 20mm 15mm;
+          }
+          body { 
+            font-family: Arial, sans-serif !important; 
+            font-size: 12pt;
+            margin: 0; 
+            padding: 10px; 
+            color: #000;
+            line-height: 1.4;
+            background: white;
+          }
+          .print-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            z-index: 1000;
+            padding: 8px 15mm;
+            margin: 0;
+            border-bottom: 2px solid #000;
+            page-break-after: avoid;
+            page-break-inside: avoid;
+          }
+          .content-wrapper {
+            position: relative;
+            margin-top: 100px;
+          }
+          table { 
+            page-break-inside: auto;
+          }
+          thead {
+            display: table-header-group;
+          }
+          tbody {
+            display: table-row-group;
+          }
+          tfoot {
+            display: table-footer-group;
+          }
+          tr {
+            page-break-inside: avoid;
+          }
+          .card {
+            page-break-inside: auto;
+          }
+          .card-body {
+            page-break-inside: auto;
+          }
+          .print-new-page {
+            page-break-before: always !important;
+            break-before: page !important;
+            page-break-after: avoid !important;
+          }
+          .print-page-end {
+            page-break-after: always !important;
+            break-after: page !important;
           }
           @media print {
             @page {
-              margin: 15mm 10mm;
+              size: A4 landscape;
+              margin: 20mm 15mm;
             }
             body {
               margin: 0;
-              padding: 0;
+              padding: 10px;
+              padding-top: 100px;
             }
-          }
-          body { 
-            font-family: Arial, sans-serif; 
-            margin: 0; 
-            padding: 16px; 
-            color: #000; 
-          }
-          .header { 
-            text-align: center; 
-            border-bottom: 1px solid #000; 
-            padding-bottom: 12px; 
-            margin-bottom: 16px; 
-          }
-          .header h5, .header h6, .header p { 
-            margin: 2px 0; 
-          }
-          .logo-row { 
-            display: flex; 
-            align-items: flex-start; 
-            justify-content: center; 
-            gap: 20px;
-            margin-bottom: 12px; 
-            position: relative;
-          }
-          .logo-row img { 
-            width: 80px; 
-            height: 80px; 
-            object-fit: contain; 
-            flex-shrink: 0;
-          }
-          .header-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-          }
-          .title { 
-            text-align: center; 
-            font-size: 20px; 
-            font-weight: bold; 
-            color: #dc3545; 
-            margin-bottom: 16px; 
-            text-transform: uppercase; 
-          }
-          .meta { 
-            text-align: center; 
-            margin-bottom: 12px; 
-            font-size: 14px; 
-          }
-          table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            font-size: 12px; 
-          }
-          th, td { 
-            border: 1px solid #000; 
-            padding: 6px 8px; 
-          }
-          th { 
-            background-color: #f8f9fa; 
-          }
-          .section { 
-            margin-top: 16px; 
-          }
-          .section-new-page {
-            page-break-before: always;
-            break-before: page;
-            margin-top: 16px;
-          }
-          .notes { 
-            margin-top: 16px; 
-            font-size: 12px; 
+            .print-header {
+              position: fixed;
+              top: 0;
+              left: 0;
+              right: 0;
+              background: white;
+              z-index: 1000;
+              padding: 8px 15mm;
+              margin: 0;
+              border-bottom: 2px solid #000;
+            }
+            .content-wrapper {
+              margin-top: 0;
+            }
+            table {
+              page-break-inside: auto;
+            }
+            thead {
+              display: table-header-group;
+            }
+            tfoot {
+              display: table-footer-group;
+            }
+            tr {
+              page-break-inside: avoid;
+            }
+            .card {
+              border: none !important;
+              box-shadow: none !important;
+              page-break-inside: avoid;
+            }
+            .card.print-new-page {
+              page-break-before: always !important;
+              break-before: page !important;
+              margin-top: 0 !important;
+              page-break-after: avoid !important;
+            }
+            .card.print-new-page .card-body {
+              page-break-inside: avoid;
+            }
+            .shadow-sm {
+              box-shadow: none !important;
+            }
+            .print-new-page {
+              page-break-before: always !important;
+              break-before: page !important;
+              page-break-after: avoid !important;
+            }
+            .print-page-end {
+              page-break-after: always !important;
+              break-after: page !important;
+            }
           }
         </style>
       </head>
       <body>
-        <div class="header">
-          <div class="logo-row">
-            <img src="${logoLeft}" alt="LGU New Corella Logo">
-            <div class="header-content">
-              <h6>Republic of the Philippines</h6>
-              <h6>Province of Davao del Norte</h6>
-              <h5>Municipality of New Corella</h5>
-              <h6>Municipal Health Office</h6>
-              <p>Purok 5, Poblacion, New Corella | rhunewcorella@yahoo.com | (+63) 970-093-3480</p>
-            </div>
-            <img src="${logoRight}" alt="MHO Logo">
+        <div class="print-header">
+          ${headerHtml}
+        </div>
+        <div class="content-wrapper">
+          <div class="container-fluid py-4">
+            ${contentHtml}
           </div>
-        </div>
-        <div class="title">${reportTitle}</div>
-        <div class="meta">Reporting Period: ${period}</div>
-
-        <div class="section">
-          <h4>Top Diagnoses</h4>
-          ${topTableHtml}
-        </div>
-
-        <div class="section-new-page">
-          <h4>Monthly Trend</h4>
-          ${trendTableHtml}
-        </div>
-
-        <div class="notes">
-          <div><strong>Notes:</strong></div>
-          <div>• “Possible Rabies” consolidates dog/cat bite incidents in compliance with DOH Form 48.</div>
-          <div>• “Gastrointestinal Issue” consolidates LBM-related entries.</div>
-          <div>• Criticality levels sourced from disease registry; missing mappings default to N/A.</div>
-          <div>• Generated on ${generatedAt}.</div>
         </div>
       </body>
       </html>
@@ -391,15 +487,10 @@
     printWindow.onload = () => {
       setTimeout(() => {
         printWindow.focus();
-        // Try to suppress browser print headers/footers
         printWindow.print();
         setTimeout(() => printWindow.close(), 100);
       }, 300);
     };
-    
-    // Note: To completely remove browser print headers/footers, users should:
-    // - In Chrome/Edge: Uncheck "Headers and footers" in print dialog
-    // - In Firefox: Uncheck "Print headers and footers" in print dialog
   }
 </script>
 {% endblock %}

@@ -200,18 +200,66 @@
 {% block script %}
 <script>
   function printPerformanceReport() {
+    // Define variables
     const reportTitle = 'Barangay Referral Performance Summary';
-    const monthLabel = '{{ month_name }}';
-    const yearLabel = '{{ selected_year }}';
-    const logoLeft = "{% static 'images/LGU-NEWCORELLA.png' %}";
-    const logoRight = "{% static 'images/MHO-LOGO.png' %}";
+    const logoLeft = window.location.origin + "{% static 'images/LGU-NEWCORELLA.png' %}";
+    const logoRight = window.location.origin + "{% static 'images/MHO-LOGO.png' %}";
+    
+    // Get the actual content from the page
+    const printHeader = document.querySelector('.d-print-block');
     const tableContainer = document.querySelector('.table-responsive');
+    const notesSection = document.querySelector('.mt-3');
+    
     if (!tableContainer) {
       window.print();
       return;
     }
+    
+    // Clone elements to preserve structure
+    const headerClone = printHeader ? printHeader.cloneNode(true) : null;
+    const tableClone = tableContainer.cloneNode(true);
+    const notesClone = notesSection ? notesSection.cloneNode(true) : null;
+    
+    // Remove d-none class from header and clean up
+    if (headerClone) {
+      headerClone.classList.remove('d-none', 'd-print-block');
+      headerClone.classList.add('d-block');
+      // Remove mb-4 class that adds extra spacing
+      headerClone.classList.remove('mb-4');
+    }
+    
+    // Fix logo URLs in all cloned elements
+    const allImages = [headerClone, tableClone, notesClone]
+      .filter(el => el !== null)
+      .flatMap(el => Array.from(el.querySelectorAll('img')));
+    
+    allImages.forEach(img => {
+      const src = img.getAttribute('src');
+      if (src && src.startsWith('/')) {
+        img.setAttribute('src', window.location.origin + src);
+      }
+    });
+    
+    // Get HTML content
+    const tableHtml = tableClone.innerHTML;
+    const notesHtml = notesClone ? notesClone.innerHTML : '';
 
-    const tableHtml = tableContainer.innerHTML;
+    // Create header HTML with proper structure
+    const headerHtml = `
+      <div class="print-header">
+        <div class="logo-container">
+          <img src="${logoLeft}" alt="LGU New Corella Logo">
+          <div class="header-text">
+            <h6>Republic of the Philippines</h6>
+            <h6>Province of Davao del Norte</h6>
+            <h5>Municipality of New Corella</h5>
+            <h6>Municipal Health Office</h6>
+            <p>Purok 5, Poblacion, New Corella | rhunewcorella@yahoo.com | (+63) 970-093-3480</p>
+          </div>
+          <img src="${logoRight}" alt="MHO Logo">
+        </div>
+      </div>
+    `;
 
     const printWindow = window.open('', '_blank');
     printWindow.document.write(`
@@ -221,40 +269,174 @@
         <meta charset="utf-8">
         <title>${reportTitle}</title>
         <style>
-          @page { size: A4 landscape; margin: 10mm; }
-          body { font-family: Arial, sans-serif; margin: 0; padding: 16px; color: #000; }
-          .header { text-align: center; border-bottom: 1px solid #000; padding-bottom: 12px; margin-bottom: 16px; }
-          .header h5, .header h6, .header p { margin: 2px 0; }
-          .logo-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-          .logo-row img { width: 80px; height: 80px; object-fit: contain; }
-          .title { text-align: center; font-size: 20px; font-weight: bold; color: #dc3545; margin-bottom: 16px; text-transform: uppercase; }
-          .meta { text-align: center; margin-bottom: 12px; font-size: 14px; }
-          table { width: 100%; border-collapse: collapse; }
-          th, td { border: 1px solid #000; padding: 6px 8px; font-size: 12px; }
-          th { background-color: #f8f9fa; }
-          .notes { margin-top: 16px; font-size: 12px; }
+          @page { 
+            size: A4 landscape; 
+            margin: 20mm 15mm;
+          }
+          * {
+            font-family: Arial, sans-serif !important;
+            box-sizing: border-box;
+          }
+          body { 
+            font-family: Arial, sans-serif !important; 
+            font-size: 12pt;
+            margin: 0; 
+            padding: 10px; 
+            color: #000;
+            line-height: 1.4;
+          }
+          .print-header {
+            text-align: center;
+            border-bottom: 2px solid #000;
+            padding: 8px 0;
+            margin-bottom: 15px;
+            page-break-after: avoid;
+            page-break-inside: avoid;
+          }
+          .print-header .logo-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+          }
+          .print-header .logo-container img {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            flex-shrink: 0;
+          }
+          .print-header .header-text {
+            flex: 1;
+            padding: 0 15px;
+          }
+          .print-header h5,
+          .print-header h6 {
+            margin: 1px 0;
+            line-height: 1.2;
+            font-weight: bold;
+            font-size: 12pt;
+          }
+          .print-header p {
+            margin: 2px 0;
+            line-height: 1.2;
+            font-size: 11pt;
+          }
+          h1, h2, h3, h4, h5, h6 {
+            font-family: Arial, sans-serif !important;
+            font-weight: bold;
+            color: #000;
+            margin: 8px 0;
+          }
+          h4 { font-size: 13pt; }
+          h5, h6 { font-size: 12pt; }
+          p, small, span {
+            font-family: Arial, sans-serif !important;
+            font-size: 12pt;
+            margin: 4px 0;
+          }
+          table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            font-size: 12pt;
+            font-family: Arial, sans-serif !important;
+            margin: 15px 0;
+            page-break-inside: auto;
+          }
+          thead {
+            display: table-header-group;
+          }
+          tbody {
+            display: table-row-group;
+          }
+          tfoot {
+            display: table-footer-group;
+          }
+          tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+          }
+          th, td { 
+            border: 1px solid #000; 
+            padding: 8px 10px; 
+            font-size: 12pt;
+            font-family: Arial, sans-serif !important;
+          }
+          th { 
+            background-color: #f5f5f5;
+            font-weight: bold;
+            text-align: center;
+          }
+          td {
+            text-align: left;
+          }
+          .table-responsive {
+            overflow: visible;
+            width: 100%;
+          }
+          .print-notes {
+            margin-top: 20px;
+            font-size: 12pt;
+            page-break-inside: avoid;
+          }
+          .print-notes small {
+            display: block;
+            margin: 3px 0;
+          }
+          @media print {
+            @page {
+              size: A4 landscape;
+              margin: 20mm 15mm 20mm 15mm;
+            }
+            body {
+              margin: 0;
+              padding: 0;
+              padding-top: 110px;
+            }
+            .print-header {
+              position: fixed;
+              top: 0;
+              left: 0;
+              right: 0;
+              background: white;
+              z-index: 1000;
+              padding: 8px 15mm;
+              margin: 0;
+              border-bottom: 2px solid #000;
+              page-break-after: avoid;
+              page-break-inside: avoid;
+            }
+            .content-wrapper {
+              position: relative;
+            }
+            table {
+              page-break-inside: auto;
+            }
+            thead {
+              display: table-header-group;
+            }
+            tfoot {
+              display: table-footer-group;
+            }
+            tr {
+              page-break-inside: avoid;
+            }
+            tbody tr {
+              page-break-inside: avoid;
+            }
+            .print-notes {
+              page-break-inside: avoid;
+              page-break-before: avoid;
+            }
+          }
         </style>
       </head>
       <body>
-        <div class="header">
-          <div class="logo-row">
-            <img src="${logoLeft}" alt="LGU New Corella Logo">
-            <img src="${logoRight}" alt="MHO Logo">
-          </div>
-          <h6>Republic of the Philippines</h6>
-          <h6>Province of Davao del Norte</h6>
-          <h5>Municipality of New Corella</h5>
-          <h6>Municipal Health Office</h6>
-          <p>Purok 5, Poblacion, New Corella | rhunewcorella@yahoo.com | (+63) 970-093-3480</p>
+        ${headerHtml}
+        <div class="content-wrapper" style="margin-top: 10px;">
+          ${tableHtml}
         </div>
-        <div class="title">${reportTitle}</div>
-        <div class="meta">Reporting Period: ${monthLabel} ${yearLabel}</div>
-        ${tableHtml}
-        <div class="notes">
-          <div><strong>Notes:</strong></div>
-          <div>• Counts reflect referrals created within the selected month and year.</div>
-          <div>• Average days to close is computed from completed referrals only (created_at to completed_at).</div>
-          <div>• Generated on {{ report_generated_at|date:'F d, Y h:i A' }}.</div>
+        <div class="print-notes">
+          ${notesHtml}
         </div>
       </body>
       </html>

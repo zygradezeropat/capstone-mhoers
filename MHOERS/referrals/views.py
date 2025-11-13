@@ -697,8 +697,8 @@ def export_referrals_csv(request):
       - facility_id: int (maps to Facility.user_id for referrals.user)
       - user_id: int (referrals.user id)
     """
-    # Base queryset
-    qs = Referral.objects.select_related('user', 'patient').all()
+    # Base queryset - include facility for CSV export
+    qs = Referral.objects.select_related('user', 'patient', 'facility').all()
 
     # Filters from query params
     year = request.GET.get('year')
@@ -712,11 +712,17 @@ def export_referrals_csv(request):
     if month and month.isdigit():
         qs = qs.filter(created_at__month=int(month))
 
-    # Apply facility filter by mapping to user
+    # Apply facility filter by mapping to users (ManyToMany relationship)
     if facility_id and facility_id.isdigit():
         try:
             facility = Facility.objects.get(facility_id=int(facility_id))
-            qs = qs.filter(user_id=facility.user_id_id)
+            # Get all user IDs associated with this facility
+            user_ids = facility.users.values_list('id', flat=True)
+            if user_ids:
+                qs = qs.filter(user_id__in=user_ids)
+            else:
+                # If facility has no users, return empty queryset
+                qs = qs.none()
         except Facility.DoesNotExist:
             qs = qs.none()
 
@@ -760,38 +766,89 @@ def export_referrals_csv(request):
 
     import csv
     writer = csv.writer(response)
-    # Header
+    # Header - All fields from Referral model
     writer.writerow([
-        'referral_id', 'created_at', 'status',
-        'user_id', 'username',
-        'patient_id', 'patient_name',
-        'chief_complaint', 'initial_diagnosis', 'final_diagnosis',
-        'bp_systolic', 'bp_diastolic', 'pulse_rate', 'respiratory_rate',
-        'temperature', 'oxygen_saturation', 'weight', 'height'
+        # Basic Information
+        'referral_id', 'facility_name', 'username',
+        'patient_name', 'created_at', 'completed_at', 'status', 'followup_date',
+        # Referral Details
+        'referral_type', 'chief_complaint', 'symptoms', 'work_up_details', 'ICD_code',
+        'initial_diagnosis', 'final_diagnosis', 'cause', 'treatments', 'remarks',
+        # Vital Signs
+        'weight', 'height', 'bp_systolic', 'bp_diastolic', 'pulse_rate',
+        'respiratory_rate', 'temperature', 'oxygen_saturation',
+        # Lifestyle/Social History
+        'is_smoker', 'smoking_sticks_per_day', 'is_alcoholic', 'alcohol_bottles_per_year',
+        'family_planning', 'family_planning_type',
+        # Menstrual History
+        'menarche', 'sexually_active', 'number_of_partners', 'is_menopause', 'menopause_age',
+        'last_menstrual_period', 'period_duration', 'period_interval', 'pads_per_day',
+        # Pregnancy History
+        'is_pregnant', 'gravidity', 'parity', 'delivery_type', 'full_term_births',
+        'premature_births', 'abortions', 'living_children'
     ])
 
     # Rows
     for r in qs.order_by('created_at'):
         patient_name = f"{r.patient.first_name} {r.patient.last_name}" if hasattr(r.patient, 'first_name') else str(r.patient_id)
+        facility_name = r.facility.name if r.facility else ''
+        
         writer.writerow([
+            # Basic Information
             r.referral_id,
-            r.created_at.isoformat(),
-            r.status,
-            r.user_id,
+            facility_name,
             r.user.username if r.user_id else '',
-            r.patient_id,
             patient_name,
-            r.chief_complaint,
-            r.initial_diagnosis,
+            r.created_at.isoformat() if r.created_at else '',
+            r.completed_at.isoformat() if r.completed_at else '',
+            r.status,
+            r.followup_date.isoformat() if r.followup_date else '',
+            # Referral Details
+            r.referral_type or '',
+            r.chief_complaint or '',
+            r.symptoms or '',
+            r.work_up_details or '',
+            r.ICD_code or '',
+            r.initial_diagnosis or '',
             r.final_diagnosis or '',
+            r.cause or '',
+            r.treatments or '',
+            r.remarks or '',
+            # Vital Signs
+            float(r.weight) if r.weight else '',
+            float(r.height) if r.height else '',
             r.bp_systolic,
             r.bp_diastolic,
             r.pulse_rate,
             r.respiratory_rate,
-            float(r.temperature),
+            float(r.temperature) if r.temperature else '',
             r.oxygen_saturation,
-            float(r.weight),
-            float(r.height),
+            # Lifestyle/Social History
+            r.is_smoker,
+            r.smoking_sticks_per_day or '',
+            r.is_alcoholic,
+            r.alcohol_bottles_per_year or '',
+            r.family_planning,
+            r.family_planning_type or '',
+            # Menstrual History
+            r.menarche or '',
+            r.sexually_active if r.sexually_active is not None else '',
+            r.number_of_partners or '',
+            r.is_menopause if r.is_menopause is not None else '',
+            r.menopause_age or '',
+            r.last_menstrual_period.isoformat() if r.last_menstrual_period else '',
+            r.period_duration or '',
+            r.period_interval or '',
+            r.pads_per_day or '',
+            # Pregnancy History
+            r.is_pregnant if r.is_pregnant is not None else '',
+            r.gravidity or '',
+            r.parity or '',
+            r.delivery_type or '',
+            r.full_term_births or '',
+            r.premature_births or '',
+            r.abortions or '',
+            r.living_children or '',
         ])
 
     return response

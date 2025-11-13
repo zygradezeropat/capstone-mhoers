@@ -6,6 +6,8 @@ from django.contrib import messages
 from django.utils import timezone
 from django.db.models import Q, Count, Max, Sum
 from django.core.paginator import Paginator
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 from .models import Conversation, Message, MessageNotification
 from .forms import MessageForm
 import json
@@ -21,7 +23,7 @@ def chat_home(request):
         participants=user,
         is_active=True
     ).annotate(
-        unread_count=Count('messages', filter=Q(messages__is_read=False) & ~Q(messages__sender=user))
+        unread_count=Count('messages', filter=Q(messages__is_read=False) & ~Q(messages__sender=user) & Q(messages__is_deleted=False))
     ).order_by('-updated_at')
     
     # Get unread message count for each conversation and add other user name
@@ -93,8 +95,8 @@ def conversation_detail(request, conversation_id):
         conversation=conversation
     ).update(unread_count=0)
     
-    # Get messages for this conversation
-    messages_list = conversation.messages.all().order_by('created_at')
+    # Get messages for this conversation (exclude deleted messages)
+    messages_list = conversation.messages.filter(is_deleted=False).order_by('created_at')
     
     # Pagination
     paginator = Paginator(messages_list, 50)
@@ -169,12 +171,39 @@ def send_message(request, conversation_id):
                 notification.unread_count += 1
                 notification.save()
             
+            # Broadcast message to WebSocket clients
+            try:
+                channel_layer = get_channel_layer()
+                room_group_name = f'chat_{conversation_id}'
+                message_data = {
+                    'id': message.id,
+                    'content': message.content,
+                    'sender': message.sender.get_full_name() or message.sender.username,
+                    'sender_id': message.sender.id,
+                    'created_at': message.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                    'is_read': message.is_read
+                }
+                async_to_sync(channel_layer.group_send)(
+                    room_group_name,
+                    {
+                        'type': 'chat_message',
+                        'message': message_data
+                    }
+                )
+            except Exception as e:
+                # If channel layer is not available, continue without broadcasting
+                # This allows the HTTP endpoint to work even if Channels is not fully configured
+                print(f"Warning: Could not broadcast message via Channels: {e}")
+            
             return JsonResponse({
                 'success': True,
+                'id': message.id,
                 'message_id': message.id,
                 'content': message.content,
                 'sender': message.sender.get_full_name() or message.sender.username,
-                'created_at': message.created_at.strftime('%Y-%m-%d %H:%M:%S')
+                'sender_id': message.sender.id,
+                'created_at': message.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                'is_deleted': message.is_deleted
             })
             
         except Exception as e:
@@ -193,9 +222,9 @@ def get_messages(request, conversation_id):
         last_message_id = request.GET.get('last_message_id')
         
         if last_message_id:
-            messages_list = conversation.messages.filter(id__gt=last_message_id).order_by('created_at')
+            messages_list = conversation.messages.filter(id__gt=last_message_id, is_deleted=False).order_by('created_at')
         else:
-            messages_list = conversation.messages.all().order_by('-created_at')[:20]
+            messages_list = conversation.messages.filter(is_deleted=False).order_by('-created_at')[:20]
             messages_list = list(reversed(messages_list))
         
         messages_data = []
@@ -207,7 +236,8 @@ def get_messages(request, conversation_id):
                 'sender_id': message.sender.id,
                 'is_own': message.sender == request.user,
                 'created_at': message.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-                'is_read': message.is_read
+                'is_read': message.is_read,
+                'is_deleted': message.is_deleted
             })
         
         return JsonResponse({
@@ -268,3 +298,64 @@ def user_list(request):
         'success': True,
         'users': users_data
     })
+
+
+@login_required
+def delete_message(request, message_id):
+    """Delete a message (soft delete)"""
+    if request.method == 'POST':
+        try:
+            message = get_object_or_404(Message, id=message_id)
+            
+            # Check if user is the sender or a participant in the conversation
+            if message.sender != request.user and request.user not in message.conversation.participants.all():
+                return JsonResponse({'error': 'You do not have permission to delete this message'}, status=403)
+            
+            # Soft delete the message
+            message.delete_message(request.user)
+            
+            # Broadcast delete event to WebSocket clients
+            try:
+                channel_layer = get_channel_layer()
+                room_group_name = f'chat_{message.conversation.id}'
+                async_to_sync(channel_layer.group_send)(
+                    room_group_name,
+                    {
+                        'type': 'message_deleted',
+                        'message_id': message.id
+                    }
+                )
+            except Exception as e:
+                print(f"Warning: Could not broadcast delete via Channels: {e}")
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Message deleted successfully'
+            })
+            
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    
+    return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+
+@login_required
+def delete_conversation(request, conversation_id):
+    """Delete a conversation (soft delete by setting is_active=False)"""
+    if request.method == 'POST':
+        try:
+            conversation = get_object_or_404(Conversation, id=conversation_id, participants=request.user)
+            
+            # Soft delete the conversation by setting is_active=False
+            conversation.is_active = False
+            conversation.save()
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Conversation deleted successfully'
+            })
+            
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    
+    return JsonResponse({'error': 'Invalid request method'}, status=405)

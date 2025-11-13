@@ -129,36 +129,7 @@
   </div>
 
   <!-- Tab Navigation -->
-  <div class="card border-0 shadow-sm rounded-lg mb-4">
-    <div class="card-body">
-      <ul class="nav nav-pills nav-fill" id="dashboardTab" role="tablist">
-        <li class="nav-item">
-          <a class="nav-link" id="tab1-tab" data-bs-toggle="tab" href="#tab1" role="tab">
-            <i class="bi bi-graph-up"></i>
-            <span class="ms-2">Referral Statistics</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" id="tab2-tab" data-bs-toggle="tab" href="#tab2" role="tab">
-            <i class="bi bi-clipboard2-pulse"></i>
-            <span class="ms-2">Common Diagnoses</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" id="tab3-tab" data-bs-toggle="tab" href="#tab3" role="tab">
-            <i class="bi bi-bar-chart"></i>
-            <span class="ms-2">Barangay Performance</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link active" id="tab5-tab" data-bs-toggle="tab" href="#tab5" role="tab">
-            <i class="bi bi-printer"></i>
-            <span class="ms-2">Generate Reports</span>
-          </a>
-        </li>
-      </ul>
-    </div>
-  </div>
+  {% include 'components/tabbar/tabbar.html' with tab1_name="Referral Statistics" tab1_icon="bi-graph-up" tab2_name="Common Diagnoses" tab2_icon="bi-clipboard2-pulse" tab3_name="Barangay Performance" tab3_icon="bi-bar-chart" tab5_name="Generate Reports" tab5_icon="bi-printer" active_tab="tab5" %}
 
   <!-- Tab Content -->
   <div class="tab-content" id="dashboardTabContent">
@@ -821,7 +792,7 @@
         <style>
           @page { 
             size: A4 landscape; 
-            margin: 5mm 5mm;
+            margin: 20mm 15mm;
             @top-center { content: ""; }
             @bottom-center { content: ""; }
             @top-left { content: ""; }
@@ -831,13 +802,15 @@
           }
           * {
             box-sizing: border-box;
+            font-family: Arial, sans-serif !important;
           }
           body { 
             font-family: Arial, sans-serif; 
+            font-size: 12pt;
             margin: 0;
-            padding: 4px;
+            padding: 15px;
             color: #000;
-            font-size: 9px;
+            line-height: 1.5;
           }
           .card {
             border: none !important;
@@ -846,50 +819,42 @@
             padding: 0 !important;
           }
           .card-body {
-            padding: 4px !important;
+            padding: 10px !important;
             margin: 0 !important;
           }
-          /* Reduce spacing in header section - very compact */
-          .d-flex.flex-column,
-          .d-flex.flex-lg-row,
-          .mb-4,
-          .mb-3 {
-            margin-bottom: 4px !important;
+          h1, h2, h3, h4, h5, h6 {
+            font-family: Arial, sans-serif !important;
+            font-weight: bold;
+            color: #000;
+            margin: 15px 0 10px 0;
           }
-          .mt-4,
-          .mt-3 {
-            margin-top: 4px !important;
+          h1 { font-size: 18pt; }
+          h2 { font-size: 16pt; }
+          h3 { font-size: 14pt; }
+          h4 { font-size: 13pt; }
+          h5, h6 { font-size: 12pt; }
+          p, small, span, div {
+            font-family: Arial, sans-serif !important;
+            font-size: 12pt;
+            line-height: 1.5;
           }
-          /* Header styling - very compact */
           .d-flex.align-items-center {
-            margin-bottom: 6px !important;
+            margin-bottom: 15px !important;
             page-break-after: avoid;
           }
           .report-logo,
           img[alt*="Logo"],
           img[src*="LGU"],
           img[src*="MHO"] {
-            width: 60px !important;
-            height: 60px !important;
-            max-width: 60px !important;
-            max-height: 60px !important;
+            width: 70px !important;
+            height: 70px !important;
+            max-width: 70px !important;
+            max-height: 70px !important;
             object-fit: contain;
           }
-          /* Compact header text */
-          h4, h5, h6 {
-            margin: 2px 0 !important;
-            font-size: 12px !important;
-            line-height: 1.2 !important;
-          }
-          p, small {
-            margin: 1px 0 !important;
-            font-size: 8px !important;
-            line-height: 1.2 !important;
-          }
-          /* Table styling - very compact to fit on one page */
           .table-responsive {
             page-break-inside: avoid;
-            margin-top: 4px !important;
+            margin: 15px 0;
             overflow: visible !important;
             width: 100% !important;
           }
@@ -898,11 +863,9 @@
             max-width: 100% !important;
             border-collapse: collapse !important;
             page-break-inside: avoid !important;
-            margin-top: 0 !important;
-            margin-bottom: 4px !important;
-            table-layout: fixed !important;
-            word-wrap: break-word !important;
-            font-size: 8px !important;
+            margin: 15px 0;
+            font-size: 12pt !important;
+            font-family: Arial, sans-serif !important;
           }
           thead {
             display: table-header-group !important;
@@ -914,148 +877,93 @@
           tr {
             page-break-inside: avoid;
             page-break-after: auto;
-            height: auto !important;
           }
           th, td {
             border: 1px solid #000 !important;
-            padding: 3px 4px !important;
-            text-align: center !important;
-            font-size: 8px !important;
+            padding: 8px 10px !important;
+            font-size: 12pt !important;
+            font-family: Arial, sans-serif !important;
             word-wrap: break-word !important;
             overflow-wrap: break-word !important;
-            hyphens: auto !important;
             vertical-align: top !important;
             box-sizing: border-box !important;
-            overflow: hidden !important;
-            line-height: 1.2 !important;
+            line-height: 1.4 !important;
           }
           th {
-            background-color: #f8f9fa !important;
+            background-color: #f5f5f5 !important;
             font-weight: bold !important;
-            white-space: normal !important;
-            word-wrap: break-word !important;
-            font-size: 9px !important;
-            padding: 4px 4px !important;
+            text-align: center !important;
           }
           td {
-            white-space: normal !important;
-            word-break: break-word !important;
-            font-size: 8px !important;
+            text-align: left !important;
           }
-          /* Column widths are set by JavaScript for balanced distribution */
-          /* Ensure inline styles from JavaScript are respected */
-          table th[style*="width"],
-          table td[style*="width"] {
-            /* JavaScript sets width, respect it */
-          }
-          /* Make second column (usually Facility/Diagnosis) left-aligned */
           table th:nth-child(2),
           table td:nth-child(2) {
             text-align: left !important;
-            padding-left: 8px !important;
+            padding-left: 10px !important;
           }
-          /* Ensure table doesn't overflow */
-          .table-responsive {
-            max-width: 100% !important;
-            overflow-x: visible !important;
-            width: 100% !important;
-          }
-          /* Notes section - compact */
-          .mt-3 small,
-          .mt-3 .text-muted {
-            margin-top: 4px !important;
-            margin-bottom: 2px !important;
-            font-size: 10px;
-            line-height: 1.3;
-          }
-          /* Hide unnecessary elements */
           .d-print-none {
             display: none !important;
           }
           .d-none.d-print-block {
             display: none !important;
           }
-          /* Remove extra spacing from forms and buttons */
           form,
           .btn,
           .row.g-3 {
             display: none !important;
           }
-          /* Ensure content flows properly */
           .container-fluid {
             padding: 0 !important;
             margin: 0 !important;
           }
-          /* Remove empty spaces and large gaps */
           div:empty {
             display: none !important;
             height: 0 !important;
             margin: 0 !important;
             padding: 0 !important;
           }
-          /* Ensure table starts close to header */
-          .table-responsive {
-            margin-top: 4px !important;
-          }
-          /* Compact spacing between sections */
-          .flex-grow-1 {
-            margin: 0 !important;
-          }
-          /* Prevent large gaps before table - very compact */
           .card-body > * {
-            margin-top: 2px !important;
-            margin-bottom: 2px !important;
+            margin-top: 10px !important;
+            margin-bottom: 10px !important;
           }
           .card-body > .d-flex:first-child {
             margin-top: 0 !important;
-            margin-bottom: 4px !important;
+            margin-bottom: 15px !important;
           }
           .card-body > .table-responsive {
-            margin-top: 4px !important;
-            margin-bottom: 4px !important;
+            margin-top: 15px !important;
+            margin-bottom: 15px !important;
           }
-          .card-body > .table-responsive:first-of-type {
-            margin-top: 4px !important;
-          }
-          .card-body > .table-responsive + .table-responsive {
-            margin-top: 4px !important;
-          }
-          /* Reduce spacing between heading and table */
-          h4, h5, h6 {
-            margin-bottom: 2px !important;
-          }
-          /* Signature lines styling - compact */
           div[style*="margin-top: 15px"],
           div[style*="margin-top: 40px"] {
-            margin-top: 15px !important;
-            padding-top: 10px !important;
+            margin-top: 20px !important;
+            padding-top: 15px !important;
             page-break-inside: avoid;
-            font-size: 9px !important;
+            font-size: 12pt !important;
           }
           div[style*="display: flex"] {
             display: flex !important;
             justify-content: space-between !important;
             width: 100% !important;
-            font-size: 9px !important;
+            font-size: 12pt !important;
           }
-          /* No page breaks - keep everything on one page */
-          .second-table-page-break,
-          .page-break-before {
-            page-break-before: auto !important;
-            break-before: auto !important;
+          @media print {
+            @page {
+              size: A4 landscape;
+              margin: 20mm 15mm;
+            }
+            body {
+              margin: 0;
+              padding: 10px;
+            }
+            table {
+              page-break-inside: avoid !important;
+            }
+            tr {
+              page-break-inside: avoid !important;
+            }
           }
-          /* Ensure tables don't break awkwardly - keep on same page */
-          .table-responsive {
-            page-break-inside: avoid !important;
-            page-break-before: auto !important;
-            page-break-after: auto !important;
-          }
-          table {
-            page-break-inside: avoid !important;
-            page-break-before: auto !important;
-            page-break-after: auto !important;
-          }
-          /* Notes section is removed via JavaScript before printing */
         </style>
       </head>
       <body>

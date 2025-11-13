@@ -4,54 +4,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const sidebarToggle = document.getElementById('sidebarToggle');
     const sidebarClose = document.getElementById('sidebarClose');
     const sidebarOverlay = document.getElementById('sidebarOverlay');
-    const sidebarToggleDesktop = document.getElementById('sidebarToggleDesktop');
-    const collapseIcon = document.getElementById('collapseIcon');
     const mainContent = document.querySelector('.main-content');
     
-    // Debug: Log elements to console
-    console.log('Sidebar elements found:', {
-        sidebar: !!sidebar,
-        sidebarToggle: !!sidebarToggle,
-        sidebarClose: !!sidebarClose,
-        sidebarOverlay: !!sidebarOverlay,
-        sidebarToggleDesktop: !!sidebarToggleDesktop,
-        collapseIcon: !!collapseIcon,
-        mainContent: !!mainContent
-    });
-    
-    // Force set the collapse icon immediately
-    if (collapseIcon) {
-        console.log('Collapse icon found, setting to chevron-left');
-        collapseIcon.className = 'bi bi-chevron-left';
-        collapseIcon.innerHTML = '';
+    // Ensure sidebar is always expanded (remove any collapsed state)
+    if (sidebar) {
+        sidebar.classList.remove('collapsed');
     }
-    
-    // Additional fallback - find collapse icon by parent button
-    const desktopToggle = document.getElementById('sidebarToggleDesktop');
-    if (desktopToggle) {
-        const iconInButton = desktopToggle.querySelector('i');
-        if (iconInButton) {
-            console.log('Found icon in desktop toggle button, setting to chevron-left');
-            iconInButton.className = 'bi bi-chevron-left';
-            iconInButton.innerHTML = '';
-        }
-    }
-    
-    // Check if sidebar is collapsed from localStorage
-    const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-    if (isCollapsed && window.innerWidth > 767) {
-        sidebar.classList.add('collapsed');
-        if (mainContent) {
-            mainContent.classList.add('sidebar-collapsed');
-        }
-        if (collapseIcon) {
-            collapseIcon.className = 'bi bi-chevron-right';
-        }
-    } else {
-        // Initialize collapse icon for expanded state
-        if (collapseIcon && window.innerWidth > 767) {
-            collapseIcon.className = 'bi bi-chevron-left';
-        }
+    if (mainContent) {
+        mainContent.classList.remove('sidebar-collapsed');
     }
     
     // Toggle sidebar on mobile
@@ -83,49 +43,6 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.style.width = '';
     }
     
-    // Toggle sidebar collapse on desktop
-    function toggleSidebarCollapse() {
-        if (window.innerWidth > 767) {
-            sidebar.classList.toggle('collapsed');
-            if (mainContent) {
-                mainContent.classList.toggle('sidebar-collapsed');
-            }
-            
-            // Update icon
-            if (collapseIcon) {
-                if (sidebar.classList.contains('collapsed')) {
-                    collapseIcon.className = 'bi bi-chevron-right';
-                    collapseIcon.innerHTML = '';
-                } else {
-                    collapseIcon.className = 'bi bi-chevron-left';
-                    collapseIcon.innerHTML = '';
-                }
-            }
-            
-            // Additional fallback - update icon in desktop toggle button
-            const desktopToggle = document.getElementById('sidebarToggleDesktop');
-            if (desktopToggle) {
-                const iconInButton = desktopToggle.querySelector('i');
-                if (iconInButton) {
-                    if (sidebar.classList.contains('collapsed')) {
-                        iconInButton.className = 'bi bi-chevron-right';
-                        iconInButton.innerHTML = '';
-                    } else {
-                        iconInButton.className = 'bi bi-chevron-left';
-                        iconInButton.innerHTML = '';
-                    }
-                }
-            }
-            
-            // Save state to localStorage
-            localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
-            
-            // Force a small delay to ensure CSS transitions work properly
-            setTimeout(() => {
-                sidebar.style.transition = 'all 0.3s ease';
-            }, 10);
-        }
-    }
     
     // Event listeners
     if (sidebarToggle) {
@@ -138,15 +55,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (sidebarOverlay) {
         sidebarOverlay.addEventListener('click', closeSidebar);
-    }
-    
-    if (sidebarToggleDesktop) {
-        sidebarToggleDesktop.addEventListener('click', function(e) {
-            // Only allow desktop collapse on screens wider than 767px
-            if (window.innerWidth > 767) {
-                toggleSidebarCollapse();
-            }
-        });
     }
     
     // Close sidebar when clicking on a nav link (mobile)
@@ -207,24 +115,10 @@ document.addEventListener('DOMContentLoaded', function() {
         resizeTimeout = setTimeout(function() {
             if (window.innerWidth > 767) {
                 closeSidebar();
-                // Restore collapsed state on desktop
-                const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-                if (isCollapsed) {
-                    sidebar.classList.add('collapsed');
-                    if (mainContent) {
-                        mainContent.classList.add('sidebar-collapsed');
-                    }
-                    if (collapseIcon) {
-                        collapseIcon.className = 'bi bi-chevron-right';
-                    }
-                } else {
-                    sidebar.classList.remove('collapsed');
-                    if (mainContent) {
-                        mainContent.classList.remove('sidebar-collapsed');
-                    }
-                    if (collapseIcon) {
-                        collapseIcon.className = 'bi bi-chevron-left';
-                    }
+                // Ensure sidebar is always expanded on desktop
+                sidebar.classList.remove('collapsed');
+                if (mainContent) {
+                    mainContent.classList.remove('sidebar-collapsed');
                 }
             } else {
                 // On mobile, remove collapsed state and ensure sidebar is closed
@@ -277,34 +171,17 @@ document.addEventListener('DOMContentLoaded', function() {
         sidebar.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
     }
     
-    // Ensure collapse icon is properly initialized
-    if (collapseIcon && window.innerWidth > 767) {
-        if (sidebar.classList.contains('collapsed')) {
-            collapseIcon.className = 'bi bi-chevron-right';
-            console.log('Icon set to chevron-right (collapsed)');
-        } else {
-            collapseIcon.className = 'bi bi-chevron-left';
-            console.log('Icon set to chevron-left (expanded)');
-        }
-    } else {
-        console.log('Collapse icon not found or not on desktop');
-    }
-    
     // Add loading animation (but ensure visibility)
     setTimeout(() => {
         if (sidebar) {
             sidebar.style.opacity = '1';
             sidebar.style.transform = 'translateX(0)';
             sidebar.classList.add('loaded');
+            // Ensure sidebar is always expanded
+            sidebar.classList.remove('collapsed');
         }
-        
-        // Double-check icon initialization after DOM is fully loaded
-        if (collapseIcon && window.innerWidth > 767) {
-            if (sidebar.classList.contains('collapsed')) {
-                collapseIcon.className = 'bi bi-chevron-right';
-            } else {
-                collapseIcon.className = 'bi bi-chevron-left';
-            }
+        if (mainContent) {
+            mainContent.classList.remove('sidebar-collapsed');
         }
     }, 100);
 });

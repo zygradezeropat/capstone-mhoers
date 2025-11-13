@@ -460,7 +460,12 @@ def user_login(request):
             return redirect('login')
 
     # Make sure GET request renders login.html
-    return render(request, 'accounts/login.html')
+    response = render(request, 'accounts/login.html')
+    # Prevent back navigation after logout
+    response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response['Pragma'] = 'no-cache'
+    response['Expires'] = '0'
+    return response
 
 @login_required
 def create_doctor(request):
@@ -958,7 +963,13 @@ def reject_user(request):
 
 
 def user_logout(request):
-    return redirect('login')
+    logout(request)
+    response = redirect('login')
+    # Prevent back navigation after logout
+    response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response['Pragma'] = 'no-cache'
+    response['Expires'] = '0'
+    return response
 
 
 @login_required

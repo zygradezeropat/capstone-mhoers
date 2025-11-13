@@ -15,73 +15,8 @@
     </div>
   </div>
 
-  <!-- Summary Statistics Cards -->
-  <div class="row mb-4">
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm">
-        <div class="card-body text-center">
-          <h3 class="text-primary mb-1">{{ total_referrals }}</h3>
-          <p class="text-muted mb-0">Total Referrals ({{ current_year }})</p>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm">
-        <div class="card-body text-center">
-          <h3 class="text-warning mb-1">{{ pending_referrals }}</h3>
-          <p class="text-muted mb-0">Pending Referrals</p>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm">
-        <div class="card-body text-center">
-          <h3 class="text-success mb-1">{{ completed_referrals }}</h3>
-          <p class="text-muted mb-0">Completed Referrals</p>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm">
-        <div class="card-body text-center">
-          <h3 class="text-info mb-1">{{ top_diagnoses|length }}</h3>
-          <p class="text-muted mb-0">Top Diagnoses</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- Tab Navigation -->
-  <div class="card border-0 shadow-sm rounded-lg mb-4">
-    <div class="card-body">
-      <ul class="nav nav-pills nav-fill" id="dashboardTab" role="tablist">
-        <li class="nav-item">
-          <a class="nav-link active" id="tab1-tab" data-bs-toggle="tab" href="#tab1" role="tab">
-            <i class="bi bi-graph-up"></i>
-            <span class="ms-2">Referral Statistics</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" id="tab2-tab" data-bs-toggle="tab" href="#tab2" role="tab">
-            <i class="bi bi-clipboard2-pulse"></i>
-            <span class="ms-2">Common Diagnoses</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" id="tab3-tab" data-bs-toggle="tab" href="#tab3" role="tab">
-            <i class="bi bi-bar-chart"></i>
-            <span class="ms-2">Barangay Performance</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" id="tab5-tab" data-bs-toggle="tab" href="#tab5" role="tab">
-            <i class="bi bi-printer"></i>
-            <span class="ms-2">Generate Reports</span>
-          </a>
-        </li>
-      </ul>
-    </div>
-  </div>
+  {% include 'components/tabbar/tabbar.html' with tab1_name="Referral Statistics" tab1_icon="bi-graph-up" tab2_name="Common Diagnoses" tab2_icon="bi-clipboard2-pulse" tab3_name="Barangay Performance" tab3_icon="bi-bar-chart" tab5_name="Generate Reports" tab5_icon="bi-printer" active_tab="tab1" %}
 
   <!-- Tab Content -->
   <div class="tab-content" id="dashboardTabContent">
