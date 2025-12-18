@@ -268,10 +268,18 @@ body {
 
 .app-title {
   font-size: 1.1rem;
-  font-weight: 700;
+  font-weight: 400;
   color: #fff;
   margin: 0;
   line-height: 1.2;
+}
+
+.doctor-name-bold {
+  font-weight: 700;
+}
+
+.doctor-role-text {
+  font-weight: 400;
 }
 
 .username {

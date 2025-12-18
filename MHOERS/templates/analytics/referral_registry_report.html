@@ -60,9 +60,9 @@
           <div class="d-flex align-items-center justify-content-between flex-wrap mb-3">
             <img src="{% static 'images/LGU-NEWCORELLA.png' %}" alt="LGU New Corella Logo" class="report-logo mb-3 mb-lg-0">
             <div class="text-center flex-grow-1 px-lg-4">
-              <h4 class="text-primary mb-1">Referral Registry with Vital Signs</h4>
+              <h4 class="text-primary mb-1 text-uppercase">REFERRAL REGISTRY WITH VITAL SIGNS</h4>
               <p class="text-muted mb-0">Comprehensive referral log for sign-off and archiving</p>
-              <small class="text-muted">Reporting Period: {{ month_name }} {{ year }}</small>
+              <small class="text-muted">Reporting Period: {{ month_name }}{% if 'to' not in month_name %} {{ year }}{% endif %}</small>
             </div>
             <img src="{% static 'images/MHO-LOGO.png' %}" alt="MHO Logo" class="report-logo mb-3 mb-lg-0 d-none d-sm-block">
           </div>
@@ -186,7 +186,10 @@
 <script>
   function printReferralRegistry() {
     const reportTitle = 'Referral Registry with Vital Signs';
-    const period = '{{ month_name }} {{ year }}';
+    const monthName = '{{ month_name }}';
+    const year = '{{ year }}';
+    // Only add year if month_name doesn't already contain a date range (indicated by "to")
+    const period = monthName.includes(' to ') ? monthName : `${monthName} ${year}`;
     const generatedAt = '{{ report_generated_at|date:"F d, Y h:i A" }}';
     const logoLeft = "{% static 'images/LGU-NEWCORELLA.png' %}";
     const logoRight = "{% static 'images/MHO-LOGO.png' %}";

@@ -85,6 +85,15 @@ body {
   margin-bottom: 20px;
 }
 
+.form-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 8px;
+  letter-spacing: 0.3px;
+}
+
 .form-row {
   display: flex;
   gap: 12px;
@@ -113,7 +122,7 @@ body {
 
 .form-input {
   width: 100%;
-  padding: 16px 16px 16px 48px;
+  padding: 16px;
   border: 2px solid #e2e8f0;
   border-radius: 12px;
   font-size: 16px;
@@ -121,11 +130,15 @@ body {
   color: #1e293b;
   background: #f8fafc;
   transition: all 0.3s ease;
+  text-align: left !important;
+  direction: ltr;
 }
 
 .form-input::placeholder {
   color: #94a3b8;
   font-weight: 400;
+  text-align: left !important;
+  direction: ltr;
 }
 
 .form-input:focus {
@@ -139,9 +152,62 @@ body {
   color: #3b82f6;
 }
 
+/* Error state styling */
+.form-input.error,
+.form-select.error {
+  border-color: #dc2626 !important;
+  background: #fef2f2 !important;
+  box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.1) !important;
+}
+
+.form-input.error:focus,
+.form-select.error:focus {
+  border-color: #dc2626 !important;
+  box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.15) !important;
+}
+
+.form-group.has-error .input-wrapper::after {
+  content: '!';
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  background: #dc2626;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 14px;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.form-group.has-error .input-wrapper .password-toggle {
+  right: 48px;
+}
+
+/* Error message styling */
+.form-group.has-error .error-message {
+  color: #dc2626;
+  font-size: 12px;
+  margin-top: 4px;
+  font-weight: 500;
+  display: block;
+  padding-left: 4px;
+}
+
+.form-group.has-error .error-message::before {
+  content: '⚠ ';
+  margin-right: 4px;
+}
+
 .form-select {
   width: 100%;
-  padding: 16px 16px 16px 48px;
+  padding: 16px 40px 16px 16px;
   border: 2px solid #e2e8f0;
   border-radius: 12px;
   font-size: 16px;
@@ -154,7 +220,8 @@ body {
   background-position: right 12px center;
   background-repeat: no-repeat;
   background-size: 16px;
-  padding-right: 40px;
+  text-align: left !important;
+  direction: ltr;
 }
 
 .form-select:focus {
@@ -162,6 +229,17 @@ body {
   border-color: #3b82f6;
   background-color: white;
   box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+.form-select.error {
+  border-color: #dc2626 !important;
+  background: #fef2f2 !important;
+  box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.1) !important;
+}
+
+.form-select.error:focus {
+  border-color: #dc2626 !important;
+  box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.15) !important;
 }
 
 .register-button {
@@ -209,6 +287,22 @@ body {
   margin-bottom: 20px;
   font-size: 14px;
   line-height: 1.5;
+}
+
+.register-form .alert.alert-success,
+.alert.alert-success,
+.register-card .alert.alert-success {
+  background: #f0fdf4 !important;
+  border: 1px solid #bbf7d0 !important;
+  border-color: #bbf7d0 !important;
+  color: #16a34a !important;
+}
+
+.register-form .alert.alert-success p,
+.alert.alert-success p,
+.register-card .alert.alert-success p {
+  color: #16a34a !important;
+  margin: 0;
 }
 
 .alert p {
@@ -266,14 +360,20 @@ body {
   background: #f0f9ff;
 }
 
+/* Tablet and below (768px) */
 @media (max-width: 768px) {
   .register-container {
     padding: 16px;
+    min-height: auto;
   }
   
   .register-card {
     padding: 32px 24px;
     border-radius: 16px;
+  }
+  
+  .register-header {
+    margin-bottom: 24px;
   }
   
   .logo {
@@ -290,8 +390,12 @@ body {
   }
   
   .form-input, .form-select {
-    padding: 14px 14px 14px 44px;
+    padding: 14px;
     font-size: 15px;
+  }
+  
+  .form-select {
+    padding-right: 40px;
   }
   
   .input-icon {
@@ -311,21 +415,85 @@ body {
 
   .form-row .form-group {
     min-width: unset;
+    width: 100%;
+    margin-bottom: 16px;
   }
 
   .register-wrapper {
     max-width: 100%;
   }
+
+  .form-section-title {
+    margin: 24px 0 16px 0;
+  }
+
+  .form-section-title h6 {
+    font-size: 14px;
+  }
+
+  /* Password requirements responsive */
+  .password-requirements {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: calc(100% - 32px);
+    max-width: 400px;
+    max-height: 80vh;
+    overflow-y: auto;
+    z-index: 2000;
+  }
+
+  /* Location dropdown responsive */
+  .location-dropdown {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: calc(100% - 32px);
+    max-width: 500px;
+    max-height: 80vh;
+    z-index: 2000;
+  }
+
+  .location-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .location-tab {
+    flex: 1 0 auto;
+    min-width: 80px;
+    font-size: 13px;
+    padding: 10px 12px;
+    white-space: nowrap;
+  }
+
+  .location-options {
+    max-height: 50vh;
+  }
+
+  .location-option-item {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
 }
 
+/* Mobile devices (480px and below) */
 @media (max-width: 480px) {
   .register-container {
     padding: 12px;
+    min-height: auto;
   }
   
   .register-card {
-    padding: 28px 20px;
+    padding: 24px 16px;
     border-radius: 12px;
+  }
+
+  .register-header {
+    margin-bottom: 20px;
   }
   
   .logo {
@@ -333,8 +501,13 @@ body {
     height: 60px;
   }
   
+  .logo-container {
+    margin-bottom: 16px;
+  }
+  
   .app-title {
     font-size: 22px;
+    margin-bottom: 6px;
   }
   
   .welcome-text {
@@ -342,22 +515,214 @@ body {
   }
   
   .form-input, .form-select {
-    padding: 12px 12px 12px 40px;
+    padding: 12px;
     font-size: 14px;
+    border-radius: 10px;
+  }
+  
+  .form-select {
+    padding-right: 36px;
   }
   
   .input-icon {
     left: 12px;
     font-size: 14px;
   }
+
+  .password-toggle {
+    right: 12px;
+    font-size: 14px;
+  }
+
+  .input-wrapper input[type="password"] {
+    padding-right: 40px !important;
+  }
   
   .register-button {
     padding: 12px 16px;
     font-size: 14px;
+    border-radius: 10px;
+  }
+
+  .form-row .form-group {
+    margin-bottom: 14px;
+  }
+
+  .form-section-title {
+    margin: 20px 0 14px 0;
+    padding-bottom: 6px;
+  }
+
+  .form-section-title h6 {
+    font-size: 13px;
+  }
+  
+  .register-footer {
+    margin-top: 20px;
   }
   
   .register-footer p {
     font-size: 13px;
+  }
+
+  /* Password requirements mobile */
+  .password-requirements {
+    width: calc(100% - 24px);
+    max-width: 350px;
+    padding: 14px;
+    font-size: 13px;
+  }
+
+  .requirements-title {
+    font-size: 11px;
+    margin-bottom: 10px;
+  }
+
+  .requirement-item {
+    font-size: 12px;
+    margin-bottom: 8px;
+    gap: 8px;
+  }
+
+  .requirement-icon {
+    font-size: 12px;
+    width: 16px;
+  }
+
+  /* Location dropdown mobile */
+  .location-dropdown {
+    width: calc(100% - 24px);
+    max-width: 400px;
+    border-radius: 10px;
+  }
+
+  .location-tab {
+    font-size: 12px;
+    padding: 10px 8px;
+    min-width: 70px;
+  }
+
+  .location-options {
+    max-height: 45vh;
+    padding: 6px 0;
+  }
+
+  .location-option-item {
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+
+  .location-dropdown-icon {
+    right: 12px;
+    font-size: 12px;
+  }
+
+  /* Alert messages mobile */
+  .alert {
+    padding: 10px 14px;
+    font-size: 13px;
+    border-radius: 8px;
+  }
+}
+
+/* Small mobile devices (360px and below) */
+@media (max-width: 360px) {
+  .register-container {
+    padding: 8px;
+  }
+
+  .register-card {
+    padding: 20px 12px;
+  }
+
+  .logo {
+    width: 50px;
+    height: 50px;
+  }
+
+  .app-title {
+    font-size: 20px;
+  }
+
+  .welcome-text {
+    font-size: 13px;
+  }
+
+  .form-input, .form-select {
+    padding: 10px;
+    font-size: 13px;
+  }
+  
+  .form-select {
+    padding-right: 32px;
+  }
+
+  .input-icon {
+    left: 10px;
+    font-size: 13px;
+  }
+
+  .password-toggle {
+    right: 10px;
+    font-size: 13px;
+  }
+
+  .register-button {
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+
+  .location-tab {
+    font-size: 11px;
+    padding: 8px 6px;
+    min-width: 60px;
+  }
+}
+
+/* Landscape orientation on mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+  .register-container {
+    padding: 12px;
+    align-items: flex-start;
+    padding-top: 20px;
+    padding-bottom: 20px;
+  }
+
+  .register-card {
+    padding: 24px 20px;
+  }
+
+  .register-header {
+    margin-bottom: 20px;
+  }
+
+  .logo {
+    width: 50px;
+    height: 50px;
+  }
+
+  .app-title {
+    font-size: 20px;
+  }
+
+  .form-section-title {
+    margin: 16px 0 12px 0;
+  }
+
+  .password-requirements,
+  .location-dropdown {
+    max-height: 70vh;
+  }
+}
+
+/* Large screens (1200px and above) - ensure proper max-width */
+@media (min-width: 1200px) {
+  .register-wrapper {
+    max-width: 1200px;
+  }
+
+  .register-card {
+    padding: 50px 40px;
   }
 }
 

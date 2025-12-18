@@ -1,0 +1,113 @@
+{% load static %}
+
+<!-- Mobile Toggle Button -->
+<button class="sidebar-toggle" id="sidebarToggle">
+  <i class="bi bi-list"></i>
+</button>
+
+<aside class="sidebar" id="sidebar">
+  <header class="sidebar-header">
+    <div class="header-content">
+      <a href="#" class="header-logo">
+        <img src="{% static 'images/newcorellalogo.png' %}" alt="Logo" />
+      </a>
+      <div class="header-text">
+        <h3 class="app-title doctor-name-bold">{{ request.user.first_name }} {{ request.user.last_name }}</h3>
+        <span class="username">Doctor</span>
+        {% if request.user.doctors and request.user.doctors.specialization %}
+          <span class="username">{{ request.user.doctors.specialization }}</span>
+        {% endif %}
+      </div>
+    </div>
+    
+    <!-- Close button for mobile -->
+    <button class="sidebar-close" id="sidebarClose">
+      <i class="bi bi-x-lg"></i>
+    </button>
+  </header>
+
+  <nav class="sidebar-nav">
+    <ul class="nav-list primary-nav">
+      <li class="nav-item">
+        <a
+          href="{% url 'doctor_dashboard' %}"
+          class="nav-link {% if active_page == 'doctor_dashboard' %}active{% endif %}"
+          data-tooltip="Dashboard"
+        >
+          <i class="bi bi-speedometer"></i>
+          <span class="nav-label">Dashboard</span>
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a href="{% url 'referrals:patient_list' %}?mode=assessment" class="nav-link {% if active_page == 'patient_list' and request.GET.mode != 'patients' %}active{% endif %}" data-tooltip="Assessment">
+          <i class="bi bi-menu-button-wide"></i>
+          <span class="nav-label">Assessment</span>
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a
+          href="{% url 'referrals:patient_list' %}?mode=patients"
+          class="nav-link {% if active_page == 'patient_list' and request.GET.mode == 'patients' %}active{% endif %}"
+          data-tooltip="Patients"
+        >
+          <i class="bi bi-list-ul"></i>
+          <span class="nav-label">Patients</span>
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a
+          href="{% url 'diseases' %}"
+          class="nav-link {% if active_page == 'diseases' %}active{% endif %}"
+          data-tooltip="Diseases"
+        >
+          <i class="bi bi-virus"></i>
+          <span class="nav-label">Diseases</span>
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a
+          href="{% url 'new_heatmap' %}"
+          class="nav-link {% if active_page == 'new_heatmap' %}active{% endif %}"
+          data-tooltip="Heatmap"
+        >
+          <i class="bi bi-geo-alt"></i>
+          <span class="nav-label">Heatmap</span>
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a
+          href="{% url 'user_report' %}"
+          class="nav-link {% if active_page == 'user_report' %}active{% endif %}"
+          data-tooltip="Report"
+        >
+          <i class="bi bi-newspaper"></i>
+          <span class="nav-label">Report</span>
+        </a>
+      </li>
+    </ul>
+
+    <ul class="nav-list secondary-nav">
+      <li class="nav-item">
+        <a href="{% url 'profile' %}" class="nav-link {% if active_page == 'profile' %}active{% endif %}" data-tooltip="Profile">
+          <i class="bi bi-person-circle"></i>
+          <span class="nav-label">Profile</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="{% url 'logout' %}" class="nav-link" data-tooltip="Logout">
+          <i class="bi bi-box-arrow-left"></i>
+          <span class="nav-label">Logout</span>
+        </a>
+      </li>
+    </ul>
+  </nav>
+</aside>
+
+<!-- Overlay for mobile -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+

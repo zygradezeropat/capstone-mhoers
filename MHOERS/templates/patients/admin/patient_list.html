@@ -67,12 +67,211 @@
     font-size: 0.875rem;
     line-height: 1.4;
   }
+  
+  /* Ensure referral modal appears above patient information modal */
+  #viewReferralModal {
+    z-index: 1060 !important;
+  }
+  
+  #viewReferralModal.show {
+    z-index: 1060 !important;
+  }
+  
+  /* Patient information modal should be below referral modal */
+  #viewPatients {
+    z-index: 1050 !important;
+  }
+  
+  #viewPatients.show {
+    z-index: 1050 !important;
+  }
+  
+  /* Ensure backdrop for referral modal is above patient modal backdrop */
+  #viewReferralModal + .modal-backdrop,
+  .modal-backdrop.show:has(+ #viewReferralModal) {
+    z-index: 1055 !important;
+  }
+  
+  /* Accept Referral Confirmation Modal should appear above View Referral Modal */
+  #acceptReferralConfirmModal {
+    z-index: 1070 !important;
+  }
+  
+  #acceptReferralConfirmModal.show {
+    z-index: 1070 !important;
+  }
+  
+  /* Ensure backdrop for accept confirmation modal is above view referral modal */
+  #acceptReferralConfirmModal + .modal-backdrop,
+  .modal-backdrop.show:has(+ #acceptReferralConfirmModal) {
+    z-index: 1065 !important;
+  }
+  
+  /* Accept Referral Modal (if used) should also appear above View Referral Modal */
+  #acceptReferralModal {
+    z-index: 1070 !important;
+  }
+  
+  #acceptReferralModal.show {
+    z-index: 1070 !important;
+  }
+  
+  /* Ensure backdrop for accept modal is above view referral modal */
+  #acceptReferralModal + .modal-backdrop,
+  .modal-backdrop.show:has(+ #acceptReferralModal) {
+    z-index: 1065 !important;
+  }
+  
+  /* Custom Flatpickr Date Picker Styles - Black and White */
+  .flatpickr-calendar {
+    font-family: 'Roboto', sans-serif;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border: 1px solid #000;
+    background-color: #fff;
+  }
+  
+  .flatpickr-months {
+    background-color: #000;
+    border-radius: 8px 8px 0 0;
+    padding: 10px;
+  }
+  
+  .flatpickr-month {
+    color: #fff;
+  }
+  
+  .flatpickr-current-month {
+    color: #fff;
+    font-weight: 600;
+  }
+  
+  .flatpickr-prev-month,
+  .flatpickr-next-month {
+    color: #fff;
+    fill: #fff;
+    padding: 5px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+  }
+  
+  .flatpickr-prev-month:hover,
+  .flatpickr-next-month:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+  }
+  
+  .flatpickr-weekdays {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #000;
+  }
+  
+  .flatpickr-weekday {
+    color: #000;
+    font-weight: 600;
+    font-size: 0.85rem;
+  }
+  
+  .flatpickr-day {
+    border-radius: 6px;
+    margin: 2px;
+    transition: all 0.2s;
+    color: #000;
+  }
+  
+  .flatpickr-day:hover {
+    background-color: #e9ecef;
+    border-color: #000;
+  }
+  
+  .flatpickr-day.selected,
+  .flatpickr-day.startRange,
+  .flatpickr-day.endRange {
+    background-color: #000;
+    border-color: #000;
+    color: #fff;
+    font-weight: 600;
+  }
+  
+  .flatpickr-day.inRange {
+    background-color: #e9ecef;
+    border-color: #000;
+    color: #000;
+  }
+  
+  .flatpickr-day.today {
+    border-color: #000;
+    border-width: 2px;
+    font-weight: 600;
+  }
+  
+  .flatpickr-day.today:hover {
+    background-color: #000;
+    color: #fff;
+  }
+  
+  .flatpickr-day.flatpickr-disabled,
+  .flatpickr-day.prevMonthDay,
+  .flatpickr-day.nextMonthDay {
+    color: #999;
+    opacity: 0.5;
+  }
+  
+  .flatpickr-time {
+    border-top: 1px solid #000;
+    padding: 10px;
+    background-color: #fff;
+  }
+  
+  .flatpickr-time input {
+    border-radius: 4px;
+    border: 1px solid #000;
+    color: #000;
+  }
+  
+  .flatpickr-time input:hover {
+    background-color: #f8f9fa;
+  }
+  
+  /* Custom input styling */
+  .custom-date-input {
+    cursor: pointer;
+    background-color: white;
+    color: #000;
+  }
+  
+  .custom-date-input:focus {
+    border-color: #000;
+    box-shadow: 0 0 0 0.2rem rgba(0, 0, 0, 0.25);
+  }
+  
+  /* Date input group styling */
+  .input-group .form-control {
+    border-right: none;
+  }
+  
+  .input-group .btn {
+    border-left: none;
+    padding: 0.375rem 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .input-group .btn:hover {
+    background-color: #333 !important;
+    border-color: #333 !important;
+  }
 </style>
 
 <!-- Navbar Include --> 
 {% include 'components/navbar.html' %}
 {% include 'components/referral/referral_modal.html' %}
-{% include 'components/tabbar/tabbar.html' with tab1_name="Active Referral" tab1_count=active_count tab2_name="Referred" tab3_name="All Patients" tab4_name="Medical History" %}
+{% if view_mode == 'patients' %}
+  {% include 'components/patients/viewpatients.html' %}
+{% endif %}
+{% if view_mode != 'patients' %}
+  {% include 'components/tabbar/tabbar.html' with tab1_name="Pending" tab1_count=pending_count tab1_icon="bi-hourglass-split" tab2_name="Active Referral" tab2_count=active_count tab3_name="Referred" %}
+{% endif %}
 
 <div class="container-fluid py-4">
   <div class="row">
@@ -82,8 +281,131 @@
           <!-- Global Filter Controls -->
           <div class="tab-content" id="dashboardTabContent">
             
-            <!-- Active Referral Tab -->
-            <div class="tab-pane fade {% if active_tab == 'tab1' %}show active{% endif %}" id="tab1" role="tabpanel">
+            {% if view_mode != 'patients' %}
+            <!-- Pending Referral Tab (Assessment Mode Only) -->
+            <div class="tab-pane fade {% if active_tab == 'tab1' or not active_tab %}show active{% endif %}" id="tab1" role="tabpanel">
+              <div class="table-responsive">
+                <table id="pendingTable" class="table table-hover align-middle">
+                  <thead class="bg-light">
+                    <tr>
+                      <th>Date</th>
+                      <th>Patient Name</th>
+                      <th>Facility</th>
+                      <th>Location</th>
+                      <th>Complaint</th>
+                      <th>Possible Disease</th>
+                      <th>Severity</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for r in pending_referrals %}
+                    <tr data-id="{{ r.referral_id }}" class="align-middle">
+                      <td><h6 class="mb-1 text-dark">{{ r.created_at|date:'Y-m-d h:i A' }}</h6></td>
+                      <td>
+                        <div class="d-flex align-items-center">
+                          
+                          <div>
+                            <h6 class="mb-1 text-dark">{{ r.patient.first_name }} {{ r.patient.middle_name }} {{ r.patient.last_name }}</h6>
+                          </div>
+                        </div>
+                      </td>
+                      
+                      <td>{{ r.patient.facility.name }}</td>
+                      <td>{{ r.patient.p_address }}</td>
+                      <td>{{ r.chief_complaint|default:'N/A'|truncatewords:10 }}</td>
+                      <td>
+                        {% with disease_code=predictions|dict_get:r.referral_id|default:'No prediction available'|first %}
+                        <span class="text-dark" title="{{ disease_code|icd_to_disease }}">
+                          {{ disease_code|icd_to_disease }}
+                        </span>
+                        {% endwith %}
+                      </td>
+                      <td data-order="{% with disease_code=predictions|dict_get:r.referral_id|default:'No prediction available'|first %}{% with severity=disease_code|icd_to_severity %}{% if severity == 'High' %}0{% elif severity == 'Medium' %}1{% elif severity == 'Low' %}2{% else %}3{% endif %}{% endwith %}{% endwith %}">
+                        {% with disease_code=predictions|dict_get:r.referral_id|default:'No prediction available'|first %}
+                        {% with severity=disease_code|icd_to_severity %}
+                          {% if severity == "High" %}
+                            <span class="badge bg-danger rounded-pill">{{ severity }}</span>
+                          {% elif severity == "Medium" %}
+                            <span class="badge bg-warning text-dark rounded-pill">{{ severity }}</span>
+                          {% elif severity == "Low" %}
+                            <span class="badge bg-success rounded-pill">{{ severity }}</span>
+                          {% else %}
+                            <span class="text-muted">{{ severity }}</span>
+                          {% endif %}
+                        {% endwith %}
+                        {% endwith %}
+                      </td>
+                      <td>
+                        <div class="d-flex align-items-center gap-2">
+                      
+                        
+                      
+                          <button class="btn btn-outline-primary btn-sm rounded-pill view-button"
+                            data-id="{{ r.referral_id }}"
+                            data-patient="{{ r.patient.first_name }} {{ r.patient.middle_name }} {{ r.patient.last_name }}"
+                            data-sex ="{{ r.patient.sex }}"
+                            data-date="{{ r.created_at|date:'Y-m-d h:i A' }}"
+                            data-from="{{ r.patient.facility.name }}"
+                            data-to="Municipal Health Office"
+                            data-status="{{ r.status }}"
+                            data-notes="{{ r.chief_complaint }}"
+                            data-symptoms="{{ r.symptoms }}"
+                            data-workup="{{ r.work_up_details }}"
+                            data-height="{{ r.height }}"
+                            data-weight="{{ r.weight }}"
+                            data-systolic="{{ r.bp_systolic }}/{{ r.bp_diastolic }}"
+                            data-diastolic="{{ r.bp_diastolic }}"
+                            data-pulserate="{{ r.pulse_rate }}"
+                            data-respiratory="{{ r.respiratory_rate }}"
+                            data-temperature="{{ r.temperature }}"
+                            data-oxygen="{{ r.oxygen_saturation }}"
+                            data-disease="{{ predictions|dict_get:r.referral_id|default:'No prediction available'|first }}"
+                            data-referral-type="{{ r.referral_type|default:'' }}"
+                            data-cause="{{ r.cause|default:'' }}"
+                            data-treatments="{{ r.treatments|default:'' }}"
+                            data-remarks="{{ r.remarks|default:'' }}"
+                            data-examined-by="{% if r.examined_by %}{{ r.examined_by.id }}{% endif %}"
+                            data-is-smoker="{% if r.is_smoker %}True{% else %}False{% endif %}"
+                            data-smoking-sticks="{% if r.smoking_sticks_per_day %}{{ r.smoking_sticks_per_day }}{% endif %}"
+                            data-is-alcoholic="{% if r.is_alcoholic %}True{% else %}False{% endif %}"
+                            data-alcohol-bottles="{% if r.alcohol_bottles_per_year %}{{ r.alcohol_bottles_per_year }}{% endif %}"
+                            data-family-planning="{% if r.family_planning %}True{% else %}False{% endif %}"
+                            data-family-planning-type="{{ r.family_planning_type|default:'' }}"
+                            data-menarche="{{ r.menarche|default:'' }}"
+                            data-sexually-active="{% if r.sexually_active %}True{% else %}False{% endif %}"
+                            data-number-of-partners="{{ r.number_of_partners|default:'' }}"
+                            data-is-menopause="{% if r.is_menopause %}True{% else %}False{% endif %}"
+                            data-menopause-age="{{ r.menopause_age|default:'' }}"
+                            data-last-menstrual-period="{% if r.last_menstrual_period %}{{ r.last_menstrual_period|date:'Y-m-d' }}{% endif %}"
+                            data-period-duration="{{ r.period_duration|default:'' }}"
+                            data-period-interval="{{ r.period_interval|default:'' }}"
+                            data-pads-per-day="{{ r.pads_per_day|default:'' }}"
+                            data-is-pregnant="{% if r.is_pregnant %}True{% else %}False{% endif %}"
+                            data-gravidity="{{ r.gravidity|default:'' }}"
+                            data-parity="{{ r.parity|default:'' }}"
+                            data-delivery-type="{{ r.delivery_type|default:'' }}"
+                            data-full-term-births="{{ r.full_term_births|default:'' }}"
+                            data-premature-births="{{ r.premature_births|default:'' }}"
+                            data-abortions="{{ r.abortions|default:'' }}"
+                            data-living-children="{{ r.living_children|default:'' }}"
+                            data-bs-toggle="modal"
+                            data-bs-target="#viewReferralModal">
+                            View
+                          </button>
+                      
+                        </div>
+                      </td>
+                      
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Active Referral Tab (Assessment Mode Only) -->
+            <div class="tab-pane fade {% if active_tab == 'tab2' %}show active{% endif %}" id="tab2" role="tabpanel">
               <div class="table-responsive">
                 <table id="activeTable" class="table table-hover align-middle">
                   <thead class="bg-light">
@@ -92,28 +414,29 @@
                       <th>Patient Name</th>
                       <th>Facility</th>
                       <th>Location</th>
+                      <th>Complaint</th>
                       <th>Possible Disease</th>
-                      <th>Status</th>
+                      <th>Severity</th>
+                      <th>Est. Completion Time</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {% for r in active_referrals %}
                     <tr data-id="{{ r.referral_id }}" class="align-middle">
-                      <td><h6 class="mb-1 text-dark">{{ r.created_at|date:'Y-m-d' }}</h6></td>
+                      <td><h6 class="mb-1 text-dark">{{ r.created_at|date:'Y-m-d h:i A' }}</h6></td>
                       <td>
                         <div class="d-flex align-items-center">
-                          <div class="avatar-circle bg-success-soft me-3">
-                            <i class="bi bi-person-circle text-success fs-4"></i>
-                          </div>
+                          
                           <div>
                             <h6 class="mb-1 text-dark">{{ r.patient.first_name }} {{ r.patient.middle_name }} {{ r.patient.last_name }}</h6>
                           </div>
                         </div>
                       </td>
                       
-                      <td><i class="bi bi-hospital text-primary me-2"></i>{{ r.patient.facility.name }}</td>
-                      <td><i class="bi bi-geo-alt-fill text-danger me-2"></i>{{ r.patient.p_address }}</td>
+                      <td>{{ r.patient.facility.name }}</td>
+                      <td>{{ r.patient.p_address }}</td>
+                      <td>{{ r.chief_complaint|default:'N/A'|truncatewords:10 }}</td>
                       <td>
                         {% with disease_code=predictions|dict_get:r.referral_id|default:'No prediction available'|first %}
                         <span class="text-dark" title="{{ disease_code|icd_to_disease }}">
@@ -121,26 +444,78 @@
                         </span>
                         {% endwith %}
                       </td>
-                      <td><span class="badge rounded-pill bg-success">Active</span>
-                        {% if r.status == 'in-progress' %}
-                          <br>
-                          <small class="text-muted">
-                            <i class="bi bi-clock-history me-1"></i>
-                            Est. completion: 
-                            {% with preds=predictions|dict_get:r.referral_id %}
-                              <span class="est-time" data-ref="{{ r.referral_id }}">
-                                {% if preds %}{{ preds|last|floatformat:0 }} mins{% else %}--{% endif %}
+                      <td data-order="{% with disease_code=predictions|dict_get:r.referral_id|default:'No prediction available'|first %}{% with severity=disease_code|icd_to_severity %}{% if severity == 'High' %}0{% elif severity == 'Medium' %}1{% elif severity == 'Low' %}2{% else %}3{% endif %}{% endwith %}{% endwith %}">
+                        {% with disease_code=predictions|dict_get:r.referral_id|default:'No prediction available'|first %}
+                        {% with severity=disease_code|icd_to_severity %}
+                          {% if severity == "High" %}
+                            <span class="badge bg-danger rounded-pill">{{ severity }}</span>
+                          {% elif severity == "Medium" %}
+                            <span class="badge bg-warning text-dark rounded-pill">{{ severity }}</span>
+                          {% elif severity == "Low" %}
+                            <span class="badge bg-success rounded-pill">{{ severity }}</span>
+                          {% else %}
+                            <span class="text-muted">{{ severity }}</span>
+                          {% endif %}
+                        {% endwith %}
+                        {% endwith %}
+                      </td>
+                      <td>
+                        {% if r.status == 'completed' %}
+                          {% with duration=r.completion_duration_minutes %}
+                            {% if duration is not None %}
+                              <span class="est-time" data-ref="{{ r.referral_id }}" data-fixed="true">
+                                <i class="bi bi-clock me-1"></i>{{ duration }} mins
                               </span>
-                            {% endwith %}
-                          </small>
+                            {% else %}
+                              {% with preds=predictions|dict_get:r.referral_id %}
+                                {% if preds %}
+                                  {% with time_pred=preds|last %}
+                                    {% if time_pred and time_pred != "N/A" and time_pred != "No prediction" %}
+                                      <span class="est-time" data-ref="{{ r.referral_id }}" data-fixed="true">
+                                        <i class="bi bi-clock me-1"></i>{{ time_pred|floatformat:0 }} mins
+                                      </span>
+                                    {% else %}
+                                      <span class="est-time" data-ref="{{ r.referral_id }}">
+                                        <i class="bi bi-clock me-1"></i>Loading...
+                                      </span>
+                                    {% endif %}
+                                  {% endwith %}
+                                {% else %}
+                                  <span class="est-time" data-ref="{{ r.referral_id }}">
+                                    <i class="bi bi-clock me-1"></i>Loading...
+                                  </span>
+                                {% endif %}
+                              {% endwith %}
+                            {% endif %}
+                          {% endwith %}
+                        {% else %}
+                          {% with preds=predictions|dict_get:r.referral_id %}
+                            {% if preds %}
+                              {% with time_pred=preds|last %}
+                                {% if time_pred and time_pred != "N/A" and time_pred != "No prediction" and time_pred != 0 %}
+                                  <span class="est-time" data-ref="{{ r.referral_id }}">
+                                    <i class="bi bi-clock me-1"></i>{{ time_pred|floatformat:0 }} mins
+                                  </span>
+                                {% else %}
+                                  <span class="est-time" data-ref="{{ r.referral_id }}">
+                                    <i class="bi bi-clock me-1"></i>Loading...
+                                  </span>
+                                {% endif %}
+                              {% endwith %}
+                            {% else %}
+                              <span class="est-time" data-ref="{{ r.referral_id }}">
+                                <i class="bi bi-clock me-1"></i>Loading...
+                              </span>
+                            {% endif %}
+                          {% endwith %}
                         {% endif %}
                       </td>
                       <td>
-                        <button class="btn btn-outline-warning btn-sm rounded-pill edit-button me-2"
+                        <button class="btn btn-outline-primary btn-sm rounded-pill edit-button me-2"
                           data-id="{{ r.referral_id }}"
                           data-patient="{{ r.patient.first_name }} {{ r.patient.middle_name }} {{ r.patient.last_name }}"
                           data-sex ="{{ r.patient.sex }}"
-                          data-date="{{ r.created_at|date:'Y-m-d H:i' }}"
+                          data-date="{{ r.created_at|date:'Y-m-d h:i A' }}"
                           data-from="{{ r.patient.facility.name }}"
                           data-to="Municipal Health Office"
                           data-status="{{ r.status }}"
@@ -156,13 +531,40 @@
                           data-temperature = "{{r.temperature }}"
                           data-oxygen = "{{r.oxygen_saturation}}"
                           data-disease="{{ predictions|dict_get:r.referral_id|default:'No prediction available'|first }}"
+                          data-disease-id="{% if r.disease %}{{ r.disease.id }}{% endif %}"
+                          data-mho-findings="{{ r.final_diagnosis|default:'' }}"
+                          data-icd-code="{{ r.ICD_code|default:'' }}"
                           data-referral-type="{{ r.referral_type|default:'' }}"
                           data-cause="{{ r.cause|default:'' }}"
                           data-treatments="{{ r.treatments|default:'' }}"
                           data-remarks="{{ r.remarks|default:'' }}"
-                          data-toggle="modal"
-                          data-target="#editReferralModal">
-                          <i class="bi bi-pencil-square me-1"></i> Edit
+                          data-examined-by="{% if r.examined_by %}{{ r.examined_by.id }}{% endif %}"
+                          data-is-smoker="{% if r.is_smoker %}True{% else %}False{% endif %}"
+                          data-smoking-sticks="{% if r.smoking_sticks_per_day %}{{ r.smoking_sticks_per_day }}{% endif %}"
+                          data-is-alcoholic="{% if r.is_alcoholic %}True{% else %}False{% endif %}"
+                          data-alcohol-bottles="{% if r.alcohol_bottles_per_year %}{{ r.alcohol_bottles_per_year }}{% endif %}"
+                          data-family-planning="{% if r.family_planning %}True{% else %}False{% endif %}"
+                          data-family-planning-type="{{ r.family_planning_type|default:'' }}"
+                          data-menarche="{{ r.menarche|default:'' }}"
+                          data-sexually-active="{% if r.sexually_active %}True{% else %}False{% endif %}"
+                          data-number-of-partners="{{ r.number_of_partners|default:'' }}"
+                          data-is-menopause="{% if r.is_menopause %}True{% else %}False{% endif %}"
+                          data-menopause-age="{{ r.menopause_age|default:'' }}"
+                          data-last-menstrual-period="{% if r.last_menstrual_period %}{{ r.last_menstrual_period|date:'Y-m-d' }}{% endif %}"
+                          data-period-duration="{{ r.period_duration|default:'' }}"
+                          data-period-interval="{{ r.period_interval|default:'' }}"
+                          data-pads-per-day="{{ r.pads_per_day|default:'' }}"
+                          data-is-pregnant="{% if r.is_pregnant %}True{% else %}False{% endif %}"
+                          data-gravidity="{{ r.gravidity|default:'' }}"
+                          data-parity="{{ r.parity|default:'' }}"
+                          data-delivery-type="{{ r.delivery_type|default:'' }}"
+                          data-full-term-births="{{ r.full_term_births|default:'' }}"
+                          data-premature-births="{{ r.premature_births|default:'' }}"
+                          data-abortions="{{ r.abortions|default:'' }}"
+                          data-living-children="{{ r.living_children|default:'' }}"
+                          data-bs-toggle="modal"
+                          data-bs-target="#editReferralModal">
+                          <i class="bi bi-pencil-square me-1"></i> Assess
                         </button>
                       </td>
                     </tr>
@@ -171,9 +573,11 @@
                 </table>
               </div>
             </div>
+            {% endif %}
 
-            <!-- Referred Tab -->
-            <div class="tab-pane fade {% if active_tab == 'tab2' %}show active{% endif %}" id="tab2" role="tabpanel">
+            {% if view_mode != 'patients' %}
+            <!-- Referred Tab (Assessment Mode Only) -->
+            <div class="tab-pane fade {% if active_tab == 'tab3' %}show active{% endif %}" id="tab3" role="tabpanel">
               <div class="table-responsive">
                 <table id="referredTable" class="table table-hover align-middle">
                   <thead class="bg-light">
@@ -189,29 +593,35 @@
                   <tbody>
                     {% for r in referred_referrals %}
                     <tr data-id="{{ r.referral_id }}" class="align-middle">
-                      <td><h6 class="mb-1 text-dark">{% if r.completed_at %}{{ r.completed_at|date:'Y-m-d' }}{% else %}{{ r.created_at|date:'Y-m-d' }}{% endif %}</h6></td>
+                      <td data-date="{% if r.completed_at %}{{ r.completed_at|date:'Y-m-d' }}{% else %}{{ r.created_at|date:'Y-m-d' }}{% endif %}" data-order="{% if r.completed_at %}{{ r.completed_at|date:'U' }}{% else %}{{ r.created_at|date:'U' }}{% endif %}"><h6 class="mb-1 text-dark">{% if r.completed_at %}{{ r.completed_at|date:'Y-m-d h:i A' }}{% else %}{{ r.created_at|date:'Y-m-d h:i A' }}{% endif %}</h6></td>
                       <td>
                         <div class="d-flex align-items-center">
-                          <div class="avatar-circle bg-info-soft me-3">
-                            <i class="bi bi-person-circle text-info fs-4"></i>
-                          </div>
+                          
                           <div>
                             <h6 class="mb-1 text-dark">{{ r.patient.first_name }} {{ r.patient.middle_name }} {{ r.patient.last_name }}</h6>
                           </div>
                         </div>
                       </td>
-                      <td><i class="bi bi-hospital text-primary me-2"></i>{{ r.patient.facility.name }}</td>
-                      <td><i class="bi bi-geo-alt-fill text-danger me-2"></i>{{ r.patient.p_address }}</td>
-                      <td><span class="badge rounded-pill bg-info text-dark">Referred</span>
+                      <td>{{ r.patient.facility.name }}</td>
+                      <td>{{ r.patient.p_address }}</td>
+                      <td><span class="badge rounded-pill bg-info text-dark">Completed</span>
                         {% if r.status == 'completed' %}
                           <br>
                           <small class="text-muted">
-                            <i class="bi bi-check-circle me-1"></i>
+                            
                             Completed in: 
-                            {% with preds=predictions|dict_get:r.referral_id %}
-                              <span class="est-time" data-ref="{{ r.referral_id }}">
-                                {% if preds %}{{ preds|last|floatformat:0 }} mins{% else %}--{% endif %}
-                              </span>
+                            {% with duration=r.completion_duration_minutes %}
+                              {% if duration is not None %}
+                                <span class="est-time" data-ref="{{ r.referral_id }}" data-fixed="true">
+                                  {{ duration }} mins
+                                </span>
+                              {% else %}
+                                {% with preds=predictions|dict_get:r.referral_id %}
+                                  <span class="est-time" data-ref="{{ r.referral_id }}">
+                                    {% if preds %}{{ preds|last|floatformat:0 }} mins{% else %}--{% endif %}
+                                  </span>
+                                {% endwith %}
+                              {% endif %}
                             {% endwith %}
                           </small>
                         {% endif %}
@@ -220,26 +630,56 @@
                         <button class="btn btn-outline-primary btn-sm rounded-pill view-button"
                           data-id="{{ r.referral_id }}"
                           data-patient="{{ r.patient.first_name }} {{ r.patient.middle_name }} {{ r.patient.last_name }}"
-                          data-sex ="{{ r.patient.sex }}"
-                          data-date="{{ r.created_at|date:'Y-m-d H:i' }}"
+                          data-sex="{{ r.patient.sex }}"
+                          data-date="{% if r.completed_at %}{{ r.completed_at|date:'Y-m-d h:i A' }}{% else %}{{ r.created_at|date:'Y-m-d h:i A' }}{% endif %}"
                           data-from="{{ r.patient.facility.name }}"
                           data-to="Municipal Health Office"
                           data-status="{{ r.status }}"
                           data-notes="{{ r.chief_complaint }}"
                           data-symptoms="{{ r.symptoms }}"
                           data-workup="{{ r.work_up_details }}"
-                          data-height= "{{ r.height }}"
-                          data-weight = "{{ r.weight }}"
-                          data-systolic = "{{ r.bp_systolic }}"
-                          data-diastolic = "{{ r.bp_diastolic }}"
-                          data-pulserate = "{{ r.pulse_rate}}"
-                          data-respiratory = "{{ r.respiratory_rate }}"
-                          data-temperature = "{{r.temperature }}"
-                          data-oxygen = "{{r.oxygen_saturation}}"
+                          data-height="{{ r.height }}"
+                          data-weight="{{ r.weight }}"
+                          data-systolic="{{ r.bp_systolic }}"
+                          data-diastolic="{{ r.bp_diastolic }}"
+                          data-pulserate="{{ r.pulse_rate }}"
+                          data-respiratory="{{ r.respiratory_rate }}"
+                          data-temperature="{{ r.temperature }}"
+                          data-oxygen="{{ r.oxygen_saturation }}"
                           data-disease="{{ predictions|dict_get:r.referral_id|default:'No prediction available'|first }}"
-                          data-toggle="modal"
-                          data-target="#viewReferralModal">
-                          <i class="bi bi-eye me-1"></i> View
+                          data-mho-findings="{{ r.final_diagnosis|default:'' }}"
+                          data-mho-note="{% if r.medical_history_notes %}{{ r.medical_history_notes }}{% else %}{{ r.remarks|default:'' }}{% endif %}"
+                          data-mho-advice="{% if r.medical_history_advice %}{{ r.medical_history_advice }}{% else %}{{ r.treatments|default:'' }}{% endif %}"
+                          data-icd-code="{{ r.ICD_code|default:'' }}"
+                          data-followup="{% if r.followup_date %}{{ r.followup_date|date:'Y-m-d' }}{% endif %}"
+                          data-examined-by="{% if r.examined_by %}{{ r.examined_by.id }}{% endif %}"
+                          data-examined-by-name="{% if r.examined_by %}{% if r.examined_by.doctors %}Dr. {{ r.examined_by.doctors.first_name }} {{ r.examined_by.doctors.last_name }}{% else %}Dr. {{ r.examined_by.get_full_name|default:r.examined_by.username }}{% endif %}{% endif %}"
+                          data-is-smoker="{% if r.is_smoker %}True{% else %}False{% endif %}"
+                          data-smoking-sticks="{% if r.smoking_sticks_per_day %}{{ r.smoking_sticks_per_day }}{% endif %}"
+                          data-is-alcoholic="{% if r.is_alcoholic %}True{% else %}False{% endif %}"
+                          data-alcohol-bottles="{% if r.alcohol_bottles_per_year %}{{ r.alcohol_bottles_per_year }}{% endif %}"
+                          data-family-planning="{% if r.family_planning %}True{% else %}False{% endif %}"
+                          data-family-planning-type="{{ r.family_planning_type|default:'' }}"
+                          data-menarche="{{ r.menarche|default:'' }}"
+                          data-sexually-active="{% if r.sexually_active %}True{% else %}False{% endif %}"
+                          data-number-of-partners="{{ r.number_of_partners|default:'' }}"
+                          data-is-menopause="{% if r.is_menopause %}True{% else %}False{% endif %}"
+                          data-menopause-age="{{ r.menopause_age|default:'' }}"
+                          data-last-menstrual-period="{% if r.last_menstrual_period %}{{ r.last_menstrual_period|date:'Y-m-d' }}{% endif %}"
+                          data-period-duration="{{ r.period_duration|default:'' }}"
+                          data-period-interval="{{ r.period_interval|default:'' }}"
+                          data-pads-per-day="{{ r.pads_per_day|default:'' }}"
+                          data-is-pregnant="{% if r.is_pregnant %}True{% else %}False{% endif %}"
+                          data-gravidity="{{ r.gravidity|default:'' }}"
+                          data-parity="{{ r.parity|default:'' }}"
+                          data-delivery-type="{{ r.delivery_type|default:'' }}"
+                          data-full-term-births="{{ r.full_term_births|default:'' }}"
+                          data-premature-births="{{ r.premature_births|default:'' }}"
+                          data-abortions="{{ r.abortions|default:'' }}"
+                          data-living-children="{{ r.living_children|default:'' }}"
+                          data-bs-toggle="modal"
+                          data-bs-target="#viewReferralModal">
+                          View
                         </button>
                       </td>
                     </tr>
@@ -248,9 +688,11 @@
                 </table>
               </div>
             </div>
+            {% endif %}
 
-            <!-- All Patients Tab -->
-            <div class="tab-pane fade {% if active_tab == 'tab3' %}show active{% endif %}" id="tab3" role="tabpanel">
+            {% if view_mode == 'patients' %}
+            <!-- All Patients (Patient Management Mode Only - No Tabs) -->
+            <div>
               <div class="table-responsive">
                 <table id="allTable" class="table table-hover align-middle">
                   <thead class="bg-light">
@@ -301,26 +743,34 @@
                         data-family-history-others="{{ r.family_history_others|default:'N/A' }}">
                       <td>
                         <div class="d-flex align-items-center">
-                          <div class="avatar-circle bg-primary-soft me-3">
-                            <i class="bi bi-person-circle text-primary fs-4"></i>
-                          </div>
                           <div>
                             <h6 class="mb-1 text-dark">{{ r.first_name }} {{ r.middle_name }} {{ r.last_name }}</h6>
                            
                           </div>
                         </div>
                       </td>
-                      <td><i class="bi bi-calendar3 text-success me-2"></i>{{ r.age }}</td>
-                      <td><i class="bi bi-geo-alt-fill text-danger me-2"></i>{{ r.p_address|truncatewords:5 }}</td>
-                      <td><i class="bi bi-gender-ambiguous text-info me-2"></i>{{ r.sex }}</td>
-                      <td><i class="bi bi-telephone-fill text-primary me-2"></i>{{ r.p_number }}</td>
+                      <td>{{ r.age }}</td>
+                      <td>{{ r.p_address|truncatewords:5 }}</td>
+                      <td>{{ r.sex }}</td>
+                      <td>{{ r.p_number }}</td>
                       <td>
-                        <button class="btn btn-outline-danger btn-sm rounded-pill delete-button"
+                        <button class="btn btn-outline-primary btn-sm rounded-pill view-button"
                           data-id="{{ r.patients_id }}"
-                          data-patient="{{ r.first_name }} {{ r.middle_name }} {{ r.last_name }}"
-                          data-toggle="modal"
-                          data-target="#deleteReferralModal">
-                          <i class="bi bi-trash me-1"></i> Delete
+                          data-vpatient="{{ r.first_name }} {{ r.middle_name }} {{ r.last_name }}"
+                          data-vbdate="{{ r.date_of_birth|date:'m/d/Y' }}"
+                          data-vaddress="{{ r.p_address }}"
+                          data-vsex="{{ r.sex }}"
+                          data-vsitio="{{ r.sitio|default:'Not specified' }}"
+                          data-vbarangay="{{ r.barangay|default:'Not specified' }}"
+                          data-vcivilstatus="{{ r.civil_status|default:'Not specified' }}"
+                          data-vphicstatus="{% if r.phic_status == 'M' %}Member{% elif r.phic_status == 'D' %}Dependent{% else %}Not specified{% endif %}"
+                          data-vcctbeneficiary="{% if r.cct_beneficiary %}Yes{% else %}No{% endif %}"
+                          data-vispwd="{% if r.is_pwd %}Yes{% else %}No{% endif %}"
+                          data-vreferralcount="{{ r.referral_count|default:0 }}"
+                          data-vlastreferred="{{ r.latest_referral_date|date:'M d, Y h:i A'|default:'Not yet referred' }}"
+                          data-bs-toggle="modal"
+                          data-bs-target="#viewPatients">
+                          View
                         </button>
                       </td>
                     </tr>
@@ -329,13 +779,8 @@
                 </table>
               </div>
             </div>
-            <!-- End of All Patients Tab -->
-
-            <!-- Medical History Tab -->
-             <div class="tab-pane fade {% if active_tab == 'tab4' %}show active{% endif %}" id="tab4" role="tabpanel">
-              {% include 'patients/admin/patient_history.html' %}
-            </div>
-      <!-- end 0f Medical History Tab -->
+            <!-- End of All Patients -->
+            {% endif %}
           </div>
         </div>
       </div>
@@ -526,13 +971,48 @@
   </div>
 </div>
 
+<!-- Accept Referral Modal -->
+<div class="modal fade" id="acceptReferralModal" tabindex="-1" aria-labelledby="acceptReferralModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title" id="acceptReferralModalLabel">
+          <i class="bi bi-check-circle me-2"></i>Accept Referral
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="text-center mb-3">
+          <i class="bi bi-question-circle text-success" style="font-size: 3rem;"></i>
+        </div>
+        
+        <p class="text-muted text-center mb-0" id="acceptReferralPatientName">
+         
+        </p>
+        <form id="acceptReferralForm" method="POST" action="{% url 'referrals:update_referral_status' %}">
+          {% csrf_token %}
+          <input type="hidden" name="referral_id" id="acceptReferralId">
+        </form>
+      </div>
+      <div class="modal-footer justify-content-center">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="bi bi-x-circle me-1"></i> Cancel
+        </button>
+        <button type="button" class="btn btn-success" id="confirmAcceptBtn">
+          <i class="bi bi-check-circle me-1"></i> Accept Referral
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Success Modal for Referral Completion -->
 <div class="modal fade" id="referralSuccessModal" tabindex="-1" role="dialog" aria-labelledby="referralSuccessModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered" role="document">
     <div class="modal-content">
       <div class="modal-header bg-success text-white">
         <h5 class="modal-title" id="referralSuccessModalLabel">
-          <i class="bi bi-check-circle"></i> Referral Completed Successfully
+          <i class="bi bi-check-circle"></i> Referral Completed
         </h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
@@ -540,11 +1020,7 @@
         <div class="text-center mb-3">
           <i class="bi bi-check-circle text-success" style="font-size: 3rem;"></i>
         </div>
-        <h6 class="text-center mb-3">Patient referral has been successfully completed!</h6>
-        <p class="text-muted text-center mb-0">
-          The patient has been referred to the appropriate healthcare facility. 
-          Medical history has been updated with the findings and recommendations.
-        </p>
+        <h6 class="text-center mb-3">Patient referral has been completed!</h6>
       </div>
       <div class="modal-footer justify-content-center">
         <button type="button" class="btn btn-success" data-bs-dismiss="modal">
@@ -565,6 +1041,24 @@
 $(document).ready(function() {
   // DataTables are initialized in patient_list_admin.js
   // This script handles additional functionality
+  
+  // Set view mode from Django template
+  const viewMode = '{{ view_mode|default:"assessment" }}';
+  
+  // Activate tab based on URL parameter (for assessment mode)
+  if (viewMode !== 'patients') {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab');
+    if (tabParam) {
+      // Find the tab button and activate it
+      const tabButton = document.querySelector(`button[data-bs-target="#${tabParam}"]`);
+      if (tabButton) {
+        // Use Bootstrap's tab API to show the tab
+        const tab = new bootstrap.Tab(tabButton);
+        tab.show();
+      }
+    }
+  }
 
   // Handle patient row click - open modal with patient details
   // Only target patient rows in the All Patients tab (#allTable), not medical history tab
@@ -625,7 +1119,316 @@ $(document).ready(function() {
     }
   });
 
-  // Handle delete button click - only for All Patients tab
+  // Handle view button click - for patients mode (filtered by current user)
+  if (viewMode === 'patients') {
+  $(document).on('click', '#allTable .view-button', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const button = $(this);
+    const patientId = button.data('id');
+    
+    // Populate modal fields from data attributes
+    $('#viewPatientName').val(button.data('vpatient') || '');
+    $('#viewPatientBday').val(button.data('vbdate') || '');
+    $('#viewAddress').val(button.data('vaddress') || '');
+    $('#viewSex').val(button.data('vsex') || '');
+    $('#viewSitio').val(button.data('vsitio') || 'Not specified');
+    $('#viewBarangay').val(button.data('vbarangay') || 'Not specified');
+    $('#viewCivilStatus').val(button.data('vcivilstatus') || 'Not specified');
+    $('#viewPhicStatus').val(button.data('vphicstatus') || 'Not specified');
+    $('#viewCctBeneficiary').val(button.data('vcctbeneficiary') || 'No');
+    $('#viewIsPwd').val(button.data('vispwd') || 'No');
+    $('#viewReferralCount').val(button.data('vreferralcount') || '0');
+    $('#viewLastReferred').val(button.data('vlastreferred') || 'Not yet referred');
+    
+    // Load referral history (already filtered by current user in the backend)
+    const historyContainer = $('#viewReferralHistory');
+    if (historyContainer.length && patientId) {
+      historyContainer.html('<div class="text-muted">Loading history...</div>');
+      $.ajax({
+        url: `/referral/patient/${patientId}/history/`,
+        method: 'GET',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        success: function(data) {
+          const items = (data.referrals || []);
+          
+          // Filter to only show completed referrals (exclude follow-ups and non-completed referrals)
+          const completedReferrals = items.filter(r => {
+            // Only show referrals (not follow-ups) with status 'completed'
+            return (!r.type || r.type !== 'followup_visit') && r.status === 'completed';
+          });
+          
+          // Sort by date (most recent first)
+          completedReferrals.sort((a, b) => {
+            return new Date(b.created_at) - new Date(a.created_at);
+          });
+          
+          // Store all completed referrals globally for filtering
+          window.currentPatientCompletedReferrals = completedReferrals;
+          
+          // Function to render referrals with optional date filter and pagination
+          function renderReferrals(dateFilter = null) {
+            let filteredReferrals = completedReferrals;
+            
+            // Apply date filter if provided
+            if (dateFilter && (dateFilter.from || dateFilter.to)) {
+              filteredReferrals = completedReferrals.filter(r => {
+                const referralDate = new Date(r.created_at);
+                referralDate.setHours(0, 0, 0, 0);
+                
+                if (dateFilter.from && dateFilter.to) {
+                  const fromDate = new Date(dateFilter.from);
+                  const toDate = new Date(dateFilter.to);
+                  toDate.setHours(23, 59, 59, 999);
+                  return referralDate >= fromDate && referralDate <= toDate;
+                } else if (dateFilter.from) {
+                  const fromDate = new Date(dateFilter.from);
+                  return referralDate >= fromDate;
+                } else if (dateFilter.to) {
+                  const toDate = new Date(dateFilter.to);
+                  toDate.setHours(23, 59, 59, 999);
+                  return referralDate <= toDate;
+                }
+                return true;
+              });
+            }
+            
+            const initialLimit = 10;
+            const displayItems = filteredReferrals.slice(0, initialLimit);
+            const remainingCount = filteredReferrals.length - initialLimit;
+            
+            const referralItems = displayItems.map(r => {
+              const date = new Date(r.created_at).toLocaleString();
+              return `
+                <div class="mb-2 p-2 bg-white rounded border clickable-referral-item" 
+                     style="cursor: pointer; transition: background-color 0.2s;"
+                     data-referral-data='${JSON.stringify(r)}'
+                     data-referral-id="${r.referral_id}">
+                  <div class="d-flex justify-content-between">
+                    <div><strong>#${r.referral_id}</strong> - ${r.status}</div>
+                    <small class="text-muted">${date}</small>
+                  </div>
+                  <div class="small text-muted">CC: ${r.chief_complaint || 'N/A'}</div>
+                  <div class="small">Diagnosis: <strong>${r.illness_name || r.initial_diagnosis || r.final_diagnosis || 'N/A'}</strong></div>
+                </div>`;
+            }).join('');
+            
+            let html = '';
+            
+            if (dateFilter && (dateFilter.from || dateFilter.to)) {
+              const fromStr = dateFilter.from ? new Date(dateFilter.from).toLocaleDateString() : 'Any';
+              const toStr = dateFilter.to ? new Date(dateFilter.to).toLocaleDateString() : 'Any';
+              html += `<div class="small text-info mb-2">
+                <i class="bi bi-funnel-fill me-1"></i>Filtered: ${fromStr} to ${toStr} 
+                <span class="badge bg-info ms-1">${filteredReferrals.length} found</span>
+              </div>`;
+            } else {
+              html += `<div class="small text-muted mb-2">
+                Total: <span class="badge bg-primary">${completedReferrals.length}</span> completed referrals
+              </div>`;
+            }
+            
+            if (filteredReferrals.length > 0) {
+              html += referralItems;
+              
+              if (remainingCount > 0) {
+                html += `
+                  <div class="text-center mt-3">
+                    <button type="button" class="btn btn-sm btn-outline-primary show-more-referrals" 
+                            data-total="${filteredReferrals.length}" 
+                            data-shown="${initialLimit}"
+                            data-all-items='${JSON.stringify(filteredReferrals)}'>
+                      <i class="bi bi-chevron-down me-1"></i>Show More (${remainingCount} more)
+                    </button>
+                  </div>`;
+              }
+            } else {
+              html += '<div class="text-muted">No completed referrals found for the selected date range.</div>';
+            }
+            
+            historyContainer.html(html);
+            
+            // Handle "Show More" button click
+            historyContainer.find('.show-more-referrals').off('click').on('click', function() {
+              const $btn = $(this);
+              const allItems = JSON.parse($btn.attr('data-all-items'));
+              const currentlyShown = parseInt($btn.attr('data-shown'));
+              const loadMore = 10;
+              const nextBatch = allItems.slice(currentlyShown, currentlyShown + loadMore);
+              const newShown = currentlyShown + nextBatch.length;
+              const remaining = allItems.length - newShown;
+              
+              const newItems = nextBatch.map(r => {
+                const date = new Date(r.created_at).toLocaleString();
+                return `
+                  <div class="mb-2 p-2 bg-white rounded border clickable-referral-item" 
+                       style="cursor: pointer; transition: background-color 0.2s;"
+                       data-referral-data='${JSON.stringify(r)}'
+                       data-referral-id="${r.referral_id}">
+                    <div class="d-flex justify-content-between">
+                      <div><strong>#${r.referral_id}</strong> - ${r.status}</div>
+                      <small class="text-muted">${date}</small>
+                    </div>
+                    <div class="small text-muted">CC: ${r.chief_complaint || 'N/A'}</div>
+                    <div class="small">Diagnosis: <strong>${r.illness_name || r.initial_diagnosis || r.final_diagnosis || 'N/A'}</strong></div>
+                  </div>`;
+              }).join('');
+              
+              $btn.before(newItems);
+              
+              if (remaining > 0) {
+                $btn.attr('data-shown', newShown);
+                $btn.html(`<i class="bi bi-chevron-down me-1"></i>Show More (${remaining} more)`);
+              } else {
+                $btn.remove();
+                const countBadge = historyContainer.find('.badge');
+                if (countBadge.length) {
+                  historyContainer.find('.small.text-info, .small.text-muted').html(
+                    `Showing all <span class="badge bg-success">${allItems.length}</span> completed referrals`
+                  );
+                }
+              }
+            });
+          }
+          
+          renderReferrals();
+          
+          window.renderPatientReferrals = renderReferrals;
+          
+          $('#applyReferralFilter').off('click').on('click', function() {
+            const fromDate = $('#referralFilterFrom').val();
+            const toDate = $('#referralFilterTo').val();
+            
+            if (fromDate && toDate && new Date(fromDate) > new Date(toDate)) {
+              alert('From date cannot be later than To date. Please correct the date range.');
+              return;
+            }
+            
+            renderReferrals({ from: fromDate || null, to: toDate || null });
+          });
+          
+          $('#clearReferralFilter').off('click').on('click', function() {
+            $('#referralFilterFrom').val('');
+            $('#referralFilterTo').val('');
+            renderReferrals();
+          });
+          
+          // Use document-level delegation to ensure handler is always attached
+          $(document).off('click', '#viewReferralHistory .clickable-referral-item').on('click', '#viewReferralHistory .clickable-referral-item', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const $item = $(this);
+            const referralId = $item.attr('data-referral-id');
+            
+            if (!referralId) {
+              alert('Error: Referral ID not found.');
+              return;
+            }
+            
+            const modalEl = document.getElementById('viewReferralModal');
+            if (!modalEl) {
+              alert('Error: Referral modal not found.');
+              return;
+            }
+            
+            // Clear previous data
+            $('#viewReferralModal input, #viewReferralModal textarea').val('');
+            $('#viewReferralModal input[type="checkbox"]').prop('checked', false);
+            
+            // Set flag to prevent populateViewModal from running
+            window.openingFromReferralHistory = true;
+            
+            // Show modal with loading state
+            if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+              const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+              modal.show();
+              
+              // Ensure referral modal has higher z-index
+              modalEl.style.zIndex = '1060';
+              
+              // Get the patient modal to ensure it stays below
+              const patientModal = document.getElementById('viewPatients');
+              if (patientModal) {
+                patientModal.style.zIndex = '1050';
+              }
+            }
+            
+            // Fetch full referral details from backend
+            $.ajax({
+              url: `/referral/referral/${referralId}/details/`,
+              method: 'GET',
+              headers: { 'X-Requested-With': 'XMLHttpRequest' },
+              success: function(response) {
+                if (response.success && response.referral) {
+                  if (typeof window.populateReferralModalFromData === 'function') {
+                    window.populateReferralModalFromData(response.referral);
+                    window.openingFromReferralHistory = false;
+                  } else {
+                    console.error('populateReferralModalFromData function not found!');
+                    alert('Error: Function to populate modal not found.');
+                    window.openingFromReferralHistory = false;
+                  }
+                  
+                  // Ensure z-index is correct after modal is shown
+                  if (modalEl) {
+                    modalEl.addEventListener('shown.bs.modal', function() {
+                      modalEl.style.zIndex = '1060';
+                      const backdrops = document.querySelectorAll('.modal-backdrop');
+                      if (backdrops.length > 1) {
+                        backdrops[backdrops.length - 1].style.zIndex = '1055';
+                      }
+                    }, { once: true });
+                  }
+                } else {
+                  alert('Error: Failed to load referral details. ' + (response.error || 'Unknown error'));
+                  window.openingFromReferralHistory = false;
+                  if (modalEl && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                    const modal = bootstrap.Modal.getInstance(modalEl);
+                    if (modal) {
+                      modal.hide();
+                    }
+                  }
+                }
+              },
+              error: function(xhr, status, error) {
+                let errorMsg = 'Error: Failed to load referral details. ';
+                if (xhr.responseJSON && xhr.responseJSON.error) {
+                  errorMsg += xhr.responseJSON.error;
+                } else if (xhr.responseText) {
+                  try {
+                    const errorResponse = JSON.parse(xhr.responseText);
+                    errorMsg += errorResponse.error || errorResponse.message || 'Unknown error';
+                  } catch (e) {
+                    errorMsg += `Status: ${xhr.status}`;
+                  }
+                } else {
+                  errorMsg += `Status: ${xhr.status}`;
+                }
+                
+                alert(errorMsg);
+                window.openingFromReferralHistory = false;
+                if (modalEl && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                  const modal = bootstrap.Modal.getInstance(modalEl);
+                  if (modal) {
+                    modal.hide();
+                  }
+                }
+              }
+            });
+          });
+        },
+        error: function() {
+          historyContainer.html('<div class="text-danger">Failed to load referral history.</div>');
+        }
+      });
+    } else if (!patientId) {
+      historyContainer.html('<div class="text-muted">No patient ID available.</div>');
+    }
+  });
+  } else {
+  // Handle delete button click - only for All Patients tab (non-patients mode)
   $(document).on('click', '#allTable .delete-button', function(e) {
     e.stopPropagation(); // Prevent row click when clicking delete button
     const button = $(this);
@@ -633,6 +1436,7 @@ $(document).ready(function() {
     $('#deletePatientId').val(button.data('id'));
     $('#delete-confirmation').text(`Are you sure you want to delete ${patientName}'s record?`);
   });
+  }
 
   // Show success modal after referral completion
   // This will be triggered when the page loads with a success parameter
@@ -670,11 +1474,6 @@ $(document).ready(function() {
           const successModal = bootstrap.Modal.getOrCreateInstance(successEl);
           successModal.show();
         }
-        
-        // Reload the page after a short delay to update the data
-        setTimeout(function() {
-          location.reload();
-        }, 2000);
       },
       error: function(xhr, status, error) {
         console.error('Error completing referral:', error);
@@ -685,24 +1484,569 @@ $(document).ready(function() {
     e.preventDefault(); // Prevent default form submission
   });
 
+  // Handle accept referral button click - directly call update_referral_status
+  let isAcceptingFromList = false; // Flag to prevent double submission
+  $(document).on('click', '.accept-referral-btn', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (isAcceptingFromList) {
+      console.log('Already accepting, ignoring click');
+      return; // Prevent double submission
+    }
+    
+    const button = $(this);
+    const referralId = button.data('id');
+    const patientName = button.data('patient') || 'this patient';
+    
+    if (!referralId) {
+      alert('Error: Referral ID not found.');
+      return;
+    }
+    
+    // Confirm action
+    if (!confirm(`Are you sure you want to accept the referral for ${patientName}?`)) {
+      console.log('User cancelled acceptance');
+      return;
+    }
+    
+    // Set flag and disable button
+    isAcceptingFromList = true;
+    const originalHtml = button.html();
+    button.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
+    
+    // Get CSRF token
+    const csrfToken = $('[name=csrfmiddlewaretoken]').val() || $('input[name="csrfmiddlewaretoken"]').val() || '';
+    if (!csrfToken) {
+      console.error('❌ CSRF token not found');
+      alert('Error: CSRF token not found. Please refresh the page.');
+      isAcceptingFromList = false;
+      button.prop('disabled', false).html(originalHtml);
+      return;
+    }
+    
+    // Prepare form data
+    const formData = new FormData();
+    formData.append('referral_id', referralId);
+    formData.append('csrfmiddlewaretoken', csrfToken);
+    
+    console.log('Submitting AJAX request to update_referral_status...');
+    
+    // Submit via AJAX to update_referral_status
+    $.ajax({
+      url: '{% url "referrals:update_referral_status" %}',
+      method: 'POST',
+      data: formData,
+      processData: false,
+      contentType: false,
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      dataType: 'json',
+      success: function(response) {
+        console.log('AJAX success response:', response);
+        
+        // Check if response is actually JSON
+        if (typeof response === 'string') {
+          try {
+            response = JSON.parse(response);
+          } catch (e) {
+            console.error('Failed to parse response:', response);
+            alert('There was an error processing the response. Please try again.');
+            isAcceptingFromList = false;
+            button.prop('disabled', false).html(originalHtml);
+            return;
+          }
+        }
+        
+        // Validate response
+        if (!response.success) {
+          alert(response.error || 'Failed to accept referral. Please try again.');
+          isAcceptingFromList = false;
+          button.prop('disabled', false).html(originalHtml);
+          return;
+        }
+        
+        console.log('✅ Referral accepted successfully!');
+        
+        // Show success message
+        alert(response.message || 'Referral accepted successfully!');
+        
+        // Redirect to active referral tab (tab2)
+        console.log('Redirecting to active referral tab...');
+        const currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.set('tab', 'tab2');
+        // Remove any other tab-related parameters
+        currentUrl.searchParams.delete('pending_page');
+        currentUrl.searchParams.delete('referred_page');
+        currentUrl.searchParams.set('active_page', '1');
+        window.location.href = currentUrl.toString();
+      },
+      error: function(xhr, status, error) {
+        console.error('❌ AJAX error:', status, error);
+        console.error('Response:', xhr.responseText);
+        
+        let errorMessage = 'Failed to accept referral. Please try again.';
+        if (xhr.responseJSON && xhr.responseJSON.error) {
+          errorMessage = xhr.responseJSON.error;
+        } else if (xhr.status === 400) {
+          errorMessage = 'Bad request. Please check the referral ID.';
+        } else if (xhr.status === 403) {
+          errorMessage = 'Permission denied.';
+        } else if (xhr.status === 404) {
+          errorMessage = 'Referral not found.';
+        }
+        
+        alert(errorMessage);
+        isAcceptingFromList = false;
+        button.prop('disabled', false).html(originalHtml);
+      }
+    });
+  });
+
+  // Handle confirm accept button click
+  let isAccepting = false; // Flag to prevent double submission
+  $('#confirmAcceptBtn').on('click', function(e) {
+    e.preventDefault();
+    
+    if (isAccepting) {
+      return; // Prevent double submission
+    }
+    
+    const referralId = $('#acceptReferralId').val();
+    if (!referralId) {
+      alert('Error: Referral ID not found.');
+      return;
+    }
+    
+    // Set flag and disable button
+    isAccepting = true;
+    const confirmBtn = $(this);
+    const originalHtml = confirmBtn.html();
+    confirmBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Accepting...');
+    
+    // Submit form via AJAX
+    const form = $('#acceptReferralForm');
+    const formData = new FormData(form[0]);
+    
+    $.ajax({
+      url: form.attr('action'),
+      method: 'POST',
+      data: formData,
+      processData: false,
+      contentType: false,
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      dataType: 'json',
+      success: function(response) {
+        // Check if response is actually JSON
+        if (typeof response === 'string') {
+          try {
+            response = JSON.parse(response);
+          } catch (e) {
+            console.error('Failed to parse response:', response);
+            alert('There was an error processing the response. Please try again.');
+            isAccepting = false;
+            confirmBtn.prop('disabled', false).html(originalHtml);
+            return;
+          }
+        }
+        
+        // Validate response
+        if (!response.success) {
+          alert(response.error || 'Failed to accept referral. Please try again.');
+          isAccepting = false;
+          confirmBtn.prop('disabled', false).html(originalHtml);
+          return;
+        }
+        
+        // Close the accept modal
+        const acceptModal = bootstrap.Modal.getInstance(document.getElementById('acceptReferralModal'));
+        if (acceptModal) {
+          acceptModal.hide();
+        }
+        
+        // Update success modal message for acceptance
+        const successModalEl = document.getElementById('referralSuccessModal');
+        if (response.patient_name) {
+          const modalBody = successModalEl.querySelector('.modal-body');
+          if (modalBody) {
+            const messageEl = modalBody.querySelector('h6');
+            if (messageEl) {
+              messageEl.textContent = `Referral for ${response.patient_name} accepted successfully!`;
+            }
+            const descEl = modalBody.querySelector('p');
+            if (descEl) {
+              descEl.textContent = 'The referral has been assigned to you and moved to Active Referrals.';
+            }
+          }
+        }
+        
+        // Show success message
+        const successModal = bootstrap.Modal.getOrCreateInstance(successModalEl);
+        successModal.show();
+        
+        // Reload page after short delay to show updated data
+        setTimeout(function() {
+          const currentUrl = new URL(window.location.href);
+          currentUrl.searchParams.set('tab', 'tab2');
+          currentUrl.searchParams.set('referral_id', referralId);
+          window.location.href = currentUrl.toString();
+        }, 1500);
+      },
+      error: function(xhr, status, error) {
+        console.error('Error accepting referral:', error);
+        
+        // Try to get error message from response
+        let errorMessage = 'There was an error accepting the referral. Please try again.';
+        if (xhr.responseJSON && xhr.responseJSON.error) {
+          errorMessage = xhr.responseJSON.error;
+        } else if (xhr.responseText) {
+          try {
+            const response = JSON.parse(xhr.responseText);
+            if (response.error) {
+              errorMessage = response.error;
+            }
+          } catch (e) {
+            // Use default message
+          }
+        }
+        
+        alert(errorMessage);
+        // Reset button
+        isAccepting = false;
+        confirmBtn.prop('disabled', false).html(originalHtml);
+      }
+    });
+  });
+
+  // Reset flag when modal is hidden
+  $('#acceptReferralModal').on('hidden.bs.modal', function() {
+    isAccepting = false;
+    $('#confirmAcceptBtn').prop('disabled', false).html('<i class="bi bi-check-circle me-1"></i> Accept Referral');
+  });
+
   // Replace est-time spans with live API prediction (keeps server value as fallback)
   (function refreshEstTimes() {
     $(".est-time").each(function() {
       const $el = $(this);
+      if ($el.data('fixed')) return;
       const id = $el.data('ref');
       if (!id) return;
       $.get(`/referral/referral/time-predict/${id}/`)
         .done(function(res) {
           if (res && typeof res.prediction_minutes !== 'undefined') {
             const mins = Math.round(res.prediction_minutes);
-            if (!isNaN(mins)) {
-              $el.text(`${mins} mins`);
+            if (!isNaN(mins) && mins > 0) {
+              // Update the text while preserving the icon
+              $el.html(`<i class="bi bi-clock me-1"></i>${mins} mins`);
+            } else {
+              $el.html('<i class="bi bi-clock me-1"></i>-- mins');
             }
+          } else {
+            $el.html('<i class="bi bi-clock me-1"></i>-- mins');
+          }
+        })
+        .fail(function() {
+          // If API call fails, show error
+          if ($el.text().includes('Loading')) {
+            $el.html('<i class="bi bi-clock me-1"></i>-- mins');
           }
         });
     });
   })();
+  
+  // Initialize DataTable for Follow-ups tab (prevent double init)
+  const $followupsTable = $('#followupsTable');
+  if ($followupsTable.length) {
+    if ($.fn.DataTable.isDataTable($followupsTable)) {
+      $followupsTable.DataTable().destroy();
+    }
+    $followupsTable.DataTable({
+      order: [[0, 'desc']], // Sort by date descending
+      pageLength: 10,
+      responsive: true,
+      language: {
+        search: "Search follow-ups:"
+      }
+    });
+  }
+  
+  // Handler for "Add New Consultation Form" button in Follow-ups tab (for today's follow-ups)
+  $(document).off('click', '.add-consultation-form-btn').on('click', '.add-consultation-form-btn', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const patientId = $(this).data('patient-id');
+    console.log('Add New Consultation Form clicked for patient ID:', patientId);
+    
+    // Redirect to assessment page with patient_id
+    window.location.href = `/referral/assessment/?patient_id=${patientId}`;
+  });
+  
+  // Handler for "Record Follow-up Visit" button in Follow-ups tab
+  // Use namespace to prevent duplicate handlers
+  $(document).off('click', '.record-followup-visit-btn').on('click', '.record-followup-visit-btn', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Prevent multiple rapid clicks
+    if ($(this).hasClass('processing')) {
+      return false;
+    }
+    $(this).addClass('processing');
+    
+    const patientId = $(this).data('patient-id');
+    const medicalHistoryId = $(this).data('medical-history-id');
+    const followupDate = $(this).data('followup-date');
+    const illnessName = $(this).data('illness-name');
+    
+    // Use the function from calendar.js if available, otherwise show alert
+    if (typeof showFollowupVisitForm === 'function') {
+      showFollowupVisitForm(patientId, medicalHistoryId, followupDate, illnessName);
+    } else {
+      alert('Please load the calendar.js script to use this feature.');
+    }
+    
+    // Remove processing class after a delay
+    setTimeout(() => {
+      $(this).removeClass('processing');
+    }, 1000);
+  });
+  
+  // Handler for "View Details" button in Follow-ups tab
+  // Use namespace to prevent duplicate handlers
+  $(document).off('click', '.view-followup-details').on('click', '.view-followup-details', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Prevent multiple rapid clicks
+    if ($(this).hasClass('processing')) {
+      return false;
+    }
+    $(this).addClass('processing');
+    
+    const patientId = $(this).data('patient-id');
+    const medicalHistoryId = $(this).data('medical-history-id');
+    const followupDate = $(this).data('followup-date');
+    const illnessName = $(this).data('illness-name');
+    const notes = $(this).data('notes');
+    const advice = $(this).data('advice');
+    // Get status and normalize it (trim and lowercase)
+    let status = $(this).data('status') || $(this).attr('data-status') || 'upcoming';
+    status = String(status).trim().toLowerCase();
+    
+    // Debug: log the status value
+    console.log('Button clicked - Status from data attribute:', status);
+    
+    // Create followup object similar to calendar.js format
+    const followup = {
+      patient_id: patientId,
+      medical_history_id: medicalHistoryId,
+      followup_date: followupDate,
+      illness_name: illnessName,
+      notes: notes,
+      advice: advice,
+      status: status,
+      patient_name: $(this).closest('tr').find('td').eq(1).text()
+    };
+    
+    // Use the function from calendar.js if available
+    if (typeof showFollowupDetails === 'function') {
+      showFollowupDetails(followup, new Date(followupDate));
+    } else {
+      // Fallback: show in alert
+      alert(`Patient: ${followup.patient_name}\nDate: ${new Date(followupDate).toLocaleDateString()}\nIllness: ${illnessName}\nNotes: ${notes}\nAdvice: ${advice}`);
+    }
+    
+    // Remove processing class after a delay
+    setTimeout(() => {
+      $(this).removeClass('processing');
+    }, 1000);
+  });
+  
 });
 </script>
+
+
+<script>
+  // Function to populate referral modal from referral data object
+  window.populateReferralModalFromData = function(referralData) {
+    const $modal = $('#viewReferralModal');
+    if (!$modal.length) {
+      console.error('viewReferralModal not found');
+      return;
+    }
+    
+    const setFieldValue = (selector, value, fallback = '') => {
+      let $field = $modal.find(selector);
+      if (!$field.length) {
+        $field = $(selector);
+      }
+      if (!$field.length) {
+        return false;
+      }
+      let finalValue = '';
+      if (value !== undefined && value !== null && value !== '' && value !== 'None' && value !== 'null') {
+        finalValue = String(value);
+      } else if (fallback !== '') {
+        finalValue = fallback;
+      }
+      $field.val(finalValue);
+      return true;
+    };
+    
+    const setTextareaValue = (selector, value, fallback = '') => {
+      let $field = $modal.find(selector);
+      if (!$field.length) {
+        $field = $(selector);
+      }
+      if (!$field.length) {
+        return false;
+      }
+      // Trim whitespace from value to prevent leading/trailing spaces
+      let finalValue = value !== undefined && value !== null && value !== '' ? String(value).trim() : fallback;
+      $field.val(finalValue);
+      return true;
+    };
+    
+    // Format date
+    const formatDate = (dateString) => {
+      if (!dateString) return '';
+      try {
+        const date = new Date(dateString);
+        return date.toLocaleString('en-US', { 
+          year: 'numeric', 
+          month: '2-digit', 
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true
+        });
+      } catch (e) {
+        return dateString;
+      }
+    };
+    
+    // Patient Information - use data from backend response
+    const patientName = referralData.patient_name || $('#viewPatientName').val() || 'N/A';
+    const patientSex = referralData.patient_sex || $('#viewSex').val() || 'N/A';
+    const patientAddress = referralData.patient_address || $('#viewAddress').val() || 'N/A';
+    const referFrom = referralData.refer_from || patientAddress || 'N/A';
+    
+    setFieldValue('#viewReferralPatientName', patientName, 'N/A');
+    setFieldValue('#viewReferralDateField', formatDate(referralData.created_at), 'N/A');
+    setFieldValue('#viewReferralFrom', referFrom, 'N/A');
+    setFieldValue('#viewReferralSex', patientSex, 'N/A');
+    setFieldValue('#viewReferralHeight', referralData.height);
+    setFieldValue('#viewReferralWeight', referralData.weight);
+    
+    // Vital Signs
+    const bpValue = referralData.bp_systolic && referralData.bp_diastolic ? 
+      `${referralData.bp_systolic}/${referralData.bp_diastolic}` : 
+      (referralData.bp_systolic || '');
+    setFieldValue('#viewBpSystolic', bpValue);
+    setFieldValue('#viewPulseRate', referralData.pulse_rate || '');
+    setFieldValue('#viewRespiratory', referralData.respiratory_rate || '');
+    setFieldValue('#viewTemperature', referralData.temperature || '');
+    setFieldValue('#viewOxygen', referralData.oxygen_saturation || '');
+    
+    // Chief Complaint & History
+    setTextareaValue('#viewNotes', referralData.chief_complaint || '');
+    setTextareaValue('#viewSymptoms', referralData.symptoms || '');
+    setTextareaValue('#viewWorkUp', referralData.work_up_details || '');
+    
+    // Diagnosis
+    const diagnosis = referralData.illness_name || referralData.initial_diagnosis || referralData.final_diagnosis || '';
+    setFieldValue('#viewdisease', diagnosis);
+    
+    // MHO Actions Section
+    setTextareaValue('#viewMhoFindings', referralData.final_diagnosis || referralData.illness_name || '');
+    setTextareaValue('#viewMhoNote', referralData.notes || '');
+    setTextareaValue('#viewMhoAdvice', referralData.advice || '');
+    setFieldValue('#viewIcdCode', referralData.ICD_code || '');
+    
+    // Examined By and Follow Up Date
+    setFieldValue('#viewExaminedBy', referralData.examined_by || '');
+    setFieldValue('#viewFollowup', referralData.followup_date ? formatDate(referralData.followup_date) : '');
+    
+    // Store referral ID and status
+    setFieldValue('#viewReferralId', referralData.referral_id || '');
+    setFieldValue('#viewReferralStatus', referralData.status || '');
+    
+    // Lifestyle & Social History - Checkboxes and text fields
+    const setCheckbox = (selector, value) => {
+      const $checkbox = $modal.find(selector);
+      if ($checkbox.length) {
+        $checkbox.prop('checked', value === true || value === 'true' || value === 1 || value === '1');
+      }
+    };
+    
+    setCheckbox('#viewIsSmoker', referralData.is_smoker);
+    setFieldValue('#viewSmokingSticks', referralData.smoking_sticks_per_day || '');
+    setCheckbox('#viewIsAlcoholic', referralData.is_alcoholic);
+    setFieldValue('#viewAlcoholBottles', referralData.alcohol_bottles_per_year || '');
+    setCheckbox('#viewFamilyPlanning', referralData.family_planning);
+    setFieldValue('#viewFamilyPlanningType', referralData.family_planning_type || '');
+    
+    // Menstrual History - Checkboxes and text fields
+    setFieldValue('#viewMenarche', referralData.menarche || '');
+    setCheckbox('#viewSexuallyActive', referralData.sexually_active);
+    setFieldValue('#viewNumberOfPartners', referralData.number_of_partners || '');
+    setCheckbox('#viewIsMenopause', referralData.is_menopause);
+    setFieldValue('#viewMenopauseAge', referralData.menopause_age || '');
+    setFieldValue('#viewLastMenstrualPeriod', referralData.last_menstrual_period ? formatDate(referralData.last_menstrual_period) : '');
+    setFieldValue('#viewPeriodDuration', referralData.period_duration || '');
+    setFieldValue('#viewPeriodInterval', referralData.period_interval || '');
+    setFieldValue('#viewPadsPerDay', referralData.pads_per_day || '');
+    
+    // Pregnancy History - Checkboxes and text fields
+    setCheckbox('#viewIsPregnant', referralData.is_pregnant);
+    setFieldValue('#viewGravidity', referralData.gravidity || '');
+    setFieldValue('#viewParity', referralData.parity || '');
+    setFieldValue('#viewDeliveryType', referralData.delivery_type || '');
+    setFieldValue('#viewFullTermBirths', referralData.full_term_births || '');
+    setFieldValue('#viewPrematureBirths', referralData.premature_births || '');
+    setFieldValue('#viewAbortions', referralData.abortions || '');
+    setFieldValue('#viewLivingChildren', referralData.living_children || '');
+    
+    // Show/hide menstrual and pregnancy history sections based on patient sex
+    if (patientSex && patientSex.toLowerCase() === 'female') {
+      $('#viewMenstrualHistorySection').show();
+      $('#viewPregnancyHistorySection').show();
+    } else {
+      $('#viewMenstrualHistorySection').hide();
+      $('#viewPregnancyHistorySection').hide();
+    }
+    
+    // Hide "Doctor Notes & Actions" section if status is pending or in-progress
+    // Only show it when referral is completed
+    const status = referralData.status || '';
+    if (status === 'pending' || status === 'in-progress') {
+      $('#viewDoctorNotesSection').hide();
+    } else if (status === 'completed') {
+      $('#viewDoctorNotesSection').show();
+    } else {
+      // Default: show for other statuses
+      $('#viewDoctorNotesSection').show();
+    }
+    
+    // Ensure default layout is visible
+    const defaultLayout = $modal.find('#viewReferralDefaultLayout');
+    const specialLayout = $modal.find('#viewReferralSpecialLayout');
+    if (defaultLayout.length) {
+      defaultLayout.removeClass('d-none');
+      defaultLayout.find('.referral-section-card').removeClass('d-none');
+    }
+    if (specialLayout.length) {
+      specialLayout.addClass('d-none');
+    }
+  };
+</script>
+
+<!-- Load calendar.js for follow-up visit functions -->
+<script src="{% static 'js/calendar.js' %}"></script>
+
 {% endblock %}
 {% endblock %}

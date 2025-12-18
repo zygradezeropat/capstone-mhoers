@@ -8,8 +8,8 @@
 
 <style>
   .report-logo {
-    width: 80px;
-    height: 80px;
+    width: 95px;
+    height: 95px;
     object-fit: contain;
   }
 
@@ -71,7 +71,7 @@
       <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center mb-4">
         <div class="flex-grow-1">
           <div class="d-flex align-items-center justify-content-between flex-wrap mb-3">
-            <img src="{% static 'images/LGU-NEWCORELLA.png' %}" alt="LGU New Corella Logo" class="report-logo mb-3 mb-lg-0" style="width: 80px; height: 80px; object-fit: contain; flex-shrink: 0;">
+            <img src="{% static 'images/LGU-NEWCORELLA.png' %}" alt="LGU New Corella Logo" class="report-logo mb-3 mb-lg-0" style="width: 95px; height: 95px; object-fit: contain; flex-shrink: 0;">
             <div class="text-center flex-grow-1 px-lg-4">
               <h6 class="mb-1">Republic of the Philippines</h6>
               <h6 class="mb-1">Province of Davao del Norte</h6>
@@ -79,7 +79,7 @@
               <h6 class="mb-1">Municipal Health Office</h6>
               <p class="mb-0 small text-muted">Purok 5, Poblacion, New Corella | rhunewcorella@yahoo.com | (+63) 970-093-3480</p>
             </div>
-            <img src="{% static 'images/MHO-LOGO.png' %}" alt="MHO Logo" class="report-logo mb-3 mb-lg-0 d-none d-sm-block" style="width: 80px; height: 80px; object-fit: contain; flex-shrink: 0;">
+            <img src="{% static 'images/MHO-LOGO.png' %}" alt="MHO Logo" class="report-logo mb-3 mb-lg-0 d-none d-sm-block" style="width: 95px; height: 95px; object-fit: contain; flex-shrink: 0;">
           </div>
         </div>
       </div>
@@ -117,7 +117,7 @@
               <div class="row">
                 <div class="col-12">
                   <h5 class="card-title d-flex justify-content-between align-items-center">
-                    <span>Top Diagnoses</span>
+                    <span>TOP DIAGNOSIS REPORT</span>
                     <span class="badge bg-primary">Total Cases: {{ total_cases }}</span>
                   </h5>
                   {% if top_diagnoses %}
@@ -126,22 +126,18 @@
                         <thead class="table-light">
                           <tr>
                             <th>#</th>
+                            <th>ICD Code</th>
                             <th>Diagnosis</th>
-                            <th>Criticality</th>
                             <th class="text-end">Cases</th>
-                            <th class="text-end">% Share</th>
                           </tr>
                         </thead>
                         <tbody>
                           {% for row in top_diagnoses %}
                           <tr class="{{ row.row_class }}">
                             <td>{{ forloop.counter }}</td>
+                            <td>{{ row.icd_code }}</td>
                             <td>{{ row.name }}</td>
-                            <td>
-                              <span class="badge badge-critical bg-{{ row.badge_variant }}">{{ row.critical|default:'N/A' }}</span>
-                            </td>
                             <td class="text-end">{{ row.count }}</td>
-                            <td class="text-end">{{ row.percent }}%</td>
                           </tr>
                           {% endfor %}
                         </tbody>
@@ -159,52 +155,13 @@
 
       <div class="card border-0 shadow-sm mt-4 print-new-page">
         <div class="card-body">
-          <h5 class="card-title">Recent Morbidity Entries</h5>
-          {% if raw_entries %}
-            <div class="table-responsive" id="entriesTable">
-              <table class="table table-sm table-striped table-bordered align-middle">
-                <thead class="table-light">
-                  <tr>
-                    <th>Date</th>
-                    <th>Facility</th>
-                    <th>Diagnosis (Normalized)</th>
-                    <th>Original Entry</th>
-                    <th>Advice / Notes</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for item in raw_entries %}
-                  <tr>
-                    <td>{{ item.diagnosed_date|date:'M d, Y' }}</td>
-                    <td>{{ item.facility }}</td>
-                    <td>{{ item.illness_display }}</td>
-                    <td>{{ item.illness_raw }}</td>
-                    <td>
-                      {% if item.advice %}<div><strong>Advice:</strong> {{ item.advice }}</div>{% endif %}
-                      {% if item.notes %}<div><strong>Notes:</strong> {{ item.notes }}</div>{% endif %}
-                    </td>
-                  </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-            {% if total_cases > raw_entries|length %}
-              <p class="text-muted small mb-0">Showing first {{ raw_entries|length }} of {{ total_cases }} recorded cases.</p>
-            {% endif %}
-          {% else %}
-            <p class="text-muted mb-0">No morbidity entries available.</p>
-          {% endif %}
-        </div>
-      </div>
-
-      <div class="card border-0 shadow-sm mt-4 print-new-page">
-        <div class="card-body">
-          <h5 class="card-title">Monthly Trend (Top Diagnoses)</h5>
+          <h5 class="card-title">Monthly Trend</h5>
           {% if trend_table %}
             <div class="table-responsive" id="trendTable">
               <table class="table table-sm table-bordered align-middle">
                 <thead class="table-light">
                   <tr>
+                    <th>ICD Code</th>
                     <th>Diagnosis</th>
                     {% for label in month_labels %}
                       <th class="text-center">{{ label }}</th>
@@ -215,6 +172,7 @@
                 <tbody>
                   {% for row in trend_table %}
                   <tr>
+                    <td>{{ row.icd_code }}</td>
                     <td>{{ row.diagnosis }}</td>
                     {% for val in row.monthly_counts %}
                       <td class="text-center">{{ val }}</td>
@@ -263,13 +221,85 @@
 
     // Remove print-hidden elements (forms, buttons, etc.)
     const printHiddenElements = containerClone.querySelectorAll('.d-print-none, form, .btn, .mb-3.d-print-none');
-    printHiddenElements.forEach(el => el.remove());
+    printHiddenElements.forEach(el => {
+      // Don't remove if it's inside a card we need
+      const isInCard = el.closest('.card.print-page-end, .card.print-new-page');
+      if (!isInCard) {
+        el.remove();
+      }
+    });
     
-    // Remove notes section from print output
+    // Remove notes section from print output (but keep it if it's the only content)
     const notesSection = containerClone.querySelector('.notes-list, .mt-3.notes-list');
     if (notesSection) {
-      notesSection.remove();
+      // Only remove if it's not the last element
+      const hasOtherContent = containerClone.querySelector('.card.print-new-page, .card.print-page-end');
+      if (hasOtherContent) {
+        notesSection.remove();
+      }
     }
+    
+    // Debug: Log all cards found after removal
+    const allCardsAfter = containerClone.querySelectorAll('.card');
+    console.log('Cards found after removal:', allCardsAfter.length);
+    allCardsAfter.forEach((card, index) => {
+      console.log(`Card ${index}:`, card.className, card.textContent.substring(0, 50));
+    });
+    
+    // Ensure page break classes are preserved and visible
+    const pageEndCards = containerClone.querySelectorAll('.print-page-end');
+    pageEndCards.forEach(card => {
+      card.style.pageBreakAfter = 'always';
+      card.style.breakAfter = 'page';
+      card.style.display = 'block';
+      // Also apply to parent row if exists
+      const parentRow = card.closest('.row');
+      if (parentRow) {
+        parentRow.style.pageBreakAfter = 'always';
+        parentRow.style.breakAfter = 'page';
+      }
+      // Insert a page break element after the card
+      const pageBreak = document.createElement('div');
+      pageBreak.style.pageBreakAfter = 'always';
+      pageBreak.style.breakAfter = 'page';
+      pageBreak.style.height = '0';
+      pageBreak.style.margin = '0';
+      pageBreak.style.padding = '0';
+      pageBreak.className = 'page-break-insert';
+      if (card.parentNode) {
+        card.parentNode.insertBefore(pageBreak, card.nextSibling);
+      }
+    });
+    
+    const newPageCards = containerClone.querySelectorAll('.print-new-page');
+    newPageCards.forEach(card => {
+      card.style.pageBreakBefore = 'always';
+      card.style.breakBefore = 'page';
+      card.style.display = 'block';
+      card.style.marginTop = '0';
+      // Insert a page break element before the card
+      const pageBreak = document.createElement('div');
+      pageBreak.style.pageBreakBefore = 'always';
+      pageBreak.style.breakBefore = 'page';
+      pageBreak.style.height = '0';
+      pageBreak.style.margin = '0';
+      pageBreak.style.padding = '0';
+      pageBreak.className = 'page-break-insert';
+      if (card.parentNode) {
+        card.parentNode.insertBefore(pageBreak, card);
+      }
+      // Ensure the card and its contents don't break
+      const cardBody = card.querySelector('.card-body');
+      if (cardBody) {
+        cardBody.style.pageBreakInside = 'avoid';
+        cardBody.style.breakInside = 'avoid';
+      }
+      const table = card.querySelector('table');
+      if (table) {
+        table.style.pageBreakInside = 'avoid';
+        table.style.breakInside = 'avoid';
+      }
+    });
     
     // Get all inline styles from the page (all <style> blocks in the template)
     const allStyleTags = document.querySelectorAll('style');
@@ -326,11 +356,184 @@
       });
     }
 
-    // Get the content HTML (without the header)
-    const contentHtml = containerClone.innerHTML;
-
+    // Separate the two table sections
+    const firstTableCard = containerClone.querySelector('.card.print-page-end');
+    const allNewPageCards = containerClone.querySelectorAll('.card.print-new-page');
+    
+    // Get HTML for each section separately
+    let firstTableHtml = '';
+    let secondTableHtml = '';
+    
+    if (firstTableCard) {
+      // Get the entire row wrapper for first table
+      const firstTableRow = firstTableCard.closest('.row');
+      if (firstTableRow) {
+        firstTableHtml = firstTableRow.outerHTML;
+      } else {
+        firstTableHtml = firstTableCard.outerHTML;
+      }
+    }
+    
+    // Get the Monthly Trend table (should be the last or only print-new-page card)
+    // Look for the card that contains "Monthly Trend" text
+    let secondTableCard = null;
+    allNewPageCards.forEach(card => {
+      const cardText = card.textContent || '';
+      if (cardText.includes('Monthly Trend') || cardText.includes('Trend')) {
+        secondTableCard = card;
+      }
+    });
+    
+    // If not found by text, use the last print-new-page card
+    if (!secondTableCard && allNewPageCards.length > 0) {
+      secondTableCard = allNewPageCards[allNewPageCards.length - 1];
+    }
+    
+    if (secondTableCard) {
+      // Verify card structure includes header and body
+      const cardTitle = secondTableCard.querySelector('.card-title');
+      const cardBody = secondTableCard.querySelector('.card-body');
+      
+      if (!cardTitle) {
+        console.warn('Warning: Card title/header not found! Reconstructing...');
+        // Reconstruct the header if it's missing
+        if (cardBody) {
+          const title = document.createElement('h5');
+          title.className = 'card-title';
+          title.textContent = 'Monthly Trend';
+          // Insert at the beginning of card-body
+          if (cardBody.firstChild) {
+            cardBody.insertBefore(title, cardBody.firstChild);
+          } else {
+            cardBody.appendChild(title);
+          }
+          console.log('Header reconstructed and added to card-body');
+        } else {
+          console.error('Error: Card body not found!');
+        }
+      } else {
+        console.log('Header found:', cardTitle.textContent);
+      }
+      
+      // Get the entire card including card-body and header
+      // Make sure we're getting the complete structure
+      secondTableHtml = secondTableCard.outerHTML;
+      
+      // Verify both header AND table are in the HTML
+      const hasHeader = secondTableHtml.includes('Monthly Trend');
+      const hasTable = secondTableHtml.includes('<table') || secondTableHtml.includes('trendTable');
+      
+      console.log('Header in HTML:', hasHeader);
+      console.log('Table in HTML:', hasTable);
+      console.log('Extracted HTML length:', secondTableHtml.length);
+      
+      // If content is missing, reconstruct using the card-body innerHTML
+      if (!hasHeader || !hasTable) {
+        console.warn('Missing content detected! Reconstructing card...');
+        const cardBody = secondTableCard.querySelector('.card-body');
+        const cardBodyContent = cardBody ? cardBody.innerHTML : '';
+        
+        // If card-body exists, use its content directly
+        if (cardBodyContent) {
+          secondTableHtml = `
+            <div class="card border-0 shadow-sm print-new-page">
+              <div class="card-body">
+                ${cardBodyContent.includes('Monthly Trend') ? cardBodyContent : `<h5 class="card-title">Monthly Trend</h5>${cardBodyContent}`}
+              </div>
+            </div>
+          `;
+          console.log('Card reconstructed using card-body content');
+        } else {
+          // Last resort: manually reconstruct
+          const tableWrapper = secondTableCard.querySelector('#trendTable');
+          const tableContent = tableWrapper ? tableWrapper.outerHTML : '';
+          secondTableHtml = `
+            <div class="card border-0 shadow-sm print-new-page">
+              <div class="card-body">
+                <h5 class="card-title">Monthly Trend</h5>
+                ${tableContent}
+              </div>
+            </div>
+          `;
+          console.log('Card manually reconstructed');
+        }
+      } else {
+        console.log('✓ Header and table confirmed in extracted HTML');
+      }
+      console.log('Final HTML length:', secondTableHtml.length);
+    } else {
+      console.warn('Second table (Monthly Trend) not found!');
+      // Fallback: try to find by ID
+      const trendTable = containerClone.querySelector('#trendTable');
+      if (trendTable) {
+        const trendCard = trendTable.closest('.card');
+        if (trendCard) {
+          const cardBody = trendCard.querySelector('.card-body');
+          const cardBodyContent = cardBody ? cardBody.innerHTML : '';
+          const hasHeader = cardBodyContent.includes('Monthly Trend') || trendCard.querySelector('.card-title');
+          const hasTable = cardBodyContent.includes('<table') || trendTable;
+          
+          if (!hasHeader || !hasTable) {
+            console.warn('Fallback: Reconstructing card with header and table...');
+            // Get the actual table element (trendTable is the div wrapper)
+            const actualTable = trendTable.querySelector('table') || trendTable;
+            const tableHTML = actualTable.outerHTML;
+            // Get the full table-responsive wrapper if it exists
+            const tableWrapper = trendTable.outerHTML;
+            
+            secondTableHtml = `
+              <div class="card border-0 shadow-sm print-new-page">
+                <div class="card-body">
+                  <h5 class="card-title">Monthly Trend</h5>
+                  ${tableWrapper}
+                </div>
+              </div>
+            `;
+            console.log('Fallback: Card reconstructed with table');
+          } else {
+            secondTableHtml = trendCard.outerHTML;
+            console.log('Fallback: Using existing card structure');
+          }
+          console.log('Second table found by ID fallback');
+          console.log('Fallback includes header:', secondTableHtml.includes('Monthly Trend'));
+          console.log('Fallback includes table:', secondTableHtml.includes('<table'));
+        }
+      }
+    }
+    
     // Create header HTML for fixed printing
     const headerHtml = headerClone ? headerClone.outerHTML : '';
+    
+    // Debug: Log what we found
+    console.log('First table HTML length:', firstTableHtml.length);
+    console.log('Second table HTML length:', secondTableHtml.length);
+    
+    // If second table is missing, try alternative approach - get all content and split manually
+    if (!secondTableHtml || secondTableHtml.length < 100) {
+      console.warn('Second table not found, trying alternative method...');
+      // Get all cards in order
+      const allCards = containerClone.querySelectorAll('.card.border-0.shadow-sm');
+      if (allCards.length >= 2) {
+        // First card should be TOP DIAGNOSIS REPORT
+        // Second card should be Monthly Trend
+        const firstCard = allCards[0];
+        const secondCard = allCards[1];
+        
+        // Check if first card has print-page-end or contains "TOP DIAGNOSIS REPORT"
+        const firstCardText = firstCard.textContent || '';
+        if (firstCardText.includes('TOP DIAGNOSIS REPORT') || firstCardText.includes('Top 10 Diagnoses') || firstCardText.includes('Top Diagnoses')) {
+          const firstRow = firstCard.closest('.row');
+          firstTableHtml = firstRow ? firstRow.outerHTML : firstCard.outerHTML;
+        }
+        
+        // Check if second card contains "Monthly Trend"
+        const secondCardText = secondCard.textContent || '';
+        if (secondCardText.includes('Monthly Trend') || secondCardText.includes('Trend')) {
+          secondTableHtml = secondCard.outerHTML;
+          console.log('Found second table using alternative method');
+        }
+      }
+    }
 
     const printWindow = window.open('', '_blank');
     printWindow.document.write(`
@@ -386,8 +589,8 @@
             justify-content: space-between;
           }
           .print-header img.report-logo {
-            width: 80px !important;
-            height: 80px !important;
+            width: 95px !important;
+            height: 95px !important;
             object-fit: contain;
             flex-shrink: 0;
           }
@@ -413,34 +616,70 @@
             margin-top: 100px;
           }
           table { 
-            page-break-inside: auto;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
           }
           thead {
-            display: table-header-group;
+            display: table-header-group !important;
+            page-break-after: avoid !important;
           }
           tbody {
-            display: table-row-group;
+            display: table-row-group !important;
           }
           tfoot {
-            display: table-footer-group;
+            display: table-footer-group !important;
           }
           tr {
-            page-break-inside: avoid;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
+          .table-responsive {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
           }
           .card {
-            page-break-inside: auto;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            margin-bottom: 0 !important;
           }
           .card-body {
-            page-break-inside: auto;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
           }
           .print-new-page {
             page-break-before: always !important;
             break-before: page !important;
             page-break-after: avoid !important;
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
           }
           .print-page-end {
             page-break-after: always !important;
             break-after: page !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            margin-bottom: 0 !important;
+          }
+          /* Ensure first table doesn't break and ends on its own page */
+          .card.print-page-end {
+            page-break-after: always !important;
+            break-after: page !important;
+          }
+          .card.print-page-end .table-responsive,
+          .card.print-page-end table {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
+          /* Ensure subsequent tables start on new pages */
+          .card.print-new-page {
+            page-break-before: always !important;
+            break-before: page !important;
+            page-break-after: avoid !important;
+          }
+          .card.print-new-page .table-responsive,
+          .card.print-new-page table {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
           }
           @media print {
             @page {
@@ -469,8 +708,8 @@
               justify-content: space-between;
             }
             .print-header img.report-logo {
-              width: 80px !important;
-              height: 80px !important;
+              width: 95px !important;
+              height: 95px !important;
               object-fit: contain;
               flex-shrink: 0;
             }
@@ -495,30 +734,97 @@
               margin-top: 0;
             }
             table {
-              page-break-inside: auto;
+              page-break-inside: avoid !important;
+              break-inside: avoid !important;
+              width: 100% !important;
             }
             thead {
-              display: table-header-group;
+              display: table-header-group !important;
+              page-break-after: avoid !important;
+            }
+            tbody {
+              display: table-row-group !important;
             }
             tfoot {
-              display: table-footer-group;
+              display: table-footer-group !important;
             }
             tr {
-              page-break-inside: avoid;
+              page-break-inside: avoid !important;
+              break-inside: avoid !important;
+            }
+            .table-responsive {
+              page-break-inside: avoid !important;
+              break-inside: avoid !important;
+              overflow: visible !important;
             }
             .card {
               border: none !important;
               box-shadow: none !important;
-              page-break-inside: avoid;
+              page-break-inside: avoid !important;
+              break-inside: avoid !important;
+              margin-bottom: 0 !important;
             }
+            .card-body {
+              page-break-inside: avoid !important;
+              break-inside: avoid !important;
+            }
+            /* First table - Top Diagnoses - should end on its own page */
+            .card.print-page-end {
+              page-break-after: always !important;
+              break-after: page !important;
+              page-break-inside: avoid !important;
+              break-inside: avoid !important;
+              margin-bottom: 0 !important;
+              display: block !important;
+            }
+            .card.print-page-end .card-body {
+              page-break-inside: avoid !important;
+              break-inside: avoid !important;
+              display: block !important;
+            }
+            .card.print-page-end .row,
+            .card.print-page-end .col-12 {
+              page-break-inside: avoid !important;
+              break-inside: avoid !important;
+            }
+            .card.print-page-end .table-responsive,
+            .card.print-page-end table {
+              page-break-inside: avoid !important;
+              break-inside: avoid !important;
+            }
+            /* Monthly Trend table - should start on new page */
             .card.print-new-page {
               page-break-before: always !important;
               break-before: page !important;
               margin-top: 0 !important;
+              margin-bottom: 0 !important;
               page-break-after: avoid !important;
+              page-break-inside: avoid !important;
+              break-inside: avoid !important;
+              display: block !important;
             }
             .card.print-new-page .card-body {
-              page-break-inside: avoid;
+              page-break-inside: avoid !important;
+              break-inside: avoid !important;
+              display: block !important;
+            }
+            .card.print-new-page .table-responsive,
+            .card.print-new-page table {
+              page-break-inside: avoid !important;
+              break-inside: avoid !important;
+            }
+            /* Force page break before Monthly Trend */
+            .card.print-page-end + .card.print-new-page {
+              page-break-before: always !important;
+              break-before: page !important;
+              margin-top: 0 !important;
+            }
+            /* Ensure wrapper divs don't interfere */
+            .row {
+              page-break-inside: avoid !important;
+            }
+            .col-12 {
+              page-break-inside: avoid !important;
             }
             .shadow-sm {
               box-shadow: none !important;
@@ -532,6 +838,84 @@
               page-break-after: always !important;
               break-after: page !important;
             }
+            /* Remove margins that might interfere with page breaks */
+            .mt-4.print-new-page {
+              margin-top: 0 !important;
+            }
+            /* Force page breaks between sections - more aggressive */
+            .row + .card.print-new-page,
+            .card.print-page-end + .card.print-new-page,
+            div:has(.card.print-page-end) + div:has(.card.print-new-page),
+            .card.print-page-end ~ .card.print-new-page {
+              page-break-before: always !important;
+              break-before: page !important;
+              margin-top: 0 !important;
+            }
+            /* Ensure wrapper divs don't interfere with page breaks */
+            .row {
+              page-break-inside: avoid !important;
+              break-inside: avoid !important;
+            }
+            .col-12 {
+              page-break-inside: avoid !important;
+              break-inside: avoid !important;
+            }
+            /* Ensure container-fluid doesn't interfere */
+            .container-fluid {
+              page-break-inside: auto !important;
+            }
+            /* Make sure content-wrapper allows page breaks */
+            .content-wrapper {
+              page-break-inside: auto !important;
+            }
+            /* Force page breaks between table sections - CRITICAL */
+            .first-table-section {
+              page-break-after: always !important;
+              break-after: page !important;
+              page-break-inside: avoid !important;
+              break-inside: avoid !important;
+              display: block !important;
+              height: auto !important;
+              overflow: visible !important;
+            }
+            .second-table-section {
+              page-break-before: always !important;
+              break-before: page !important;
+              page-break-inside: avoid !important;
+              break-inside: avoid !important;
+              margin-top: 0 !important;
+              padding-top: 0 !important;
+              display: block !important;
+              height: auto !important;
+              overflow: visible !important;
+            }
+            /* Ensure tables inside sections don't break */
+            .first-table-section table,
+            .second-table-section table,
+            .first-table-section .table-responsive,
+            .second-table-section .table-responsive {
+              page-break-inside: avoid !important;
+              break-inside: avoid !important;
+            }
+            /* Ensure cards inside sections respect page breaks */
+            .first-table-section .card,
+            .second-table-section .card {
+              page-break-inside: avoid !important;
+              break-inside: avoid !important;
+            }
+            /* Style for inserted page break elements */
+            .page-break-insert {
+              page-break-after: always !important;
+              break-after: page !important;
+              height: 0 !important;
+              margin: 0 !important;
+              padding: 0 !important;
+              display: block !important;
+            }
+            .page-break-insert[style*="page-break-before"] {
+              page-break-before: always !important;
+              break-before: page !important;
+            }
           }
         </style>
       </head>
@@ -541,7 +925,14 @@
         </div>
         <div class="content-wrapper">
           <div class="container-fluid py-4">
-            ${contentHtml}
+            <!-- First Table Section - TOP DIAGNOSIS REPORT -->
+            ${firstTableHtml ? `<div class="first-table-section" style="page-break-after: always; break-after: page; page-break-inside: avoid; break-inside: avoid;">
+              ${firstTableHtml}
+            </div>` : ''}
+            <!-- Second Table Section - Monthly Trend -->
+            ${secondTableHtml ? `<div class="second-table-section" style="page-break-before: always; break-before: page; page-break-inside: avoid; break-inside: avoid; margin-top: 0;">
+              ${secondTableHtml}
+            </div>` : '<div class="text-danger">Error: Monthly Trend table not found</div>'}
           </div>
         </div>
       </body>

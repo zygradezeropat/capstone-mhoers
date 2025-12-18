@@ -6,7 +6,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
     <meta http-equiv="x-ua-compatible" content="ie=edge" />
-    <title>MHOERS</title>
+    <title>MHOERS - Register</title>
     <link rel="icon" type="image/png" href="{% static 'images/MHO-LOGO.png' %}" />
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
@@ -14,14 +14,576 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/login.css' %}?v=2" />
-    <link rel="stylesheet" href="{% static 'css/register.css' %}?v=2" />
+    <link rel="stylesheet" href="{% static 'css/login.css' %}?v=3" />
+    <link rel="stylesheet" href="{% static 'css/register.css' %}?v=3" />
+    <style>
+      /* Hide browser's default password reveal button */
+      input[type="password"]::-ms-reveal,
+      input[type="password"]::-ms-clear {
+        display: none !important;
+      }
+
+      /* Hide Chrome/Edge password reveal button */
+      input[type="password"]::-webkit-credentials-auto-fill-button {
+        display: none !important;
+        visibility: hidden !important;
+      }
+
+      /* Additional padding for password fields to accommodate eye icon */
+      .input-wrapper input[type="password"] {
+        padding-right: 48px !important;
+      }
+
+      /* Password toggle eye icon styling */
+      .password-toggle {
+        position: absolute;
+        right: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #94a3b8;
+        font-size: 16px;
+        cursor: pointer;
+        z-index: 10;
+        transition: color 0.3s ease;
+        user-select: none;
+        pointer-events: auto;
+      }
+
+      .password-toggle:hover {
+        color: #3b82f6;
+      }
+
+      .input-wrapper:focus-within .password-toggle {
+        color: #3b82f6;
+      }
+
+      /* Password Requirements Checklist Styling */
+      .form-group {
+        position: relative;
+      }
+
+      .password-requirements {
+        position: absolute;
+        top: calc(100% + 8px);
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        margin-top: 0;
+        padding: 16px;
+        background: #ffffff;
+        border: 2px solid #3b82f6;
+        border-radius: 12px;
+        font-size: 14px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        animation: slideDown 0.2s ease-out;
+      }
+
+      @media (max-width: 768px) {
+        .password-requirements {
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: calc(100% - 32px);
+          max-width: 400px;
+          max-height: 80vh;
+          overflow-y: auto;
+          z-index: 2000;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .password-requirements {
+          width: calc(100% - 24px);
+          max-width: 350px;
+          padding: 14px;
+          font-size: 13px;
+        }
+      }
+
+      @keyframes slideDown {
+        from {
+          opacity: 0;
+          transform: translateY(-10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .requirements-title {
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 12px;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .requirements-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      .requirement-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+        color: #64748b;
+        font-size: 13px;
+        font-weight: 500;
+      }
+
+      .requirement-item:last-child {
+        margin-bottom: 0;
+      }
+
+      .requirement-icon {
+        font-size: 14px;
+        width: 18px;
+        text-align: center;
+        font-weight: 600;
+      }
+
+      .requirement-item.valid {
+        color: #16a34a;
+      }
+
+      .requirement-item.valid .requirement-icon {
+        color: #16a34a;
+      }
+
+      .requirement-item.invalid {
+        color: #dc2626;
+      }
+
+      .requirement-item.invalid .requirement-icon {
+        color: #dc2626;
+      }
+
+      /* Address Autocomplete Styling */
+      .address-suggestions {
+        position: absolute;
+        top: calc(100% + 8px);
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        max-height: 300px;
+        overflow-y: auto;
+        margin-top: 4px;
+      }
+
+      .address-suggestion-item {
+        padding: 12px 16px;
+        cursor: pointer;
+        border-bottom: 1px solid #f1f5f9;
+        transition: background-color 0.2s ease;
+        font-size: 14px;
+        color: #1e293b;
+      }
+
+      .address-suggestion-item:hover {
+        background-color: #f8fafc;
+      }
+
+      .address-suggestion-item:last-child {
+        border-bottom: none;
+      }
+
+      .address-suggestion-item.highlighted {
+        background-color: #eff6ff;
+        color: #3b82f6;
+      }
+
+      .address-suggestion-item .suggestion-main {
+        font-weight: 500;
+        margin-bottom: 4px;
+      }
+
+      .address-suggestion-item .suggestion-details {
+        font-size: 12px;
+        color: #64748b;
+      }
+
+      /* Shopee-style Location Selector Styling */
+      .location-selector-wrapper {
+        position: relative;
+      }
+
+      .location-display-input {
+        cursor: pointer;
+      }
+
+      .location-dropdown-icon {
+        position: absolute;
+        right: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #94a3b8;
+        font-size: 14px;
+        pointer-events: none;
+        z-index: 2;
+        transition: transform 0.3s ease, color 0.3s ease;
+        display: none !important;
+      }
+
+      .location-selector-wrapper.active .location-dropdown-icon {
+        transform: translateY(-50%) rotate(180deg);
+        color: #3b82f6;
+      }
+
+      .location-dropdown {
+        position: absolute;
+        top: calc(100% + 8px);
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        background: #ffffff;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        overflow: hidden;
+        animation: slideDown 0.2s ease-out;
+      }
+
+      .location-tabs {
+        display: flex;
+        border-bottom: 1px solid #e2e8f0;
+        background: #f8fafc;
+        padding: 0;
+        margin: 0;
+      }
+
+      .location-tab {
+        flex: 1;
+        padding: 12px 16px;
+        background: transparent;
+        border: none;
+        border-bottom: 2px solid transparent;
+        color: #64748b;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: center;
+      }
+
+      .location-tab:hover {
+        color: #3b82f6;
+        background: #f1f5f9;
+      }
+
+      .location-tab.active {
+        color: #dc2626;
+        border-bottom-color: #dc2626;
+        background: #ffffff;
+        font-weight: 600;
+      }
+
+      .location-options {
+        max-height: 300px;
+        overflow-y: auto;
+        padding: 8px 0;
+      }
+
+      .location-option-item {
+        padding: 12px 20px;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+        font-size: 14px;
+        color: #1e293b;
+        border-bottom: 1px solid #f1f5f9;
+      }
+
+      .location-option-item:last-child {
+        border-bottom: none;
+      }
+
+      .location-option-item:hover {
+        background-color: #f8fafc;
+      }
+
+      .location-option-item.selected {
+        background-color: #eff6ff;
+        color: #3b82f6;
+        font-weight: 500;
+      }
+
+      .location-option-item.empty {
+        padding: 20px;
+        text-align: center;
+        color: #94a3b8;
+        font-style: italic;
+        cursor: default;
+      }
+
+      .location-option-item.empty:hover {
+        background-color: transparent;
+      }
+
+      /* Responsive adjustments for location selector */
+      @media (max-width: 768px) {
+        .location-dropdown {
+          position: fixed !important;
+          top: 50% !important;
+          left: 50% !important;
+          transform: translate(-50%, -50%) !important;
+          width: calc(100% - 32px) !important;
+          max-width: 500px !important;
+          max-height: 80vh !important;
+          z-index: 2000 !important;
+        }
+
+        .location-tabs {
+          flex-wrap: nowrap;
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+        }
+
+        .location-tab {
+          flex: 1 0 auto;
+          min-width: 80px;
+          font-size: 13px;
+          padding: 10px 12px;
+        }
+
+        .location-options {
+          max-height: 50vh;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .location-dropdown {
+          width: calc(100% - 24px) !important;
+          max-width: 400px !important;
+        }
+
+        .location-tab {
+          font-size: 12px;
+          padding: 10px 8px;
+          min-width: 70px;
+        }
+
+        .location-options {
+          max-height: 45vh;
+        }
+      }
+
+      /* Overlay for mobile dropdowns */
+      .location-dropdown-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1999;
+      }
+
+      @media (max-width: 768px) {
+        .location-dropdown-overlay.active {
+          display: block;
+        }
+      }
+
+      /* Image Upload Styling */
+      .image-upload-wrapper {
+        width: 100%;
+        margin-bottom: 0;
+      }
+
+      .image-upload-label {
+        display: block;
+        cursor: pointer;
+        width: 100%;
+      }
+
+      .image-upload-preview {
+        width: 100%;
+        height: 200px;
+        border: 2px dashed #cbd5e1;
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: #f8fafc;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .image-upload-preview:hover {
+        border-color: #3b82f6;
+        background: #eff6ff;
+      }
+
+      .image-upload-preview.has-image {
+        border-style: solid;
+        border-color: #3b82f6;
+        background: #ffffff;
+      }
+
+      .image-upload-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: none;
+      }
+
+      .image-upload-preview.has-image img {
+        display: block;
+      }
+
+      .image-upload-preview.has-image .upload-icon,
+      .image-upload-preview.has-image .upload-text {
+        display: none;
+      }
+
+      .upload-icon {
+        font-size: 48px;
+        color: #94a3b8;
+        margin-bottom: 12px;
+        transition: color 0.3s ease;
+      }
+
+      .image-upload-preview:hover .upload-icon {
+        color: #3b82f6;
+      }
+
+      .upload-text {
+        color: #64748b;
+        font-size: 14px;
+        font-weight: 500;
+        transition: color 0.3s ease;
+      }
+
+      .image-upload-preview:hover .upload-text {
+        color: #3b82f6;
+      }
+
+      .image-upload-input {
+        display: none;
+      }
+
+      .remove-image-btn {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        background: rgba(220, 38, 38, 0.9);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        z-index: 10;
+      }
+
+      .image-upload-preview.has-image .remove-image-btn {
+        display: flex;
+      }
+
+      .remove-image-btn:hover {
+        background: rgba(220, 38, 38, 1);
+        transform: scale(1.1);
+      }
+
+      @media (max-width: 768px) {
+        .image-upload-preview {
+          height: 180px;
+        }
+
+        .upload-icon {
+          font-size: 40px;
+        }
+
+        .upload-text {
+          font-size: 13px;
+        }
+      }
+
+      /* Phone Validation Indicators */
+      .phone-validation-indicators {
+        margin-top: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .phone-error-indicator {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        border-radius: 8px;
+        color: #dc2626;
+        font-size: 13px;
+        font-weight: 500;
+        animation: slideDown 0.2s ease-out;
+      }
+
+      .phone-error-indicator i {
+        font-size: 14px;
+        flex-shrink: 0;
+      }
+
+      .phone-error-indicator span {
+        line-height: 1.4;
+      }
+
+      @media (max-width: 768px) {
+        .phone-error-indicator {
+          font-size: 12px;
+          padding: 6px 10px;
+        }
+
+        .phone-error-indicator i {
+          font-size: 13px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .phone-validation-indicators {
+          margin-top: 6px;
+          gap: 4px;
+        }
+
+        .phone-error-indicator {
+          font-size: 11px;
+          padding: 5px 8px;
+        }
+
+        .phone-error-indicator i {
+          font-size: 12px;
+        }
+      }
+
+    </style>
   </head>
 
   <body>
     <div class="register-container">
       <!-- Background Image -->
       <div class="background-image"></div>
+      
+      <!-- Overlay for mobile dropdowns -->
+      <div class="location-dropdown-overlay" id="location-overlay"></div>
       
       <!-- Register Card -->
       <div class="register-wrapper">
@@ -36,358 +598,293 @@
           </div>
 
           <!-- Register Form -->
-          <form method="POST" action="{% url 'register' %}" class="register-form">
+          <form method="POST" action="{% url 'register' %}" class="register-form" enctype="multipart/form-data" novalidate>
             {% csrf_token %}
             
-          {% if messages %}
-            <div class="alert alert-danger">
-            {% for message in messages %}
-            <p>{{ message }}</p>
-            {% endfor %}
-          </div>
-          {% endif %}
+            {% if messages %}
+              {% for message in messages %}
+              <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-danger{% endif %}">
+                <p>{{ message }}</p>
+              </div>
+              {% endfor %}
+            {% endif %}
 
             <!-- Personal Information Section -->
             <div class="form-section-title">
               <h6>Personal Information</h6>
             </div>
 
-            <!-- First Name, Last Name, Email and Phone Row -->
+            <!-- First Row: First Name, Middle Name, Last Name, Email -->
             <div class="form-row">
               <div class="form-group">
                 <div class="input-wrapper">
-                  <i class="fas fa-user input-icon"></i>
                   <input type="text" name="firstname" id="firstname" class="form-input" placeholder="First Name" required>
                 </div>
               </div>
               <div class="form-group">
                 <div class="input-wrapper">
-                  <i class="fas fa-user input-icon"></i>
-                  <input type="text" name="middlename" id="middlename" class="form-input" placeholder="Middle Name" >
+                  <input type="text" name="middlename" id="middlename" class="form-input" placeholder="Middle Name">
                 </div>
               </div>
-
               <div class="form-group">
                 <div class="input-wrapper">
-                  <i class="fas fa-user input-icon"></i>
                   <input type="text" name="lastname" id="lastname" class="form-input" placeholder="Last Name" required>
                 </div>
               </div>
-
               <div class="form-group">
                 <div class="input-wrapper">
-                  <i class="fas fa-envelope input-icon"></i>
                   <input type="email" name="email" id="email" class="form-input" placeholder="Email Address" required>
                 </div>
               </div>
             </div>
 
-            <!-- Username and Password Row -->
+            <!-- Second Row: Username, Password, Confirm Password -->
             <div class="form-row">
               <div class="form-group">
                 <div class="input-wrapper">
-                  <i class="fas fa-user input-icon"></i>
                   <input type="text" name="username" id="username" class="form-input" placeholder="Username" required>
                 </div>
               </div>
-
               <div class="form-group">
                 <div class="input-wrapper">
-                  <i class="fas fa-lock input-icon"></i>
-                  <input type="password" name="password1" id="password1" class="form-input" placeholder="Password" required>
+                  <input type="password" name="password1" id="password1" class="form-input" placeholder="Password" 
+                         pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"
+                         title="Password must be at least 8 characters with uppercase, lowercase, number, and special character"
+                         required>
+                  <i class="fas fa-eye-slash password-toggle" id="togglePassword1"></i>
+                </div>
+                <!-- Password Requirements Checklist -->
+                <div id="passwordRequirements" class="password-requirements" style="display: none;">
+                  <p class="requirements-title">Password must contain:</p>
+                  <ul class="requirements-list">
+                    <li id="req-length" class="requirement-item">
+                      <i class="fas fa-times requirement-icon"></i>
+                      <span>At least 8 characters</span>
+                    </li>
+                    <li id="req-uppercase" class="requirement-item">
+                      <i class="fas fa-times requirement-icon"></i>
+                      <span>At least 1 uppercase letter (A-Z)</span>
+                    </li>
+                    <li id="req-lowercase" class="requirement-item">
+                      <i class="fas fa-times requirement-icon"></i>
+                      <span>At least 1 lowercase letter (a-z)</span>
+                    </li>
+                    <li id="req-number" class="requirement-item">
+                      <i class="fas fa-times requirement-icon"></i>
+                      <span>At least 1 number (0-9)</span>
+                    </li>
+                    <li id="req-special" class="requirement-item">
+                      <i class="fas fa-times requirement-icon"></i>
+                      <span>At least 1 special character (@$!%*?&)</span>
+                    </li>
+                  </ul>
                 </div>
               </div>
-
               <div class="form-group">
                 <div class="input-wrapper">
-                  <i class="fas fa-lock input-icon"></i>
                   <input type="password" name="password2" id="password2" class="form-input" placeholder="Confirm Password" required>
+                  <i class="fas fa-eye-slash password-toggle" id="togglePassword2"></i>
                 </div>
               </div>
             </div>
 
-            <!-- Phone and Role Row -->
+            <!-- Third Row: Phone Number, Select Role -->
             <div class="form-row">
               <div class="form-group">
                 <div class="input-wrapper">
-                  <i class="fas fa-phone input-icon"></i>
-                  <input type="tel" name="phone" id="phone" class="form-input" placeholder="Phone Number" required>
+                  <input type="text" name="phone" id="phone" class="form-input" placeholder="Phone Number (09XXXXXXXXX)" 
+                         pattern="09[0-9]{9}" 
+                         maxlength="11" 
+                         title="Phone number must start with 09 and be exactly 11 digits" 
+                         required 
+                         oninput="this.value = this.value.replace(/[^0-9]/g, '');">
+                </div>
+                <!-- Phone validation indicators -->
+                <div id="phone-validation-indicators" class="phone-validation-indicators" style="display: none;">
+                  <div id="phone-prefix-error" class="phone-error-indicator" style="display: none;">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span>Phone number must start with 09</span>
+                  </div>
+                  <div id="phone-length-error" class="phone-error-indicator" style="display: none;">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span>Phone number must be exactly 11 digits</span>
+                  </div>
                 </div>
               </div>
-
-               <div class="form-group">
-                 <div class="input-wrapper">
-                   <i class="fas fa-user-tag input-icon"></i>
-                   <select name="main_role" id="main_role" class="form-select" required>
-                     <option value="" disabled selected>Select Role</option>
-                     <option value="BHW">BHW</option>
-                     <option value="MHO">MHO</option>
-                   </select>
-                 </div>
-               </div>
-
-               <!-- BHW Sub-role Selection -->
-               <div class="form-group" id="bhw-sub-role" style="display: none;">
-                 <div class="input-wrapper">
-                   <i class="fas fa-user-md input-icon"></i>
-                   <select name="bhw_sub_role" id="bhw_sub_role" class="form-select">
-                     <option value="" disabled selected>Select BHW Type</option>
-                     <option value="BHW">BHW (Barangay Health Worker)</option>
-                     <option value="BHW_NURSE">Nurse</option>
-                   </select>
-                 </div>
-               </div>
-
-               <!-- MHO Sub-role Selection -->
-               <div class="form-group" id="mho-sub-role" style="display: none;">
-                 <div class="input-wrapper">
-                   <i class="fas fa-user-md input-icon"></i>
-                   <select name="mho_sub_role" id="mho_sub_role" class="form-select">
-                     <option value="" disabled selected>Select MHO Type</option>
-                     <option value="MHO_DOCTOR">Doctor</option>
-                     <option value="MHO_NURSE">Nurse</option>
-                   </select>
-                 </div>
-               </div>
+              <div class="form-group">
+                <div class="input-wrapper">
+                  <select name="main_role" id="main_role" class="form-select" required>
+                    <option value="" disabled selected>Select Role</option>
+                    <option value="BHW">BHW</option>
+                    <option value="DOCTOR">Doctor</option>
+                  </select>
+                </div>
+              </div>
             </div>
 
             <!-- Address Information Section -->
-            <div class="form-section-title">
-              <h6>Address Information</h6>
+            <div class="form-section-title" style="margin-top: 20px;">
+              <h6>ADDRESS INFORMATION</h6>
             </div>
 
-            <!-- Street Address, City, Barangay, Province and Postal Code Row -->
+            <!-- Province Field -->
             <div class="form-row">
               <div class="form-group">
                 <div class="input-wrapper">
-                  <i class="fas fa-map-marker-alt input-icon"></i>
-                  <input type="text" name="street_address" id="street_address" class="form-input" placeholder="Street Address" required>
-                </div>
-              </div>
-
-              
-
-              <div class="form-group">
-                <div class="input-wrapper">
-                  <i class="fas fa-home input-icon"></i>
-                  <input type="text" name="barangay" id="barangay" class="form-input" placeholder="Barangay" required>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <div class="input-wrapper">
-                  <i class="fas fa-city input-icon"></i>
-                  <input type="text" name="city" id="city" class="form-input" placeholder="City" required>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <div class="input-wrapper">
-                  <i class="fas fa-map input-icon"></i>
-                  <input type="text" name="province" id="province" class="form-input" placeholder="Province" required>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <div class="input-wrapper">
-                  <i class="fas fa-mail-bulk input-icon"></i>
-                  <input type="text" name="postal_code" id="postal_code" class="form-input" placeholder="Postal Code" required>
+                  <select name="province" id="province" class="form-select" required>
+                    <option value="" disabled selected>Select Province</option>
+                  </select>
                 </div>
               </div>
             </div>
 
-            <!-- Professional Information Section -->
-            <div class="form-section-title">
-              <h6>Professional Information</h6>
+            <!-- City/Municipality Field -->
+            <div class="form-row">
+              <div class="form-group">
+                <div class="input-wrapper">
+                  <select name="municipality" id="municipality" class="form-select" required disabled>
+                    <option value="" disabled selected>Select City/Municipality</option>
+                  </select>
+                </div>
+              </div>
             </div>
 
-             <!-- BHW Professional Information -->
-             <div id="bhw-professional" class="professional-section" style="display: none;">
-               <div class="form-row">
-                 <div class="form-group">
-                   <div class="input-wrapper">
-                     <i class="fas fa-id-card input-icon"></i>
-                     <input type="text" name="registration_number" id="registration_number" class="form-input" placeholder="Registration Number">
-                   </div>
-                 </div>
-
-                 <div class="form-group">
-                   <div class="input-wrapper">
-                     <i class="fas fa-calendar-alt input-icon"></i>
-                       <input type="text" name="accreditation_number" id="accreditation_number" class="form-input" placeholder="Accreditation Number">
-                   </div>
-                 </div>
-
-                 <div class="form-group">
-                   <div class="input-wrapper">
-                     <i class="fas fa-map-marker-alt input-icon"></i>
-                     <select name="bhw_assigned_barangay" id="bhw_assigned_barangay" class="form-select">
-                       <option value="" disabled selected>Select Facility</option>
-                       {% for facility in facilities %}
-                       <option value="{{ facility.facility_id }}">{{ facility.name }}</option>
-                       {% endfor %}
-                     </select>
-                   </div>
-                 </div>
-               </div>
-             </div>
-
-             <!-- Nurse Professional Information -->
-             <div id="nurse-professional" class="professional-section" style="display: none;">
-               <div class="form-row">
-                 <div class="form-group">
-                   <div class="input-wrapper">
-                     <i class="fas fa-id-card input-icon"></i>
-                     <input type="text" name="nurse_license_number" id="nurse_license_number" class="form-input" placeholder="Nursing License Number">
-                   </div>
-                 </div>
-
-                 <div class="form-group">
-                   <div class="input-wrapper">
-                     <i class="fas fa-id-card input-icon"></i>
-                     <input type="text" name="prc_license_number" id="prc_license_number" class="form-input" placeholder="PRC License Number">
-                   </div>
-                 </div>
-
-                 <div class="form-group">
-                   <div class="input-wrapper">
-                     <i class="fas fa-map-marker-alt input-icon"></i>
-                     <select name="nurse_assigned_barangay" id="nurse_assigned_barangay" class="form-select">
-                       <option value="" disabled selected>Select Facility</option>
-                       {% for facility in facilities %}
-                       <option value="{{ facility.facility_id }}">{{ facility.name }}</option>
-                       {% endfor %}
-                     </select>
-                   </div>
-                 </div>
-               </div>
-             </div>
-
-            <!-- MHO Doctor Professional Information -->
-             <div id="mho-doctor-professional" class="professional-section" style="display: none;">
-               <div class="form-row">
-                 <div class="form-group">
-                   <div class="input-wrapper">
-                     <i class="fas fa-id-card input-icon"></i>
-                     <input type="text" name="doctor_registration_number" id="doctor_registration_number" class="form-input" placeholder="Medical Registration Number">
-                   </div>
-                 </div>
-
-                 <div class="form-group">
-                   <div class="input-wrapper">
-                     <i class="fas fa-id-card input-icon"></i>
-                     <input type="text" name="doctor_license_number" id="doctor_license_number" class="form-input" placeholder="Medical License Number">
-                   </div>
-                 </div>
-
-                 <div class="form-group">
-                   <div class="input-wrapper">
-                     <i class="fas fa-map-marker-alt input-icon"></i>
-                     <select name="doctor_assigned_barangay" id="doctor_assigned_barangay" class="form-select">
-                       <option value="" disabled selected>Select Facility</option>
-                       {% for facility in facilities %}
-                       <option value="{{ facility.facility_id }}">{{ facility.name }}</option>
-                       {% endfor %}
-                     </select>
-                   </div>
-                 </div>
-               </div>
-
-               <div class="form-row">
+            <!-- Barangay and Purok Row (6-6 columns) -->
+            <div class="row g-3">
+              <div class="col-12 col-md-6">
                 <div class="form-group">
                   <div class="input-wrapper">
-                    <i class="fas fa-briefcase input-icon"></i>
-                    <input 
-                      list="specializationList" 
-                      name="medical_specialization" 
-                      id="medical_specialization" 
-                      class="form-input" 
-                      placeholder="Medical Specialization"
-                    >
-                    <datalist id="specializationList">
-                      <option value="General Practitioner">
-                      <option value="Pediatrician">
-                      <option value="Cardiologist">
-                      <option value="Dermatologist">
-                      <option value="Neurologist">
-                      <option value="Obstetrician/Gynecologist">
-                      <option value="Oncologist">
-                      <option value="Orthopedic Surgeon">
-                      <option value="Psychiatrist">
-                      <option value="Radiologist">
-                      <option value="ENT Specialist">
-                      <option value="Urologist">
-                      <option value="Pulmonologist">
-                      <option value="Endocrinologist">
-                      <option value="Ophthalmologist">
-                      <option value="Nephrologist">
-                      <option value="Gastroenterologist">
-                    </datalist>
+                    <select name="barangay" id="barangay" class="form-select" required disabled>
+                      <option value="" disabled selected>Select Barangay</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div class="col-12 col-md-6">
+                <div class="form-group">
+                  <div class="input-wrapper">
+                    <input type="text" name="purok" id="purok" class="form-input" placeholder="Purok" required disabled>
                   </div>
                 </div>
               </div>
             </div>
 
-            <!-- MHO Nurse Professional Information -->
-             <div id="mho-nurse-professional" class="professional-section" style="display: none;">
-               <div class="form-row">
-                 <div class="form-group">
-                   <div class="input-wrapper">
-                     <i class="fas fa-id-card input-icon"></i>
-                     <input type="text" name="mho_registration_number" id="mho_registration_number" class="form-input" placeholder="Registration Number">
-                   </div>
-                 </div>
-
-                 <div class="form-group">
-                   <div class="input-wrapper">
-                     <i class="fas fa-id-card input-icon"></i>
-                     <input type="text" name="mho_accreditation_number" id="mho_accreditation_number" class="form-input" placeholder="Accreditation Number">
-                   </div>
-                 </div>
-
-                 <div class="form-group">
-                   <div class="input-wrapper">
-                     <i class="fas fa-map-marker-alt input-icon"></i>
-                     <select name="nurse_assigned_barangay" id="nurse_assigned_barangay" class="form-select">
-                       <option value="" disabled selected>Select Facility</option>
-                       {% for facility in facilities %}
-                       <option value="{{ facility.facility_id }}">{{ facility.name }}</option>
-                       {% endfor %}
-                     </select>
-                   </div>
-                 </div>
-               </div>
-             </div>
-
-            <!-- Privacy & Consent Section -->
-            <div class="form-section-title" style="margin-top: 2rem; margin-bottom: 1rem;">
-              <h3 style="font-size: 1.1rem; color: #2c3e50; font-weight: 600;">Privacy & Data Consent</h3>
-            </div>
-
-            <div class="form-group" style="margin-bottom: 1rem;">
-              <div class="form-check" style="display: flex; align-items: flex-start; gap: 0.5rem;">
-                <input class="form-check-input" type="checkbox" id="privacy_policy" name="privacy_policy" required style="margin-top: 0.25rem; cursor: pointer;">
-                <label class="form-check-label" for="privacy_policy" style="cursor: pointer; line-height: 1.5;">
-                  I have read and agree to the <a href="{% url 'privacy_policy' %}" target="_blank" style="color: #007bff; text-decoration: underline;">Privacy Policy</a> <span style="color: #dc3545;">*</span>
-                </label>
+            <!-- Assigned Facility (shown only when BHW is selected) -->
+            <div class="form-row">
+              <div class="form-group" id="assigned-facility-group" style="display: none;">
+                <div class="input-wrapper">
+                  
+                  <select name="assigned_facility" id="assigned_facility" class="form-select">
+                    <option value="" disabled selected>Assigned Facility</option>
+                    {% for facility in facilities %}
+                    <option value="{{ facility.facility_id }}">{{ facility.name }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
               </div>
             </div>
 
-            <div class="form-group" style="margin-bottom: 1rem;">
-              <div class="form-check" style="display: flex; align-items: flex-start; gap: 0.5rem;">
-                <input class="form-check-input" type="checkbox" id="data_processing" name="data_processing" required style="margin-top: 0.25rem; cursor: pointer;">
-                <label class="form-check-label" for="data_processing" style="cursor: pointer; line-height: 1.5;">
-                  I consent to the processing of my personal data for healthcare services <span style="color: #dc3545;">*</span>
-                </label>
+            <!-- Doctor Professional Information Section (appears when Doctor role is selected) -->
+            <div id="doctor-info-section" class="doctor-info-section" style="display: none;">
+              <div class="form-section-title" style="margin-top: 20px;">
+                <h6>PROFESSIONAL INFORMATION</h6>
+              </div>
+
+              <!-- Specialization and License Number -->
+              <div class="form-row">
+                <div class="form-group">
+                  <div class="input-wrapper">
+                    <input type="text" name="specialization" id="specialization" class="form-input" 
+                           placeholder="Specialization" 
+                           required>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <div class="input-wrapper">
+                    <input type="text" name="license_number" id="license_number" class="form-input" 
+                           placeholder="PRC License Number" 
+                           required>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Assigned Facility (MHO only) -->
+              <div class="form-row">
+                <div class="form-group" id="doctor-facility-group">
+                  <label for="assigned_facility_doctor" class="form-label">Assigned Facility</label>
+                  <div class="input-wrapper">
+                    <select name="assigned_facility_doctor" id="assigned_facility_doctor" class="form-select" required>
+                      <option value="MHO" selected>MHO</option>
+                    </select>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div class="form-group" style="margin-bottom: 1.5rem;">
-              <div class="form-check" style="display: flex; align-items: flex-start; gap: 0.5rem;">
-                <input class="form-check-input" type="checkbox" id="marketing_consent" name="marketing_consent" style="margin-top: 0.25rem; cursor: pointer;">
-                <label class="form-check-label" for="marketing_consent" style="cursor: pointer; line-height: 1.5;">
-                  I consent to receive marketing communications (optional)
-                </label>
+            <!-- BHW Professional Information Section (appears when BHW role is selected) -->
+            <div id="bhw-info-section" class="bhw-info-section" style="display: none;">
+              <div class="form-section-title" style="margin-top: 20px;">
+                <h6>PROFESSIONAL INFORMATION</h6>
+              </div>
+
+              <!-- Registration Number and Accreditation Number -->
+              <div class="form-row">
+                <div class="form-group">
+                  <div class="input-wrapper">
+                    <input type="text" name="registration_number" id="registration_number" class="form-input" 
+                           placeholder="Registration Number (XX-XXX)" 
+                           pattern="^\d{2}-\d{3}$"
+                           title="Format must be exactly 2 digits, dash, 3 digits (e.g., 32-424)"
+                           maxlength="6">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <div class="input-wrapper">
+                    <input type="text" name="accreditation_number" id="accreditation_number" class="form-input" 
+                           placeholder="Accreditation Number (XX-XXX)" 
+                           pattern="^\d{2}-\d{3}$"
+                           title="Format must be exactly 2 digits, dash, 3 digits (e.g., 32-424)"
+                           maxlength="6">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Profile Picture Upload (BHW only) -->
+              <div class="form-row">
+                <div class="form-group">
+                  <div class="image-upload-wrapper">
+                    <label for="profile_picture" class="image-upload-label">
+                      <div class="image-upload-preview" id="imagePreview">
+                        <img id="previewImage" src="" alt="Preview">
+                        <button type="button" class="remove-image-btn" id="removeImageBtn" aria-label="Remove image">
+                          <i class="fas fa-times"></i>
+                        </button>
+                        <i class="fas fa-user-circle upload-icon"></i>
+                        <span class="upload-text">Click to upload the Registration Certificate</span>
+                      </div>
+                      <input type="file" name="profile_picture" id="profile_picture" class="image-upload-input" accept="image/*" style="display: none;">
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              
+            </div>
+
+            <!-- Privacy Policy Consent Section -->
+            <div class="form-row" style="margin-top: 20px;">
+              <div class="form-group" style="width: 100%;">
+                <div class="form-check" style="padding: 12px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+                  <input type="checkbox" name="privacy_consent" id="privacy_consent" class="form-check-input" required 
+                         style="margin-top: 4px; cursor: pointer;">
+                  <label class="form-check-label" for="privacy_consent" style="cursor: pointer; font-size: 14px; line-height: 1.5; color: #1e293b;">
+                    I have read and agree to the 
+                    <a href="{% url 'privacy_policy' %}" target="_blank" 
+                       style="color: #3b82f6; text-decoration: underline; font-weight: 500;">
+                      Data Privacy Terms and Agreement
+                    </a>
+                  </label>
+                </div>
               </div>
             </div>
 
@@ -408,9 +905,5 @@
     <!-- Bootstrap Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{% static 'js/register.js' %}"></script>
-     <!-- Role Selection Script -->
-     <script>
-      
-     </script>
   </body>
 </html>

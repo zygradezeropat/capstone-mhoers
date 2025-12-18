@@ -60,7 +60,7 @@
           <div class="d-flex align-items-center justify-content-between flex-wrap mb-3">
             <img src="{% static 'images/LGU-NEWCORELLA.png' %}" alt="LGU New Corella Logo" class="report-logo mb-3 mb-lg-0">
             <div class="text-center flex-grow-1 px-lg-4">
-              <h4 class="text-primary mb-1">Facility &amp; Workforce Masterlist</h4>
+              <h4 class="text-primary mb-1 text-uppercase">FACILITY &amp; WORKFORCE MASTERLIST</h4>
               <p class="text-muted mb-0">Accredited personnel roster per facility for licensing &amp; compliance</p>
               <small class="text-muted">Generated on {{ generated_at|date:'F d, Y h:i A' }}</small>
             </div>
@@ -81,11 +81,10 @@
         <table class="table table-bordered roster-table">
           <thead class="table-light">
             <tr>
-              <th style="width: 18%;">Facility</th>
-              <th style="width: 18%;">Assigned BHW</th>
-              <th style="width: 21%;">Barangay Health Workers</th>
-              <th style="width: 21%;">Doctors</th>
-              <th style="width: 22%;">Nurses</th>
+              <th style="width: 25%;">Facility</th>
+              <th style="width: 25%;">Person assigned</th>
+              <th style="width: 25%;">Barangay Health Workers</th>
+            
             </tr>
           </thead>
           <tbody>
@@ -93,16 +92,12 @@
             <tr>
               <td>
                 <div class="fw-semibold">{{ entry.facility.name }}</div>
-                {% if entry.facility.latitude and entry.facility.longitude %}
-                  <div class="text-muted small">Lat: {{ entry.facility.latitude }}, Lng: {{ entry.facility.longitude }}</div>
-                {% endif %}
               </td>
               <td>
                 {% if entry.facility.assigned_bhw %}
                   <div>{{ entry.facility.assigned_bhw }}</div>
-                  <div class="text-muted small">(Assigned)</div>
                 {% else %}
-                  <span class="text-muted">No BHW assigned</span>
+                  <span class="text-muted">No person assigned</span>
                 {% endif %}
               </td>
               <td>
@@ -110,55 +105,60 @@
                   {% for bhw in entry.bhws %}
                     <div class="mb-2">
                       <div class="fw-semibold">{{ bhw.first_name }} {{ bhw.last_name }}</div>
-                      <div class="text-muted small">Accreditation #: {{ bhw.accreditationNumber|default:"N/A" }}</div>
-                      <div class="text-muted small">Registration #: {{ bhw.registrationNumber|default:"N/A" }}</div>
-                      <span class="tag">{{ bhw.status }}</span>
                     </div>
                   {% endfor %}
                 {% else %}
                   <span class="text-muted">No accredited BHW on file</span>
                 {% endif %}
               </td>
-              <td>
-                {% if entry.doctors %}
-                  {% for doctor in entry.doctors %}
-                    <div class="mb-2">
-                      <div class="fw-semibold">Dr. {{ doctor.first_name }} {{ doctor.last_name }}</div>
-                      <div class="text-muted small">Specialization: {{ doctor.specialization|default:"N/A" }}</div>
-                      <div class="text-muted small">License #: {{ doctor.license_number|default:"N/A" }}</div>
-                      <span class="tag">{{ doctor.status }}</span>
-                    </div>
-                  {% endfor %}
-                {% else %}
-                  <span class="text-muted">No accredited doctors on file</span>
-                {% endif %}
-              </td>
-              <td>
-                {% if entry.nurses %}
-                  {% for nurse in entry.nurses %}
-                    <div class="mb-2">
-                      <div class="fw-semibold">Nurse {{ nurse.first_name }} {{ nurse.last_name }}</div>
-                      <div class="text-muted small">PRC #: {{ nurse.prc_license_number|default:"N/A" }}</div>
-                      <div class="text-muted small">Assigned Area: {{ nurse.nursing_assigned_area|default:"N/A" }}</div>
-                      <span class="tag">{{ nurse.status }}</span>
-                    </div>
-                  {% endfor %}
-                {% else %}
-                  <span class="text-muted">No accredited nurses on file</span>
-                {% endif %}
-              </td>
+              
             </tr>
             {% empty %}
             <tr>
-              <td colspan="5" class="text-center text-muted py-4">No facilities available.</td>
+              <td colspan="4" class="text-center text-muted py-4">No facilities available.</td>
             </tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
 
+      <!-- MHO Doctors Table - Only visible to staff/superuser -->
+      {% if is_staff %}
+      <div class="table-responsive mt-4" id="mhoDoctorsTable">
+        <table class="table table-bordered roster-table">
+          <thead class="table-light">
+            <tr>
+              <th style="width: 50%;">Facility</th>
+              <th style="width: 50%;">Doctors</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <div class="fw-semibold">MHO</div>
+              </td>
+              <td>
+                {% if all_doctors %}
+                  {% for doctor in all_doctors %}
+                    <div class="mb-2">
+                      <div class="fw-semibold">Dr. {{ doctor.first_name }} {{ doctor.last_name }}</div>
+                      {% if doctor.specialization %}
+                        <div class="text-muted small">{{ doctor.specialization }}</div>
+                      {% endif %}
+                    </div>
+                  {% endfor %}
+                {% else %}
+                  <span class="text-muted">No accredited doctors on file</span>
+                {% endif %}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+
       <div class="mt-3">
-        <small class="text-muted d-block">• Status values reflect the latest accreditation workflow (Pending/Approved/Rejected).</small>
+        <small class="text-muted d-block">• Only approved personnel are displayed in this masterlist.</small>
         <small class="text-muted d-block">• Please coordinate with HR for missing personnel records.</small>
       </div>
     </div>
@@ -173,6 +173,8 @@
     const logoLeft = "{% static 'images/LGU-NEWCORELLA.png' %}";
     const logoRight = "{% static 'images/MHO-LOGO.png' %}";
     const tableHtml = document.getElementById('rosterTable')?.innerHTML || '';
+    const mhoDoctorsTable = document.getElementById('mhoDoctorsTable');
+    const mhoDoctorsTableHtml = mhoDoctorsTable ? mhoDoctorsTable.innerHTML : '';
 
     const printWindow = window.open('', '_blank');
     printWindow.document.write(`
@@ -285,6 +287,7 @@
         </div>
         <h2 style="text-align:center; margin-bottom: 16px;">${reportTitle}</h2>
         ${tableHtml}
+        ${mhoDoctorsTableHtml}
         <p style="margin-top: 12px; font-size: 12px;">Generated on ${generatedAt}</p>
       </body>
       </html>

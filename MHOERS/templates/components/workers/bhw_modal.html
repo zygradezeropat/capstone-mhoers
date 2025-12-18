@@ -11,7 +11,7 @@
             </div>
             <div class="title-content">
               <h5 class="modal-title" id="bhwModalLabel">Add New BHW</h5>
-              <p class="modal-subtitle">Register a new Barangay Health Worker</p>
+              <p class="modal-subtitle">Add a Barangay Health Worker to the whitelist</p>
             </div>
           </div>
           <button type="button" class="btn-close modern-close" data-bs-dismiss="modal" aria-label="Close">
@@ -66,36 +66,17 @@
             <div class="row g-3">
               <div class="col-md-6">
                 <div class="form-floating">
-                  <input type="text" name="accreditation_number" id="bhw_accreditation_number" class="form-control modern-input" placeholder="Accreditation Number" required>
+                  <input type="text" name="accreditation_number" id="bhw_accreditation_number" class="form-control modern-input" placeholder="Accreditation Number (e.g., 32-424)" pattern="^\d{2}-\d{3}$" maxlength="6" title="Format must be exactly 2 digits, dash, 3 digits (e.g., 32-424)" required>
                   <label for="bhw_accreditation_number"><i class="bi bi-shield-check me-2"></i>Accreditation Number</label>
                 </div>
+                <small class="text-muted">Format: XX-XXX (e.g., 32-424)</small>
               </div>
               <div class="col-md-6">
                 <div class="form-floating">
-                  <input type="text" name="registration_number" id="bhw_registration_number" class="form-control modern-input" placeholder="Registration Number" required>
+                  <input type="text" name="registration_number" id="bhw_registration_number" class="form-control modern-input" placeholder="Registration Number (e.g., 32-424)" pattern="^\d{2}-\d{3}$" maxlength="6" title="Format must be exactly 2 digits, dash, 3 digits (e.g., 32-424)" required>
                   <label for="bhw_registration_number"><i class="bi bi-card-checklist me-2"></i>Registration Number</label>
                 </div>
-              </div>
-              <div class="col-md-6">
-                <div class="form-floating">
-                  <select name="bhw_sub_role" id="bhw_sub_role" class="form-select modern-select" required>
-                    <option value="" disabled selected>Select BHW Type</option>
-                    <option value="BHW">BHW (Barangay Health Worker)</option>
-                    <option value="BHW_NURSE">Nurse</option>
-                  </select>
-                  <label for="bhw_sub_role"><i class="bi bi-person-badge me-2"></i>BHW Type</label>
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="form-floating">
-                  <select name="facility" id="bhw_facility" class="form-select modern-select">
-                    <option value="" disabled selected>Select Assigned Facility (Optional)</option>
-                    {% for facility in facilities %}
-                      <option value="{{ facility.facility_id }}">{{ facility.name }}</option>
-                    {% endfor %}
-                  </select>
-                  <label for="bhw_facility"><i class="bi bi-building me-2"></i>Assigned Facility</label>
-                </div>
+                <small class="text-muted">Format: XX-XXX (e.g., 32-424)</small>
               </div>
             </div>
           </div>
@@ -109,95 +90,36 @@
             <div class="row g-3">
               <div class="col-md-6">
                 <div class="form-floating">
-                  <input type="tel" name="phone" id="bhw_phone" class="form-control modern-input" placeholder="Phone Number" required>
-                  <label for="bhw_phone"><i class="bi bi-phone me-2"></i>Phone Number</label>
+                  <input type="tel" name="phone" id="bhw_phone" class="form-control modern-input" placeholder="Phone Number (e.g., 09123456789)" pattern="^09\d{9}$" maxlength="11" title="Phone number must be exactly 11 digits starting with 09">
+                  <label for="bhw_phone"><i class="bi bi-phone me-2"></i>Phone Number (Optional)</label>
                 </div>
+                <small class="text-muted">Format: 09XXXXXXXXX (11 digits, must start with 09)</small>
               </div>
               <div class="col-md-6">
                 <div class="form-floating">
-                  <input type="email" name="email" id="bhw_email" class="form-control modern-input" placeholder="Email Address">
+                  <input type="email" name="email" id="bhw_email" class="form-control modern-input" placeholder="Email Address (e.g., example@email.com)" title="Please enter a valid email address">
                   <label for="bhw_email"><i class="bi bi-envelope me-2"></i>Email Address (Optional)</label>
                 </div>
+                <small class="text-muted">Format: example@email.com</small>
               </div>
             </div>
           </div>
 
-          <!-- Address Information Section -->
+          <!-- Status Information Section -->
           <div class="form-section">
             <div class="section-header">
-              <i class="bi bi-geo-alt"></i>
-              <h6>Address Information</h6>
+              <i class="bi bi-toggle-on"></i>
+              <h6>Status</h6>
             </div>
             <div class="row g-3">
               <div class="col-md-12">
-                <div class="form-floating">
-                  <input type="text" name="street_address" id="bhw_street_address" class="form-control modern-input" placeholder="Street Address">
-                  <label for="bhw_street_address"><i class="bi bi-house me-2"></i>Street Address</label>
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" name="is_active" id="bhw_is_active" checked>
+                  <label class="form-check-label" for="bhw_is_active">
+                    <i class="bi bi-toggle-on me-2"></i>Active (Allow this BHW to register accounts)
+                  </label>
                 </div>
-              </div>
-              <div class="col-md-4">
-                <div class="form-floating">
-                  <input type="text" name="barangay" id="bhw_barangay" class="form-control modern-input" placeholder="Barangay" required>
-                  <label for="bhw_barangay"><i class="bi bi-geo-alt me-2"></i>Barangay</label>
-                </div>
-              </div>
-              <div class="col-md-4">
-                <div class="form-floating">
-                  <input type="text" name="city" id="bhw_city" class="form-control modern-input" placeholder="City">
-                  <label for="bhw_city"><i class="bi bi-building me-2"></i>City</label>
-                </div>
-              </div>
-              <div class="col-md-4">
-                <div class="form-floating">
-                  <input type="text" name="province" id="bhw_province" class="form-control modern-input" placeholder="Province">
-                  <label for="bhw_province"><i class="bi bi-map me-2"></i>Province</label>
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="form-floating">
-                  <input type="text" name="postal_code" id="bhw_postal_code" class="form-control modern-input" placeholder="Postal Code">
-                  <label for="bhw_postal_code"><i class="bi bi-mailbox me-2"></i>Postal Code</label>
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="form-floating">
-                  <input type="text" name="assigned_barangay" id="bhw_assigned_barangay" class="form-control modern-input" placeholder="Assigned Barangay">
-                  <label for="bhw_assigned_barangay"><i class="bi bi-pin-map me-2"></i>Assigned Barangay (Optional)</label>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Account Security Section -->
-          <div class="form-section">
-            <div class="section-header">
-              <i class="bi bi-shield-lock"></i>
-              <h6>Account Security</h6>
-            </div>
-            <div class="row g-3">
-              <div class="col-md-6">
-                <div class="form-floating">
-                  <input type="text" name="username" id="bhw_username" class="form-control modern-input" placeholder="Username" required>
-                  <label for="bhw_username"><i class="bi bi-at me-2"></i>Username</label>
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="form-floating">
-                  <input type="email" name="email_account" id="bhw_email_account" class="form-control modern-input" placeholder="Email for Account" required>
-                  <label for="bhw_email_account"><i class="bi bi-envelope me-2"></i>Email for Account</label>
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="form-floating">
-                  <input type="password" name="password1" id="bhw_password1" class="form-control modern-input" placeholder="Create Password" required>
-                  <label for="bhw_password1"><i class="bi bi-key me-2"></i>Create Password</label>
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="form-floating">
-                  <input type="password" name="password2" id="bhw_password2" class="form-control modern-input" placeholder="Verify Password" required>
-                  <label for="bhw_password2"><i class="bi bi-key-fill me-2"></i>Verify Password</label>
-                </div>
+                <small class="text-muted">Uncheck to revoke registration access without deleting from whitelist</small>
               </div>
             </div>
           </div>
@@ -208,7 +130,7 @@
             <i class="bi bi-x-circle me-2"></i>Cancel
           </button>
           <button type="submit" class="btn btn-primary modern-btn-submit">
-            <i class="bi bi-person-plus me-2"></i>Create BHW Account
+            <i class="bi bi-person-plus me-2"></i>Add to Whitelist
           </button>
         </div>
       </form>
@@ -419,4 +341,140 @@
   }
 }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Format Registration Number and Accreditation Number (strict format: XX-XXX)
+    function formatNumberWithDash(input) {
+        if (!input) return;
+        
+        input.addEventListener('input', function(e) {
+            // Remove all non-numeric characters except dash
+            let value = e.target.value.replace(/[^0-9-]/g, '');
+            
+            // Ensure only one dash
+            const parts = value.split('-');
+            if (parts.length > 2) {
+                value = parts[0] + '-' + parts.slice(1).join('');
+            }
+            
+            // Strict format: Exactly 2 digits before dash, 3 after (XX-XXX)
+            if (parts.length === 2) {
+                // Limit to 2 digits before dash
+                if (parts[0].length > 2) {
+                    parts[0] = parts[0].substring(0, 2);
+                }
+                // Limit to 3 digits after dash
+                if (parts[1].length > 3) {
+                    parts[1] = parts[1].substring(0, 3);
+                }
+                value = parts[0] + '-' + parts[1];
+            } else if (parts.length === 1 && parts[0].length > 2) {
+                // Auto-insert dash after 2 digits
+                value = parts[0].substring(0, 2) + '-' + parts[0].substring(2, 5);
+            }
+            
+            e.target.value = value;
+        });
+        
+        input.addEventListener('blur', function(e) {
+            // Ensure format is correct on blur
+            const value = e.target.value.trim();
+            const exactFormat = /^\d{2}-\d{3}$/;
+            
+            if (value && !exactFormat.test(value)) {
+                // Try to fix common mistakes
+                const digits = value.replace(/[^0-9]/g, '');
+                if (digits.length >= 5) {
+                    e.target.value = digits.substring(0, 2) + '-' + digits.substring(2, 5);
+                } else {
+                    e.target.setCustomValidity('Format must be exactly 2 digits, dash, 3 digits (e.g., 32-424)');
+                    e.target.reportValidity();
+                }
+            } else {
+                e.target.setCustomValidity('');
+            }
+        });
+    }
+    
+    // Apply formatting to registration and accreditation number inputs
+    const registrationNumberInput = document.getElementById('bhw_registration_number');
+    const accreditationNumberInput = document.getElementById('bhw_accreditation_number');
+    
+    if (registrationNumberInput) {
+        formatNumberWithDash(registrationNumberInput);
+    }
+    
+    if (accreditationNumberInput) {
+        formatNumberWithDash(accreditationNumberInput);
+    }
+    
+    // Phone number validation - must start with 09 and be exactly 11 digits
+    const phoneInput = document.getElementById('bhw_phone');
+    if (phoneInput) {
+        phoneInput.addEventListener('input', function() {
+            let phone = this.value.replace(/[^0-9]/g, '');
+            
+            // Limit to 11 digits
+            if (phone.length > 11) {
+                phone = phone.substring(0, 11);
+            }
+            
+            this.value = phone;
+            
+            // Validate: must start with 09 and be exactly 11 digits
+            this.setCustomValidity('');
+            if (phone && phone.length !== 11) {
+                this.setCustomValidity('Phone number must be exactly 11 digits.');
+            } else if (phone && phone.length === 11 && !phone.startsWith('09')) {
+                this.setCustomValidity('Phone number must start with 09.');
+            } else if (phone && phone.length === 11 && phone.startsWith('09')) {
+                this.setCustomValidity('');
+            }
+        });
+
+        phoneInput.addEventListener('blur', function() {
+            const phone = this.value.replace(/[^0-9]/g, '');
+            
+            if (phone && phone.length !== 11) {
+                this.setCustomValidity('Phone number must be exactly 11 digits.');
+                this.reportValidity();
+            } else if (phone && !phone.startsWith('09')) {
+                this.setCustomValidity('Phone number must start with 09.');
+                this.reportValidity();
+            } else if (phone && phone.length === 11 && phone.startsWith('09')) {
+                this.setCustomValidity('');
+            } else if (!phone) {
+                this.setCustomValidity(''); // Clear error if empty (optional field)
+            }
+        });
+    }
+
+    // Email validation
+    const emailInput = document.getElementById('bhw_email');
+    if (emailInput) {
+        emailInput.addEventListener('input', function() {
+            const email = this.value.trim();
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            
+            this.setCustomValidity('');
+            if (email && !emailPattern.test(email)) {
+                this.setCustomValidity('Please enter a valid email address.');
+            }
+        });
+
+        emailInput.addEventListener('blur', function() {
+            const email = this.value.trim();
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            
+            if (email && !emailPattern.test(email)) {
+                this.setCustomValidity('Please enter a valid email address.');
+                this.reportValidity();
+            } else {
+                this.setCustomValidity(''); // Clear error if valid or empty (optional field)
+            }
+        });
+    }
+});
+</script>
 

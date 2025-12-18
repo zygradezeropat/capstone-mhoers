@@ -16,7 +16,15 @@ class Referral(models.Model):
 
     facility = models.ForeignKey(Facility, on_delete=models.CASCADE, related_name='referrals')
     referral_id = models.AutoField(primary_key=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)  # Who created/referred
+    examined_by = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='examinations_performed',
+        verbose_name='Examined By'
+    )  # Doctor/staff who performed the check-up
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
     weight = models.DecimalField(max_digits=5, decimal_places=2)
     height = models.DecimalField(max_digits=5, decimal_places=2)
@@ -30,6 +38,21 @@ class Referral(models.Model):
     symptoms = models.TextField()
     work_up_details = models.TextField()
     ICD_code = models.CharField(max_length=10, null=True, blank=True)
+    
+    # NEW FIELD: Link to Disease database
+    disease = models.ForeignKey(
+        'analytics.Disease',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='referrals',
+        help_text="Verified disease from database"
+    )
+    disease_verified = models.BooleanField(
+        default=False,
+        help_text="Whether doctor verified disease information from database"
+    )
+    
     status = models.CharField(max_length=20, default='pending')
     created_at = models.DateTimeField(auto_now_add=True)
     completed_at = models.DateTimeField(null=True, blank=True)
@@ -52,10 +75,16 @@ class Referral(models.Model):
     family_planning_type = models.CharField(
         max_length=20,
         choices=[
+            # Female options
             ('DMPA', 'DMPA'),
             ('IMPLANT', 'IMPLANT'),
             ('IUD', 'IUD'),
             ('PILLS', 'PILLS'),
+            # Male options
+            ('CONDOM', 'CONDOM'),
+            ('VASECTOMY', 'VASECTOMY'),
+            ('WITHDRAWAL', 'WITHDRAWAL'),
+            ('NONE', 'NONE'),
         ],
         blank=True, null=True,
         verbose_name='Family Planning Type'
@@ -84,6 +113,18 @@ class Referral(models.Model):
      
     def __str__(self):
         return f"Referral #{self.referral_id} - {self.patient}"
+
+    @property
+    def completion_duration_minutes(self):
+        """
+        Returns the rounded number of minutes between referral creation and completion.
+        """
+        if not self.created_at or not self.completed_at:
+            return None
+
+        delta = self.completed_at - self.created_at
+        minutes = max(round(delta.total_seconds() / 60), 0)
+        return minutes
 
 
 class FollowUpVisit(models.Model):

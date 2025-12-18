@@ -12,8 +12,6 @@
   <div class="row mb-4">
     <div class="col-12 d-flex justify-content-between align-items-center">
       <div>
-        <h4 class="text-primary mb-0">Disease Registry</h4>
-        <p class="text-muted">Manage and view disease information with ICD codes and criticality levels</p>
       </div>
       <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDiseaseModal">
         <i class="bi bi-plus-circle me-2"></i>Add Disease
@@ -33,11 +31,15 @@
                   <th>Name</th>
                   <th>Description</th>
                   <th>Critical Level</th>
+                  <th class="text-center">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {% for disease in diseases %}
-                <tr>
+                <tr class="disease-row"
+                    data-disease-id="{{ disease.id }}"
+                    data-update-url="{% url 'update_disease' disease.id %}"
+                    data-delete-url="{% url 'delete_disease' disease.id %}">
                   <td><strong>{{ disease.icd_code }}</strong></td>
                   <td>{{ disease.name }}</td>
                   <td>{{ disease.description }}</td>
@@ -50,10 +52,19 @@
                       <span class="badge bg-success">Low</span>
                     {% endif %}
                   </td>
-                </tr>
-                {% empty %}
-                <tr>
-                  <td colspan="4" class="text-center text-muted py-4">No diseases found in the registry.</td>
+                  <td class="text-center">
+                    <div class="btn-group btn-group-sm action-button-group" role="group">
+                      <button type="button" class="btn btn-outline-primary table-action-btn btn-view-disease" title="View details">
+                        <i class="bi bi-eye"></i>
+                      </button>
+                      <button type="button" class="btn btn-outline-secondary table-action-btn btn-edit-disease" title="Edit disease">
+                        <i class="bi bi-pencil-square"></i>
+                      </button>
+                      <button type="button" class="btn btn-outline-danger table-action-btn btn-delete-disease" title="Delete disease">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </div>
+                  </td>
                 </tr>
                 {% endfor %}
               </tbody>
@@ -64,6 +75,8 @@
     </div>
   </div>
 </div>
+
+{{ diseases_payload|json_script:"diseases-data" }}
 
 <!-- Add Disease Modal -->
 <div class="modal fade" id="addDiseaseModal" tabindex="-1" role="dialog" aria-labelledby="addDiseaseModalLabel" aria-hidden="true">
@@ -139,6 +152,34 @@
             </div>
           </div>
 
+          <!-- Verification Section -->
+          <div class="form-section">
+            <div class="section-header">
+              <i class="bi bi-person-check"></i>
+              <h6>Verification</h6>
+            </div>
+            <div class="row g-3">
+              <div class="col-md-12">
+                <div class="form-floating">
+                  <select name="verified_by_doctor" id="disease_verified_by" class="form-select modern-select" required disabled>
+                    <option value="">Select Doctor </option>
+                    {% for doctor in doctors %}
+                      <option value="{{ doctor.doctor_id }}" {% if current_doctor_id and doctor.doctor_id == current_doctor_id %}selected{% endif %}>
+                        Dr. {{ doctor.first_name }} {{ doctor.last_name }}{% if doctor.specialization %} - {{ doctor.specialization }}{% endif %}
+                      </option>
+                    {% endfor %}
+                  </select>
+                  <label for="disease_verified_by">
+                    <i class="bi bi-person-check me-2"></i>Verified By Doctor
+                  </label>
+                  <small class="text-muted d-block mt-2">
+                    Select the doctor who verified this disease information
+                  </small>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Description Section -->
           <div class="form-section">
             <div class="section-header">
@@ -154,6 +195,43 @@
               </div>
             </div>
           </div>
+
+          <!-- Symptoms & Treatment Section -->
+          <div class="form-section">
+            <div class="section-header">
+              <i class="bi bi-heart-pulse"></i>
+              <h6>Symptoms & Treatment</h6>
+            </div>
+            <div class="row g-3">
+              <div class="col-md-12">
+                <label for="disease_symptoms" class="form-label">
+                  <i class="bi bi-list-ul me-2"></i>Common Symptoms
+                </label>
+                <textarea name="common_symptoms" id="disease_symptoms" 
+                          class="form-control modern-input" 
+                          placeholder="Enter common symptoms associated with this disease (e.g., Fever, Cough, Headache)..." 
+                          rows="3"></textarea>
+              </div>
+              <div class="col-md-12">
+                <label for="disease_treatment" class="form-label">
+                  <i class="bi bi-capsule me-2"></i>Treatment Protocol
+                </label>
+                <textarea name="treatment_protocol" id="disease_treatment" 
+                          class="form-control modern-input" 
+                          placeholder="Enter standard treatment protocol for this disease..." 
+                          rows="3"></textarea>
+              </div>
+              <div class="col-md-12">
+                <label for="disease_guidelines" class="form-label">
+                  <i class="bi bi-file-medical me-2"></i>Treatment Guidelines
+                </label>
+                <textarea name="treatment_guidelines" id="disease_guidelines" 
+                          class="form-control modern-input" 
+                          placeholder="Enter clinical treatment guidelines and recommendations..." 
+                          rows="4"></textarea>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="modal-footer modern-footer">
@@ -162,6 +240,287 @@
           </button>
           <button type="submit" class="btn btn-primary modern-btn-submit">
             <i class="bi bi-check-circle me-2"></i>Add Disease
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- View Disease Modal -->
+<div class="modal fade" id="viewDiseaseModal" tabindex="-1" role="dialog" aria-labelledby="viewDiseaseModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
+    <div class="modal-content modern-modal">
+      <div class="modal-header modern-header info-header">
+        <div class="header-content">
+          <div class="icon-wrapper">
+            <i class="bi bi-journal-medical"></i>
+          </div>
+          <div class="title-content">
+            <h5 class="modal-title" id="viewDiseaseModalLabel">Disease Details</h5>
+            <p class="modal-subtitle">Review the complete disease profile</p>
+          </div>
+        </div>
+        <button type="button" class="btn-close modern-close" data-bs-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body modern-body">
+        <div class="form-section">
+          <div class="section-header">
+            <i class="bi bi-card-list"></i>
+            <h6>Overview</h6>
+          </div>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <p class="text-muted small mb-1">ICD Code</p>
+              <p class="modern-value" id="viewDiseaseIcd">-</p>
+            </div>
+            <div class="col-md-4">
+              <p class="text-muted small mb-1">Disease Name</p>
+              <p class="modern-value" id="viewDiseaseName">-</p>
+            </div>
+            <div class="col-md-4">
+              <p class="text-muted small mb-1">Critical Level</p>
+              <span class="badge bg-success" id="viewDiseaseCritical">Low</span>
+            </div>
+            <div class="col-12">
+              <p class="text-muted small mb-1">Description</p>
+              <p class="modern-value" id="viewDiseaseDescription">-</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="section-header">
+            <i class="bi bi-heart-pulse"></i>
+            <h6>Symptoms & Treatment</h6>
+          </div>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <p class="text-muted small mb-1">Common Symptoms</p>
+              <p class="modern-value" id="viewDiseaseSymptoms">Not specified</p>
+            </div>
+            <div class="col-md-4">
+              <p class="text-muted small mb-1">Treatment Protocol</p>
+              <p class="modern-value" id="viewDiseaseTreatment">Not specified</p>
+            </div>
+            <div class="col-md-4">
+              <p class="text-muted small mb-1">Treatment Guidelines</p>
+              <p class="modern-value" id="viewDiseaseGuidelines">Not specified</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="section-header">
+            <i class="bi bi-person-badge"></i>
+            <h6>Verification</h6>
+          </div>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <p class="text-muted small mb-1">Verified By</p>
+              <p class="modern-value" id="viewDiseaseVerifiedBy">Not assigned</p>
+            </div>
+            <div class="col-md-6">
+              <p class="text-muted small mb-1">Verified At</p>
+              <p class="modern-value" id="viewDiseaseVerifiedAt">Pending verification</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer modern-footer">
+        <button type="button" class="btn btn-outline-secondary modern-btn-cancel" data-bs-dismiss="modal">
+          <i class="bi bi-x-circle me-2"></i>Close
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Disease Modal -->
+<div class="modal fade" id="editDiseaseModal" tabindex="-1" role="dialog" aria-labelledby="editDiseaseModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
+    <div class="modal-content modern-modal">
+      <form method="POST" id="editDiseaseForm" class="disease-form">
+        {% csrf_token %}
+        <div class="modal-header modern-header edit-header">
+          <div class="header-content">
+            <div class="icon-wrapper">
+              <i class="bi bi-pencil-square"></i>
+            </div>
+            <div class="title-content">
+              <h5 class="modal-title" id="editDiseaseModalLabel">Edit Disease</h5>
+              <p class="modal-subtitle">Update existing disease information</p>
+            </div>
+          </div>
+          <button type="button" class="btn-close modern-close" data-bs-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+
+        <div class="modal-body modern-body">
+          <div class="form-section">
+            <div class="section-header">
+              <i class="bi bi-info-circle"></i>
+              <h6>Basic Information</h6>
+            </div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <div class="form-floating">
+                  <input type="text" name="icd_code" id="edit_disease_icd_code" class="form-control modern-input" placeholder="ICD Code" maxlength="10" required>
+                  <label for="edit_disease_icd_code"><i class="bi bi-code-square me-2"></i>ICD Code</label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-floating">
+                  <input type="text" name="name" id="edit_disease_name" class="form-control modern-input" placeholder="Disease Name" maxlength="100" required>
+                  <label for="edit_disease_name"><i class="bi bi-tag me-2"></i>Disease Name</label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <div class="section-header">
+              <i class="bi bi-award"></i>
+              <h6>Classification</h6>
+            </div>
+            <div class="row g-3">
+              <div class="col-md-12">
+                <div class="form-floating">
+                  <select name="critical_level" id="edit_disease_critical_level" class="form-select modern-select" required>
+                    <option value="">Select Critical Level</option>
+                    <option value="high">High</option>
+                    <option value="medium">Medium</option>
+                    <option value="low">Low</option>
+                  </select>
+                  <label for="edit_disease_critical_level"><i class="bi bi-exclamation-triangle me-2"></i>Critical Level</label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <div class="section-header">
+              <i class="bi bi-person-check"></i>
+              <h6>Verification</h6>
+            </div>
+            <div class="row g-3">
+              <div class="col-md-12">
+                <div class="form-floating">
+                  <select name="verified_by_doctor" id="edit_disease_verified_by" class="form-select modern-select">
+                    <option value="">Select Doctor </option>
+                    {% for doctor in doctors %}
+                      <option value="{{ doctor.doctor_id }}">
+                        Dr. {{ doctor.first_name }} {{ doctor.last_name }}{% if doctor.specialization %} - {{ doctor.specialization }}{% endif %}
+                      </option>
+                    {% endfor %}
+                  </select>
+                  <label for="edit_disease_verified_by">
+                    <i class="bi bi-person-check me-2"></i>Verified By Doctor
+                  </label>
+                  <small class="text-muted d-block mt-2">
+                    Choosing a doctor will update the verification details
+                  </small>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <div class="section-header">
+              <i class="bi bi-file-text"></i>
+              <h6>Description</h6>
+            </div>
+            <div class="row g-3">
+              <div class="col-md-12">
+                <label for="edit_disease_description" class="form-label">
+                  <i class="bi bi-file-text me-2"></i>Detailed Description
+                </label>
+                <textarea name="description" id="edit_disease_description" class="form-control modern-input" placeholder="Enter detailed description of the disease..." rows="4" required></textarea>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <div class="section-header">
+              <i class="bi bi-heart-pulse"></i>
+              <h6>Symptoms & Treatment</h6>
+            </div>
+            <div class="row g-3">
+              <div class="col-md-12">
+                <label for="edit_disease_symptoms" class="form-label">
+                  <i class="bi bi-list-ul me-2"></i>Common Symptoms
+                </label>
+                <textarea name="common_symptoms" id="edit_disease_symptoms" class="form-control modern-input" placeholder="Enter common symptoms associated with this disease..." rows="3"></textarea>
+              </div>
+              <div class="col-md-12">
+                <label for="edit_disease_treatment" class="form-label">
+                  <i class="bi bi-capsule me-2"></i>Treatment Protocol
+                </label>
+                <textarea name="treatment_protocol" id="edit_disease_treatment" class="form-control modern-input" placeholder="Enter standard treatment protocol for this disease..." rows="3"></textarea>
+              </div>
+              <div class="col-md-12">
+                <label for="edit_disease_guidelines" class="form-label">
+                  <i class="bi bi-file-medical me-2"></i>Treatment Guidelines
+                </label>
+                <textarea name="treatment_guidelines" id="edit_disease_guidelines" class="form-control modern-input" placeholder="Enter clinical treatment guidelines and recommendations..." rows="4"></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer modern-footer">
+          <button type="button" class="btn btn-outline-secondary modern-btn-cancel" data-bs-dismiss="modal">
+            <i class="bi bi-x-circle me-2"></i>Cancel
+          </button>
+          <button type="submit" class="btn btn-primary modern-btn-submit">
+            <i class="bi bi-check-circle me-2"></i>Save Changes
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Disease Modal -->
+<div class="modal fade" id="deleteDiseaseModal" tabindex="-1" role="dialog" aria-labelledby="deleteDiseaseModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content modern-modal">
+      <form method="POST" id="deleteDiseaseForm">
+        {% csrf_token %}
+        <div class="modal-header modern-header delete-header">
+          <div class="header-content">
+            <div class="icon-wrapper">
+              <i class="bi bi-exclamation-octagon"></i>
+            </div>
+            <div class="title-content">
+              <h5 class="modal-title" id="deleteDiseaseModalLabel">Delete Disease</h5>
+              <p class="modal-subtitle">This action cannot be undone</p>
+            </div>
+          </div>
+          <button type="button" class="btn-close modern-close" data-bs-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+
+        <div class="modal-body modern-body">
+          <p class="mb-0">
+            Are you sure you want to remove
+            <strong id="deleteDiseaseName">this disease</strong> from the registry?
+          </p>
+          <p class="text-muted small mt-2 mb-0">
+            All analytics and future references will no longer include this disease.
+          </p>
+        </div>
+
+        <div class="modal-footer modern-footer">
+          <button type="button" class="btn btn-outline-secondary modern-btn-cancel" data-bs-dismiss="modal">
+            <i class="bi bi-x-circle me-2"></i>Cancel
+          </button>
+          <button type="submit" class="btn btn-danger modern-btn-submit">
+            <i class="bi bi-trash me-2"></i>Delete
           </button>
         </div>
       </form>
@@ -252,6 +611,46 @@
   font-size: 1.5rem;
   font-weight: bold;
   line-height: 1;
+}
+
+.action-button-group .table-action-btn {
+  border-radius: 10px;
+  padding: 0.35rem 0.55rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.action-button-group .table-action-btn i {
+  font-size: 1rem;
+}
+
+.action-button-group .table-action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+.modern-header.info-header {
+  background: linear-gradient(135deg, #0d6efd 0%, #00b0ff 100%);
+}
+
+.modern-header.edit-header {
+  background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%);
+}
+
+.modern-header.delete-header {
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+}
+
+.modern-value {
+  font-weight: 600;
+  color: #2c3e50;
+  background: #fff;
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  border: 1px solid #e9ecef;
+  min-height: 58px;
 }
 
 .modern-body {
@@ -380,11 +779,7 @@
 }
 
 /* DataTables Custom Styling */
-#diseasesTable_wrapper .dataTables_filter {
-  float: right;
-  text-align: right;
-  margin-bottom: 1rem;
-}
+ 
 
 #diseasesTable_wrapper .dataTables_filter input {
   margin-left: 0.5rem;
@@ -420,23 +815,31 @@
   border: 1px solid #dee2e6;
   border-radius: 0.375rem;
   background: white;
-  color: #0d6efd !important;
+  color: #6c757d !important;
+  text-decoration: none;
 }
 
 #diseasesTable_wrapper .dataTables_paginate .paginate_button:hover {
-  background: #0d6efd;
-  color: white !important;
-  border-color: #0d6efd;
+  background: #f8f9fa;
+  color: #495057 !important;
+  border-color: #adb5bd;
 }
 
 #diseasesTable_wrapper .dataTables_paginate .paginate_button.current {
-  background: #0d6efd;
-  color: white !important;
-  border-color: #0d6efd;
+  background: #e9ecef;
+  color: #212529 !important;
+  border: 1px solid #adb5bd;
+  font-weight: 500;
+}
+
+#diseasesTable_wrapper .dataTables_paginate .paginate_button.current:hover {
+  background: #e9ecef;
+  color: #212529 !important;
+  border-color: #adb5bd;
 }
 
 #diseasesTable_wrapper .dataTables_paginate .paginate_button.disabled {
-  opacity: 0.5;
+  opacity: 0.6;
   cursor: not-allowed;
 }
 
@@ -462,60 +865,88 @@
 {% block script %}
 <script>
 $(document).ready(function() {
-  // Initialize DataTable with modern styling
-  const tableConfig = {
-    responsive: true,
-    processing: true,
-    dom: '<"row mb-3"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
-         '<"row"<"col-sm-12"tr>>' +
-         '<"row mt-3"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
-    language: {
-      search: "",
-      searchPlaceholder: "Search diseases...",
-      lengthMenu: "Show _MENU_ entries",
-      info: "Showing _START_ to _END_ of _TOTAL_ diseases",
-      infoEmpty: "Showing 0 to 0 of 0 diseases",
-      infoFiltered: "(filtered from _MAX_ total diseases)",
-      zeroRecords: "No matching diseases found",
-      emptyTable: "No diseases found in the registry",
-      paginate: {
-        first: "First",
-        last: "Last",
-        next: "Next",
-        previous: "Previous"
+  const addDiseaseModal = $('#addDiseaseModal');
+  const editDiseaseModal = $('#editDiseaseModal');
+  const deleteDiseaseModal = $('#deleteDiseaseModal');
+  const viewDiseaseModal = $('#viewDiseaseModal');
+
+  // Get current doctor ID from template context
+  const currentDoctorId = {% if current_doctor_id %}{{ current_doctor_id }}{% else %}null{% endif %};
+
+  const diseaseMap = {};
+  const diseasesDataElement = document.getElementById('diseases-data');
+  if (diseasesDataElement) {
+    try {
+      const parsedDiseases = JSON.parse(diseasesDataElement.textContent || '[]');
+      parsedDiseases.forEach(disease => {
+        diseaseMap[disease.id] = disease;
+      });
+    } catch (error) {
+      console.error('Failed to parse disease payload', error);
+    }
+  }
+
+  const sanitizeText = (value = '') => {
+    return String(value || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  };
+
+  const formatSingleValue = (value, fallback = 'Not specified') => {
+    const clean = sanitizeText(value);
+    return clean.trim() ? clean : `<span class="text-muted">${fallback}</span>`;
+  };
+
+  const formatMultiline = (value, fallback = 'Not specified') => {
+    const clean = sanitizeText(value);
+    return clean.trim() ? clean.replace(/\n/g, '<br>') : `<span class="text-muted">${fallback}</span>`;
+  };
+
+  const updateCriticalBadge = (level = 'low') => {
+    const badge = $('#viewDiseaseCritical');
+    badge.removeClass('bg-danger bg-warning text-dark bg-success');
+    if (level === 'high') {
+      badge.addClass('bg-danger').text('High');
+    } else if (level === 'medium') {
+      badge.addClass('bg-warning text-dark').text('Medium');
+    } else {
+      badge.addClass('bg-success').text('Low');
+    }
+  };
+
+  const clearModalAlerts = (modal) => {
+    modal.find('.alert').remove();
+  };
+
+  const showModalAlert = (modal, message, type = 'danger') => {
+    const alertHtml = `
+      <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    `;
+    modal.find('.modal-body').first().prepend(alertHtml);
+  };
+
+  const toggleButtonLoading = (button, isLoading, loadingText) => {
+    if (!button || button.length === 0) return;
+    if (isLoading) {
+      button.data('original-html', button.html());
+      button.prop('disabled', true).html(`<span class="spinner-border spinner-border-sm me-2"></span>${loadingText}`);
+    } else {
+      const originalHtml = button.data('original-html');
+      if (originalHtml) {
+        button.html(originalHtml);
       }
-    },
-    pageLength: 10,
-    lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
-    order: [[0, 'asc']], // Sort by ICD Code by default
-    columnDefs: [
-      { 
-        targets: [2], 
-        orderable: true,
-        render: function(data, type, row) {
-          if (type === 'display' && data.length > 100) {
-            return data.substring(0, 100) + '...';
-          }
-          return data;
-        }
-      },
-      {
-        targets: [0],
-        className: "text-nowrap"
-      },
-      {
-        targets: [3],
-        className: "text-center"
-      }
-    ],
-    drawCallback: function() {
-      // Re-initialize tooltips if needed
-      $('[data-bs-toggle="tooltip"]').tooltip();
+      button.prop('disabled', false);
     }
   };
 
   if ($("#diseasesTable").length && !$.fn.DataTable.isDataTable('#diseasesTable')) {
-    $("#diseasesTable").DataTable(tableConfig);
+    $("#diseasesTable").DataTable();
   }
 
   // Handle form submission with AJAX
@@ -559,23 +990,165 @@ $(document).ready(function() {
           }
         }
         
-        // Show error alert
-        const alertHtml = `
-          <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i>
-            ${errorMsg}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-          </div>
-        `;
-        $('.modal-body').prepend(alertHtml);
+        showModalAlert(addDiseaseModal, errorMsg, 'danger');
       }
     });
+  });
+
+  // Set current doctor when modal is shown
+  $('#addDiseaseModal').on('shown.bs.modal', function() {
+    if (currentDoctorId) {
+      $('#disease_verified_by').val(currentDoctorId);
+    }
   });
 
   // Reset form when modal is closed
   $('#addDiseaseModal').on('hidden.bs.modal', function() {
     $('#addDiseaseForm')[0].reset();
-    $('.alert').remove();
+    // Re-select current doctor after reset
+    if (currentDoctorId) {
+      $('#disease_verified_by').val(currentDoctorId);
+    }
+    clearModalAlerts(addDiseaseModal);
+  });
+
+  const tableBody = $('#diseasesTable tbody');
+
+  // View disease handler
+  tableBody.on('click', '.btn-view-disease', function() {
+    const diseaseId = $(this).closest('tr').data('disease-id');
+    const disease = diseaseMap[diseaseId];
+    if (!disease) {
+      console.warn('Disease data is missing for row', diseaseId);
+      return;
+    }
+    $('#viewDiseaseModalLabel').text(disease.name || 'Disease Details');
+    $('#viewDiseaseIcd').text(disease.icd_code || '—');
+    $('#viewDiseaseName').text(disease.name || '—');
+    $('#viewDiseaseDescription').html(formatMultiline(disease.description, 'No description provided'));
+    $('#viewDiseaseSymptoms').html(formatMultiline(disease.common_symptoms, 'Not specified'));
+    $('#viewDiseaseTreatment').html(formatMultiline(disease.treatment_protocol, 'Not specified'));
+    $('#viewDiseaseGuidelines').html(formatMultiline(disease.treatment_guidelines, 'Not specified'));
+    let verifiedDisplay = '';
+    if (disease.verified_by) {
+      let name = disease.verified_by.trim();
+      if (!name.toLowerCase().startsWith('dr.')) {
+        name = `Dr. ${name}`;
+      }
+      verifiedDisplay = name;
+    }
+    $('#viewDiseaseVerifiedBy').html(formatSingleValue(verifiedDisplay, 'Not assigned'));
+    $('#viewDiseaseVerifiedAt').html(formatSingleValue(disease.verified_at, 'Pending verification'));
+    updateCriticalBadge(disease.critical_level);
+    viewDiseaseModal.modal('show');
+  });
+
+  // Populate edit modal
+  tableBody.on('click', '.btn-edit-disease', function() {
+    const row = $(this).closest('tr');
+    const diseaseId = row.data('disease-id');
+    const disease = diseaseMap[diseaseId];
+    if (!disease) {
+      console.warn('Disease data is missing for edit action', diseaseId);
+      return;
+    }
+    clearModalAlerts(editDiseaseModal);
+    const form = $('#editDiseaseForm');
+    form.attr('action', row.data('update-url'));
+    $('#edit_disease_icd_code').val(disease.icd_code || '');
+    $('#edit_disease_name').val(disease.name || '');
+    $('#edit_disease_description').val(disease.description || '');
+    $('#edit_disease_critical_level').val(disease.critical_level || 'medium');
+    $('#edit_disease_symptoms').val(disease.common_symptoms || '');
+    $('#edit_disease_treatment').val(disease.treatment_protocol || '');
+    $('#edit_disease_guidelines').val(disease.treatment_guidelines || '');
+    // Use verified doctor ID if available, otherwise default to current doctor
+    const verifiedDoctorId = disease.verified_doctor_id || currentDoctorId || '';
+    $('#edit_disease_verified_by').val(verifiedDoctorId);
+    editDiseaseModal.modal('show');
+  });
+
+  // Submit edit form
+  $('#editDiseaseForm').on('submit', function(e) {
+    e.preventDefault();
+    const form = $(this);
+    const submitBtn = form.find('button[type="submit"]');
+    clearModalAlerts(editDiseaseModal);
+    toggleButtonLoading(submitBtn, true, 'Saving...');
+
+    $.ajax({
+      url: form.attr('action'),
+      method: 'POST',
+      data: form.serialize(),
+      success: function() {
+        $('#editDiseaseModal').modal('hide');
+        location.reload();
+      },
+      error: function(xhr) {
+        toggleButtonLoading(submitBtn, false);
+        let errorMsg = 'An error occurred while updating the disease.';
+        if (xhr.responseJSON && xhr.responseJSON.error) {
+          errorMsg = xhr.responseJSON.error;
+        }
+        showModalAlert(editDiseaseModal, errorMsg, 'danger');
+      }
+    });
+  });
+
+  $('#editDiseaseModal').on('hidden.bs.modal', function() {
+    const form = $('#editDiseaseForm')[0];
+    if (form) {
+      form.reset();
+    }
+    $('#editDiseaseForm').attr('action', '');
+    clearModalAlerts(editDiseaseModal);
+    const submitBtn = $('#editDiseaseForm').find('button[type="submit"]');
+    toggleButtonLoading(submitBtn, false);
+  });
+
+  // Delete handler
+  tableBody.on('click', '.btn-delete-disease', function() {
+    const row = $(this).closest('tr');
+    const diseaseId = row.data('disease-id');
+    const disease = diseaseMap[diseaseId];
+    const deleteUrl = row.data('delete-url');
+    clearModalAlerts(deleteDiseaseModal);
+    $('#deleteDiseaseName').text(disease ? `${disease.name} (${disease.icd_code})` : 'this disease');
+    $('#deleteDiseaseForm').attr('action', deleteUrl);
+    deleteDiseaseModal.modal('show');
+  });
+
+  $('#deleteDiseaseForm').on('submit', function(e) {
+    e.preventDefault();
+    const form = $(this);
+    const submitBtn = form.find('button[type="submit"]');
+    clearModalAlerts(deleteDiseaseModal);
+    toggleButtonLoading(submitBtn, true, 'Deleting...');
+
+    $.ajax({
+      url: form.attr('action'),
+      method: 'POST',
+      data: form.serialize(),
+      success: function() {
+        $('#deleteDiseaseModal').modal('hide');
+        location.reload();
+      },
+      error: function(xhr) {
+        toggleButtonLoading(submitBtn, false);
+        let errorMsg = 'An error occurred while deleting the disease.';
+        if (xhr.responseJSON && xhr.responseJSON.error) {
+          errorMsg = xhr.responseJSON.error;
+        }
+        showModalAlert(deleteDiseaseModal, errorMsg, 'danger');
+      }
+    });
+  });
+
+  $('#deleteDiseaseModal').on('hidden.bs.modal', function() {
+    $('#deleteDiseaseForm').attr('action', '');
+    clearModalAlerts(deleteDiseaseModal);
+    const submitBtn = $('#deleteDiseaseForm').find('button[type="submit"]');
+    toggleButtonLoading(submitBtn, false);
   });
 });
 </script>

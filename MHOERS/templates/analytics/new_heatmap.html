@@ -1,0 +1,1756 @@
+{% extends 'base.html' %} {% load static %} {% block content %}
+
+<link rel="stylesheet" href="{% static 'css/admin_dashboard.css' %}" />
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+/>
+
+<style>
+  /* Heat Index Display */
+  .heat-index-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .heat-index-value {
+    font-size: 3rem;
+    font-weight: bold;
+    text-align: center;
+    margin: 1rem 0;
+  }
+  
+  .heat-index-label {
+    font-size: 1.1rem;
+    text-align: center;
+    opacity: 0.9;
+  }
+  
+  .heat-index-level {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 600;
+    margin-top: 0.5rem;
+  }
+  
+  .heat-index-normal {
+    background-color: #28a745; /* Green - Normal (0-10%) */
+    color: #fff;
+  }
+  
+  .heat-index-alert {
+    background-color: #ffc107; /* Yellow - Alert (10-25%) */
+    color: #000;
+  }
+  
+  .heat-index-warning {
+    background-color: #ff8800; /* Orange - Warning (25-50%) */
+    color: #fff;
+  }
+  
+  .heat-index-outbreak {
+    background-color: #dc3545; /* Red - Outbreak (50-100%) */
+    color: #fff;
+  }
+  
+  .heat-index-epidemic {
+    background-color: #8b0000; /* Dark Red - Epidemic (>100%) */
+    color: #fff;
+  }
+  
+  /* Model Info Badge */
+  .model-info-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    font-size: 0.75rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+  }
+  
+  /* Prediction Stats */
+  .prediction-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  
+  .stat-card {
+    background: white;
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    text-align: center;
+  }
+  
+  .stat-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #667eea;
+  }
+  
+  .stat-label {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-top: 0.5rem;
+  }
+  
+  /* Data Type Badge Styling */
+  #data-type-badge {
+    padding: 0.25rem 0.5rem;
+    font-weight: 600;
+  }
+
+  #data-type-badge.bg-info {
+    background-color: #0dcaf0 !important;
+    color: #000;
+  }
+
+  #data-type-badge.bg-warning {
+    background-color: #ffc107 !important;
+    color: #000;
+  }
+
+  #data-type-badge.bg-secondary {
+    background-color: #6c757d !important;
+    color: #fff;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .heat-index-value {
+      font-size: 2rem;
+    }
+    
+    .prediction-stats {
+      grid-template-columns: 1fr;
+    }
+    
+    .d-flex.justify-content-between {
+      flex-direction: column;
+      gap: 1rem;
+    }
+    
+    .d-flex.align-items-center.gap-2 {
+      flex-wrap: wrap;
+    }
+  }
+</style>
+
+<!-- Navbar Include -->
+{% include 'components/navbar.html' %}
+
+<!-- Disease Heat Index Map Section -->
+<div class="row mt-4">
+  <div class="col-12">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-3">
+          <h4 class="mb-0">Disease Heat Index Map</h4>
+          
+          <!-- Filters Row -->
+          <div class="d-flex align-items-end gap-2 flex-wrap">
+            <!-- Disease Filter -->
+            <div>
+              <label class="form-label fw-semibold mb-1" style="font-size: 0.75rem;">
+                Disease
+              </label>
+              <select id="disease-filter" class="form-select form-select-sm" style="width: auto; min-width: 200px;">
+                <option value="">Select Disease</option>
+                <option value="T14.1">Open Wounds (T14.1)</option>
+                <option value="W54.99">Dog Bites (W54.99)</option>
+                <option value="J06.9">Acute respiratory infections (J06.9)</option>
+                <option value="J15">Pneumonia (J15)</option>
+                <option value="I10.1">Hypertension Level 2 (I10.1)</option>
+              </select>
+            </div>
+            
+            <!-- Year Selector -->
+            <div class="position-relative">
+              <label class="form-label fw-semibold mb-1" style="font-size: 0.75rem;">
+                Year
+              </label>
+              <input type="number" id="year-selector" class="form-control form-control-sm" 
+                     style="width: auto; min-width: 100px;" 
+                     value="2025" min="2020" max="2030" step="1">
+              <!-- Data Type Badge -->
+              
+            </div>
+            
+            <!-- Month Range: From -->
+            <div>
+              <label class="form-label fw-semibold mb-1" style="font-size: 0.75rem;">
+                From Month
+              </label>
+              <select id="month-from" class="form-select form-select-sm" style="width: auto; min-width: 130px;">
+                <option value="">Select Month</option>
+                <option value="January">January</option>
+                <option value="February">February</option>
+                <option value="March">March</option>
+                <option value="April">April</option>
+                <option value="May">May</option>
+                <option value="June">June</option>
+                <option value="July">July</option>
+                <option value="August">August</option>
+                <option value="September">September</option>
+                <option value="October">October</option>
+                <option value="November">November</option>
+                <option value="December">December</option>
+              </select>
+            </div>
+            
+            <!-- Month Range: To -->
+            <div>
+              <label class="form-label fw-semibold mb-1" style="font-size: 0.75rem;">
+                To Month
+              </label>
+              <select id="month-to" class="form-select form-select-sm" style="width: auto; min-width: 130px;">
+                <option value="">Select Month</option>
+                <option value="January">January</option>
+                <option value="February">February</option>
+                <option value="March">March</option>
+                <option value="April">April</option>
+                <option value="May">May</option>
+                <option value="June">June</option>
+                <option value="July">July</option>
+                <option value="August">August</option>
+                <option value="September">September</option>
+                <option value="October">October</option>
+                <option value="November">November</option>
+                <option value="December">December</option>
+              </select>
+            </div>
+            
+            <!-- Month Navigation (for single month view) -->
+            <div class="d-flex align-items-end gap-1">
+              <button class="btn btn-sm btn-outline-secondary" id="btn-prev-month" title="Previous Month" style="display: none;">
+                <i class="bi bi-chevron-left"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-secondary" id="btn-next-month" title="Next Month" style="display: none;">
+                <i class="bi bi-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Prediction Statistics -->
+        <div class="prediction-stats" id="prediction-stats" style="display: none;">
+          <div class="stat-card" style="display: none;">
+            <div class="stat-value" id="stat-peak-disease">--</div>
+            <div class="stat-label">Peak Disease</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-selected-disease">--</div>
+            <div class="stat-label" id="stat-selected-disease-label">Selected Disease</div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-value" id="stat-predicted-cases">0</div>
+            <div class="stat-label">Predicted Cases</div>
+          </div>
+          
+        
+        </div>
+
+        <!-- Subtle loading indicator for background data -->
+        <div class="mb-3">
+          <small id="background-loading-indicator" class="text-muted ms-2" style="display: none;">
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="width: 0.75rem; height: 0.75rem;"></span>
+            <span class="ms-1">Loading map data...</span>
+          </small>
+        </div>
+
+        <!-- Map Container -->
+        <div id="map" style="height: 500px; position: relative;">
+          <!-- Legends Section - Positioned at bottom right -->
+          <div style="position: absolute; bottom: 10px; right: 10px; z-index: 1000; max-width: 280px;">
+            <div class="card border-0 shadow-lg" style="background-color: rgba(255, 255, 255, 0.95);">
+              <div class="card-body p-2">
+                <h6 class="mb-1 text-primary" style="font-size: 12px; margin-bottom: 6px;"><strong>Heat Index Legend</strong></h6>
+                <div class="d-flex flex-column gap-1" style="gap: 4px;">
+                  <div class="d-flex align-items-center gap-1">
+                    <div style="width: 28px; height: 14px; background: #28a745; border: 1px solid #ccc; border-radius: 2px; flex-shrink: 0;"></div>
+                    <span style="font-size: 10px;">Normal </span>
+                  </div>
+                  <div class="d-flex align-items-center gap-1">
+                    <div style="width: 28px; height: 14px; background: #ffc107; border: 1px solid #ccc; border-radius: 2px; flex-shrink: 0;"></div>
+                    <span style="font-size: 10px;">Alert</span>
+                  </div>
+                  <div class="d-flex align-items-center gap-1">
+                    <div style="width: 28px; height: 14px; background: #ff8800; border: 1px solid #ccc; border-radius: 2px; flex-shrink: 0;"></div>
+                    <span style="font-size: 10px;">Warning</span>
+                  </div>
+                  <div class="d-flex align-items-center gap-1">
+                    <div style="width: 28px; height: 14px; background: #dc3545; border: 1px solid #ccc; border-radius: 2px; flex-shrink: 0;"></div>
+                    <span style="font-size: 10px;">Outbreak </span>
+                  </div>
+                  <div class="d-flex align-items-center gap-1">
+                    <div style="width: 28px; height: 14px; background: #8b0000; border: 1px solid #ccc; border-radius: 2px; flex-shrink: 0;"></div>
+                    <span style="font-size: 10px;">Epidemic </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Prediction Summary Table -->
+        <div class="card border-0 shadow-sm mt-4" id="prediction-table-container" style="display: none;">
+          <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Monthly Disease Predictions</h5>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover" id="prediction-table">
+                <thead>
+                  <tr>
+                    <th>Month</th>
+                    <th>Disease</th>
+                    <th>Predicted Cases</th>
+                    
+                  </tr>
+                </thead>
+                <tbody id="prediction-table-body">
+                  <tr>
+                    <td colspan="3" class="text-center text-muted">Loading predictions...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+  </div>
+</div>
+
+{% block script %}
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+
+<!-- New Heat Index JavaScript -->
+<script>
+  // Heat Index Calculation and Display
+  // Using unique variable names to avoid conflicts
+  let newHeatIndexValue = 0;
+  let newHeatPredictions = {};
+  let newHeatMapInstance = null;
+  let newHeatLayerInstance = null;
+  let newFacilityLayerGroup = null;
+  let newFacilityCache = [];
+  let newBarangayCircleLayer = null; // Layer for colored circles representing barangay percentages
+  let currentBarangayDataMap = {}; // Map to store barangay data by name for facility popups
+  
+  // Default values
+  const DEFAULT_MONTH = null;
+  const DEFAULT_DISEASE = null;
+  let currentYear = 2025;
+  let currentMonth = null;
+  let currentDisease = null;
+  let monthFrom = null;
+  let monthTo = null;
+  
+  // Month navigation
+  const months = ['January', 'February', 'March', 'April', 'May', 'June',
+                  'July', 'August', 'September', 'October', 'November', 'December'];
+  let currentMonthIndex = 0; // January = 0
+  
+  // Get current month (default to current month or January)
+  function getCurrentMonth() {
+    const now = new Date();
+    const currentMonthNum = now.getMonth(); // 0-11
+    return months[currentMonthNum] || 'January';
+  }
+  
+  // Get disease display name from code
+  function getDiseaseDisplayName(diseaseCode) {
+    const diseaseMap = {
+      'T14.1': 'Open Wounds',
+      'W54.99': 'Dog Bites',
+      'J06.9': 'Acute respiratory infections',
+      'J15': 'Pneumonia',
+      'I10.1': 'Hypertension Level 2',
+      
+    };
+    return diseaseMap[diseaseCode] || diseaseCode;
+  }
+  
+  // Update data type badge based on selected year
+  function updateDataTypeBadge(year) {
+    const badge = document.getElementById('data-type-badge');
+    const text = document.getElementById('data-type-text');
+    
+    if (!badge || !text) return;
+    
+    if (year < 2025) {
+      // Historical data
+      badge.className = 'badge bg-info position-absolute';
+      text.textContent = 'Historical Data';
+    } else if (year === 2025) {
+      // Predictions
+      badge.className = 'badge bg-warning position-absolute';
+      text.textContent = 'Predicted';
+    } else {
+      // No data
+      badge.className = 'badge bg-secondary position-absolute';
+      text.textContent = 'No Data';
+    }
+  }
+  
+  // Update month selector
+  function updateMonthSelector(month) {
+    const selector = document.getElementById('month-selector');
+    if (selector) {
+      selector.value = month;
+      currentMonthIndex = months.indexOf(month);
+      if (currentMonthIndex === -1) currentMonthIndex = 0;
+    }
+    currentMonth = month;
+  }
+  
+  // Facility marker icons
+  const newMhoIcon = L.divIcon({
+    className: 'facility-marker mho-marker',
+    html: `
+      <svg width="32" height="40" viewBox="0 0 32 40" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
+        <path d="M16 0 C10 0, 4 4, 4 10 C4 16, 16 32, 16 32 C16 32, 28 16, 28 10 C28 4, 22 0, 16 0 Z" 
+              fill="#2563eb" stroke="none"/>
+        <circle cx="16" cy="14" r="6" fill="white"/>
+      </svg>
+    `,
+    iconSize: [32, 40],
+    iconAnchor: [16, 40],
+    popupAnchor: [0, -40]
+  });
+  
+  const newBhcIcon = L.divIcon({
+    className: 'facility-marker bhc-marker',
+    html: `
+      <svg width="32" height="40" viewBox="0 0 32 40" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
+        <path d="M16 0 C10 0, 4 4, 4 10 C4 16, 16 32, 16 32 C16 32, 28 16, 28 10 C28 4, 22 0, 16 0 Z" 
+              fill="#10b981" stroke="none"/>
+        <circle cx="16" cy="14" r="6" fill="white"/>
+      </svg>
+    `,
+    iconSize: [32, 40],
+    iconAnchor: [16, 40],
+    popupAnchor: [0, -40]
+  });
+  
+  const newOtherFacilityIcon = L.divIcon({
+    className: 'facility-marker other-marker',
+    html: `
+      <svg width="32" height="40" viewBox="0 0 32 40" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
+        <path d="M16 0 C10 0, 4 4, 4 10 C4 16, 16 32, 16 32 C16 32, 28 16, 28 10 C28 4, 22 0, 16 0 Z" 
+              fill="#6b7280" stroke="none"/>
+        <circle cx="16" cy="14" r="6" fill="white"/>
+      </svg>
+    `,
+    iconSize: [32, 40],
+    iconAnchor: [16, 40],
+    popupAnchor: [0, -40]
+  });
+  
+  // Initialize map for new heatmap
+  function initializeNewHeatMap() {
+    if (newHeatMapInstance) {
+      console.log('Map already initialized');
+      return; // Already initialized
+    }
+    
+    const mapElement = document.getElementById('map');
+    if (!mapElement) {
+      console.error('Map element not found!');
+      return;
+    }
+    
+    // Check if map container already has a map instance
+    if (mapElement._leaflet_id) {
+      console.warn('Map container already initialized, removing old instance...');
+      // Try to remove existing map if any
+      try {
+        if (window.map && typeof window.map.remove === 'function') {
+          window.map.remove();
+        }
+      } catch (e) {
+        console.warn('Could not remove existing map:', e);
+      }
+      // Clear the container
+      mapElement.innerHTML = '';
+      mapElement._leaflet_id = null;
+    }
+    
+    // Initialize Leaflet map
+    newHeatMapInstance = L.map('map').setView([7.587429855100546, 125.82881651697123], 12);
+    
+    // Add OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(newHeatMapInstance);
+    
+    // Initialize heat layer
+    newHeatLayerInstance = L.heatLayer([], {
+      radius: 40,
+      blur: 25,
+      maxZoom: 10,
+      max: 1.0,
+      minOpacity: 1.0,  // Remove transparency - fully opaque
+      opacity: 1.0,     // Remove transparency - fully opaque
+      gradient: {
+        0.0: '#28a745',  // Green - Normal (0-10%)
+        0.1: '#ffc107',  // Yellow - Alert (10-25%)
+        0.25: '#ff8800', // Orange - Warning (25-50%)
+        0.5: '#dc3545',  // Red - Outbreak (50-100%)
+        1.0: '#8b0000'   // Dark Red - Epidemic (>100%)
+      }
+    }).addTo(newHeatMapInstance);
+    
+    // Initialize facility layer group
+    newFacilityLayerGroup = L.layerGroup().addTo(newHeatMapInstance);
+    
+    // Initialize barangay circle layer for colored circles
+    newBarangayCircleLayer = L.layerGroup().addTo(newHeatMapInstance);
+    
+    console.log('New heatmap map initialized successfully');
+  }
+  
+  // Fetch facilities from API
+  async function fetchNewFacilities() {
+    try {
+      const response = await fetch('/facilities/api/facilities/');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const facilities = await response.json();
+      console.log('Fetched facilities:', facilities);
+      return facilities;
+    } catch (error) {
+      console.error('Error fetching facilities:', error);
+      return [];
+    }
+  }
+  
+  // Plot facility markers on the map
+  async function plotNewFacilityMarkers() {
+    if (!newHeatMapInstance || !newFacilityLayerGroup) {
+      console.error('Map not initialized yet');
+      return;
+    }
+    
+    // Clear existing markers
+    newFacilityLayerGroup.clearLayers();
+    
+    // Fetch facilities
+    newFacilityCache = await fetchNewFacilities();
+    
+    if (newFacilityCache.length === 0) {
+      console.warn('No facilities found');
+      return;
+    }
+    
+    // Plot each facility
+    newFacilityCache.forEach((facility) => {
+      // Skip if coordinates are invalid
+      if (!facility.latitude || !facility.longitude || 
+          facility.latitude === 0 || facility.longitude === 0) {
+        console.warn(`Invalid coordinates for facility ${facility.name}`);
+        return;
+      }
+      
+      // Get disease count for this facility's barangay
+      // Try exact match first, then case-insensitive match
+      let diseaseCount = 0;
+      if (facility.barangay) {
+        const facilityBarangay = facility.barangay.trim();
+        // Try exact match
+        if (currentBarangayDataMap[facilityBarangay]) {
+          diseaseCount = currentBarangayDataMap[facilityBarangay].cases;
+        } else {
+          // Try case-insensitive match
+          const barangayKey = Object.keys(currentBarangayDataMap).find(
+            key => key.trim().toLowerCase() === facilityBarangay.toLowerCase()
+          );
+          if (barangayKey) {
+            diseaseCount = currentBarangayDataMap[barangayKey].cases;
+          } else {
+            // Debug: log when no match is found
+            console.log(`No match found for facility barangay: "${facilityBarangay}". Available keys:`, Object.keys(currentBarangayDataMap));
+          }
+        }
+      }
+      
+      // Create popup content
+      const popupContent = `
+        <div style="min-width: 200px;">
+          <strong>${facility.name}</strong><br>
+          ${facility.assigned_bhw ? `<strong>Assigned BHW:</strong> ${facility.assigned_bhw}<br>` : ''}
+          ${facility.barangay ? `<strong>Barangay:</strong> ${facility.barangay}<br>` : ''}
+          <strong>Predicted:</strong> ${diseaseCount}<br>
+        </div>
+      `;
+      
+      // Determine icon based on facility type
+      let icon = newOtherFacilityIcon;
+      if (facility.name && facility.name.toUpperCase().includes('MHO')) {
+        icon = newMhoIcon;
+      } else if (facility.name && facility.name.toUpperCase().includes('BHC')) {
+        icon = newBhcIcon;
+      }
+      
+      // Create marker
+      const marker = L.marker([facility.latitude, facility.longitude], {
+        icon: icon,
+        zIndexOffset: 1000  // Ensure markers appear above heat layer
+      })
+        .addTo(newFacilityLayerGroup)
+        .bindPopup(popupContent, {
+          maxWidth: 250,
+          className: 'facility-popup'
+        });
+      
+      // Enhanced hover effects
+      marker.on('mouseover', function() {
+        marker.setZIndexOffset(2000);
+      });
+      
+      marker.on('mouseout', function() {
+        marker.setZIndexOffset(1000);
+      });
+    });
+    
+    console.log(`Plotted ${newFacilityCache.length} facilities on map`);
+  }
+  
+  // Update facility markers with disease count (without re-fetching facilities)
+  function updateFacilityMarkersWithDiseaseCount() {
+    if (!newFacilityLayerGroup || !newFacilityCache || newFacilityCache.length === 0) {
+      return;
+    }
+    
+    // Update popup for each existing marker
+    newFacilityLayerGroup.eachLayer(function(layer) {
+      if (layer instanceof L.Marker) {
+        // Find corresponding facility
+        const facility = newFacilityCache.find(f => 
+          f.latitude === layer.getLatLng().lat && 
+          f.longitude === layer.getLatLng().lng
+        );
+        
+        if (facility) {
+          // Get disease count for this facility's barangay
+          // Try exact match first, then case-insensitive match
+          let diseaseCount = 0;
+          if (facility.barangay) {
+            const facilityBarangay = facility.barangay.trim();
+            // Try exact match
+            if (currentBarangayDataMap[facilityBarangay]) {
+              diseaseCount = currentBarangayDataMap[facilityBarangay].cases;
+            } else {
+              // Try case-insensitive match
+              const barangayKey = Object.keys(currentBarangayDataMap).find(
+                key => key.trim().toLowerCase() === facilityBarangay.toLowerCase()
+              );
+              if (barangayKey) {
+                diseaseCount = currentBarangayDataMap[barangayKey].cases;
+              }
+            }
+          }
+          
+          // Update popup content
+          const popupContent = `
+            <div style="min-width: 200px;">
+              <strong>${facility.name}</strong><br>
+              ${facility.assigned_bhw ? `<strong>Assigned BHW:</strong> ${facility.assigned_bhw}<br>` : ''}
+              ${facility.barangay ? `<strong>Barangay:</strong> ${facility.barangay}<br>` : ''}
+              <strong>Predicted:</strong> ${diseaseCount}<br>
+            </div>
+          `;
+          
+          layer.setPopupContent(popupContent);
+        }
+      }
+    });
+  }
+  
+  // Calculate heat index based on predicted cases
+  function calculateHeatIndex(predictedCases, maxCases) {
+    if (maxCases === 0) return 0;
+    const percentage = (predictedCases / maxCases) * 100;
+    return Math.round(percentage);
+  }
+  
+  // Get heat index level (Real-world healthcare/epidemiology standards)
+  function getHeatIndexLevel(heatIndex) {
+    if (heatIndex <= 10) return { level: 'Normal', class: 'heat-index-normal' };
+    if (heatIndex <= 25) return { level: 'Alert', class: 'heat-index-alert' };
+    if (heatIndex <= 50) return { level: 'Warning', class: 'heat-index-warning' };
+    if (heatIndex <= 100) return { level: 'Outbreak', class: 'heat-index-outbreak' };
+    return { level: 'Epidemic', class: 'heat-index-epidemic' };
+  }
+  
+  // Get color based on percentage (0-100) - maps directly to gradient colors
+  function getColorFromPercentage(percentage) {
+    if (percentage <= 10) return '#28a745';  // Green - Normal (0-10%)
+    if (percentage <= 25) return '#ffc107';  // Yellow - Alert (10-25%)
+    if (percentage <= 50) return '#ff8800';  // Orange - Warning (25-50%)
+    if (percentage <= 100) return '#dc3545'; // Red - Outbreak (50-100%)
+    return '#8b0000'; // Dark Red - Epidemic (>100%)
+  }
+  
+  // Update heat index display
+  function updateHeatIndexDisplay(predictions, selectedDisease, selectedMonth, monthFrom = null, monthTo = null) {
+    // Get elements with null checks (card may be removed)
+    const heatIndexValueEl = document.getElementById('heat-index-value');
+    const heatIndexLevelEl = document.getElementById('heat-index-level');
+    const statPredictedCasesEl = document.getElementById('stat-predicted-cases');
+    const statPeakDiseaseEl = document.getElementById('stat-peak-disease');
+    const statSelectedDiseaseEl = document.getElementById('stat-selected-disease');
+    const statSelectedDiseaseLabelEl = document.getElementById('stat-selected-disease-label');
+    const predictionStatsEl = document.getElementById('prediction-stats');
+    const predictionTableBodyEl = document.getElementById('prediction-table-body');
+    const predictionTableContainer = document.getElementById('prediction-table-container');
+    
+    // Check if year > 2025 - no data available
+    if (currentYear > 2025) {
+      if (statPredictedCasesEl) {
+        statPredictedCasesEl.textContent = 'No data available';
+        statPredictedCasesEl.style.fontSize = '0.9rem';
+      }
+      if (predictionTableContainer) {
+        predictionTableContainer.style.display = 'block';
+      }
+      if (predictionTableBodyEl) {
+        predictionTableBodyEl.innerHTML = 
+          '<tr><td colspan="3" class="text-center text-muted">No data available for year ' + currentYear + '</td></tr>';
+      }
+      return;
+    }
+    
+    // Show/hide table based on whether disease is selected
+    if (predictionTableContainer) {
+      if (selectedDisease && selectedDisease !== '') {
+        predictionTableContainer.style.display = 'block';
+      } else {
+        predictionTableContainer.style.display = 'none';
+        return; // Don't update table if no disease selected
+      }
+    }
+    
+    if (!predictions || predictions.error) {
+      // Only update if elements exist
+      if (heatIndexValueEl) heatIndexValueEl.textContent = '--';
+      if (heatIndexLevelEl) {
+        heatIndexLevelEl.textContent = 'No Data';
+        heatIndexLevelEl.className = 'heat-index-level';
+      }
+      if (predictionTableBodyEl) {
+        predictionTableBodyEl.innerHTML = 
+          '<tr><td colspan="3" class="text-center text-muted">' + 
+          (predictions?.error || 'No predictions available') + 
+          '</td></tr>';
+      }
+      return;
+    }
+    
+    // Check if we have a month range aggregation
+    const hasRange = monthFrom && monthTo;
+    let monthData;
+    
+    if (hasRange) {
+      // Use aggregated range data
+      const rangeKey = `${monthFrom} - ${monthTo}`;
+      monthData = predictions[rangeKey];
+    } else if (selectedMonth) {
+      // Use selected month
+      monthData = predictions[selectedMonth];
+    } else {
+      // No month selected, use first available month or show all
+      monthData = null;
+    }
+    
+    if (!monthData || !monthData.all_diseases) {
+      // Only update if elements exist
+      if (heatIndexValueEl) heatIndexValueEl.textContent = '--';
+      if (heatIndexLevelEl) {
+        heatIndexLevelEl.textContent = 'No Data';
+        heatIndexLevelEl.className = 'heat-index-level';
+      }
+      return;
+    }
+    
+    // Get all disease counts to find max
+    const allCounts = Object.values(monthData.all_diseases);
+    const maxCases = Math.max(...allCounts, 1);
+    const currentCases = monthData.all_diseases[selectedDisease] || 0;
+    
+    // Calculate heat index
+    newHeatIndexValue = calculateHeatIndex(currentCases, maxCases);
+    
+    // Update display (only if elements exist)
+    if (heatIndexValueEl) heatIndexValueEl.textContent = newHeatIndexValue + '%';
+    if (heatIndexLevelEl) {
+      const levelInfo = getHeatIndexLevel(newHeatIndexValue);
+      heatIndexLevelEl.textContent = levelInfo.level;
+      heatIndexLevelEl.className = 'heat-index-level ' + levelInfo.class;
+    }
+    
+    // Update stats (only if elements exist)
+    if (statPredictedCasesEl) {
+      statPredictedCasesEl.textContent = currentCases;
+      statPredictedCasesEl.style.fontSize = ''; // Reset font size
+    }
+    if (statPeakDiseaseEl) statPeakDiseaseEl.textContent = monthData.disease || '--';
+    if (statSelectedDiseaseEl) {
+      const diseaseName = getDiseaseDisplayName(selectedDisease);
+      statSelectedDiseaseEl.textContent = diseaseName;
+    }
+    if (statSelectedDiseaseLabelEl) {
+      statSelectedDiseaseLabelEl.textContent = 'Selected Disease';
+    }
+    if (predictionStatsEl) predictionStatsEl.style.display = 'grid';
+    
+    // Update prediction table with month range filter
+    updatePredictionTable(predictions, selectedDisease, selectedMonth, monthFrom, monthTo);
+    
+    // Update map heat layer (will use barangay data if available)
+    updateNewHeatMapLayer(predictions, selectedDisease, selectedMonth, monthFrom, monthTo);
+  }
+  
+  // Fetch historical data
+  async function fetchHistoricalData(year, monthFrom = null, monthTo = null, disease = null) {
+    try {
+      const apiUrl = new URL('/analytics/api/historical-disease-data/', window.location.origin);
+      apiUrl.searchParams.append('year', year);
+      apiUrl.searchParams.append('use_db', 'true');
+      if (monthFrom) apiUrl.searchParams.append('month_from', monthFrom);
+      if (monthTo) apiUrl.searchParams.append('month_to', monthTo);
+      if (disease) apiUrl.searchParams.append('disease', disease);
+      
+      const response = await fetch(apiUrl.toString());
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error fetching historical data:', error);
+      return { error: error.message };
+    }
+  }
+  
+  // Fetch predictions (updated to support year, month range, and disease parameters)
+  async function fetchPredictions(year = 2025, monthFrom = null, monthTo = null, disease = null) {
+    try {
+      if (year < 2025) {
+        // Fetch historical data
+        return await fetchHistoricalData(year, monthFrom, monthTo, disease);
+      } else if (year === 2025) {
+        // Fetch predictions
+        const apiUrl = new URL('/analytics/api/disease-peak-predictions/', window.location.origin);
+        apiUrl.searchParams.append('use_db', 'true');
+        if (monthFrom) apiUrl.searchParams.append('month_from', monthFrom);
+        if (monthTo) apiUrl.searchParams.append('month_to', monthTo);
+        if (disease) apiUrl.searchParams.append('disease', disease);
+        
+        const response = await fetch(apiUrl.toString());
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return await response.json();
+      } else {
+        // Year > 2025 - no data available
+        return { error: `No data available for year ${year}` };
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      return { error: error.message };
+    }
+  }
+  
+  // Fetch barangay predictions with facility coordinates
+  let barangayHeatData = null;
+  
+  async function fetchBarangayHeatData() {
+    try {
+      console.log('Fetching barangay heatmap data...');
+      const response = await fetch('/analytics/api/barangay-heatmap-data/?use_db=false');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      console.log('Barangay heatmap data received:', data);
+      barangayHeatData = data;
+      return data;
+    } catch (error) {
+      console.error('Error fetching barangay heat data:', error);
+      return null;
+    }
+  }
+  
+  // Fetch barangay breakdown for a specific month and disease
+  async function fetchBarangayBreakdown(year, month, disease) {
+    try {
+      const apiUrl = new URL('/analytics/api/barangay-breakdown/', window.location.origin);
+      apiUrl.searchParams.append('year', year);
+      apiUrl.searchParams.append('month', month);
+      apiUrl.searchParams.append('disease', disease);
+      apiUrl.searchParams.append('use_db', 'true');
+      
+      const response = await fetch(apiUrl.toString());
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching barangay breakdown:', error);
+      return { error: error.message };
+    }
+  }
+  
+  // Display barangay breakdown modal
+  function displayBarangayBreakdownModal(data) {
+    // Remove existing modal if any
+    const existingModal = document.getElementById('barangay-breakdown-modal');
+    if (existingModal) existingModal.remove();
+    
+    const modal = document.createElement('div');
+    modal.id = 'barangay-breakdown-modal';
+    modal.className = 'modal fade show';
+    modal.style.display = 'block';
+    modal.style.backgroundColor = 'rgba(0,0,0,0.5)';
+    modal.style.zIndex = '9999';
+    modal.innerHTML = `
+      <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title">
+              <i class="bi bi-pie-chart"></i> Barangay Breakdown: ${data.disease} - ${data.month} ${data.year}
+            </h5>
+            <button type="button" class="btn-close btn-close-white" onclick="document.getElementById('barangay-breakdown-modal').remove()"></button>
+          </div>
+          <div class="modal-body">
+            <div class="alert alert-info">
+              <strong>Total Cases:</strong> ${data.total_cases}
+            </div>
+            ${data.barangays && data.barangays.length > 0 ? `
+              <div class="table-responsive">
+                <table class="table table-hover table-sm">
+                  <thead>
+                    <tr>
+                      <th>Rank</th>
+                      <th>Barangay</th>
+                      <th>Cases</th>
+                      <th>Percentage</th>
+                      <th>Visual</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${data.barangays.map((b, idx) => `
+                      <tr>
+                        <td><strong>#${idx + 1}</strong></td>
+                        <td><strong>${b.name}</strong></td>
+                        <td>${b.cases}</td>
+                        <td>${b.percentage}%</td>
+                        <td>
+                          <div class="progress" style="height: 20px;">
+                            <div class="progress-bar" role="progressbar" 
+                                 style="width: ${b.percentage}%; background-color: ${getProgressBarColor(b.percentage)};">
+                              ${b.percentage}%
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            ` : '<p class="text-muted">No barangay data available</p>'}
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="document.getElementById('barangay-breakdown-modal').remove()">Close</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    
+    // Close on background click
+    modal.addEventListener('click', function(e) {
+      if (e.target === modal) {
+        modal.remove();
+      }
+    });
+  }
+  
+  // Helper function to get progress bar color based on percentage (Real-world standards)
+  function getProgressBarColor(percentage) {
+    if (percentage >= 50) return '#dc3545'; // Red - Outbreak
+    if (percentage >= 25) return '#ff8800'; // Orange - Warning
+    if (percentage >= 10) return '#ffc107'; // Yellow - Alert
+    return '#28a745'; // Green - Normal
+  }
+  
+  // Update map heat layer with barangay data - using colored circles instead of heat layer
+  // This function displays table data on the map based on current filters (year, month, disease)
+  // When filters change, this updates the map to show corresponding barangay predictions
+  function updateNewHeatMapLayer(predictions, selectedDisease, selectedMonth, monthFrom = null, monthTo = null) {
+    if (!newHeatMapInstance || !newBarangayCircleLayer) return;
+    
+    // Clear existing circles - map will display new data based on current filters
+    newBarangayCircleLayer.clearLayers();
+    
+    // Also clear heat layer (we're not using it anymore, but keep it for fallback)
+    if (newHeatLayerInstance) {
+      newHeatLayerInstance.setLatLngs([]);
+    }
+    
+    const barangayData = []; // Store barangay data with coordinates and percentages
+    
+    // Check if we have a month range
+    const hasRange = monthFrom && monthTo;
+    
+    // Always use barangay mode (toggle removed - barangay heatmap is always enabled)
+    const useBarangayHeat = true;
+    
+    // Try to use barangay data first (if available)
+    if (useBarangayHeat && barangayHeatData && Object.keys(barangayHeatData).length > 0) {
+      const monthMap = {
+        'January': 1, 'February': 2, 'March': 3, 'April': 4,
+        'May': 5, 'June': 6, 'July': 7, 'August': 8,
+        'September': 9, 'October': 10, 'November': 11, 'December': 12
+      };
+      
+      // Get all cases for SELECTED DISEASE to calculate total (for range or single month)
+      // Total-based approach: compares each barangay to total cases (matches table percentages)
+      // This enables proportional response: Red (≥50%) = strong action, Yellow (<50%) = moderate action
+      const allSelectedDiseaseCases = [];
+      
+      if (hasRange) {
+        // Handle month range for barangay data
+        const fromNum = monthMap[monthFrom] || 1;
+        const toNum = monthMap[monthTo] || 12;
+        
+        // First pass: collect all cases of selected disease across all barangays and months
+        for (let monthNum = fromNum; monthNum <= toNum; monthNum++) {
+          Object.values(barangayHeatData).forEach(monthly => {
+            const monthData = monthly[monthNum];
+            if (monthData && monthData.diseases && monthData.diseases[selectedDisease]) {
+              allSelectedDiseaseCases.push(monthData.diseases[selectedDisease]);
+            }
+          });
+        }
+        
+        // Calculate total cases across all barangays and months (total-based approach)
+        const totalSelectedDiseaseCases = allSelectedDiseaseCases.reduce((sum, cases) => sum + cases, 0) || 1;
+        
+        // Second pass: aggregate selected disease cases per barangay across the range
+        for (const [barangayName, monthlyData] of Object.entries(barangayHeatData)) {
+          let selectedDiseaseCasesRange = 0;
+          let coordinates = null;
+          
+          for (let monthNum = fromNum; monthNum <= toNum; monthNum++) {
+            const monthData = monthlyData[monthNum];
+            if (monthData) {
+              // Use selected disease cases, not total cases
+              if (monthData.diseases && monthData.diseases[selectedDisease]) {
+                selectedDiseaseCasesRange += monthData.diseases[selectedDisease];
+              }
+              if (!coordinates && monthData.coordinates && monthData.coordinates.length > 0) {
+                coordinates = monthData.coordinates;
+              }
+            }
+          }
+          
+          if (selectedDiseaseCasesRange > 0 && coordinates) {
+            // Compare each barangay to total cases (matches table percentages)
+            const percentage = calculateHeatIndex(selectedDiseaseCasesRange, totalSelectedDiseaseCases); // Returns 0-100
+            
+            // Store barangay data with coordinates and percentage
+            coordinates.forEach(coord => {
+              if (coord.lat && coord.lng) {
+                barangayData.push({
+                  lat: coord.lat,
+                  lng: coord.lng,
+                  percentage: percentage,
+                  barangay: barangayName,
+                  cases: selectedDiseaseCasesRange
+                });
+              }
+            });
+          }
+        }
+        
+        console.log(`Added ${barangayData.length} barangay points for ${selectedDisease} (range: ${monthFrom} - ${monthTo})`);
+      } else {
+        // Handle single month for barangay data
+        const monthNum = monthMap[selectedMonth] || 1;
+        
+        // First pass: collect all cases of selected disease across all barangays
+        Object.values(barangayHeatData).forEach(monthly => {
+          const monthData = monthly[monthNum];
+          if (monthData && monthData.diseases && monthData.diseases[selectedDisease]) {
+            allSelectedDiseaseCases.push(monthData.diseases[selectedDisease]);
+          }
+        });
+        
+        // Calculate total cases across all barangays (total-based approach)
+        const totalSelectedDiseaseCases = allSelectedDiseaseCases.reduce((sum, cases) => sum + cases, 0) || 1;
+        
+        // Second pass: create heat points for each barangay using selected disease
+        for (const [barangayName, monthlyData] of Object.entries(barangayHeatData)) {
+          const monthData = monthlyData[monthNum];
+          if (!monthData || !monthData.coordinates || monthData.coordinates.length === 0) {
+            continue;
+          }
+          
+          // Use selected disease cases, not total cases
+          const selectedDiseaseCases = (monthData.diseases && monthData.diseases[selectedDisease]) ? monthData.diseases[selectedDisease] : 0;
+          if (selectedDiseaseCases === 0) continue;
+          
+          // Compare each barangay to total cases (matches table percentages)
+          const percentage = calculateHeatIndex(selectedDiseaseCases, totalSelectedDiseaseCases); // Returns 0-100
+          
+          // Store barangay data with coordinates and percentage
+          monthData.coordinates.forEach(coord => {
+            if (coord.lat && coord.lng) {
+              barangayData.push({
+                lat: coord.lat,
+                lng: coord.lng,
+                percentage: percentage,
+                barangay: barangayName,
+                cases: selectedDiseaseCases
+              });
+            }
+          });
+        }
+        
+        console.log(`Added ${barangayData.length} barangay points for ${selectedDisease} (month: ${selectedMonth})`);
+      }
+      
+      // Update barangay count stat
+      const barangayCount = Object.keys(barangayHeatData).length;
+      const barangayCountElement = document.getElementById('stat-barangay-count');
+      if (barangayCountElement) {
+        barangayCountElement.textContent = barangayCount;
+      }
+    } else if (predictions && !predictions.error) {
+      // Fallback to original predictions if barangay data not available
+      let monthData;
+      
+      if (hasRange) {
+        // Handle month range in predictions
+        const rangeKey = `${monthFrom} - ${monthTo}`;
+        monthData = predictions[rangeKey];
+      } else {
+        // Handle single month
+        monthData = predictions[selectedMonth];
+      }
+      
+      if (monthData && monthData.all_diseases) {
+        const allCounts = Object.values(monthData.all_diseases);
+        const maxCases = Math.max(...allCounts, 1);
+        const currentCases = monthData.all_diseases[selectedDisease] || 0;
+        const percentage = calculateHeatIndex(currentCases, maxCases);
+        
+        // Add fallback point at center
+        if (currentCases > 0) {
+          barangayData.push({
+            lat: 7.587429855100546,
+            lng: 125.82881651697123,
+            percentage: percentage,
+            barangay: 'Center',
+            cases: currentCases
+          });
+          console.log(`Added fallback point (${hasRange ? 'range' : 'single month'})`);
+        }
+      }
+    }
+    
+    // Store barangay data in map for facility popups
+    currentBarangayDataMap = {};
+    barangayData.forEach(data => {
+      if (data.barangay) {
+        // Normalize barangay name (trim and store as-is, but also create lowercase key for matching)
+        const normalizedName = data.barangay.trim();
+        currentBarangayDataMap[normalizedName] = {
+          cases: data.cases,
+          percentage: data.percentage
+        };
+      }
+    });
+    
+    // Debug: log the barangay data map
+    console.log('Barangay data map populated:', Object.keys(currentBarangayDataMap).length, 'barangays');
+    if (Object.keys(currentBarangayDataMap).length > 0) {
+      console.log('Sample barangay keys:', Object.keys(currentBarangayDataMap).slice(0, 5));
+    }
+    
+    // Create colored circles for each barangay based on percentage
+    if (barangayData.length > 0) {
+      barangayData.forEach(data => {
+        const color = getColorFromPercentage(data.percentage);
+        const radius = 20 + (data.percentage / 100) * 30; // Radius based on percentage (20-50px)
+        
+        // Create circle marker
+        const circle = L.circleMarker([data.lat, data.lng], {
+          radius: radius,
+          fillColor: color,
+          color: '#fff',
+          weight: 2,
+          opacity: 1,
+          fillOpacity: 0.8
+        }).addTo(newBarangayCircleLayer);
+        
+        // Add popup with information
+        circle.bindPopup(`
+          <strong>${data.barangay}</strong><br>
+          <strong>Predicted: ${data.cases}</strong><br>
+          Percentage: ${data.percentage.toFixed(1)}%<br>
+          Status: ${getHeatIndexLevel(data.percentage).level}
+        `);
+      });
+      
+      console.log(`Created ${barangayData.length} colored circles with direct percentage mapping`);
+      
+      // Update facility markers with new disease counts
+      updateFacilityMarkersWithDiseaseCount();
+      
+      // Debug: log facility barangay names for comparison
+      if (newFacilityCache && newFacilityCache.length > 0) {
+        const facilityBarangays = newFacilityCache
+          .filter(f => f.barangay)
+          .map(f => f.barangay.trim())
+          .slice(0, 5);
+        console.log('Sample facility barangays:', facilityBarangays);
+      }
+    } else {
+      console.log('No barangay data to display');
+      // Clear barangay data map
+      currentBarangayDataMap = {};
+      // Update facility markers (will show 0 or no count)
+      updateFacilityMarkersWithDiseaseCount();
+    }
+  }
+  
+  // Update prediction table with clickable rows for barangay breakdown
+  function updatePredictionTable(predictions, selectedDisease, selectedMonth, monthFrom = null, monthTo = null) {
+    const tbody = document.getElementById('prediction-table-body');
+    tbody.innerHTML = '';
+    
+    if (!predictions || predictions.error) {
+      tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted">' + 
+        (predictions?.error || 'No predictions available') + 
+        '</td></tr>';
+      return;
+    }
+    
+    // Check if we have aggregated range data
+    const hasRange = monthFrom && monthTo;
+    
+    if (hasRange) {
+      // Show aggregated range as single row
+      const rangeKey = `${monthFrom} - ${monthTo}`;
+      const rangeData = predictions[rangeKey];
+      
+      if (rangeData && rangeData.all_diseases) {
+        const allCounts = Object.values(rangeData.all_diseases);
+        const maxCases = Math.max(...allCounts, 1);
+        const cases = rangeData.all_diseases[selectedDisease] || 0;
+        const heatIndex = calculateHeatIndex(cases, maxCases);
+        const levelInfo = getHeatIndexLevel(heatIndex);
+        
+        const row = document.createElement('tr');
+        row.className = 'table-primary';
+        row.style.cursor = 'pointer';
+        row.title = 'Click to see aggregated data details';
+        row.innerHTML = `
+          <td><strong>${rangeKey}</strong></td>
+          <td>${rangeData.disease || '--'}</td>
+          <td>${cases}</td>
+        `;
+        
+        // Add click handler for range row - map already shows this data via filters
+        row.addEventListener('click', function() {
+          // Map already displays this range data when month-from and month-to filters are set
+          // This click can be used for additional actions if needed
+          console.log(`Range selected: ${rangeKey}, Cases: ${cases}`);
+        });
+        
+        tbody.appendChild(row);
+      }
+    } else {
+      // Show all months
+      const months = ['January', 'February', 'March', 'April', 'May', 'June',
+                      'July', 'August', 'September', 'October', 'November', 'December'];
+      
+      months.forEach(month => {
+        const monthData = predictions[month];
+        if (monthData && monthData.all_diseases) {
+          const allCounts = Object.values(monthData.all_diseases);
+          const maxCases = Math.max(...allCounts, 1);
+          const cases = monthData.all_diseases[selectedDisease] || 0;
+          const heatIndex = calculateHeatIndex(cases, maxCases);
+          const levelInfo = getHeatIndexLevel(heatIndex);
+          
+          const row = document.createElement('tr');
+          const rowClass = month === selectedMonth ? 'table-primary' : '';
+          row.className = rowClass;
+          row.style.cursor = 'pointer';
+          row.title = 'Click to see barangay breakdown';
+          row.innerHTML = `
+            <td>${month}</td>
+            <td>${monthData.disease || '--'}</td>
+            <td>${cases}</td>
+          `;
+          
+          // Add click handler - update map view and show barangay breakdown
+          row.addEventListener('click', async function() {
+            // Update selected month to match clicked row
+            currentMonth = month;
+            currentMonthIndex = months.indexOf(month);
+            updateMonthSelector(month);
+            
+            // Update map to show data for this month
+            if (newHeatPredictions && Object.keys(newHeatPredictions).length > 0) {
+              updateHeatIndexDisplay(newHeatPredictions, selectedDisease, month, null, null);
+            } else {
+              fetchAndUpdateHeatIndex();
+            }
+            
+            // Show barangay breakdown modal
+            if (cases > 0) {
+              const breakdown = await fetchBarangayBreakdown(currentYear, month, selectedDisease);
+              if (!breakdown.error) {
+                displayBarangayBreakdownModal(breakdown);
+              } else {
+                alert('Unable to load barangay breakdown: ' + breakdown.error);
+              }
+            }
+          });
+          
+          tbody.appendChild(row);
+        } else {
+          // Add row even if no data
+          const row = document.createElement('tr');
+          const rowClass = month === selectedMonth ? 'table-primary' : '';
+          row.className = rowClass;
+          row.style.cursor = 'not-allowed';
+          row.style.opacity = '0.6';
+          row.title = 'No data available for this month';
+          row.innerHTML = `
+            <td>${month}</td>
+            <td>--</td>
+            <td>0</td>
+          `;
+          tbody.appendChild(row);
+        }
+      });
+    }
+  }
+  
+  // Show loading spinner
+  function showLoadingSpinner() {
+    // Remove existing spinner if any
+    hideLoadingSpinner();
+    
+    const spinner = document.createElement('div');
+    spinner.id = 'loading-spinner';
+    spinner.innerHTML = `
+      <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+                  background: rgba(0, 0, 0, 0.5); z-index: 9999; display: flex; 
+                  align-items: center; justify-content: center;">
+        <div style="background: white; padding: 2rem; border-radius: 10px; 
+                    box-shadow: 0 4px 6px rgba(0,0,0,0.3); text-align: center; max-width: 400px;">
+          <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <p class="mt-3 mb-0 fw-semibold">Loading predictions...</p>
+          <p class="text-muted small mt-2 mb-0">This may take a moment if the model needs training.</p>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(spinner);
+  }
+  
+  // Hide loading spinner
+  function hideLoadingSpinner() {
+    const spinner = document.getElementById('loading-spinner');
+    if (spinner) {
+      spinner.remove();
+    }
+  }
+  
+  // Fetch predictions and update display
+  async function fetchAndUpdateHeatIndex() {
+    // Check if year has data available (only 2025 has predictions, <2025 has historical)
+    if (currentYear > 2025) {
+      // Year > 2025 - no data available, clear map and show message
+      const predictionTableContainer = document.getElementById('prediction-table-container');
+      if (predictionTableContainer) {
+        predictionTableContainer.style.display = 'block'; // Show table to display message
+      }
+      const predictionTableBodyEl = document.getElementById('prediction-table-body');
+      if (predictionTableBodyEl) {
+        predictionTableBodyEl.innerHTML = 
+          '<tr><td colspan="3" class="text-center text-muted">No data available for year ' + currentYear + '</td></tr>';
+      }
+      // Update Predicted Cases card
+      const statPredictedCasesEl = document.getElementById('stat-predicted-cases');
+      if (statPredictedCasesEl) {
+        statPredictedCasesEl.textContent = 'No data available';
+        statPredictedCasesEl.style.fontSize = '0.9rem';
+      }
+      // Clear map
+      if (newBarangayCircleLayer) {
+        newBarangayCircleLayer.clearLayers();
+      }
+      if (newHeatLayerInstance) {
+        newHeatLayerInstance.setLatLngs([]);
+      }
+      currentBarangayDataMap = {};
+      updateFacilityMarkersWithDiseaseCount();
+      return;
+    }
+    
+    // Check if disease is selected - if not, hide table and return
+    const selectedDisease = currentDisease;
+    if (!selectedDisease || selectedDisease === '') {
+      const predictionTableContainer = document.getElementById('prediction-table-container');
+      if (predictionTableContainer) {
+        predictionTableContainer.style.display = 'none';
+      }
+      // Clear map
+      if (newBarangayCircleLayer) {
+        newBarangayCircleLayer.clearLayers();
+      }
+      if (newHeatLayerInstance) {
+        newHeatLayerInstance.setLatLngs([]);
+      }
+      currentBarangayDataMap = {};
+      updateFacilityMarkersWithDiseaseCount();
+      return;
+    }
+    
+    const selectedMonth = currentMonth; // Can be null if no month selected
+    
+    // Get month range from selectors
+    const monthFromEl = document.getElementById('month-from');
+    const monthToEl = document.getElementById('month-to');
+    monthFrom = monthFromEl?.value || null;
+    monthTo = monthToEl?.value || null;
+    
+    // Get elements with null checks FIRST (before try block - CRITICAL!)
+    // This prevents function from crashing if card is removed
+    const heatIndexValueEl = document.getElementById('heat-index-value');
+    const heatIndexLevelEl = document.getElementById('heat-index-level');
+    const predictionTableBodyEl = document.getElementById('prediction-table-body');
+    
+    // Show loading state (with null checks - must be before try block)
+    showLoadingSpinner();
+    if (heatIndexValueEl) heatIndexValueEl.textContent = '...';
+    if (heatIndexLevelEl) heatIndexLevelEl.textContent = 'Loading...';
+    if (predictionTableBodyEl) {
+      predictionTableBodyEl.innerHTML = 
+        '<tr><td colspan="3" class="text-center text-muted">Loading data...</td></tr>';
+    }
+    
+    try {
+      console.log(`Fetching data for year ${currentYear}, month ${selectedMonth}, disease ${selectedDisease}, range ${monthFrom}-${monthTo}...`);
+      
+      // OPTION 1: Parallelize API calls - fetch predictions and barangay data simultaneously
+      const [predictions, barangayData] = await Promise.allSettled([
+        fetchPredictions(currentYear, monthFrom, monthTo, selectedDisease),
+        fetchBarangayHeatData()  // Load in parallel, but don't block on it
+      ]);
+      
+      // Handle predictions result (critical - must succeed)
+      const predictionsResult = predictions.status === 'fulfilled' ? predictions.value : null;
+      
+      if (!predictionsResult || predictionsResult.error) {
+        const errorMessage = predictionsResult?.error || predictions.reason?.message || 'Failed to fetch predictions';
+        console.error('Error in data:', errorMessage);
+        
+        let displayMessage = errorMessage;
+        // Provide helpful error messages
+        if (errorMessage.includes('model not found') || errorMessage.includes('Failed to train')) {
+          displayMessage = 'Model needs training. Please contact administrator to train the forecasting model first.';
+        }
+        
+        // Clear map when no data is available (e.g., year > 2025)
+        if (newBarangayCircleLayer) {
+          newBarangayCircleLayer.clearLayers();
+        }
+        if (newHeatLayerInstance) {
+          newHeatLayerInstance.setLatLngs([]);
+        }
+        currentBarangayDataMap = {};
+        updateFacilityMarkersWithDiseaseCount();
+        
+        // Update with null checks (card may be removed)
+        if (heatIndexValueEl) heatIndexValueEl.textContent = 'Error';
+        if (heatIndexLevelEl) {
+          heatIndexLevelEl.textContent = 'Error';
+          heatIndexLevelEl.className = 'heat-index-level';
+        }
+        if (predictionTableBodyEl) {
+          predictionTableBodyEl.innerHTML = 
+            '<tr><td colspan="3" class="text-center text-danger">' + 
+            '<strong>Error:</strong> ' + displayMessage + 
+            '</td></tr>';
+        }
+        hideLoadingSpinner();
+        return;
+      }
+      
+      // Check if predictions object is empty or invalid
+      if (!predictionsResult || Object.keys(predictionsResult).length === 0) {
+        throw new Error('No data returned from API');
+      }
+      
+      // Update display immediately with predictions (critical data)
+      console.log('Updating display with data for month:', selectedMonth);
+      newHeatPredictions = predictionsResult;
+      updateHeatIndexDisplay(predictionsResult, selectedDisease, selectedMonth, monthFrom, monthTo);
+      
+      // Hide spinner now that critical data is loaded
+      hideLoadingSpinner();
+      
+      // Handle barangay data (non-critical - can load in background)
+      const backgroundIndicator = document.getElementById('background-loading-indicator');
+      if (barangayData.status === 'fulfilled' && barangayData.value) {
+        barangayHeatData = barangayData.value;
+        console.log('Barangay data loaded successfully');
+        if (backgroundIndicator) backgroundIndicator.style.display = 'none';
+      } else {
+        console.warn('Barangay data failed to load, will retry in background:', barangayData.reason);
+        // OPTION 2: Lazy load - retry barangay data in background
+        if (backgroundIndicator) backgroundIndicator.style.display = 'inline';
+        fetchBarangayHeatData().then(data => {
+          if (data) {
+            barangayHeatData = data;
+            // Update map layer with barangay data once it's loaded
+            updateNewHeatMapLayer(predictionsResult, selectedDisease, selectedMonth, monthFrom, monthTo);
+          }
+          if (backgroundIndicator) backgroundIndicator.style.display = 'none';
+        }).catch(err => {
+          console.error('Background barangay data fetch failed:', err);
+          if (backgroundIndicator) backgroundIndicator.style.display = 'none';
+        });
+      }
+      
+      // Update map layer (will use barangay data if available, otherwise fallback)
+      updateNewHeatMapLayer(predictionsResult, selectedDisease, selectedMonth, monthFrom, monthTo);
+      
+    } catch (error) {
+      console.error('Error fetching heat index data:', error);
+      
+      // Clear map on error
+      if (newBarangayCircleLayer) {
+        newBarangayCircleLayer.clearLayers();
+      }
+      if (newHeatLayerInstance) {
+        newHeatLayerInstance.setLatLngs([]);
+      }
+      currentBarangayDataMap = {};
+      updateFacilityMarkersWithDiseaseCount();
+      
+      // Update with null checks (card may be removed)
+      if (heatIndexValueEl) heatIndexValueEl.textContent = 'Error';
+      if (heatIndexLevelEl) {
+        heatIndexLevelEl.textContent = 'Failed to load';
+        heatIndexLevelEl.className = 'heat-index-level';
+      }
+      
+      let errorMsg = 'Error loading data. ';
+      if (error.message.includes('Failed to fetch')) {
+        errorMsg += 'Network error. Please check your connection.';
+      } else if (error.message.includes('model')) {
+        errorMsg += 'The forecasting model may need to be trained. Please contact administrator.';
+      } else {
+        errorMsg += error.message;
+      }
+      
+      if (predictionTableBodyEl) {
+        predictionTableBodyEl.innerHTML = 
+          '<tr><td colspan="3" class="text-center text-danger">' + errorMsg + '</td></tr>';
+      }
+      hideLoadingSpinner();
+    }
+  }
+  
+  // Event listeners
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('Initializing new heatmap page...');
+    
+    // Initialize with current month
+    const initialMonth = getCurrentMonth();
+    updateMonthSelector(initialMonth);
+    updateDataTypeBadge(currentYear);
+    
+    // Initialize map first
+    initializeNewHeatMap();
+    
+    // OPTION 2: Lazy load non-critical data in background
+    // Plot facilities in background (non-blocking)
+    setTimeout(() => {
+      plotNewFacilityMarkers().catch(err => {
+        console.warn('Facilities failed to load (non-critical):', err);
+      });
+    }, 500);
+    
+    // Note: Barangay data is now loaded in parallel with predictions in fetchAndUpdateHeatIndex()
+    // No need to load it separately here
+    
+    // Year selector change (input field)
+    const yearSelector = document.getElementById('year-selector');
+    if (yearSelector) {
+      // Handle both 'change' (on blur) and 'input' (while typing) events
+      yearSelector.addEventListener('change', function() {
+        let yearValue = parseInt(this.value);
+        // Validate year range
+        if (isNaN(yearValue) || yearValue < 2020 || yearValue > 2030) {
+          // Reset to current year if invalid
+          yearValue = currentYear || 2025;
+          this.value = yearValue;
+        }
+        currentYear = yearValue;
+        updateDataTypeBadge(currentYear);
+        // Clear month range when year changes (similar to month navigation)
+        document.getElementById('month-from').value = '';
+        document.getElementById('month-to').value = '';
+        monthFrom = null;
+        monthTo = null;
+        fetchAndUpdateHeatIndex();
+      });
+      
+      // Also handle Enter key press for immediate update
+      yearSelector.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          this.blur(); // Trigger change event
+        }
+      });
+    }
+    
+    // Month selector change
+    document.getElementById('month-selector')?.addEventListener('change', function() {
+      updateMonthSelector(this.value);
+      // Clear month range when selecting a specific month
+      document.getElementById('month-from').value = '';
+      document.getElementById('month-to').value = '';
+      monthFrom = null;
+      monthTo = null;
+      if (newHeatPredictions && Object.keys(newHeatPredictions).length > 0) {
+        updateHeatIndexDisplay(newHeatPredictions, currentDisease, this.value, null, null);
+        updateNewHeatMapLayer(newHeatPredictions, currentDisease, this.value, null, null);
+      } else {
+        fetchAndUpdateHeatIndex();
+      }
+    });
+    
+    // Previous month button
+    document.getElementById('btn-prev-month')?.addEventListener('click', function() {
+      currentMonthIndex = (currentMonthIndex - 1 + 12) % 12;
+      const newMonth = months[currentMonthIndex];
+      updateMonthSelector(newMonth);
+      // Clear month range when navigating
+      document.getElementById('month-from').value = '';
+      document.getElementById('month-to').value = '';
+      monthFrom = null;
+      monthTo = null;
+      if (newHeatPredictions && Object.keys(newHeatPredictions).length > 0) {
+        updateHeatIndexDisplay(newHeatPredictions, currentDisease, newMonth, null, null);
+        updateNewHeatMapLayer(newHeatPredictions, currentDisease, newMonth, null, null);
+      } else {
+        fetchAndUpdateHeatIndex();
+      }
+    });
+    
+    // Next month button
+    document.getElementById('btn-next-month')?.addEventListener('click', function() {
+      currentMonthIndex = (currentMonthIndex + 1) % 12;
+      const newMonth = months[currentMonthIndex];
+      updateMonthSelector(newMonth);
+      // Clear month range when navigating
+      document.getElementById('month-from').value = '';
+      document.getElementById('month-to').value = '';
+      monthFrom = null;
+      monthTo = null;
+      if (newHeatPredictions && Object.keys(newHeatPredictions).length > 0) {
+        updateHeatIndexDisplay(newHeatPredictions, currentDisease, newMonth, null, null);
+        updateNewHeatMapLayer(newHeatPredictions, currentDisease, newMonth, null, null);
+      } else {
+        fetchAndUpdateHeatIndex();
+      }
+    });
+    
+    // Disease filter change
+    document.getElementById('disease-filter')?.addEventListener('change', function() {
+      currentDisease = this.value || null;
+      fetchAndUpdateHeatIndex();
+    });
+    
+    // Month from change
+    document.getElementById('month-from')?.addEventListener('change', function() {
+      monthFrom = this.value || null;
+      // Clear month-to if it's before month-from
+      const monthToEl = document.getElementById('month-to');
+      if (monthFrom && monthToEl.value) {
+        const monthMap = {
+          "January": 1, "February": 2, "March": 3, "April": 4,
+          "May": 5, "June": 6, "July": 7, "August": 8,
+          "September": 9, "October": 10, "November": 11, "December": 12
+        };
+        if (monthMap[monthFrom] > monthMap[monthToEl.value]) {
+          monthToEl.value = '';
+          monthTo = null;
+        }
+      }
+      fetchAndUpdateHeatIndex();
+    });
+    
+    // Month to change
+    document.getElementById('month-to')?.addEventListener('change', function() {
+      monthTo = this.value || null;
+      // Clear month-from if it's after month-to
+      const monthFromEl = document.getElementById('month-from');
+      if (monthTo && monthFromEl.value) {
+        const monthMap = {
+          "January": 1, "February": 2, "March": 3, "April": 4,
+          "May": 5, "June": 6, "July": 7, "August": 8,
+          "September": 9, "October": 10, "November": 11, "December": 12
+        };
+        if (monthMap[monthFromEl.value] > monthMap[monthTo]) {
+          monthFromEl.value = '';
+          monthFrom = null;
+        }
+      }
+      fetchAndUpdateHeatIndex();
+    });
+    
+    
+    // Initial load - don't fetch data if no disease is selected
+    // Table will be hidden by default until user selects a disease
+    console.log('Page initialized. Please select a disease to view predictions.');
+  });
+</script>
+
+<!-- Pass current user context to JavaScript via data attributes -->
+<div id="js-context"
+     data-current-user-id="{{ request.user.id }}"
+     hidden></div>
+
+<!-- Notifications are now handled automatically by notification_poller.js in base.html -->
+{% endblock script %} {% endblock %}
+

@@ -78,6 +78,8 @@ TEMPLATES = [
                 'accounts.context_processors.pending_users_count',
                 'accounts.context_processors.user_approval_status',
                 'accounts.context_processors.active_referrals_count',
+                'accounts.context_processors.followups_count',
+                'accounts.context_processors.user_facility',
                 'chat.context_processors.chat_context',
             ],
         },
@@ -126,7 +128,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Manila'
 
 USE_I18N = True
 
@@ -138,6 +140,10 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / "static",]  # or os.path.join(BASE_DIR, "static")
+
+# Media files (user uploads)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -193,4 +199,32 @@ CHANNEL_LAYERS = {
 #         'BACKEND': 'channels.layers.InMemoryChannelLayer',
 #     },
 # }
+
+# Email Configuration for Password Reset
+# For development: emails are printed to console
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'pdpatana111@gmail.com'
+EMAIL_HOST_PASSWORD = 'myerfuxajvxevfvq'
+DEFAULT_FROM_EMAIL = 'MHOERS <pdpatana111@gmail.com>'
+
+
+
+# For production, configure SMTP settings:
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'  # or your SMTP server
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = 'your-email@gmail.com'
+# EMAIL_HOST_PASSWORD = 'your-app-password'
+# DEFAULT_FROM_EMAIL = 'MHOERS <noreply@mhoers.com>'
+
+# Site URL for password reset links
+# Update this to your actual domain in production
+SITE_URL = 'http://localhost:8000'  # Change to your production domain
+
+# OpenStreetMap Nominatim API (no API key required)
+# Note: Nominatim requires a User-Agent header (set in views.py)
 

@@ -57,7 +57,7 @@
 <nav class="navbar navbar-expand-lg px-3">
   <div class="container-fluid">
     <a class="navbar-brand" href="#">
-      <i class="bi bi-hospital health-icon"></i>
+      
       New Corella E-Referral System
     </a>
     
@@ -69,7 +69,7 @@
         <button class="notification-btn dropdown-toggle position-relative" id="notificationDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
           <i class="bi bi-bell notification-icon"></i>
           {% if unread_count > 0 or pending_users_count > 0 %}
-            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+            <span id="notif-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
               {% if unread_count > 0 and pending_users_count > 0 %}
                 {{ unread_count|add:pending_users_count }}
               {% elif unread_count > 0 %}
@@ -79,6 +79,8 @@
               {% endif %}
               <span class="sr-only">unread messages</span>
             </span>
+          {% else %}
+            <span id="notif-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display: none;"></span>
           {% endif %}
         </button>
         <div class="dropdown-menu dropdown-menu-right shadow" aria-labelledby="notificationDropdown">
@@ -94,36 +96,13 @@
                 <span class="badge bg-warning text-dark ms-2">{{ pending_users_count }}</span>
               </a>
             </li>
-            <li><hr class="dropdown-divider"></li>
+          {% else %}
+            <li>
+              <div class="dropdown-item text-center py-3 text-muted">
+                <i class="bi bi-inbox me-2"></i>No notifications
+              </div>
+            </li>
           {% endif %}
-          <li>
-            <a class="dropdown-item d-flex justify-content-between align-items-start" href="#">
-              <div>
-                <i class="bi bi-capsule text-primary me-2"></i> New patient referral from Barangay Health Center
-              </div>
-              <small class="text-muted">5 mins ago</small>
-            </a>
-          </li>
-          <li>
-            <a class="dropdown-item d-flex justify-content-between align-items-start" href="#">
-              <div>
-                <i class="bi bi-heart-pulse text-success me-2"></i> Updated vital signs for Patient #1234
-              </div>
-              <small class="text-muted">10 mins ago</small>
-            </a>
-          </li>
-          <li>
-            <a class="dropdown-item d-flex justify-content-between align-items-start" href="#">
-              <div>
-                <i class="bi bi-file-medical text-warning me-2"></i> Lab results available for review
-              </div>
-              <small class="text-muted">1 hour ago</small>
-            </a>
-          </li>
-          <li><hr class="dropdown-divider"></li>
-          <li>
-            <a class="dropdown-item text-center text-primary" href="#">View all notifications</a>
-          </li>
         </div>
       </div>
 

@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{% static 'css/admin_dashboard.css' %}" />
+
+<!-- Navbar Include -->
+{% include 'components/navbar.html' %}
+
+<div class="container-fluid">
+  <!-- ✅ MEDICAL STATISTICS CARDS FOR DOCTORS -->
+  <div class="row mt-4 g-3"> 
+    
+
+    
+
+    <div class="col-md-3">
+      <div class="card-counter warning">
+        <i class="fa fa-hourglass-half"></i>
+        <span class="count-numbers">{{ pending_count|default:0 }}</span>
+        <span class="count-name">Pending</span>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card-counter info">
+        <i class="fa fa-clock"></i>
+        <span class="count-numbers">{{ active_referrals|default:0 }}</span>
+        <span class="count-name">Active</span>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card-counter success">
+        <i class="fa fa-check-circle"></i>
+        <span class="count-numbers">{{ todays_completed|default:0 }}</span>
+        <span class="count-name">Done Today</span>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card-counter primary">
+        <i class="fa fa-database"></i>
+        <span class="count-numbers">{{ total_referrals|default:0 }}</span>
+        <span class="count-name">All Time Record</span>
+      </div>
+    </div>
+  </div>
+
+  
+
+  <!-- ✅ OVERDUE FOLLOW-UPS (if any) -->
+  <div class="row mt-4" id="overdueSection" style="display: none;">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-3">
+          <div class="reminder-main">
+            <div class="reminder-header text-muted d-flex justify-content-between align-items-center mb-2">
+              <h5 class="fw-bold text-danger mb-0">Overdue Follow-ups</h5>
+              <small class="text-muted" id="overdueCount"></small>
+            </div>
+            <div id="overdueContent" style="max-height: 200px; overflow-y: auto;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ✅ TODAY'S SCHEDULE -->
+  <div class="row mt-4">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <div class="reminder-main">
+            <div class="reminder-header text-muted">
+              <h4 class="fw-bold">Today's Schedule</h4>
+            </div>
+            <div id="scheduleContent"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ✅ CALENDAR SECTION -->
+  <div class="row mt-4">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <div class="calendar-main">
+            <div class="calendar-header">
+              <h2 id="currentMonth"></h2>
+              <div class="calendar-nav">
+                <button class="btn btn-secondary" onclick="previousMonth()">Previous</button>
+                <button class="btn btn-primary" onclick="goToToday()">Today</button>
+                <button class="btn btn-secondary" onclick="nextMonth()">Next</button>
+              </div>
+            </div>
+            <div class="calendar-grid" id="calendarGrid">
+              <!-- Calendar generated here -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<form id="goToAssessmentForm" action="{% url 'assessment' %}" method="post" style="display:none;">
+  {% csrf_token %}
+  <input type="hidden" name="patient_id" id="hiddenPatientId">
+</form>
+
+{% block script %}
+<script src="{% static 'js/line_chart.js' %}"></script>
+<script src="{% static 'js/calendar.js' %}"></script>
+
+<!-- Pass current user context to JavaScript -->
+<script>
+  // Make current user ID and doctor status available to calendar.js
+  window.currentUserId = {{ request.user.id }};
+  window.isAdmin = false;
+  window.isDoctor = true;
+</script>
+
+<!-- Notifications are handled automatically by notification_poller.js in base.html -->
+{% endblock script %}
+
+{% endblock %}
+

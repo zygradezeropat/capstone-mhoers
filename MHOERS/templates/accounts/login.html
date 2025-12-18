@@ -111,17 +111,9 @@
         align-items: center;
       }
 
-      .input-icon {
-        position: absolute;
-        left: 16px;
-        color: #94a3b8;
-        font-size: 16px;
-        z-index: 2;
-      }
-
       .form-input {
         width: 100%;
-        padding: 16px 16px 16px 48px;
+        padding: 16px;
         border: 2px solid #e2e8f0;
         border-radius: 12px;
         font-size: 16px;
@@ -129,11 +121,13 @@
         color: #1e293b;
         background: #f8fafc;
         transition: all 0.3s ease;
+        text-align: left !important;
       }
 
       .form-input::placeholder {
         color: #94a3b8;
         font-weight: 400;
+        text-align: left !important;
       }
 
       .form-input:focus {
@@ -143,7 +137,43 @@
         box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
       }
 
-      .form-input:focus + .input-icon {
+      /* Hide browser's default password reveal button */
+      input[type="password"]::-ms-reveal,
+      input[type="password"]::-ms-clear {
+        display: none !important;
+      }
+
+      /* Hide Chrome/Edge password reveal button */
+      input[type="password"]::-webkit-credentials-auto-fill-button {
+        display: none !important;
+        visibility: hidden !important;
+      }
+
+      /* Additional padding for password fields to accommodate eye icon */
+      .input-wrapper input[type="password"] {
+        padding-right: 48px !important;
+      }
+
+      /* Password toggle eye icon styling */
+      .password-toggle {
+        position: absolute;
+        right: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #94a3b8;
+        font-size: 16px;
+        cursor: pointer;
+        z-index: 10;
+        transition: color 0.3s ease;
+        user-select: none;
+        pointer-events: auto;
+      }
+
+      .password-toggle:hover {
+        color: #3b82f6;
+      }
+
+      .input-wrapper:focus-within .password-toggle {
         color: #3b82f6;
       }
 
@@ -194,6 +224,19 @@
         line-height: 1.5;
       }
 
+      .alert-success {
+        background: #f0fdf4 !important;
+        background-color: #f0fdf4 !important;
+        border: 1px solid #bbf7d0 !important;
+        border-color: #bbf7d0 !important;
+        color: #16a34a !important;
+      }
+
+      .alert-success p {
+        color: #16a34a !important;
+        margin: 0;
+      }
+
       .alert p {
         margin: 0;
       }
@@ -207,6 +250,18 @@
         color: #64748b;
         line-height: 1.5;
         margin: 0;
+      }
+
+      .login-footer a {
+        color: #3b82f6;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+       }
+
+      .login-footer a:hover {
+        color: #1d4ed8;
+        text-decoration: underline;
       }
 
       @media (max-width: 768px) {
@@ -315,25 +370,30 @@
             {% csrf_token %}
             
             {% if messages %}
-            <div class="alert alert-danger">
               {% for message in messages %}
-              <p>{{ message }}</p>
+              <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-danger{% endif %}">
+                <p>{{ message }}</p>
+              </div>
               {% endfor %}
-            </div>
             {% endif %}
 
             <div class="form-group">
               <div class="input-wrapper">
-                <i class="fas fa-user input-icon"></i>
-                <input type="text" name="username" id="username" class="form-input" placeholder="Username" required>
+                <input type="text" name="username" id="username" class="form-input" placeholder="Username or Email" required>
               </div>
             </div>
 
             <div class="form-group">
               <div class="input-wrapper">
-                <i class="fas fa-lock input-icon"></i>
                 <input type="password" id="password" name="password" class="form-input" placeholder="Password" required>
+                <i class="fas fa-eye-slash password-toggle" id="togglePassword"></i>
               </div>
+            </div>
+
+            <div style="text-align: right; margin-bottom: 20px;">
+              <a href="{% url 'password_reset' %}" style="color: #3b82f6; text-decoration: none; font-size: 14px; font-weight: 500;">
+                Forgot Password?
+              </a>
             </div>
 
             <button type="submit" class="login-button">
@@ -344,11 +404,7 @@
 
           <!-- Footer -->
           <div class="login-footer">
-             <p>No account yet?</p>
-             <a href="{% url 'register' %}" class="nav-link {% if active_page == 'assessment' %}active{% endif %}" data-tooltip="Assessment">
-          <i class="bi bi-menu-button-wide"></i>
-          <span class="nav-label">Register Here</span>
-                </a>
+             <p>No account yet? <a href="{% url 'register' %}">Register Here</a></p>
           </div>
         </div>
       </div>
@@ -364,6 +420,28 @@
       window.onpopstate = function () {
         history.go(1);
       };
+
+      // Password visibility toggle functionality
+      document.addEventListener('DOMContentLoaded', function() {
+        const togglePassword = document.getElementById('togglePassword');
+        const password = document.getElementById('password');
+
+        if (togglePassword && password) {
+          togglePassword.addEventListener('click', function() {
+            const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+            password.setAttribute('type', type);
+            
+            // Toggle icon between eye and eye-slash
+            if (type === 'text') {
+              togglePassword.classList.remove('fa-eye-slash');
+              togglePassword.classList.add('fa-eye');
+            } else {
+              togglePassword.classList.remove('fa-eye');
+              togglePassword.classList.add('fa-eye-slash');
+            }
+          });
+        }
+      });
     </script>
   </body>
 </html>

@@ -13,8 +13,8 @@
         <img src="{% static 'images/newcorellalogo.png' %}" alt="Logo" />
       </a>
       <div class="header-text">
-        <h3 class="app-title">MHO-Admin</h3>
-        <span class="username">{{ request.user.username }}</span>
+        <h3 class="app-title">{{ request.user.first_name }}</h3>
+        <span class="username">Administrator</span>
       </div>
     </div>
     
@@ -37,50 +37,8 @@
               <span class="nav-label">Dashboard</span>
             </a>
           </li>
-          <li class="nav-item">
-            <a href="{% url 'heatmap' %}" class="nav-link {% if active_page == 'heatmap' %}active{% endif %}" data-tooltip="Heatmap">
-              <i class="bi bi-map"></i>
-              <span class="nav-label">Heatmap</span>
-            </a>
-          </li>
-          
-          <li class="nav-item">
-        <a href="{% url 'referrals:assessment' %}" class="nav-link {% if active_page == 'assessment' %}active{% endif %}" data-tooltip="Assessment">
-          <i class="bi bi-file-plus"></i>
-          <span class="nav-label">Assessment</span>
-        </a>
-      </li>
 
           <li class="nav-item">
-            <a href="{% url 'referrals:patient_list' %}" class="nav-link {% if active_page == 'patient_list' %}active{% endif %}" data-tooltip="Patients Referral">
-              <i class="bi bi-menu-button-wide"></i>
-              <span class="nav-label">Patients</span>
-              {% if active_referrals_count > 0 %}
-                <span class="notification-badge">{{ active_referrals_count }}</span>
-              {% endif %}
-            </a>
-          </li>
-
-
-          <li class="nav-item">
-            <a
-              href="{% url 'diseases' %}"
-              class="nav-link {% if active_page == 'diseases' %}active{% endif %}"
-              data-tooltip="Diseases"
-            >
-              <i class="bi bi-virus"></i>
-              <span class="nav-label">Diseases</span>
-            </a>
-          </li>
-          
-          <li class="nav-item">
-            <a href="{% url 'report_analytics' %}" class="nav-link {% if active_page == 'report_analytics' %}active{% endif %}" data-tooltip="Report & Analytics">
-              <i class="bi bi-newspaper"></i>
-              <span class="nav-label">Report & Analytics</span>
-            </a>
-          </li>
-
-           <li class="nav-item">
             <a href="{% url 'user_management' %}" class="nav-link {% if active_page == 'user_management' %}active{% endif %}" data-tooltip="User Management">
               <i class="bi bi-person"></i>
               <span class="nav-label">User Management</span>
@@ -89,10 +47,15 @@
               {% endif %} 
             </a>
           </li>
-   
           
-  
-         
+          <li class="nav-item">
+            <a href="{% url 'report_analytics' %}" class="nav-link {% if active_page == 'report_analytics' %}active{% endif %}" data-tooltip="Report & Analytics">
+              <i class="bi bi-newspaper"></i>
+              <span class="nav-label">Reports</span>
+            </a>
+          </li>
+
+          
         </ul>
         
         

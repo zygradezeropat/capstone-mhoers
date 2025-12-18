@@ -31,73 +31,47 @@
                         </div>
                     </div>
 
+                    <!-- Address Information Section -->
+                    <div class="row g-3 mt-1">
+                        <div class="col-12">
+                            <hr class="my-3">
+                            <h6 class="text-muted mb-3">
+                                <i class="bi bi-geo-alt me-2"></i>Address Information
+                            </h6>
+                        </div>
+                    </div>
+
+                    <!-- Province Field -->
                     <div class="row g-3 mt-1">
                         <div class="col-md-6">
-                            <label for="editAddress" class="fw-semibold">Address</label>
-                            <select class="form-control rounded-pill" id="editAddress" name="editAddress" required>
-                                <option value="">Select Address</option>
-                                
-                                <!-- New Cortez Barangay -->
-                                <optgroup label="New Cortez">
-                                    <option value="Prk 1, Central, New Cortez, New Corella, Davao del Norte">Prk 1, Central, New Cortez, New Corella, Davao del Norte</option>
-                                    <option value="Prk 2, Matin Ao, New Cortez, New Corella, Davao del Norte">Prk 2, Matin Ao, New Cortez, New Corella, Davao del Norte</option>
-                                    <option value="Prk 3, Kauswagan, New Cortez, New Corella, Davao del Norte">Prk 3, Kauswagan, New Cortez, New Corella, Davao del Norte</option>
-                                    <option value="Prk 4, Anaman, New Cortez, New Corella, Davao del Norte">Prk 4, Anaman, New Cortez, New Corella, Davao del Norte</option>
-                                    <option value="Prk 5, Kasilak, New Cortez, New Corella, Davao del Norte">Prk 5, Kasilak, New Cortez, New Corella, Davao del Norte</option>
-                                    <option value="Prk 6, San Roque, New Cortez, New Corella, Davao del Norte">Prk 6, San Roque, New Cortez, New Corella, Davao del Norte</option>
-                                </optgroup>
-                                
-                                <!-- Carcor Barangay -->
-                                <optgroup label="Carcor">
-                                    <option value="Prk 1, Carcor, New Corella, Davao del Norte">Prk 1, Carcor, New Corella, Davao del Norte</option>
-                                    <option value="Prk 2, Carcor, New Corella, Davao del Norte">Prk 2, Carcor, New Corella, Davao del Norte</option>
-                                    <option value="Prk 3, Carcor, New Corella, Davao del Norte">Prk 3, Carcor, New Corella, Davao del Norte</option>
-                                </optgroup>
-                                
-                                <!-- Mesaoy Barangay -->
-                                <optgroup label="Mesaoy">
-                                    <option value="Prk 1, Mesaoy, New Corella, Davao del Norte">Prk 1, Mesaoy, New Corella, Davao del Norte</option>
-                                    <option value="Prk 2, Mesaoy, New Corella, Davao del Norte">Prk 2, Mesaoy, New Corella, Davao del Norte</option>
-                                    <option value="Prk 3, Mesaoy, New Corella, Davao del Norte">Prk 3, Mesaoy, New Corella, Davao del Norte</option>
-                                    <option value="Prk 4, Mesaoy, New Corella, Davao del Norte">Prk 4, Mesaoy, New Corella, Davao del Norte</option>
-                                </optgroup>
-                                
-                                <!-- Sta. Cruz Barangay -->
-                                <optgroup label="Sta. Cruz">
-                                    <option value="Sta. Cruz, New Corella, Davao del Norte">Sta. Cruz, New Corella, Davao del Norte</option>
-                                </optgroup>
-                                
-                                <!-- Other Barangays in New Corella -->
-                                <optgroup label="Other Barangays">
-                                    <option value="Cabidianan, New Corella, Davao del Norte">Cabidianan, New Corella, Davao del Norte</option>
-                                    <option value="Del Monte, New Corella, Davao del Norte">Del Monte, New Corella, Davao del Norte</option>
-                                    <option value="Del Pilar, New Corella, Davao del Norte">Del Pilar, New Corella, Davao del Norte</option>
-                                    <option value="El Salvador, New Corella, Davao del Norte">El Salvador, New Corella, Davao del Norte</option>
-                                    <option value="Limba-an, New Corella, Davao del Norte">Limba-an, New Corella, Davao del Norte</option>
-                                    <option value="Macgum, New Corella, Davao del Norte">Macgum, New Corella, Davao del Norte</option>
-                                    <option value="Mambing, New Corella, Davao del Norte">Mambing, New Corella, Davao del Norte</option>
-                                    <option value="New Bohol, New Corella, Davao del Norte">New Bohol, New Corella, Davao del Norte</option>
-                                    <option value="New Sambog, New Corella, Davao del Norte">New Sambog, New Corella, Davao del Norte</option>
-                                    <option value="Patrocenio, New Corella, Davao del Norte">Patrocenio, New Corella, Davao del Norte</option>
-                                    <option value="Poblacion, New Corella, Davao del Norte">Poblacion, New Corella, Davao del Norte</option>
-                                    <option value="San Roque, New Corella, Davao del Norte">San Roque, New Corella, Davao del Norte</option>
-                                    <option value="Sta. Fe, New Corella, Davao del Norte">Sta. Fe, New Corella, Davao del Norte</option>
-                                    <option value="Sto. Niño, New Corella, Davao del Norte">Sto. Niño, New Corella, Davao del Norte</option>
-                                    <option value="Suawon, New Corella, Davao del Norte">Suawon, New Corella, Davao del Norte</option>
-                                    <option value="San Jose, New Corella, Davao del Norte">San Jose, New Corella, Davao del Norte</option>
-                                </optgroup>
-                                
-                                <!-- Manual Entry Option -->
-                                <optgroup label="Other">
-                                    <option value="__manual__">Enter Address Manually</option>
-                                </optgroup>
+                            <label for="editProvince" class="fw-semibold">Province</label>
+                            <select class="form-control rounded-pill" id="editProvince" name="editProvince" required>
+                                <option value="" disabled selected>Select Province</option>
                             </select>
-                            
-                            <!-- Manual Address Input (hidden by default) -->
-                            <input type="text" class="form-control rounded-pill mt-2" id="editAddressManual" placeholder="Enter complete address manually" style="display: none;">
-                            
-                            <small class="text-muted">Select from dropdown or choose "Enter Address Manually" to type your address</small>
                         </div>
+                        <div class="col-md-6">
+                            <label for="editMunicipality" class="fw-semibold">City/Municipality</label>
+                            <select class="form-control rounded-pill" id="editMunicipality" name="editMunicipality" required disabled>
+                                <option value="" disabled selected>Select City/Municipality</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Barangay and Purok Row -->
+                    <div class="row g-3 mt-1">
+                        <div class="col-md-6">
+                            <label for="editBarangay" class="fw-semibold">Barangay</label>
+                            <select class="form-control rounded-pill" id="editBarangay" name="editBarangay" required disabled>
+                                <option value="" disabled selected>Select Barangay</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="editPurok" class="fw-semibold">Purok</label>
+                            <input type="text" class="form-control rounded-pill" id="editPurok" name="editPurok" required placeholder="Enter purok" disabled>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mt-1">
                         <div class="col-md-6">
                             <label for="ePhone" class="fw-semibold">Phone Number</label>
                             <input type="tel" class="form-control rounded-pill" id="ePhone" name="ePhone" pattern="[0-9]{11}" inputmode="numeric" required placeholder="Enter 11-digit phone number">
@@ -148,6 +122,7 @@
                                 <option value="">Select PHIC Status</option>
                                 <option value="M">Member</option>
                                 <option value="D">Dependent</option>
+                                <option value="N">N/A</option>
                             </select>
                         </div>
                     </div>
@@ -315,19 +290,432 @@
     }
   }
 
-  // Handle manual address entry in edit modal
-  $(document).ready(function() {
-    $('#editAddress').on('change', function() {
-      if ($(this).val() === '__manual__') {
-        $('#editAddressManual').show().prop('required', true).attr('name', 'editAddress');
-        $(this).removeAttr('name').removeAttr('required');
-        setTimeout(function() {
-          $('#editAddressManual').focus();
-        }, 100);
-      } else if ($(this).val() !== '' && $(this).val() !== '__manual__') {
-        $('#editAddressManual').hide().removeAttr('name').prop('required', false).val('');
-        $(this).attr('name', 'editAddress').prop('required', true);
+  // Function to parse address string into components
+  // Format: "Purok, Barangay, Municipality, Province"
+  function parseAddress(addressString) {
+    if (!addressString || addressString.trim() === '') {
+      return { purok: '', barangay: '', municipality: '', province: '' };
+    }
+    
+    // Split by comma and trim each part
+    const parts = addressString.split(',').map(part => part.trim());
+    
+    // Expected format: Purok, Barangay, Municipality, Province
+    if (parts.length >= 4) {
+      return {
+        purok: parts[0],
+        barangay: parts[1],
+        municipality: parts[2],
+        province: parts.slice(3).join(', ') // Handle province names with commas
+      };
+    } else if (parts.length === 3) {
+      // Handle case where purok might be missing
+      return {
+        purok: '',
+        barangay: parts[0],
+        municipality: parts[1],
+        province: parts[2]
+      };
+    }
+    
+    return { purok: '', barangay: '', municipality: '', province: '' };
+  }
+
+  // Initialize location dropdowns for edit modal
+  function initializeEditLocationDropdowns() {
+    if (typeof jQuery === 'undefined') {
+      console.error('jQuery is not loaded');
+      return;
+    }
+    var $ = jQuery;
+    
+    const provinceSelect = $('#editProvince');
+    const municipalitySelect = $('#editMunicipality');
+    const barangaySelect = $('#editBarangay');
+    const purokInput = $('#editPurok');
+    
+    if (provinceSelect.length && municipalitySelect.length && barangaySelect.length) {
+      // Load provinces on modal open
+      loadEditProvinces();
+      
+      // Province change handler
+      provinceSelect.off('change.edit').on('change.edit', function() {
+        const selectedProvince = $(this).val();
+        if (selectedProvince) {
+          loadEditCities(selectedProvince);
+          // Clear city and barangay when province changes
+          municipalitySelect.html('<option value="" disabled selected>Select City/Municipality</option>');
+          municipalitySelect.prop('disabled', false);
+          barangaySelect.html('<option value="" disabled selected>Select Barangay</option>');
+          barangaySelect.prop('disabled', true);
+          if (purokInput.length) {
+            purokInput.val('');
+            purokInput.prop('disabled', true);
+          }
+        } else {
+          municipalitySelect.html('<option value="" disabled selected>Select City/Municipality</option>');
+          municipalitySelect.prop('disabled', true);
+          barangaySelect.html('<option value="" disabled selected>Select Barangay</option>');
+          barangaySelect.prop('disabled', true);
+          if (purokInput.length) purokInput.prop('disabled', true);
+        }
+      });
+      
+      // City change handler
+      municipalitySelect.off('change.edit').on('change.edit', function() {
+        const selectedCity = $(this).val();
+        const selectedProvince = provinceSelect.val();
+        if (selectedCity && selectedProvince) {
+          loadEditBarangays(selectedCity, selectedProvince);
+          // Clear barangay when city changes
+          barangaySelect.html('<option value="" disabled selected>Select Barangay</option>');
+          barangaySelect.prop('disabled', false);
+          if (purokInput.length) {
+            purokInput.val('');
+            purokInput.prop('disabled', true);
+          }
+        } else {
+          barangaySelect.html('<option value="" disabled selected>Select Barangay</option>');
+          barangaySelect.prop('disabled', true);
+          if (purokInput.length) purokInput.prop('disabled', true);
+        }
+      });
+      
+      // Barangay change handler
+      barangaySelect.off('change.edit').on('change.edit', function() {
+        const selectedBarangay = $(this).val();
+        if (selectedBarangay && purokInput.length) {
+          purokInput.prop('disabled', false);
+        } else if (purokInput.length) {
+          purokInput.val('');
+          purokInput.prop('disabled', true);
+        }
+      });
+    }
+  }
+  
+  // Load provinces from API
+  function loadEditProvinces() {
+    if (typeof jQuery === 'undefined') {
+      console.error('jQuery is not loaded');
+      return;
+    }
+    var $ = jQuery;
+    
+    const provinceSelect = $('#editProvince');
+    if (!provinceSelect.length) return;
+    
+    provinceSelect.html('<option value="" disabled selected>Loading provinces...</option>');
+    provinceSelect.prop('disabled', true);
+    
+    fetch('/facilities/api/psgc-provinces/')
+      .then(response => response.json())
+      .then(data => {
+        provinceSelect.html('<option value="" disabled selected>Select Province</option>');
+        if (Array.isArray(data) && data.length > 0) {
+          data.forEach(province => {
+            const option = $('<option></option>')
+              .attr('value', province.name)
+              .text(province.name);
+            provinceSelect.append(option);
+          });
+        }
+        provinceSelect.prop('disabled', false);
+      })
+      .catch(error => {
+        console.error('Error loading provinces:', error);
+        provinceSelect.html('<option value="" disabled selected>Error loading provinces</option>');
+        provinceSelect.prop('disabled', false);
+      });
+  }
+  
+  // Load cities based on selected province
+  function loadEditCities(province) {
+    if (typeof jQuery === 'undefined') {
+      console.error('jQuery is not loaded');
+      return;
+    }
+    var $ = jQuery;
+    
+    const municipalitySelect = $('#editMunicipality');
+    if (!municipalitySelect.length) return;
+    
+    municipalitySelect.html('<option value="" disabled selected>Loading cities...</option>');
+    municipalitySelect.prop('disabled', true);
+    
+    const provinceQuery = encodeURIComponent(province);
+    fetch(`/facilities/api/psgc-cities/?province=${provinceQuery}`)
+      .then(response => response.json())
+      .then(data => {
+        municipalitySelect.html('<option value="" disabled selected>Select City/Municipality</option>');
+        if (Array.isArray(data) && data.length > 0) {
+          data.forEach(city => {
+            const option = $('<option></option>')
+              .attr('value', city.name)
+              .text(city.name);
+            municipalitySelect.append(option);
+          });
+        } else {
+          const option = $('<option></option>')
+            .attr('value', '')
+            .text('No cities found')
+            .prop('disabled', true);
+          municipalitySelect.append(option);
+        }
+        municipalitySelect.prop('disabled', false);
+      })
+      .catch(error => {
+        console.error('Error loading cities:', error);
+        municipalitySelect.html('<option value="" disabled selected>Error loading cities</option>');
+        municipalitySelect.prop('disabled', false);
+      });
+  }
+  
+  // Load barangays based on selected city and province
+  function loadEditBarangays(city, province) {
+    if (typeof jQuery === 'undefined') {
+      console.error('jQuery is not loaded');
+      return;
+    }
+    var $ = jQuery;
+    
+    const barangaySelect = $('#editBarangay');
+    if (!barangaySelect.length) return;
+    
+    barangaySelect.html('<option value="" disabled selected>Loading barangays...</option>');
+    barangaySelect.prop('disabled', true);
+    
+    const cityQuery = encodeURIComponent(city);
+    const provinceQuery = encodeURIComponent(province);
+    fetch(`/facilities/api/psgc-barangays/?city=${cityQuery}&province=${provinceQuery}`)
+      .then(response => response.json())
+      .then(data => {
+        barangaySelect.html('<option value="" disabled selected>Select Barangay</option>');
+        if (Array.isArray(data) && data.length > 0) {
+          data.forEach(barangay => {
+            const option = $('<option></option>')
+              .attr('value', barangay.name)
+              .text(barangay.name);
+            barangaySelect.append(option);
+          });
+        } else {
+          const option = $('<option></option>')
+            .attr('value', '')
+            .text('No barangays found')
+            .prop('disabled', true);
+          barangaySelect.append(option);
+        }
+        barangaySelect.prop('disabled', false);
+      })
+      .catch(error => {
+        console.error('Error loading barangays:', error);
+        barangaySelect.html('<option value="" disabled selected>Error loading barangays</option>');
+        barangaySelect.prop('disabled', false);
+      });
+  }
+
+  // Function to populate edit form address fields from parsed address
+  function populateEditAddressFields(addressString) {
+    if (typeof jQuery === 'undefined') {
+      console.error('jQuery is not loaded');
+      return;
+    }
+    var $ = jQuery;
+    
+    if (!addressString || addressString.trim() === '') {
+      console.log('No address to parse');
+      return;
+    }
+    
+    const parsed = parseAddress(addressString);
+    
+    if (!parsed.province) {
+      console.log('Could not parse address:', addressString);
+      return;
+    }
+    
+    console.log('Parsed address:', parsed);
+    
+    // Set province first
+    const provinceSelect = $('#editProvince');
+    if (!provinceSelect.length) {
+      console.error('Province select not found');
+      return;
+    }
+    
+    // Wait for provinces to load, then set value
+    let attempts = 0;
+    const maxAttempts = 50; // 5 seconds max wait
+    
+    const checkProvince = setInterval(function() {
+      attempts++;
+      const isReady = provinceSelect.prop('disabled') === false && 
+                      provinceSelect.find('option').length > 1;
+      
+      if (isReady || attempts >= maxAttempts) {
+        clearInterval(checkProvince);
+        
+        if (attempts >= maxAttempts) {
+          console.error('Timeout waiting for provinces to load');
+          return;
+        }
+        
+        // Try to set province value
+        provinceSelect.val(parsed.province);
+        
+        // Verify it was set correctly
+        if (provinceSelect.val() === parsed.province) {
+          console.log('Province set:', parsed.province);
+          provinceSelect.trigger('change.edit');
+          
+          // Wait for cities to load, then set municipality
+          setTimeout(function() {
+            const municipalitySelect = $('#editMunicipality');
+            let cityAttempts = 0;
+            const checkCity = setInterval(function() {
+              cityAttempts++;
+              const cityReady = municipalitySelect.prop('disabled') === false && 
+                               municipalitySelect.find('option').length > 1;
+              
+              if (cityReady || cityAttempts >= 30) {
+                clearInterval(checkCity);
+                
+                if (cityReady) {
+                  municipalitySelect.val(parsed.municipality);
+                  
+                  if (municipalitySelect.val() === parsed.municipality) {
+                    console.log('Municipality set:', parsed.municipality);
+                    municipalitySelect.trigger('change.edit');
+                    
+                    // Wait for barangays to load, then set barangay
+                    setTimeout(function() {
+                      const barangaySelect = $('#editBarangay');
+                      let barangayAttempts = 0;
+                      const checkBarangay = setInterval(function() {
+                        barangayAttempts++;
+                        const barangayReady = barangaySelect.prop('disabled') === false && 
+                                            barangaySelect.find('option').length > 1;
+                        
+                        if (barangayReady || barangayAttempts >= 30) {
+                          clearInterval(checkBarangay);
+                          
+                          if (barangayReady) {
+                            barangaySelect.val(parsed.barangay);
+                            
+                            if (barangaySelect.val() === parsed.barangay) {
+                              console.log('Barangay set:', parsed.barangay);
+                              
+                              // Set purok (text input)
+                              const purokInput = $('#editPurok');
+                              if (parsed.purok) {
+                                purokInput.val(parsed.purok);
+                                purokInput.prop('disabled', false);
+                                console.log('Purok set:', parsed.purok);
+                                console.log('Address population complete!');
+                              }
+                            } else {
+                              console.warn('Failed to set barangay. Expected:', parsed.barangay, 'Got:', barangaySelect.val());
+                            }
+                          } else {
+                            console.error('Timeout waiting for barangays to load');
+                          }
+                        }
+                      }, 100);
+                    }, 500);
+                  } else {
+                    console.warn('Failed to set municipality. Expected:', parsed.municipality, 'Got:', municipalitySelect.val());
+                  }
+                } else {
+                  console.error('Timeout waiting for cities to load');
+                }
+              }
+            }, 100);
+          }, 500);
+        } else {
+          console.error('Failed to set province. Expected:', parsed.province, 'Got:', provinceSelect.val());
+          console.log('Available provinces:', provinceSelect.find('option').map(function() { return $(this).val(); }).get());
+        }
       }
-    });
-  });
+    }, 100);
+  }
+
+  // Initialize location dropdowns when edit modal is shown
+  // Wait for jQuery to be available
+  (function() {
+    function initEditPatientForm() {
+      // Ensure jQuery is available
+      if (typeof jQuery === 'undefined') {
+        console.log('jQuery not loaded yet, retrying...');
+        setTimeout(initEditPatientForm, 100);
+        return;
+      }
+      
+      var $ = jQuery;
+      
+      $(document).ready(function() {
+        // Initialize when modal is shown
+        $('#editPatients').on('shown.bs.modal', function() {
+          // Always initialize dropdowns
+          initializeEditLocationDropdowns();
+          
+          // If there's an address stored, populate it after initialization
+          if (window.editPatientAddress && typeof populateEditAddressFields === 'function') {
+            setTimeout(function() {
+              populateEditAddressFields(window.editPatientAddress);
+              window.editPatientAddress = null; // Clean up
+            }, 600); // Wait a bit longer to ensure provinces are loaded
+          }
+        });
+        
+        // Reset form when modal is hidden
+        $('#editPatients').on('hidden.bs.modal', function() {
+          $('#editProvince').val('').trigger('change.edit');
+          $('#editMunicipality').html('<option value="" disabled selected>Select City/Municipality</option>').prop('disabled', true);
+          $('#editBarangay').html('<option value="" disabled selected>Select Barangay</option>').prop('disabled', true);
+          $('#editPurok').val('').prop('disabled', true);
+        });
+        
+        // Handle form submission - combine address fields into p_address
+        $('#editPatientForm').on('submit', function(e) {
+          // Get address values for validation
+          const province = $('#editProvince').val();
+          const municipality = $('#editMunicipality').val();
+          const barangay = $('#editBarangay').val();
+          const purok = $('#editPurok').val();
+          
+          // Validate all address fields
+          if (!province || !municipality || !barangay || !purok) {
+            e.preventDefault();
+            alert('Please complete all address fields (Province, City/Municipality, Barangay, and Purok).');
+            return false;
+          }
+          
+          // Get address names (text values, not IDs)
+          const provinceName = $('#editProvince option:selected').text();
+          const municipalityName = $('#editMunicipality option:selected').text();
+          const barangayName = $('#editBarangay option:selected').text();
+          const purokName = $('#editPurok').val().trim();
+          
+          // Create address string in format: Purok, Barangay, Municipality, Province
+          const fullAddress = `${purokName}, ${barangayName}, ${municipalityName}, ${provinceName}`;
+          
+          // Remove any existing hidden p_address field to avoid duplicates
+          $('#hidden_edit_p_address').remove();
+          
+          // Create hidden input for p_address that will be submitted to backend
+          $('<input>').attr({
+            type: 'hidden',
+            id: 'hidden_edit_p_address',
+            name: 'editAddress',
+            value: fullAddress
+          }).appendTo(this);
+          
+          console.log('Edit address being saved to p_address:', fullAddress);
+        });
+      });
+    }
+    
+    // Start initialization
+    initEditPatientForm();
+  })();
 </script>

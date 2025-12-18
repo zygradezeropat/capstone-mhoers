@@ -3,19 +3,80 @@
 {% load custom_filters %}
 {% block content %}
 
-
-<link rel="stylesheet" href="{% static 'css/dashboard.css' %}" />
+<link rel="stylesheet" href="{% static 'css/admin_dashboard.css' %}" />
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css" />
 
-<!-- Navbar Include -->
-{% include 'components/navbar.html' %}
-{% include 'components/tabbar/tabbar.html' with tab1_name="Active Referral" tab1_count=active_count tab2_name="Referred" tab2_count=referred_count tab3_name="All Patients" tab3_count=patients_count|default:0 %}
+<style>
+  /* DataTables Search Field Styling */
+  .dataTables_wrapper .dataTables_filter {
+    text-align: right;
+    float: right;
+    width: 100%; 
+    margin-bottom: 0;
+  }
+  
+  .dataTables_wrapper .dataTables_filter label {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-bottom: 0;
+  }
+  
+  .dataTables_wrapper .dataTables_filter input {
+    width: 100% !important;
+    max-width: none;
+    margin-left: 0.5em;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #ced4da;
+    font-size: 0.875rem;
+    flex: 1;
+  }
+  
+  .dataTables_wrapper .dataTables_filter input:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+    outline: none;
+  }
+  
+  @media (max-width: 768px) {
+    .dataTables_wrapper .dataTables_filter {
+      text-align: left;
+      float: none;
+      width: 100%;
+    }
+    
+    .dataTables_wrapper .dataTables_filter label {
+      justify-content: flex-start;
+    }
+    
+    .dataTables_wrapper .dataTables_filter input {
+      width: 100% !important;
+      max-width: 100%;
+      margin-left: 0.5em;
+    }
+  }
+  
+  /* Disease badge styling for longer text */
+  .badge.disease-badge {
+    white-space: normal;
+    word-wrap: break-word;
+    max-width: 200px;
+    display: inline-block;
+    padding: 0.5em 0.75em;
+    font-size: 0.875rem;
+    line-height: 1.4;
+  }
+</style>
 
-<!-- Patient Modals -->
+{% include 'components/navbar.html' %}
+{% include 'components/referral/referral_modal.html' %}
 {% include 'components/patients/addpatients.html' %}
 {% include 'components/patients/viewpatients.html' %}
 {% include 'components/patients/editpatients.html' %}
 {% include 'components/patients/deletepatients.html' %}
+{% include 'components/tabbar/tabbar.html' with tab1_name="Pending" tab2_name="Active Referral" tab3_name="Referred" %}
 
 <div class="container-fluid py-4">
   <div class="row">
@@ -23,165 +84,370 @@
       <div class="card border-0 shadow-sm rounded-lg">
         <div class="card-body p-4">
           <div class="tab-content" id="dashboardTabContent">
-            <!-- Active Referral Tab -->
+            
+            <!-- Pending Referral Tab -->
             <div class="tab-pane fade {% if active_tab == 'tab1' or not active_tab %}show active{% endif %}" id="tab1" role="tabpanel">
+              <div class="table-responsive">
+                <table id="pendingTable" class="table table-hover align-middle">
+                  <thead class="bg-light">
+                    <tr>
+                      <th>Date</th>
+                      <th>Patient Name</th>
+                      <th>Location</th>
+                      <th>Complaint</th>
+                      <th>Possible Disease</th>
+                      <th>Severity</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for r in pending_referrals %}
+                    <tr data-id="{{ r.referral_id }}" class="align-middle">
+                      <td><h6 class="mb-1 text-dark">{{ r.created_at|date:'Y-m-d h:i A' }}</h6></td>
+                      <td>
+                        <div class="d-flex align-items-center">
+                          <div>
+                            <h6 class="mb-1 text-dark">{{ r.patient.first_name }} {{ r.patient.middle_name }} {{ r.patient.last_name }}</h6>
+                          </div>
+                        </div>
+                      </td>
+                      
+                  
+                      <td>{{ r.patient.p_address }}</td>
+                      <td>{{ r.chief_complaint|default:'N/A'|truncatewords:10 }}</td>
+                      <td>
+                        {% with disease_code=predictions|dict_get:r.referral_id|default:'No prediction available'|first %}
+                        <span class="text-dark" title="{{ disease_code|icd_to_disease }}">
+                          {{ disease_code|icd_to_disease }}
+                        </span>
+                        {% endwith %}
+                      </td>
+                      <td data-order="{% with disease_code=predictions|dict_get:r.referral_id|default:'No prediction available'|first %}{% with severity=disease_code|icd_to_severity %}{% if severity == 'High' %}0{% elif severity == 'Medium' %}1{% elif severity == 'Low' %}2{% else %}3{% endif %}{% endwith %}{% endwith %}">
+                        {% with disease_code=predictions|dict_get:r.referral_id|default:'No prediction available'|first %}
+                        {% with severity=disease_code|icd_to_severity %}
+                          {% if severity == "High" %}
+                            <span class="badge bg-danger rounded-pill">{{ severity }}</span>
+                          {% elif severity == "Medium" %}
+                            <span class="badge bg-warning text-dark rounded-pill">{{ severity }}</span>
+                          {% elif severity == "Low" %}
+                            <span class="badge bg-success rounded-pill">{{ severity }}</span>
+                          {% else %}
+                            <span class="text-muted">{{ severity }}</span>
+                          {% endif %}
+                        {% endwith %}
+                        {% endwith %}
+                      </td>
+                      <td>
+                        <button class="btn btn-outline-primary btn-sm rounded-pill view-button"
+                          data-id="{{ r.referral_id }}"
+                          data-patient="{{ r.patient.first_name }} {{ r.patient.middle_name }} {{ r.patient.last_name }}"
+                          data-sex ="{{ r.patient.sex }}"
+                          data-date="{{ r.created_at|date:'Y-m-d h:i A' }}"
+                          data-from="{{ r.patient.facility.name }}"
+                          data-to="Municipal Health Office"
+                          data-status="{{ r.status }}"
+                          data-notes="{{ r.chief_complaint }}"
+                          data-symptoms="{{ r.symptoms }}"
+                          data-workup="{{ r.work_up_details }}"
+                          data-height= "{{ r.height }}"
+                          data-weight = "{{ r.weight }}"
+                          data-systolic = "{{ r.bp_systolic }}"
+                          data-diastolic = "{{ r.bp_diastolic }}"
+                          data-pulserate = "{{ r.pulse_rate}}"
+                          data-respiratory = "{{ r.respiratory_rate }}"
+                          data-temperature = "{{r.temperature }}"
+                          data-oxygen = "{{r.oxygen_saturation}}"
+                          data-disease="{{ predictions|dict_get:r.referral_id|default:'No prediction available'|first }}"
+                          data-mho-findings="{{ r.final_diagnosis|default:'' }}"
+                          data-mho-note="{% if r.medical_history_notes %}{{ r.medical_history_notes }}{% else %}{{ r.remarks|default:'' }}{% endif %}"
+                          data-mho-advice="{% if r.medical_history_advice %}{{ r.medical_history_advice }}{% else %}{{ r.treatments|default:'' }}{% endif %}"
+                          data-debug-mh-count="{{ r.medical_history.all|length }}"
+                          data-debug-mh-notes-exists="{% if r.medical_history_notes %}YES{% else %}NO{% endif %}"
+                          data-debug-mh-advice-exists="{% if r.medical_history_advice %}YES{% else %}NO{% endif %}"
+                          data-debug-remarks="{{ r.remarks|default:'EMPTY'|truncatechars:50 }}"
+                          data-debug-treatments="{{ r.treatments|default:'EMPTY'|truncatechars:50 }}"
+                          data-icd-code="{{ r.ICD_code|default:'' }}"
+                          data-followup="{% if r.followup_date %}{{ r.followup_date|date:'Y-m-d' }}{% endif %}"
+                          data-examined-by="{% if r.examined_by %}{{ r.examined_by.id }}{% endif %}"
+                          data-examined-by-name="{% if r.examined_by %}{% if r.examined_by.doctors %}Dr. {{ r.examined_by.doctors.first_name }} {{ r.examined_by.doctors.last_name }}{% else %}Dr. {{ r.examined_by.get_full_name|default:r.examined_by.username }}{% endif %}{% endif %}"
+                          data-is-smoker="{% if r.is_smoker %}True{% else %}False{% endif %}"
+                          data-smoking-sticks="{% if r.smoking_sticks_per_day %}{{ r.smoking_sticks_per_day }}{% endif %}"
+                          data-is-alcoholic="{% if r.is_alcoholic %}True{% else %}False{% endif %}"
+                          data-alcohol-bottles="{% if r.alcohol_bottles_per_year %}{{ r.alcohol_bottles_per_year }}{% endif %}"
+                          data-family-planning="{% if r.family_planning %}True{% else %}False{% endif %}"
+                          data-family-planning-type="{{ r.family_planning_type|default:'' }}"
+                          data-menarche="{{ r.menarche|default:'' }}"
+                          data-sexually-active="{% if r.sexually_active %}True{% else %}False{% endif %}"
+                          data-number-of-partners="{{ r.number_of_partners|default:'' }}"
+                          data-is-menopause="{% if r.is_menopause %}True{% else %}False{% endif %}"
+                          data-menopause-age="{{ r.menopause_age|default:'' }}"
+                          data-last-menstrual-period="{% if r.last_menstrual_period %}{{ r.last_menstrual_period|date:'Y-m-d' }}{% endif %}"
+                          data-period-duration="{{ r.period_duration|default:'' }}"
+                          data-period-interval="{{ r.period_interval|default:'' }}"
+                          data-pads-per-day="{{ r.pads_per_day|default:'' }}"
+                          data-is-pregnant="{% if r.is_pregnant %}True{% else %}False{% endif %}"
+                          data-gravidity="{{ r.gravidity|default:'' }}"
+                          data-parity="{{ r.parity|default:'' }}"
+                          data-delivery-type="{{ r.delivery_type|default:'' }}"
+                          data-full-term-births="{{ r.full_term_births|default:'' }}"
+                          data-premature-births="{{ r.premature_births|default:'' }}"
+                          data-abortions="{{ r.abortions|default:'' }}"
+                          data-living-children="{{ r.living_children|default:'' }}"
+                          data-bs-toggle="modal"
+                          data-bs-target="#viewReferralModal">
+                          <i class="bi bi-eye me-1"></i> View
+                        </button>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Active Referral Tab -->
+            <div class="tab-pane fade {% if active_tab == 'tab2' %}show active{% endif %}" id="tab2" role="tabpanel">
               <div class="table-responsive">
                 <table id="activeTable" class="table table-hover align-middle">
                   <thead class="bg-light">
                     <tr>
-                      <th>Patient Information</th>
-                      <th>Contact</th>
-                      <th>Age</th>
+                      <th>Date</th>
+                      <th>Patient Name</th>
+                      <th>Location</th>
+                      <th>Complaint</th>
+                      <th>Possible Disease</th>
+                      <th>Severity</th>
+                      <th>Examined By</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for r in active_referrals %}
+                    <tr data-id="{{ r.referral_id }}" class="align-middle">
+                      <td><h6 class="mb-1 text-dark">{{ r.created_at|date:'Y-m-d h:i A' }}</h6></td>
+                      <td>
+                        <div class="d-flex align-items-center">
+                          <div>
+                            <h6 class="mb-1 text-dark">{{ r.patient.first_name }} {{ r.patient.middle_name }} {{ r.patient.last_name }}</h6>
+                          </div>
+                        </div>
+                      </td>
+                      <td>{{ r.patient.p_address }}</td>
+                      <td>{{ r.chief_complaint|default:'N/A'|truncatewords:10 }}</td>
+                      <td>
+                        {% with disease_code=predictions|dict_get:r.referral_id|default:'No prediction available'|first %}
+                        <span class="text-dark" title="{{ disease_code|icd_to_disease }}">
+                          {{ disease_code|icd_to_disease }}
+                        </span>
+                        {% endwith %}
+                      </td>
+                      <td data-order="{% with disease_code=predictions|dict_get:r.referral_id|default:'No prediction available'|first %}{% with severity=disease_code|icd_to_severity %}{% if severity == 'High' %}0{% elif severity == 'Medium' %}1{% elif severity == 'Low' %}2{% else %}3{% endif %}{% endwith %}{% endwith %}">
+                        {% with disease_code=predictions|dict_get:r.referral_id|default:'No prediction available'|first %}
+                        {% with severity=disease_code|icd_to_severity %}
+                          {% if severity == "High" %}
+                            <span class="badge bg-danger rounded-pill">{{ severity }}</span>
+                          {% elif severity == "Medium" %}
+                            <span class="badge bg-warning text-dark rounded-pill">{{ severity }}</span>
+                          {% elif severity == "Low" %}
+                            <span class="badge bg-success rounded-pill">{{ severity }}</span>
+                          {% else %}
+                            <span class="text-muted">{{ severity }}</span>
+                          {% endif %}
+                        {% endwith %}
+                        {% endwith %}
+                      </td>
+                      <td>
+                        {% if r.examined_by %}
+                          Dr. {{ r.examined_by.get_full_name|default:r.examined_by.username }}
+                        {% else %}
+                          <span class="text-muted">Not assigned</span>
+                        {% endif %}
+                      </td>
+                      <td>
+                        <button class="btn btn-outline-primary btn-sm rounded-pill view-button"
+                          data-id="{{ r.referral_id }}"
+                          data-patient="{{ r.patient.first_name }} {{ r.patient.middle_name }} {{ r.patient.last_name }}"
+                          data-sex="{{ r.patient.sex }}"
+                          data-date="{{ r.created_at|date:'Y-m-d h:i A' }}"
+                          data-from="{{ r.patient.facility.name }}"
+                          data-to="Municipal Health Office"
+                          data-status="{{ r.status }}"
+                          data-notes="{{ r.chief_complaint }}"
+                          data-symptoms="{{ r.symptoms }}"
+                          data-workup="{{ r.work_up_details }}"
+                          data-height="{{ r.height }}"
+                          data-weight="{{ r.weight }}"
+                          data-systolic="{{ r.bp_systolic }}"
+                          data-diastolic="{{ r.bp_diastolic }}"
+                          data-pulserate="{{ r.pulse_rate }}"
+                          data-respiratory="{{ r.respiratory_rate }}"
+                          data-temperature="{{ r.temperature }}"
+                          data-oxygen="{{ r.oxygen_saturation }}"
+                          data-disease="{{ predictions|dict_get:r.referral_id|default:'No prediction available'|first }}"
+                          data-mho-findings="{{ r.final_diagnosis|default:'' }}"
+                          data-mho-note="{% if r.medical_history_notes %}{{ r.medical_history_notes }}{% else %}{{ r.remarks|default:'' }}{% endif %}"
+                          data-mho-advice="{% if r.medical_history_advice %}{{ r.medical_history_advice }}{% else %}{{ r.treatments|default:'' }}{% endif %}"
+                          data-debug-mh-count="{{ r.medical_history.all|length }}"
+                          data-debug-mh-notes-exists="{% if r.medical_history_notes %}YES{% else %}NO{% endif %}"
+                          data-debug-mh-advice-exists="{% if r.medical_history_advice %}YES{% else %}NO{% endif %}"
+                          data-debug-remarks="{{ r.remarks|default:'EMPTY'|truncatechars:50 }}"
+                          data-debug-treatments="{{ r.treatments|default:'EMPTY'|truncatechars:50 }}"
+                          data-icd-code="{{ r.ICD_code|default:'' }}"
+                          data-followup="{% if r.followup_date %}{{ r.followup_date|date:'Y-m-d' }}{% endif %}"
+                          data-examined-by="{% if r.examined_by %}{{ r.examined_by.id }}{% endif %}"
+                          data-examined-by-name="{% if r.examined_by %}{% if r.examined_by.doctors %}Dr. {{ r.examined_by.doctors.first_name }} {{ r.examined_by.doctors.last_name }}{% else %}Dr. {{ r.examined_by.get_full_name|default:r.examined_by.username }}{% endif %}{% endif %}"
+                          data-is-smoker="{% if r.is_smoker %}True{% else %}False{% endif %}"
+                          data-smoking-sticks="{% if r.smoking_sticks_per_day %}{{ r.smoking_sticks_per_day }}{% endif %}"
+                          data-is-alcoholic="{% if r.is_alcoholic %}True{% else %}False{% endif %}"
+                          data-alcohol-bottles="{% if r.alcohol_bottles_per_year %}{{ r.alcohol_bottles_per_year }}{% endif %}"
+                          data-family-planning="{% if r.family_planning %}True{% else %}False{% endif %}"
+                          data-family-planning-type="{{ r.family_planning_type|default:'' }}"
+                          data-menarche="{{ r.menarche|default:'' }}"
+                          data-sexually-active="{% if r.sexually_active %}True{% else %}False{% endif %}"
+                          data-number-of-partners="{{ r.number_of_partners|default:'' }}"
+                          data-is-menopause="{% if r.is_menopause %}True{% else %}False{% endif %}"
+                          data-menopause-age="{{ r.menopause_age|default:'' }}"
+                          data-last-menstrual-period="{% if r.last_menstrual_period %}{{ r.last_menstrual_period|date:'Y-m-d' }}{% endif %}"
+                          data-period-duration="{{ r.period_duration|default:'' }}"
+                          data-period-interval="{{ r.period_interval|default:'' }}"
+                          data-pads-per-day="{{ r.pads_per_day|default:'' }}"
+                          data-is-pregnant="{% if r.is_pregnant %}True{% else %}False{% endif %}"
+                          data-gravidity="{{ r.gravidity|default:'' }}"
+                          data-parity="{{ r.parity|default:'' }}"
+                          data-delivery-type="{{ r.delivery_type|default:'' }}"
+                          data-full-term-births="{{ r.full_term_births|default:'' }}"
+                          data-premature-births="{{ r.premature_births|default:'' }}"
+                          data-abortions="{{ r.abortions|default:'' }}"
+                          data-living-children="{{ r.living_children|default:'' }}"
+                          data-bs-toggle="modal"
+                          data-bs-target="#viewReferralModal">
+                          <i class="bi bi-eye me-1"></i> View
+                        </button>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Medical History Tab -->
+            <div class="tab-pane fade {% if active_tab == 'tab4' %}show active{% endif %}" id="tab4" role="tabpanel">
+              {% include 'patients/admin/patient_history.html' %}
+            </div>
+
+            <!-- Referred Tab -->
+            <div class="tab-pane fade {% if active_tab == 'tab3' %}show active{% endif %}" id="tab3" role="tabpanel">
+              <div class="table-responsive">
+                <table id="referredTable" class="table table-hover align-middle">
+                  <thead class="bg-light">
+                    <tr>
+                      <th>Date/Time</th>
+                      <th>Patient Name</th>
+                      <th>Facility</th>
                       <th>Location</th>
                       <th>Status</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {% for r in active_referrals %}
-                      <tr data-id="{{ r.referral_id }}" class="align-middle">
-                        <td>
-                          <div class="d-flex align-items-center">
-                            <div class="avatar-circle bg-success-soft me-3">
-                              <i class="bi bi-person-circle text-success fs-4"></i>
-                            </div>
-                            <div>
-                              <h6 class="mb-1 text-dark">{{ r.patient.first_name }} {{ r.patient.middle_name }} {{ r.patient.last_name }}</h6>
-                      
-                            </div>
-                          </div>
-                        </td>
-                        <td><i class="bi bi-telephone-fill text-primary me-2"></i>{{ r.patient.p_number }}</td>
-                        <td><i class="bi bi-calendar3 text-success me-2"></i>{{ r.patient.age }}</td>
-                        <td><i class="bi bi-geo-alt-fill text-danger me-2"></i>{{ r.patient.p_address }}</td>
-                        <td><span class="badge bg-success">Active</span>
-                          {% if r.status == 'in-progress' %}
-                            <br>
-                            <small class="text-muted">
-                              <i class="bi bi-clock-history me-1"></i>
-                              Est. completion: 
-                              {% with preds=predictions|dict_get:r.referral_id %}
-                              <span class="est-time" data-ref="{{ r.referral_id }}">
-                                {% if preds %}{{ preds|last|floatformat:0 }} mins{% else %}--{% endif %}
-                              </span>
-                              {% endwith %}
-                            </small>
-                          {% endif %}
-                        </td>
-                        <td>
-                          <button class="btn btn-outline-primary btn-sm rounded-pill MedicalDetails"
-                          data-id="{{ r.referral_id }}" 
-                          data-vpatient="{{ r.patient.first_name }} {{ r.patient.middle_name }} {{ r.patient.last_name }}"
-                          data-vage = "{{ r.patient.age }}"
-                          data-vaddress = "{{ r.patient.p_address}}"
-                          data-vsex = "{{ r.patient.sex}}"
-                          data-vreason = "{{ r.chief_complaint }}"
-                          {% with preds=predictions|dict_get:r.referral_id %}
-                          data-vdisease = "{% if preds %}{{ preds|first }}{% else %}{% endif %}"
-                          {% endwith %}
-                          data-bs-toggle="modal" 
-                          data-bs-target="#MedicalDetails">
-                           <i class="bi bi-file-medical me-1"></i> Referral Details
-                         </button>
-                        </td>
-                      </tr>
-                    {% empty %}
-                      <tr>
-                        <td colspan="6" class="text-center text-muted py-4">No active referrals found.</td>
-                      </tr>
-                    {% endfor %}
-                  </tbody>
-                </table>
-              </div>
-
-              {% if active_referrals.paginator.count %}
-              <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3">
-                <small class="text-muted">
-                  Showing {{ active_referrals.start_index }}&ndash;{{ active_referrals.end_index }} of {{ active_referrals.paginator.count }}
-                </small>
-                {% if active_referrals.has_other_pages %}
-                <nav>
-                  <ul class="pagination pagination-sm mb-0">
-                    <li class="page-item {% if not active_referrals.has_previous %}disabled{% endif %}">
-                      <a class="page-link" href="{% if active_referrals.has_previous %}?active_page={{ active_referrals.previous_page_number }}&tab=tab1{% else %}#{% endif %}" aria-label="Previous">&laquo;</a>
-                    </li>
-                    {% for page_num in active_referrals.paginator.page_range %}
-                      <li class="page-item {% if page_num == active_referrals.number %}active{% endif %}">
-                        <a class="page-link" href="?active_page={{ page_num }}&tab=tab1">{{ page_num }}</a>
-                      </li>
-                    {% endfor %}
-                    <li class="page-item {% if not active_referrals.has_next %}disabled{% endif %}">
-                      <a class="page-link" href="{% if active_referrals.has_next %}?active_page={{ active_referrals.next_page_number }}&tab=tab1{% else %}#{% endif %}" aria-label="Next">&raquo;</a>
-                    </li>
-                  </ul>
-                </nav>
-                {% endif %}
-              </div>
-              {% endif %}
-            </div>
-
-            <!-- Referred Tab -->
-            <div class="tab-pane fade {% if active_tab == 'tab2' %}show active{% endif %}" id="tab2" role="tabpanel">
-              <div class="table-responsive">
-                <table id="referredTable" class="table table-hover align-middle">
-                  <thead class="bg-light">
-                    <tr>
-                      <th>Patient Name</th>
-                      <th>Phone Number</th>
-                      <th>Age</th>
-                      <th>Address</th>
-                      <th>Status</th>
-                      <th>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
                     {% for r in referred_referrals %}
-                      <tr data-id="{{ r.referral_id }}" class="align-middle">
-                        <td>
-                          <div class="d-flex align-items-center">
-                            <div class="avatar-circle bg-info-soft me-3">
-                              <i class="bi bi-person-circle text-info fs-4"></i>
-                            </div>
-                            <div>
-                              <h6 class="mb-1 text-dark">{{ r.patient.first_name }} {{ r.patient.middle_name }} {{ r.patient.last_name }}</h6>
-                            </div>
+                    <tr data-id="{{ r.referral_id }}" class="align-middle">
+                      <td data-order="{% if r.completed_at %}{{ r.completed_at|date:'U' }}{% else %}{{ r.created_at|date:'U' }}{% endif %}"><h6 class="mb-1 text-dark">{% if r.completed_at %}{{ r.completed_at|date:'Y-m-d h:i A' }}{% else %}{{ r.created_at|date:'Y-m-d h:i A' }}{% endif %}</h6></td>
+                      <td>
+                        <div class="d-flex align-items-center">
+                         
+                          <div>
+                            <h6 class="mb-1 text-dark">{{ r.patient.first_name }} {{ r.patient.middle_name }} {{ r.patient.last_name }}</h6>
                           </div>
-                        </td>
-                        <td><i class="bi bi-telephone-fill text-primary me-2"></i>{{ r.patient.p_number }}</td>
-                        <td><i class="bi bi-calendar3 text-success me-2"></i>{{ r.patient.age }}</td>
-                        <td><i class="bi bi-geo-alt-fill text-danger me-2"></i>{{ r.patient.p_address }}</td>
-                        <td><span class="badge bg-success">Referred</span>
-                          {% if r.status == 'completed' %}
-                            <br>
-                            <small class="text-muted">
-                              <i class="bi bi-check-circle me-1"></i>
-                              {% with preds=predictions|dict_get:r.referral_id %}
-                              Completed in: {% if preds %}{{ preds|last|floatformat:0 }} mins{% else %}--{% endif %}
-                              {% endwith %}
-                            </small>
-                          {% endif %}
-                        </td>
-                        <td>
-                          <button class="btn btn-outline-primary btn-sm rounded-pill MedicalDetails"
-                          data-id="{{ r.referral_id }}" 
-                          data-vpatient="{{ r.patient.first_name }} {{ r.patient.middle_name }} {{ r.patient.last_name }}"
-                          data-vage = "{{ r.patient.age }}"
-                          data-vaddress = "{{ r.patient.p_address}}"
-                          data-vsex = "{{ r.patient.sex}}"
-                          data-vreason = "{{ r.chief_complaint }}"
-                          {% with preds=predictions|dict_get:r.referral_id %}
-                          data-vdisease = "{% if preds %}{{ preds|first }}{% else %}{% endif %}"
-                          {% endwith %}
-                          data-bs-toggle="modal" 
-                          data-bs-target="#MedicalDetails">
-                           <i class="bi bi-file-medical me-1"></i> Referral Details
-                         </button>
-                        </td>
-                      </tr>
-                    {% empty %}
-                      <tr>
-                        <td colspan="6" class="text-center text-muted py-4">No referred records found.</td>
-                      </tr>
+                        </div>
+                      </td>
+                      <td>{{ r.patient.facility.name }}</td>
+                      <td>{{ r.patient.p_address }}</td>
+                      <td><span class="badge rounded-pill bg-info text-dark">Done</span>
+                        {% if r.status == 'completed' %}
+                          <br>
+                          <small class="text-muted">
+                            
+                            Completed in: 
+                            {% with duration=r.completion_duration_minutes %}
+                              {% if duration is not None %}
+                                <span class="est-time" data-ref="{{ r.referral_id }}" data-fixed="true">
+                                  {{ duration }} mins
+                                </span>
+                              {% else %}
+                                {% with preds=predictions|dict_get:r.referral_id %}
+                                  <span class="est-time" data-ref="{{ r.referral_id }}">
+                                    {% if preds %}{{ preds|last|floatformat:0 }} mins{% else %}--{% endif %}
+                                  </span>
+                                {% endwith %}
+                              {% endif %}
+                            {% endwith %}
+                          </small>
+                        {% endif %}
+                      </td>
+                      <td>
+                        <button class="btn btn-outline-primary btn-sm rounded-pill view-button"
+                          data-id="{{ r.referral_id }}"
+                          data-patient="{{ r.patient.first_name }} {{ r.patient.middle_name }} {{ r.patient.last_name }}"
+                          data-sex="{{ r.patient.sex }}"
+                          data-date="{% if r.completed_at %}{{ r.completed_at|date:'Y-m-d h:i A' }}{% else %}{{ r.created_at|date:'Y-m-d h:i A' }}{% endif %}"
+                          data-from="{{ r.patient.facility.name }}"
+                          data-to="Municipal Health Office"
+                          data-status="{{ r.status }}"
+                          data-notes="{{ r.chief_complaint }}"
+                          data-symptoms="{{ r.symptoms }}"
+                          data-workup="{{ r.work_up_details }}"
+                          data-height="{{ r.height }}"
+                          data-weight="{{ r.weight }}"
+                          data-systolic="{{ r.bp_systolic }}"
+                          data-diastolic="{{ r.bp_diastolic }}"
+                          data-pulserate="{{ r.pulse_rate }}"
+                          data-respiratory="{{ r.respiratory_rate }}"
+                          data-temperature="{{ r.temperature }}"
+                          data-oxygen="{{ r.oxygen_saturation }}"
+                          data-disease="{{ predictions|dict_get:r.referral_id|default:'No prediction available'|first }}"
+                          data-mho-findings="{{ r.final_diagnosis|default:'' }}"
+                          data-mho-note="{% if r.medical_history_notes %}{{ r.medical_history_notes }}{% else %}{{ r.remarks|default:'' }}{% endif %}"
+                          data-mho-advice="{% if r.medical_history_advice %}{{ r.medical_history_advice }}{% else %}{{ r.treatments|default:'' }}{% endif %}"
+                          data-debug-mh-count="{{ r.medical_history.all|length }}"
+                          data-debug-mh-notes-exists="{% if r.medical_history_notes %}YES{% else %}NO{% endif %}"
+                          data-debug-mh-advice-exists="{% if r.medical_history_advice %}YES{% else %}NO{% endif %}"
+                          data-debug-remarks="{{ r.remarks|default:'EMPTY'|truncatechars:50 }}"
+                          data-debug-treatments="{{ r.treatments|default:'EMPTY'|truncatechars:50 }}"
+                          data-icd-code="{{ r.ICD_code|default:'' }}"
+                          data-followup="{% if r.followup_date %}{{ r.followup_date|date:'Y-m-d' }}{% endif %}"
+                          data-examined-by="{% if r.examined_by %}{{ r.examined_by.id }}{% endif %}"
+                          data-examined-by-name="{% if r.examined_by %}{% if r.examined_by.doctors %}Dr. {{ r.examined_by.doctors.first_name }} {{ r.examined_by.doctors.last_name }}{% else %}Dr. {{ r.examined_by.get_full_name|default:r.examined_by.username }}{% endif %}{% endif %}"
+                          data-is-smoker="{% if r.is_smoker %}True{% else %}False{% endif %}"
+                          data-smoking-sticks="{% if r.smoking_sticks_per_day %}{{ r.smoking_sticks_per_day }}{% endif %}"
+                          data-is-alcoholic="{% if r.is_alcoholic %}True{% else %}False{% endif %}"
+                          data-alcohol-bottles="{% if r.alcohol_bottles_per_year %}{{ r.alcohol_bottles_per_year }}{% endif %}"
+                          data-family-planning="{% if r.family_planning %}True{% else %}False{% endif %}"
+                          data-family-planning-type="{{ r.family_planning_type|default:'' }}"
+                          data-menarche="{{ r.menarche|default:'' }}"
+                          data-sexually-active="{% if r.sexually_active %}True{% else %}False{% endif %}"
+                          data-number-of-partners="{{ r.number_of_partners|default:'' }}"
+                          data-is-menopause="{% if r.is_menopause %}True{% else %}False{% endif %}"
+                          data-menopause-age="{{ r.menopause_age|default:'' }}"
+                          data-last-menstrual-period="{% if r.last_menstrual_period %}{{ r.last_menstrual_period|date:'Y-m-d' }}{% endif %}"
+                          data-period-duration="{{ r.period_duration|default:'' }}"
+                          data-period-interval="{{ r.period_interval|default:'' }}"
+                          data-pads-per-day="{{ r.pads_per_day|default:'' }}"
+                          data-is-pregnant="{% if r.is_pregnant %}True{% else %}False{% endif %}"
+                          data-gravidity="{{ r.gravidity|default:'' }}"
+                          data-parity="{{ r.parity|default:'' }}"
+                          data-delivery-type="{{ r.delivery_type|default:'' }}"
+                          data-full-term-births="{{ r.full_term_births|default:'' }}"
+                          data-premature-births="{{ r.premature_births|default:'' }}"
+                          data-abortions="{{ r.abortions|default:'' }}"
+                          data-living-children="{{ r.living_children|default:'' }}"
+                          data-bs-toggle="modal"
+                          data-bs-target="#viewReferralModal">
+                          <i class="bi bi-eye me-1"></i> View
+                        </button>
+                      </td>
+                    </tr>
                     {% endfor %}
                   </tbody>
                 </table>
@@ -189,7 +455,7 @@
             </div>
 
             <!-- All Patients Tab -->
-            <div class="tab-pane fade {% if active_tab == 'tab3' %}show active{% endif %}" id="tab3" role="tabpanel">
+            <div class="tab-pane fade {% if active_tab == 'tab4' %}show active{% endif %}" id="tab4" role="tabpanel">
               <div class="d-flex justify-content-between align-items-center mb-4">
                 <h5 class="mb-0 text-primary">All Patients</h5>
                 <button class="btn btn-success shadow-sm" data-bs-toggle="modal" data-bs-target="#registerModal">
@@ -200,7 +466,7 @@
 
               {% if patients %}
               <div class="table-responsive">
-                <table id="allPatientsTable" class="table table-hover align-middle">
+                <table id="allTable" class="table table-hover align-middle">
                   <thead class="bg-light">
                     <tr>
                       <th>Patient Information</th>
@@ -231,7 +497,6 @@
                       <td><i class="bi bi-telephone-fill text-primary me-2"></i>{{ patient.p_number }}</td>
                       <td>
                         <div class="btn-group">
-                          <!-- View Button -->
                           <button class="btn btn-outline-primary btn-sm rounded-pill view-button"
                             data-id="{{ patient.patients_id }}"
                             data-vpatient="{{ patient.first_name }} {{ patient.middle_name }} {{ patient.last_name }}"
@@ -251,7 +516,6 @@
                             <i class="bi bi-eye-fill me-1"></i> View
                           </button>
 
-                          <!-- Edit Button -->
                           <button class="btn btn-outline-warning btn-sm rounded-pill edit-button"
                             data-id="{{ patient.patients_id }}"
                             data-firstname="{{ patient.first_name }}"
@@ -279,7 +543,6 @@
                             <i class="bi bi-pencil-fill me-1"></i> Edit
                           </button>
 
-                          <!-- Delete Button -->
                           <button class="btn btn-outline-danger btn-sm rounded-pill delete-button"
                             data-id="{{ patient.patients_id }}"
                             data-patient="{{ patient.first_name }}"
@@ -301,6 +564,91 @@
               {% endif %}
             </div>
 
+            <!-- Medical History Tab -->
+            <div class="tab-pane fade {% if active_tab == 'tab5' %}show active{% endif %}" id="tab5" role="tabpanel">
+              {% include 'patients/admin/patient_history.html' %}
+            </div>
+            <!-- end of Medical History Tab -->
+            
+            <!-- Follow-ups Tab -->
+            <div class="tab-pane fade {% if active_tab == 'tab6' %}show active{% endif %}" id="tab6" role="tabpanel">
+              <div class="table-responsive">
+                <table id="followupsTable" class="table table-hover align-middle">
+                  <thead class="bg-light">
+                    <tr>
+                      <th>Follow-up Date</th>
+                      <th>Patient Name</th>
+                      <th>Illness/Reason</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for followup in followups %}
+                    <tr>
+                      <td>{{ followup.followup_date|date:"M d, Y" }}</td>
+                      <td>{{ followup.patient_name }}</td>
+                      <td>
+                        <strong>{{ followup.illness_name }}</strong>
+                        {% if followup.notes %}
+                        <br><small class="text-muted">{{ followup.notes|truncatewords:10 }}</small>
+                        {% endif %}
+                      </td>
+                      <td>
+                        {% if followup.status == 'completed' %}
+                          <span class="badge bg-success">Completed</span>
+                        {% elif followup.status == 'today' %}
+                          <span class="badge bg-info">Today</span>
+                        {% elif followup.status == 'overdue' %}
+                          <span class="badge bg-danger">Overdue</span>
+                        {% else %}
+                          <span class="badge bg-primary">Upcoming</span>
+                        {% endif %}
+                      </td>
+                      <td>
+                        <div class="btn-group" role="group">
+                          <button 
+                            type="button" 
+                            class="btn btn-sm btn-info view-followup-details" 
+                            data-patient-id="{{ followup.patient_id }}"
+                            data-medical-history-id="{{ followup.medical_history.history_id }}"
+                            data-followup-date="{{ followup.followup_date|date:'Y-m-d' }}"
+                            data-illness-name="{{ followup.illness_name }}"
+                            data-notes="{{ followup.notes }}"
+                            data-advice="{{ followup.advice }}"
+                            title="View Details">
+                            <i class="bi bi-eye"></i> View
+                          </button>
+                          {% if followup.status == 'today' %}
+                          <button 
+                            type="button" 
+                            class="btn btn-sm btn-success add-consultation-form-btn" 
+                            data-patient-id="{{ followup.patient_id }}"
+                            title="Add New Consultation Form">
+                            <i class="bi bi-file-earmark-medical"></i> Add Consultation
+                          </button>
+                          {% elif followup.status == 'overdue' %}
+                          <button 
+                            type="button" 
+                            class="btn btn-sm btn-success record-followup-visit-btn" 
+                            data-patient-id="{{ followup.patient_id }}"
+                            data-medical-history-id="{{ followup.medical_history.history_id }}"
+                            data-followup-date="{{ followup.followup_date|date:'Y-m-d' }}"
+                            data-illness-name="{{ followup.illness_name }}"
+                            title="Record Follow-up Visit">
+                            <i class="bi bi-clipboard-check"></i> Record
+                          </button>
+                          {% endif %}
+                        </div>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <!-- end of Follow-ups Tab -->
+
           </div>
         </div>
       </div>
@@ -308,226 +656,285 @@
   </div>
 </div>
 
-<!-- Medical Details Modal -->
-<div class="modal fade" id="MedicalDetails" tabindex="-1" role="dialog" aria-labelledby="MedicalDetailsLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+<!-- Patient Details Modal -->
+<div class="modal fade" id="patientDetailsModal" tabindex="-1" aria-labelledby="patientDetailsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content shadow-lg border-0">
-      <div class="modal-header bg-success text-white">
-        <h5 class="modal-title"><i class="bi bi-person-lines-fill mr-2"></i>Medical Details</h5>
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="patientDetailsModalLabel">
+          <i class="bi bi-person-lines-fill me-2"></i>Patient Information
+        </h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body p-4">
-        {% csrf_token %}
+        <!-- Basic Information -->
         <div class="row mb-4">
-          <div class="col-md-6">
-            <label class="font-weight-bold text-muted" for="viewPatientMedical">Patient Name</label>
-            <div class="input-group">
-                <div class="input-group-prepend">
-                    <span class="input-group-text"><i class="bi bi-person"></i></span>
-                </div>
-                <input type="text" class="form-control bg-light" id="viewPatientMedical" disabled>
-            </div>
+          <div class="col-12">
+            <h6 class="text-primary border-bottom pb-2 mb-3"><i class="bi bi-person me-2"></i>Basic Information</h6>
           </div>
-        <div class="col-md-6">
-          <label class="font-weight-bold text-muted" for="viewMedicalAge">Age</label>
-            <div class="input-group">
-              <div class="input-group-prepend">
-                  <span class="input-group-text"><i class="bi bi-calendar"></i></span>
+          <div class="col-md-4 mb-3">
+            <label class="font-weight-bold text-muted small">Full Name</label>
+            <input type="text" class="form-control bg-light" id="modalPatientName" readonly>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="font-weight-bold text-muted small">Patient ID</label>
+            <input type="text" class="form-control bg-light" id="modalPatientId" readonly>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="font-weight-bold text-muted small">Date of Birth</label>
+            <input type="text" class="form-control bg-light" id="modalDateOfBirth" readonly>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="font-weight-bold text-muted small">Age</label>
+            <input type="text" class="form-control bg-light" id="modalAge" readonly>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="font-weight-bold text-muted small">Sex</label>
+            <input type="text" class="form-control bg-light" id="modalSex" readonly>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="font-weight-bold text-muted small">Civil Status</label>
+            <input type="text" class="form-control bg-light" id="modalCivilStatus" readonly>
+          </div>
+        </div>
+
+        <!-- Contact Information -->
+        <div class="row mb-4">
+          <div class="col-12">
+            <h6 class="text-primary border-bottom pb-2 mb-3"><i class="bi bi-telephone me-2"></i>Contact Information</h6>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="font-weight-bold text-muted small">Address</label>
+            <input type="text" class="form-control bg-light" id="modalAddress" readonly>
+          </div>
+          <div class="col-md-3 mb-3">
+            <label class="font-weight-bold text-muted small">Sitio</label>
+            <input type="text" class="form-control bg-light" id="modalSitio" readonly>
+          </div>
+          <div class="col-md-3 mb-3">
+            <label class="font-weight-bold text-muted small">Barangay</label>
+            <input type="text" class="form-control bg-light" id="modalBarangay" readonly>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="font-weight-bold text-muted small">Phone Number</label>
+            <input type="text" class="form-control bg-light" id="modalPhone" readonly>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="font-weight-bold text-muted small">Facility</label>
+            <input type="text" class="form-control bg-light" id="modalFacility" readonly>
+          </div>
+        </div>
+
+        <!-- PhilHealth Information -->
+        <div class="row mb-4">
+          <div class="col-12">
+            <h6 class="text-primary border-bottom pb-2 mb-3"><i class="bi bi-card-checklist me-2"></i>PhilHealth Information</h6>
+          </div>
+          <div class="col-md-3 mb-3">
+            <label class="font-weight-bold text-muted small">PHIC Status</label>
+            <input type="text" class="form-control bg-light" id="modalPhicStatus" readonly>
+          </div>
+          <div class="col-md-3 mb-3">
+            <label class="font-weight-bold text-muted small">PhilHealth Number</label>
+            <input type="text" class="form-control bg-light" id="modalPhilhealthNumber" readonly>
+          </div>
+          <div class="col-md-3 mb-3">
+            <label class="font-weight-bold text-muted small">PhilHealth Category</label>
+            <input type="text" class="form-control bg-light" id="modalPhilhealthCategory" readonly>
+          </div>
+          <div class="col-md-3 mb-3">
+            <label class="font-weight-bold text-muted small">Private Company</label>
+            <input type="text" class="form-control bg-light" id="modalPrivateCompany" readonly>
+          </div>
+          <div class="col-md-3 mb-3">
+            <label class="font-weight-bold text-muted small">Is Dependent</label>
+            <input type="text" class="form-control bg-light" id="modalIsDependent" readonly>
+          </div>
+          <div class="col-md-3 mb-3">
+            <label class="font-weight-bold text-muted small">Dependent Member Name</label>
+            <input type="text" class="form-control bg-light" id="modalDependentMember" readonly>
+          </div>
+          <div class="col-md-3 mb-3">
+            <label class="font-weight-bold text-muted small">Dependent Birthday</label>
+            <input type="text" class="form-control bg-light" id="modalDependentBirthday" readonly>
+          </div>
+          <div class="col-md-3 mb-3">
+            <label class="font-weight-bold text-muted small">Dependent PhilHealth No.</label>
+            <input type="text" class="form-control bg-light" id="modalDependentPhilhealth" readonly>
+          </div>
+        </div>
+
+        <!-- Additional Information -->
+        <div class="row mb-4">
+          <div class="col-12">
+            <h6 class="text-primary border-bottom pb-2 mb-3"><i class="bi bi-info-circle me-2"></i>Additional Information</h6>
+          </div>
+          <div class="col-md-3 mb-3">
+            <label class="font-weight-bold text-muted small">CCT Beneficiary</label>
+            <input type="text" class="form-control bg-light" id="modalCctBeneficiary" readonly>
+          </div>
+          <div class="col-md-3 mb-3">
+            <label class="font-weight-bold text-muted small">Person With Disability (PWD)</label>
+            <input type="text" class="form-control bg-light" id="modalIsPwd" readonly>
+          </div>
+          <div class="col-md-3 mb-3">
+            <label class="font-weight-bold text-muted small">Referral Count</label>
+            <input type="text" class="form-control bg-light" id="modalReferralCount" readonly>
+          </div>
+        </div>
+
+        <!-- Family History -->
+        <div class="row mb-4">
+          <div class="col-12">
+            <h6 class="text-primary border-bottom pb-2 mb-3"><i class="bi bi-diagram-3 me-2"></i>Family History</h6>
+          </div>
+          <div class="col-md-6 mb-3">
+            <div class="row">
+              <div class="col-6">
+                <label class="font-weight-bold text-muted small">Hypertension</label>
+                <input type="text" class="form-control bg-light" id="modalFamilyHypertension" readonly>
               </div>
-              <input type="text" class="form-control bg-light" id="viewMedicalAge" disabled>
-            </div>
-        </div>
-        </div>
-        <div class="row mb-4">
-          <div class="col-md-6">
-            <label class="font-weight-bold text-muted" for="viewMedicalAddress">Address</label>
-            <div class="input-group">
-                <div class="input-group-prepend">
-                    <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
-                </div>
-                <input type="text" class="form-control bg-light" id="viewMedicalAddress" disabled>
+              <div class="col-6">
+                <label class="font-weight-bold text-muted small">Diabetes</label>
+                <input type="text" class="form-control bg-light" id="modalFamilyDiabetes" readonly>
+              </div>
             </div>
           </div>
-          <div class="col-md-6">
-            <label class="font-weight-bold text-muted" for="viewMedicalSex">Sex</label>
-            <div class="input-group">
-                <div class="input-group-prepend">
-                    <span class="input-group-text"><i class="bi bi-gender-ambiguous"></i></span>
-                </div>
-                <input type="text" class="form-control bg-light" id="viewMedicalSex" disabled>
+          <div class="col-md-6 mb-3">
+            <div class="row">
+              <div class="col-6">
+                <label class="font-weight-bold text-muted small">Cancer</label>
+                <input type="text" class="form-control bg-light" id="modalFamilyCancer" readonly>
+              </div>
+              <div class="col-6">
+                <label class="font-weight-bold text-muted small">Asthma</label>
+                <input type="text" class="form-control bg-light" id="modalFamilyAsthma" readonly>
+              </div>
             </div>
           </div>
-        </div>
-        <div class="row mb-4">
-          <div class="col-md-6">
-            <label class="font-weight-bold text-muted" for="viewMedicalReason">Reason</label>
-            <div class="input-group">
-                <div class="input-group-prepend">
-                    <span class="input-group-text"><i class="bi bi-patch-question"></i></span>
-                </div>
-                <input type="text" class="form-control bg-light" id="viewMedicalReason" disabled>
+          <div class="col-md-6 mb-3">
+            <div class="row">
+              <div class="col-6">
+                <label class="font-weight-bold text-muted small">Epilepsy</label>
+                <input type="text" class="form-control bg-light" id="modalFamilyEpilepsy" readonly>
+              </div>
+              <div class="col-6">
+                <label class="font-weight-bold text-muted small">Tuberculosis</label>
+                <input type="text" class="form-control bg-light" id="modalFamilyTuberculosis" readonly>
+              </div>
             </div>
           </div>
-          <div class="col-md-6">
-            <label class="font-weight-bold text-muted" for="viewDisease">Possible Disease</label>
-            <div class="input-group">
-                <div class="input-group-prepend">
-                    <span class="input-group-text"><i class="bi bi-virus2"></i></span>
-                </div>
-                <input type="text" class="form-control bg-light" id="viewDisease" disabled>
-            </div>
+          <div class="col-md-6 mb-3">
+            <label class="font-weight-bold text-muted small">Others</label>
+            <input type="text" class="form-control bg-light" id="modalFamilyOthers" readonly>
           </div>
         </div>
       </div>
       <div class="modal-footer bg-light">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-          <i class="bi bi-arrow-left me-2"></i>Back
+          <i class="bi bi-arrow-left me-2"></i>Close
         </button>
       </div>
     </div>
   </div>
 </div>
 
-
-
+<!-- Success Modal for Referral Completion -->
+<div class="modal fade" id="referralSuccessModal" tabindex="-1" role="dialog" aria-labelledby="referralSuccessModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title" id="referralSuccessModalLabel">
+          <i class="bi bi-check-circle"></i> Referral Completed
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="text-center mb-3">
+          <i class="bi bi-check-circle text-success" style="font-size: 3rem;"></i>
+        </div>
+        <h6 class="text-center mb-3">Patient referral has been completed!</h6>
+      </div>
+      <div class="modal-footer justify-content-center">
+        <button type="button" class="btn btn-success" data-bs-dismiss="modal">
+          <i class="bi bi-check-lg"></i> Continue
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 
 {% block script %}
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Use Bootstrap 5 from base.html; remove conflicting Bootstrap 4 bundle -->
+<script src="{% static 'js/patient_list_admin.js' %}"></script>
 
 <script>
 $(document).ready(function() {
-  let referredTableInitialized = false;
-  
-  // Initialize DataTables for activeTable (tab1) - keep minimal config
-  const activeTableConfig = {
-    responsive: true,
-    paging: false,
-    info: false,
-    searching: false,
-    ordering: false
-  };
+  // DataTables are initialized in patient_list_admin.js
+  // This script handles additional functionality
 
-  $("#activeTable").DataTable(activeTableConfig);
-
-  // Initialize DataTables for referredTable (tab2) with full features
-  const referredTableConfig = {
-    responsive: true,
-    paging: true,
-    pageLength: 10,
-    lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
-    searching: true,
-    ordering: true,
-    order: [[0, 'asc']],
-    language: {
-      search: "Search:",
-      lengthMenu: "Show _MENU_ entries",
-      info: "Showing _START_ to _END_ of _TOTAL_ entries",
-      infoEmpty: "Showing 0 to 0 of 0 entries",
-      infoFiltered: "(filtered from _MAX_ total entries)",
-      paginate: {
-        first: "First",
-        last: "Last",
-        next: "Next",
-        previous: "Previous"
-      }
-    },
-    columnDefs: [
-      { orderable: false, targets: [5] } // Disable sorting on Action column
-    ]
-  };
-
-  // Initialize referredTable when tab2 is shown
-  function initReferredTable() {
-    if (!referredTableInitialized && $('#tab2').hasClass('show')) {
-      $("#referredTable").DataTable(referredTableConfig);
-      referredTableInitialized = true;
-    }
-  }
-
-  // Check if tab2 is active on page load
-  if ($('#tab2').hasClass('show')) {
-    initReferredTable();
-  }
-
-  let allPatientsTableInitialized = false;
-
-  // Initialize DataTables for allPatientsTable (tab3) with full features
-  const allPatientsTableConfig = {
-    responsive: true,
-    paging: true,
-    pageLength: 10,
-    lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
-    searching: true,
-    ordering: true,
-    order: [[0, "asc"]],
-    language: {
-      search: "Search:",
-      lengthMenu: "Show _MENU_ entries",
-      info: "Showing _START_ to _END_ of _TOTAL_ entries",
-      infoEmpty: "Showing 0 to 0 of 0 entries",
-      infoFiltered: "(filtered from _MAX_ total entries)",
-      paginate: {
-        first: "First",
-        last: "Last",
-        next: "Next",
-        previous: "Previous"
-      }
-    },
-    columnDefs: [
-      { orderable: false, targets: [5] } // Disable sorting on Actions column
-    ]
-  };
-
-  // Initialize allPatientsTable when tab3 is shown
-  function initAllPatientsTable() {
-    if (!allPatientsTableInitialized && $('#tab3').hasClass('show')) {
-      $("#allPatientsTable").DataTable(allPatientsTableConfig);
-      allPatientsTableInitialized = true;
-    }
-  }
-
-  // Check if tab3 is active on page load
-  if ($('#tab3').hasClass('show')) {
-    initAllPatientsTable();
-  }
-
-  // Initialize when tabs are shown via Bootstrap tab event
-  $(document).on('shown.bs.tab', 'button[data-bs-toggle="tab"], a[data-bs-toggle="tab"]', function (e) {
-    const target = $(e.target).attr('data-bs-target') || $(e.target).attr('href');
-    if (target === '#tab2' && !referredTableInitialized) {
-      initReferredTable();
-    } else if (target === '#tab3' && !allPatientsTableInitialized) {
-      initAllPatientsTable();
-    }
+  // Handle delete button click - only for All Patients tab
+  $(document).on('click', '#allTable .delete-button', function(e) {
+    e.stopPropagation(); // Prevent row click when clicking delete button
+    const button = $(this);
+    const patientName = button.data('patient');
+    $('#deletePatientId').val(button.data('id'));
+    $('#delete-confirmation').text(`Are you sure you want to delete ${patientName}'s record?`);
   });
 
-  // Use event delegation to handle dynamically created elements
-  $(document).on('click', '.MedicalDetails', function() {
-    const button = $(this);
+  // Show success modal after referral completion
+  // This will be triggered when the page loads with a success parameter
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('referral_success') === 'true') {
+    const successEl = document.getElementById('referralSuccessModal');
+    if (successEl) {
+      const successModal = bootstrap.Modal.getOrCreateInstance(successEl);
+      successModal.show();
+    }
+  }
+
+  // Handle form submission for referral completion
+  $(document).on('submit', '#editReferralForm', function(e) {
+    const form = $(this);
+    const formData = new FormData(this);
     
-    // Clear previous data first
-    $('#viewPatientMedical').val('');
-    $('#viewMedicalAge').val('');
-    $('#viewMedicalAddress').val('');
-    $('#viewMedicalSex').val('');
-    $('#viewMedicalReason').val('');
-    $('#viewDisease').val('');
+    $.ajax({
+      url: form.attr('action'),
+      method: 'POST',
+      data: formData,
+      processData: false,
+      contentType: false,
+      success: function(response) {
+        // Close the edit modal first (Bootstrap 5 API)
+        const editEl = document.getElementById('editReferralModal');
+        if (editEl) {
+          const editModal = bootstrap.Modal.getOrCreateInstance(editEl);
+          editModal.hide();
+        }
+        
+        // Show success modal (Bootstrap 5 API)
+        const successEl = document.getElementById('referralSuccessModal');
+        if (successEl) {
+          const successModal = bootstrap.Modal.getOrCreateInstance(successEl);
+          successModal.show();
+        }
+      },
+      error: function(xhr, status, error) {
+        console.error('Error completing referral:', error);
+        alert('There was an error completing the referral. Please try again.');
+      }
+    });
     
-    // Set new data
-    $('#viewPatientMedical').val(button.data('vpatient'));
-    $('#viewMedicalAge').val(button.data('vage'));
-    $('#viewMedicalAddress').val(button.data('vaddress'));
-    $('#viewMedicalSex').val(button.data('vsex'));
-    $('#viewMedicalReason').val(button.data('vreason'));
-    $('#viewDisease').val(button.data('vdisease'));
+    e.preventDefault(); // Prevent default form submission
   });
 
   // Replace est-time spans with live API prediction (keeps server value as fallback)
   (function refreshEstTimes() {
     $(".est-time").each(function() {
       const $el = $(this);
+      if ($el.data('fixed')) return;
       const id = $el.data('ref');
       if (!id) return;
       $.get(`/referral/referral/time-predict/${id}/`)
@@ -541,19 +948,88 @@ $(document).ready(function() {
         });
     });
   })();
- 
-  // Clear modal data when modal is hidden
-  $('#MedicalDetails').on('hidden.bs.modal', function() {
-    $('#viewPatientMedical').val('');
-    $('#viewMedicalAge').val('');
-    $('#viewMedicalAddress').val('');
-    $('#viewMedicalSex').val('');
-    $('#viewMedicalReason').val('');
-    $('#viewDisease').val('');
+  
+  // Initialize DataTable for Follow-ups tab (prevent double init)
+  const $followupsTable = $('#followupsTable');
+  if ($followupsTable.length) {
+    if ($.fn.DataTable.isDataTable($followupsTable)) {
+      $followupsTable.DataTable().destroy();
+    }
+    $followupsTable.DataTable({
+      order: [[0, 'desc']], // Sort by date descending
+      pageLength: 10,
+      responsive: true,
+      language: {
+        search: "Search follow-ups:",
+        emptyTable: "No follow-ups found."
+      }
+    });
+  }
+  
+  // Handler for "Add New Consultation Form" button in Follow-ups tab (for today's follow-ups)
+  $(document).on('click', '.add-consultation-form-btn', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const patientId = $(this).data('patient-id');
+    console.log('Add New Consultation Form clicked for patient ID:', patientId);
+    
+    // Redirect to assessment page with patient_id
+    window.location.href = `/referral/assessment/?patient_id=${patientId}`;
+  });
+  
+  // Handler for "Record Follow-up Visit" button in Follow-ups tab
+  $(document).on('click', '.record-followup-visit-btn', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const patientId = $(this).data('patient-id');
+    const medicalHistoryId = $(this).data('medical-history-id');
+    const followupDate = $(this).data('followup-date');
+    const illnessName = $(this).data('illness-name');
+    
+    // Use the function from calendar.js if available, otherwise show alert
+    if (typeof showFollowupVisitForm === 'function') {
+      showFollowupVisitForm(patientId, medicalHistoryId, followupDate, illnessName);
+    } else {
+      alert('Please load the calendar.js script to use this feature.');
+    }
+  });
+  
+  // Handler for "View Details" button in Follow-ups tab
+  $(document).on('click', '.view-followup-details', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const patientId = $(this).data('patient-id');
+    const medicalHistoryId = $(this).data('medical-history-id');
+    const followupDate = $(this).data('followup-date');
+    const illnessName = $(this).data('illness-name');
+    const notes = $(this).data('notes');
+    const advice = $(this).data('advice');
+    
+    // Create followup object similar to calendar.js format
+    const followup = {
+      patient_id: patientId,
+      medical_history_id: medicalHistoryId,
+      followup_date: followupDate,
+      illness_name: illnessName,
+      notes: notes,
+      advice: advice,
+      patient_name: $(this).closest('tr').find('td').eq(1).text()
+    };
+    
+    // Use the function from calendar.js if available
+    if (typeof showFollowupDetails === 'function') {
+      showFollowupDetails(followup, new Date(followupDate));
+    } else {
+      // Fallback: show in alert
+      alert(`Patient: ${followup.patient_name}\nDate: ${new Date(followupDate).toLocaleDateString()}\nIllness: ${illnessName}\nNotes: ${notes}\nAdvice: ${advice}`);
+    }
   });
 
-  // All Patients Tab - View button logic (delegated to table to survive DataTables redraws)
-  $(document).on('click', '#allPatientsTable .view-button', function () {
+  // All Patients Tab - View button logic
+  $(document).on('click', '#allTable .view-button', function () {
     const button = $(this);
     $('#viewPatientName').val(button.data('vpatient'));
     $('#viewPatientBday').val(button.data('vbdate'));
@@ -569,7 +1045,6 @@ $(document).ready(function() {
     $('#viewLastReferred').val(button.data('vlastreferred') || 'Not yet referred');
     $('#referral-id-input').val(button.data('id'));
 
-    // Load referral history into the view modal
     const patientId = button.data('id');
     const historyContainer = $('#viewReferralHistory');
     if (historyContainer.length) {
@@ -600,11 +1075,10 @@ $(document).ready(function() {
     }
   });
 
-  // All Patients Tab - Edit button logic (delegated)
-  $(document).on('click', '#allPatientsTable .edit-button', function () {
+  // All Patients Tab - Edit button logic
+  $(document).on('click', '#allTable .edit-button', function () {
     const button = $(this);
     
-    // Basic Information
     $('#edit-patient-id').val(button.data('id'));
     $('#editFname').val(button.data('firstname'));
     $('#editMname').val(button.data('middlename') || '');
@@ -614,13 +1088,11 @@ $(document).ready(function() {
     $('#ePhone').val(button.data('enum'));
     $('#eSex').val(button.data('esex'));
     
-    // Additional Information
     $('#editCivilStatus').val(button.data('civilstatus') || '');
     $('#editPhicStatus').val(button.data('phicstatus') || '');
     $('#editCctBeneficiary').prop('checked', button.data('cctbeneficiary') === 'true');
     $('#editIsPwd').prop('checked', button.data('ispwd') === 'true');
     
-    // PhilHealth Information
     const philhealthNumber = button.data('philhealthnumber') || '';
     const philhealthCategory = button.data('philhealthcategory') || '';
     if (philhealthNumber || philhealthCategory) {
@@ -635,9 +1107,10 @@ $(document).ready(function() {
       if (typeof toggleEditPhilHealthFields === 'function') {
         toggleEditPhilHealthFields();
       }
+      $('#editPhilhealthNumber').val('');
+      $('#editPhilhealthCategory').val('');
     }
     
-    // Family History
     $('#editFamilyHistoryHypertension').prop('checked', button.data('familyhistoryhypertension') === 'true');
     $('#editFamilyHistoryDiabetes').prop('checked', button.data('familyhistorydiabetes') === 'true');
     $('#editFamilyHistoryCancer').prop('checked', button.data('familyhistorycancer') === 'true');
@@ -646,7 +1119,6 @@ $(document).ready(function() {
     $('#editFamilyHistoryTuberculosis').prop('checked', button.data('familyhistorytuberculosis') === 'true');
     $('#editFamilyHistoryOthers').val(button.data('familyhistoryothers') || '');
     
-    // Handle address dropdown - check if address is in dropdown or needs manual entry
     const address = button.data('eaddress');
     if (address) {
       const addressSelect = $('#editAddress');
@@ -659,7 +1131,6 @@ $(document).ready(function() {
         }
       });
       if (!found && address !== '__manual__') {
-        // Address not in dropdown, use manual entry
         addressSelect.val('__manual__').trigger('change');
         $('#editAddressManual').val(address);
       } else {
@@ -667,15 +1138,12 @@ $(document).ready(function() {
       }
     }
   });
-
-  // All Patients Tab - Delete button logic (delegated)
-  $(document).on('click', '#allPatientsTable .delete-button', function () {
-    const button = $(this);
-    const patientName = button.data('patient');
-    $('#deletePatientId').val(button.data('id'));
-    $('#delete-confirmation').text(`Are you sure you want to delete ${patientName} record?`);
-  });
+  
 });
 </script>
+
+
+<!-- Load calendar.js for follow-up visit functions -->
+<script src="{% static 'js/calendar.js' %}"></script>
 {% endblock %}
 {% endblock %}

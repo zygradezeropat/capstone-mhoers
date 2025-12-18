@@ -39,6 +39,11 @@
     color: #ffffff;
 }
 
+.card-counter.warning {
+    background: #ffc107; /* solid yellow/amber */
+    color: #000000;
+}
+
 .card-counter i {
     font-size: 3.25rem;
     opacity: 0.2;
@@ -60,6 +65,11 @@
 
 .card-counter.info i {
     color: #ffffff;
+    opacity: 0.3;
+}
+
+.card-counter.warning i {
+    color: #000000;
     opacity: 0.3;
 }
 
@@ -502,3 +512,16 @@
     border-radius: 0.5rem;
     box-shadow: 0 0 15px rgba(0,0,0,0.1);
   }
+
+/* Follow-up Modal Styles - Force black text except patient name */
+#followupModal .modal-body .mb-2 span:not(.text-primary) {
+  color: #212529 !important;
+}
+
+#followupModal .modal-body .text-primary {
+  color: #0d6efd !important;
+}
+
+#followupModal .modal-body strong {
+  color: #212529 !important;
+}

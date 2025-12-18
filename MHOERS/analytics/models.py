@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from facilities.models import Facility
+from django.utils import timezone
 
 # Disease Model
 class Disease(models.Model):
@@ -19,6 +20,33 @@ class Disease(models.Model):
         default='medium',
         help_text="Level of urgency for this disease"
     )
+    
+    # NEW FIELDS FOR SYMPTOMS & TREATMENT
+    common_symptoms = models.TextField(
+        blank=True, 
+        null=True,
+        help_text="Common symptoms associated with this disease"
+    )
+    treatment_protocol = models.TextField(
+        blank=True, 
+        null=True,
+        help_text="Standard treatment protocol for this disease"
+    )
+    treatment_guidelines = models.TextField(
+        blank=True, 
+        null=True,
+        help_text="Clinical treatment guidelines and recommendations"
+    )
+    verified_by = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='verified_diseases',
+        help_text="Doctor who verified this disease information"
+    )
+    verified_at = models.DateTimeField(null=True, blank=True)
+    last_updated = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.name

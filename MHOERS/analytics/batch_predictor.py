@@ -4,12 +4,21 @@ from django.core.cache import cache
 from .model_manager import MLModelManager
 from .ml_utils import build_disease_feature_frame, format_icd_prediction
 
+def normalize_disease_prediction(prediction):
+    """Normalize disease predictions, converting 'N' to 'Unspecified'"""
+    if not prediction:
+        return "No prediction"
+    pred_str = str(prediction).strip()
+    if pred_str.upper() == 'N' or pred_str == 'n':
+        return "Unspecified"
+    return pred_str
+
 class BatchPredictor:
     """Handles batch predictions for multiple referrals"""
     
     @classmethod
     def predict_diseases_batch(cls, referrals):
-        """Predict diseases for multiple referrals at once"""
+        """Predict diseases for multiple referrals at once with confidence threshold"""
         try:
             models = MLModelManager.get_models()
             disease_model = models.get('disease_model')
@@ -22,14 +31,41 @@ class BatchPredictor:
                 return {}
 
             predictions = disease_model.predict(feature_df)
+            prediction_probas = disease_model.predict_proba(feature_df)
             allowed_codes = metadata.get('allowed_icd', [])
+            
+            # Confidence threshold: if model is less than 30% confident, return "Unspecified"
+            CONFIDENCE_THRESHOLD = 0.3  # 30% minimum confidence required
 
             formatted = []
-            for code in predictions:
-                if allowed_codes and code not in allowed_codes:
+            for i, code in enumerate(predictions):
+                # Convert to string and normalize "N" predictions to "Unspecified"
+                code_str = normalize_disease_prediction(code)
+                max_confidence = max(prediction_probas[i])
+                
+                # If already normalized to "Unspecified", skip other checks
+                if code_str == "Unspecified":
+                    formatted.append(code_str)
+                # Special handling for T14.1 - require BOTH high confidence AND wound keywords
+                elif code_str == 'T14.1':
+                    complaint_text = (referrals[i].chief_complaint or referrals[i].symptoms or '').lower()
+                    wound_keywords = ['wound', 'cut', 'laceration', 'injury', 'trauma', 'bleeding', 
+                                     'sugat', 'tusok', 'galos', 'hiwa', 'open wound', 'puncture']
+                    has_wound_keyword = any(keyword in complaint_text for keyword in wound_keywords)
+                    
+                    # If confidence is below 50% OR no wound keywords, return "Unspecified"
+                    # This ensures T14.1 is only returned when we're confident AND it's actually wound-related
+                    if max_confidence < 0.5 or not has_wound_keyword:
+                        formatted.append("Unspecified")
+                    else:
+                        formatted.append(code_str)
+                # Check confidence for this prediction
+                elif max_confidence < CONFIDENCE_THRESHOLD:
+                    formatted.append("Unspecified")
+                elif allowed_codes and code_str not in allowed_codes:
                     formatted.append("Unspecified")
                 else:
-                    formatted.append(code)
+                    formatted.append(code_str)
 
             return dict(zip([r.referral_id for r in referrals], formatted))
             
@@ -55,19 +91,22 @@ class BatchPredictor:
             
             for r in referrals:
                 try:
+                    # Handle missing values with defaults
                     numeric_data.append({
-                        'weight': float(r.weight),
-                        'height': float(r.height),
-                        'bp_systolic': r.bp_systolic,
-                        'bp_diastolic': r.bp_diastolic,
-                        'pulse_rate': r.pulse_rate,
-                        'respiratory_rate': r.respiratory_rate,
-                        'temperature': float(r.temperature),
-                        'oxygen_saturation': r.oxygen_saturation
+                        'weight': float(r.weight) if r.weight else 70.0,  # Default 70 kg
+                        'height': float(r.height) if r.height else 170.0,  # Default 170 cm
+                        'bp_systolic': r.bp_systolic if r.bp_systolic else 120,
+                        'bp_diastolic': r.bp_diastolic if r.bp_diastolic else 80,
+                        'pulse_rate': r.pulse_rate if r.pulse_rate else 72,
+                        'respiratory_rate': r.respiratory_rate if r.respiratory_rate else 18,
+                        'temperature': float(r.temperature) if r.temperature else 37.0,
+                        'oxygen_saturation': r.oxygen_saturation if r.oxygen_saturation else 98
                     })
-                    text_data.append(r.symptoms or '')
+                    text_data.append(r.symptoms or r.chief_complaint or '')
                     valid_referrals.append(r)
-                except:
+                except (ValueError, TypeError, AttributeError) as e:
+                    # Log error but continue with other referrals
+                    print(f"Error processing referral {r.referral_id} for time prediction: {e}")
                     continue
             
             if not valid_referrals:
@@ -101,16 +140,23 @@ class BatchPredictor:
         cache_key = f"predictions_batch_{len(referrals)}"
         cached_predictions = cache.get(cache_key)
         
+        # If cached, normalize any "N" values before returning
         if cached_predictions:
-            return cached_predictions
+            normalized_cache = {}
+            for ref_id, (disease, time_pred) in cached_predictions.items():
+                normalized_disease = normalize_disease_prediction(disease)
+                normalized_cache[ref_id] = (normalized_disease, time_pred)
+            return normalized_cache
         
         disease_predictions = cls.predict_diseases_batch(referrals)
         time_predictions = cls.predict_times_batch(referrals)
         
-        # Combine predictions
+        # Combine predictions and normalize any "N" values
         combined_predictions = {}
         for r in referrals:
             disease = disease_predictions.get(r.referral_id, "No prediction")
+            # Additional normalization check in case "N" slipped through
+            disease = normalize_disease_prediction(disease)
             time_pred = time_predictions.get(r.referral_id, "N/A")
             combined_predictions[r.referral_id] = (disease, time_pred)
         

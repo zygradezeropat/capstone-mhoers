@@ -32,6 +32,28 @@ document.addEventListener("DOMContentLoaded", function() {
     alert('BHW registration form will be implemented');
   });
 
+  const selectMidwifeBtn = document.getElementById('selectMidwife');
+  if (selectMidwifeBtn) {
+    selectMidwifeBtn.addEventListener('click', function() {
+      // Close type selection modal
+      const typeModal = bootstrap.Modal.getInstance(document.getElementById('providerTypeModal'));
+      if (typeModal) {
+        typeModal.hide();
+      }
+      
+      // Show the midwife registration modal
+      const midwifeModalElement = document.getElementById('midwifeModal');
+      if (midwifeModalElement) {
+        const midwifeModal = new bootstrap.Modal(midwifeModalElement);
+        midwifeModal.show();
+      } else {
+        console.error('Midwife modal element not found');
+      }
+    });
+  } else {
+    console.error('Select Midwife button not found');
+  }
+
   document.getElementById('selectHealthcareProvider').addEventListener('click', function() {
     // Close type selection modal
     const typeModal = bootstrap.Modal.getInstance(document.getElementById('providerTypeModal'));
@@ -193,8 +215,6 @@ document.addEventListener("DOMContentLoaded", function() {
     } else if (userType === 'bhw') {
       document.getElementById('bhwSection').style.display = 'block';
       document.getElementById('assignmentSection').style.display = 'block';
-      document.getElementById('detailRegistrationNumber').textContent = row.dataset.registrationNumber || '-';
-      document.getElementById('detailAccreditationNumber').textContent = row.dataset.accreditationNumber || '-';
       document.getElementById('detailAssignedBarangay').textContent = row.dataset.assignedBarangay || '-';
     } else if (userType === 'nurse') {
       document.getElementById('assignmentSection').style.display = 'block';
@@ -234,67 +254,188 @@ document.addEventListener("DOMContentLoaded", function() {
 // Approval and Rejection Functions
 function approveUser(userType, userId) {
     if (confirm(`Are you sure you want to approve this ${userType}?`)) {
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '{% url "approve_user" %}';
+        const formData = new FormData();
+        formData.append('user_type', userType);
+        formData.append('user_id', userId);
+        formData.append('csrfmiddlewaretoken', getCookie('csrftoken'));
         
-        const csrfToken = document.createElement('input');
-        csrfToken.type = 'hidden';
-        csrfToken.name = 'csrfmiddlewaretoken';
-        csrfToken.value = '{{ csrf_token }}';
-        
-        const userTypeInput = document.createElement('input');
-        userTypeInput.type = 'hidden';
-        userTypeInput.name = 'user_type';
-        userTypeInput.value = userType;
-        
-        const userIdInput = document.createElement('input');
-        userIdInput.type = 'hidden';
-        userIdInput.name = 'user_id';
-        userIdInput.value = userId;
-        
-        form.appendChild(csrfToken);
-        form.appendChild(userTypeInput);
-        form.appendChild(userIdInput);
-        
-        document.body.appendChild(form);
-        form.submit();
+        fetch('/accounts/approve_user/', {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showMessageModal(data.type, data.title, data.message, '', function() {
+                    location.reload();
+                });
+            } else {
+                showMessageModal(data.type, data.title, data.message);
+            }
+        })
+        .catch(error => {
+            showMessageModal('error', 'Error', 'An error occurred while approving the user.');
+            console.error('Error:', error);
+        });
     }
 }
 
 function rejectUser(userType, userId) {
+    // Show input modal for rejection reason
     const reason = prompt(`Please provide a reason for rejecting this ${userType}:`);
     if (reason !== null && reason.trim() !== '') {
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '{% url "reject_user" %}';
+        const formData = new FormData();
+        formData.append('user_type', userType);
+        formData.append('user_id', userId);
+        formData.append('reason', reason);
+        formData.append('csrfmiddlewaretoken', getCookie('csrftoken'));
         
-        const csrfToken = document.createElement('input');
-        csrfToken.type = 'hidden';
-        csrfToken.name = 'csrfmiddlewaretoken';
-        csrfToken.value = '{{ csrf_token }}';
-        
-        const userTypeInput = document.createElement('input');
-        userTypeInput.type = 'hidden';
-        userTypeInput.name = 'user_type';
-        userTypeInput.value = userType;
-        
-        const userIdInput = document.createElement('input');
-        userIdInput.type = 'hidden';
-        userIdInput.name = 'user_id';
-        userIdInput.value = userId;
-        
-        const reasonInput = document.createElement('input');
-        reasonInput.type = 'hidden';
-        reasonInput.name = 'reason';
-        reasonInput.value = reason;
-        
-        form.appendChild(csrfToken);
-        form.appendChild(userTypeInput);
-        form.appendChild(userIdInput);
-        form.appendChild(reasonInput);
-        
-        document.body.appendChild(form);
-        form.submit();
+        fetch('/accounts/reject_user/', {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showMessageModal(data.type, data.title, data.message, '', function() {
+                    location.reload();
+                });
+            } else {
+                showMessageModal(data.type, data.title, data.message);
+            }
+        })
+        .catch(error => {
+            showMessageModal('error', 'Error', 'An error occurred while rejecting the user.');
+            console.error('Error:', error);
+        });
     }
 }
+
+// Helper function to get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Handle AJAX form submissions for create_doctor, create_midwife, create_bhw
+document.addEventListener('DOMContentLoaded', function() {
+    // Doctor form
+    const doctorForm = document.querySelector('.doctor-form');
+    if (doctorForm) {
+        doctorForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            
+            fetch(this.action, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Close the form modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('doctorModal'));
+                    if (modal) modal.hide();
+                    
+                    // Show success modal
+                    showMessageModal(data.type, data.title, data.message, '', function() {
+                        location.reload();
+                    });
+                } else {
+                    showMessageModal(data.type, data.title, data.message);
+                }
+            })
+            .catch(error => {
+                showMessageModal('error', 'Error', 'An error occurred while creating the doctor.');
+                console.error('Error:', error);
+            });
+        });
+    }
+    
+    // Midwife form
+    const midwifeForm = document.querySelector('#midwifeModal form');
+    if (midwifeForm) {
+        midwifeForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            
+            fetch(this.action, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('midwifeModal'));
+                    if (modal) modal.hide();
+                    
+                    showMessageModal(data.type, data.title, data.message, '', function() {
+                        location.reload();
+                    });
+                } else {
+                    showMessageModal(data.type, data.title, data.message);
+                }
+            })
+            .catch(error => {
+                showMessageModal('error', 'Error', 'An error occurred while creating the midwife.');
+                console.error('Error:', error);
+            });
+        });
+    }
+    
+    // BHW form
+    const bhwForm = document.querySelector('#bhwModal form');
+    if (bhwForm) {
+        bhwForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            
+            fetch(this.action, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('bhwModal'));
+                    if (modal) modal.hide();
+                    
+                    showMessageModal(data.type, data.title, data.message, '', function() {
+                        location.reload();
+                    });
+                } else {
+                    showMessageModal(data.type, data.title, data.message);
+                }
+            })
+            .catch(error => {
+                showMessageModal('error', 'Error', 'An error occurred while creating the BHW.');
+                console.error('Error:', error);
+            });
+        });
+    }
+});

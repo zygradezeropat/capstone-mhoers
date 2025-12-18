@@ -10,11 +10,7 @@
   <!-- Header Section -->
   <div class="row mb-4">
     <div class="col-12">
-      <div class="d-flex justify-content-between align-items-center">
-        <div>
-          <h2 class="text-primary mb-1 fw-bold">My Profile</h2>
-          <p class="text-muted mb-0">Manage your healthcare provider information and account settings</p>
-        </div>
+      <div class="d-flex justify-content-end align-items-center">
         <div class="d-flex gap-2">
           <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editProfileModal">
             <i class="bi bi-pencil-square me-2"></i>Edit Profile
@@ -66,7 +62,7 @@
                 <i class="bi bi-building text-primary me-3"></i>
                 <label class="text-muted small fw-semibold text-uppercase">Assigned Facility</label>
               </div>
-              <p class="mb-0 fw-bold text-dark">{{ facility.name|default:"Not Assigned" }}</p>
+              <p class="mb-0 fw-bold text-dark">{% if is_doctor %}MHO{% else %}{{ facility.name|default:"Not Assigned" }}{% endif %}</p>
             </div>
             
             <div class="profile-detail-item mb-4">
@@ -93,18 +89,13 @@
     <div class="col-lg-8 col-md-7">
       <div class="card border-0 shadow-sm rounded-4 h-100">
         <div class="card-body p-4">
-          <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-              <h5 class="card-title mb-0 fw-bold">Healthcare Activity Overview</h5>
-              {% if request.user.is_staff or request.user.is_superuser %}
-              <small class="text-muted">
-                <i class="bi bi-info-circle me-1"></i>Showing activities across all facilities
-              </small>
-              {% endif %}
-            </div>
-            <button class="btn btn-sm btn-outline-primary" onclick="location.reload();">
-              <i class="bi bi-arrow-clockwise me-1"></i>Refresh
-            </button>
+          <div class="mb-4">
+            <h5 class="card-title mb-0 fw-bold">Healthcare Activity Overview</h5>
+            {% if request.user.is_staff or request.user.is_superuser %}
+            <small class="text-muted">
+              <i class="bi bi-info-circle me-1"></i>Showing activities across all facilities
+            </small>
+            {% endif %}
           </div>
           
           <!-- Modern Stats Grid -->
@@ -113,8 +104,8 @@
               <div class="stat-card bg-gradient-danger rounded-4 p-4 h-100">
                 <div class="d-flex align-items-center justify-content-between">
                   <div>
-                    <h6 class="text-muted mb-2 fw-semibold">Total Referrals</h6>
-                    <h2 class="mb-0 fw-bold">{{ total_referrals }}</h2>
+                    <h6 class="text-muted mb-2 fw-semibold">Pending Referrals</h6>
+                    <h2 class="mb-0 fw-bold">{{ pending_referrals }}</h2>
                   </div>
                   <div class="stat-icon">
                     <i class="bi bi-graph-up" style="font-size: 2.5rem; opacity: 0.3;"></i>
@@ -154,9 +145,8 @@
 
           <!-- Recent Activity Section -->
           <div class="activity-section">
-            <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="mb-3">
               <h6 class="mb-0 fw-bold">Recent Healthcare Activities</h6>
-              <a href="{% url 'referrals:patient_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
             </div>
             
             <div class="table-responsive">
@@ -217,90 +207,6 @@
     </div>
   </div>
 
-  <!-- Privacy & Consent Section -->
-  <div class="row mt-4">
-    <div class="col-12">
-      <div class="card border-0 shadow-sm rounded-4">
-        <div class="card-header bg-light border-0">
-          <h5 class="card-title mb-0 fw-bold">
-            <i class="bi bi-shield-check text-primary me-2"></i>Privacy & Data Consent
-          </h5>
-        </div>
-        <div class="card-body p-4">
-          {% if user_consent %}
-            <div class="row mb-3">
-              <div class="col-md-6">
-                <p class="mb-2">
-                  <strong>Privacy Policy:</strong> 
-                  <span class="badge bg-{% if user_consent.privacy_policy_accepted %}success{% else %}danger{% endif %}">
-                    {{ user_consent.privacy_policy_accepted|yesno:"Accepted,Not Accepted" }}
-                  </span>
-                </p>
-                {% if user_consent.privacy_policy_accepted_at %}
-                  <small class="text-muted">Accepted on: {{ user_consent.privacy_policy_accepted_at|date:"F d, Y" }}</small>
-                {% endif %}
-              </div>
-              <div class="col-md-6">
-                <p class="mb-2">
-                  <strong>Data Processing:</strong> 
-                  <span class="badge bg-{% if user_consent.data_processing_consent %}success{% else %}danger{% endif %}">
-                    {{ user_consent.data_processing_consent|yesno:"Consented,Not Consented" }}
-                  </span>
-                </p>
-                {% if user_consent.data_processing_consent_at %}
-                  <small class="text-muted">Consented on: {{ user_consent.data_processing_consent_at|date:"F d, Y" }}</small>
-                {% endif %}
-              </div>
-            </div>
-            <div class="row mb-3">
-              <div class="col-md-6">
-                <p class="mb-2">
-                  <strong>Marketing Consent:</strong> 
-                  <span class="badge bg-{% if user_consent.marketing_consent %}success{% else %}secondary{% endif %}">
-                    {{ user_consent.marketing_consent|yesno:"Yes,No" }}
-                  </span>
-                </p>
-              </div>
-              <div class="col-md-6">
-                <p class="mb-2">
-                  <strong>Policy Version:</strong> {{ user_consent.consent_version }}
-                </p>
-              </div>
-            </div>
-          {% else %}
-            <div class="alert alert-warning">
-              <i class="bi bi-exclamation-triangle me-2"></i>
-              No consent record found. Please update your consent preferences.
-            </div>
-          {% endif %}
-
-          <div class="d-flex gap-2 flex-wrap">
-            <a href="{% url 'manage_consent' %}" class="btn btn-primary">
-              <i class="bi bi-gear me-2"></i>Manage Consent Preferences
-            </a>
-            <a href="{% url 'privacy_policy' %}" target="_blank" class="btn btn-outline-primary">
-              <i class="bi bi-file-text me-2"></i>View Privacy Policy
-            </a>
-            {% if deletion_request and deletion_request.status in 'PENDING,PROCESSING' %}
-                <div class="alert alert-warning d-flex align-items-center mb-0">
-                  <i class="bi bi-exclamation-triangle me-2"></i>
-                  <div>
-                    <strong>Account deletion scheduled</strong> for {{ deletion_request.scheduled_deletion_date|date:"F d, Y" }}
-                    <a href="{% url 'cancel_deletion' %}" class="btn btn-sm btn-outline-danger ms-2" onclick="return confirm('Are you sure you want to cancel the deletion request?');">
-                      Cancel Deletion
-                    </a>
-                  </div>
-                </div>
-              {% else %}
-                <a href="{% url 'request_deletion' %}" class="btn btn-outline-danger">
-                  <i class="bi bi-trash me-2"></i>Request Account Deletion
-                </a>
-              {% endif %}
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
 </div>
 
 <!-- Edit Profile Modal -->

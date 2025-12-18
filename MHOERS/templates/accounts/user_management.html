@@ -13,16 +13,11 @@
   {% include 'components/workers/doctor_modal.html' %}
   {% include 'components/workers/nurse_modal.html' %}
   {% include 'components/workers/bhw_modal.html' %}
-  {% include 'components/tabbar/tabbar.html' with tab1_name="Pending Users" tab1_icon="bi-hourglass-split" tab2_name="Active Users" tab2_icon="bi-people-fill" tab3_name="Accredited BHW" tab3_icon="bi-person-badge" tab4_name="Nurse" tab4_icon="bi-heart-pulse" tab5_name="Doctor" tab5_icon="bi-clipboard2-pulse" %}
+  {% include 'components/workers/midwife_modal.html' %}
+  {% include 'components/tabbar/tabbar.html' with tab1_name="Pending Users" tab1_icon="bi-hourglass-split" tab2_name="Active Users" tab2_icon="bi-people" tab3_name="Facilities" tab3_icon="bi-building" tab4_name="Archive" tab4_icon="bi-archive" %}
 
 
   <div class="container-fluid mt-4">
-    <div class="d-flex justify-content-between align-items-center">
-
-      <!-- Add Healthcare Provider Button -->
-      <button class="btn btn-success" id="actionButton" data-bs-toggle="modal" data-bs-target="#providerTypeModal">
-        <i class="bi bi-person-plus-fill"></i> <span>Add Healthcare Provider</span>
-      </button>
 
       <!-- Provider Type Selection Modal -->
       <div class="modal fade" id="providerTypeModal" tabindex="-1" role="dialog" aria-labelledby="providerTypeModalLabel" aria-hidden="true">
@@ -36,16 +31,13 @@
               <p class="mb-4">Choose the type of healthcare provider you want to add:</p>
               <div class="d-grid gap-3">
                 <button class="btn btn-outline-primary btn-lg" id="selectDoctor">
-                  <i class="bi bi-clipboard2-pulse me-2"></i>Doctor
-                </button>
-                <button class="btn btn-outline-success btn-lg" id="selectNurse">
-                  <i class="bi bi-heart-pulse me-2"></i>Nurse
+                  Doctor
                 </button>
                 <button class="btn btn-outline-info btn-lg" id="selectBHW">
-                  <i class="bi bi-person-badge me-2"></i>Barangay Health Worker
+                  Barangay Health Worker
                 </button>
-                <button class="btn btn-outline-warning btn-lg" id="selectHealthcareProvider">
-                  <i class="bi bi-building me-2"></i>Healthcare Provider
+                <button class="btn btn-primary btn-lg selectHealthcareProviderBtn">
+                  Healthcare Providers (Facility)
                 </button>
               </div>
             </div>
@@ -69,7 +61,7 @@
                   </div>
                   <div class="title-content">
                     <h5 class="modal-title" id="registerModalLabel">Add New Facility</h5>
-                    <p class="modal-subtitle">Create a healthcare facility without creating a user</p>
+                    
                   </div>
                 </div>
                 <button type="button" class="btn-close modern-close" data-bs-dismiss="modal" aria-label="Close">
@@ -78,14 +70,6 @@
               </div>
 
               <div class="modal-body modern-body">
-                {% if messages %}
-                  <div class="alert alert-danger modern-alert">
-                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                    {% for message in messages %}
-                      <p class="mb-0">{{ message }}</p>
-                    {% endfor %}
-                  </div>
-                {% endif %}
 
                 <!-- Facility Information Section -->
                 <div class="form-section">
@@ -97,19 +81,19 @@
                     <div class="col-md-6">
                       <div class="form-floating">
                         <input type="text" name="name" id="facility_name" class="form-control modern-input" placeholder="Facility Name" required>
-                        <label for="facility_name"><i class="bi bi-building me-2"></i>Facility Name</label>
+                        <label for="facility_name">Facility Name</label>
                       </div>
                     </div>
                     <div class="col-md-6">
                       <div class="form-floating">
                         <input type="text" name="assigned_bhw" id="assigned_bhw" class="form-control modern-input" placeholder="Assigned BHW" required>
-                        <label for="assigned_bhw"><i class="bi bi-person-badge me-2"></i>Assigned BHW</label>
+                        <label for="assigned_bhw">Person Assigned</label>
                       </div>
                     </div>
                     <div class="col-md-6">
                       <div class="form-floating">
                         <input type="text" name="barangay" id="barangay" class="form-control modern-input" placeholder="Barangay">
-                        <label for="barangay"><i class="bi bi-geo-alt me-2"></i>Barangay</label>
+                        <label for="barangay">Barangay</label>
                       </div>
                     </div>
                   </div>
@@ -132,10 +116,140 @@
 
               <div class="modal-footer modern-footer">
                 <button type="button" class="btn btn-outline-secondary modern-btn-cancel" data-bs-dismiss="modal">
+                  Cancel
+                </button>
+                <button type="submit" class="btn btn-success modern-btn-submit">
+                  Create Facility
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add Barangay Modal -->
+      <div class="modal fade" id="barangayModal" tabindex="-1" role="dialog" aria-labelledby="barangayModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+          <div class="modal-content modern-modal">
+            <form method="POST" action="{% url 'facilities:create_barangay' %}" class="provider-form">
+              {% csrf_token %}
+              <div class="modal-header modern-header" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                <div class="header-content">
+                  <div class="icon-wrapper">
+                    <i class="bi bi-geo-alt-fill"></i>
+                  </div>
+                  <div class="title-content">
+                    <h5 class="modal-title" id="barangayModalLabel">Add New Barangay</h5>
+                    <p class="modal-subtitle">Create a new barangay for the system</p>
+                  </div>
+                </div>
+                <button type="button" class="btn-close modern-close" data-bs-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+
+              <div class="modal-body modern-body">
+                <!-- Barangay Information Section -->
+                <div class="form-section">
+                  <div class="section-header">
+                    <i class="bi bi-geo-alt"></i>
+                    <h6>Barangay Information</h6>
+                  </div>
+                  <div class="row g-3">
+                    <div class="col-md-12">
+                      <div class="form-floating">
+                        <input type="text" name="name" id="barangay_name" class="form-control modern-input" placeholder="Barangay Name" required>
+                        <label for="barangay_name"><i class="bi bi-geo-alt me-2"></i>Barangay Name</label>
+                      </div>
+                    </div>
+                    <div class="col-md-12">
+                      <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="is_active" id="barangay_is_active" value="true" checked>
+                        <label class="form-check-label" for="barangay_is_active">
+                          <i class="bi bi-toggle-on me-2"></i>Active Status
+                        </label>
+                        <small class="form-text text-muted d-block mt-1">Set to inactive to hide from selection without deleting</small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="modal-footer modern-footer">
+                <button type="button" class="btn btn-outline-secondary modern-btn-cancel" data-bs-dismiss="modal">
                   <i class="bi bi-x-circle me-2"></i>Cancel
                 </button>
                 <button type="submit" class="btn btn-success modern-btn-submit">
-                  <i class="bi bi-building me-2"></i>Create Facility
+                  <i class="bi bi-geo-alt me-2"></i>Create Barangay
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Create Purok Modal -->
+      <div class="modal fade" id="purokModal" tabindex="-1" role="dialog" aria-labelledby="purokModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+          <div class="modal-content modern-modal">
+            <form method="POST" action="{% url 'facilities:create_purok' %}" class="provider-form">
+              {% csrf_token %}
+              <div class="modal-header modern-header" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);">
+                <div class="header-content">
+                  <div class="icon-wrapper">
+                    <i class="bi bi-geo-fill"></i>
+                  </div>
+                  <div class="title-content">
+                    <h5 class="modal-title" id="purokModalLabel">Create New Purok</h5>
+                    <p class="modal-subtitle">Create a new purok for a barangay</p>
+                  </div>
+                </div>
+                <button type="button" class="btn-close modern-close" data-bs-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+
+              <div class="modal-body modern-body">
+                <!-- Purok Information Section -->
+                <div class="form-section">
+                  <div class="section-header">
+                    <i class="bi bi-geo-alt"></i>
+                    <h6>Purok Information</h6>
+                  </div>
+                  <div class="row g-3">
+                    <div class="col-md-12">
+                      <div class="form-floating">
+                        <select name="barangay_id" id="purok_barangay_id" class="form-select modern-input" required>
+                          <option value="" disabled selected>Select Barangay</option>
+                        </select>
+                        <label for="purok_barangay_id"><i class="bi bi-geo-alt me-2"></i>Barangay</label>
+                      </div>
+                    </div>
+                    <div class="col-md-12">
+                      <div class="form-floating">
+                        <input type="text" name="name" id="purok_name" class="form-control modern-input" placeholder="Purok Name" required>
+                        <label for="purok_name"><i class="bi bi-geo-fill me-2"></i>Purok Name</label>
+                      </div>
+                    </div>
+                    <div class="col-md-12">
+                      <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="is_active" id="purok_is_active" value="true" checked>
+                        <label class="form-check-label" for="purok_is_active">
+                          <i class="bi bi-toggle-on me-2"></i>Active Status
+                        </label>
+                        <small class="form-text text-muted d-block mt-1">Set to inactive to hide from selection without deleting</small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="modal-footer modern-footer">
+                <button type="button" class="btn btn-outline-secondary modern-btn-cancel" data-bs-dismiss="modal">
+                  <i class="bi bi-x-circle me-2"></i>Cancel
+                </button>
+                <button type="submit" class="btn btn-success modern-btn-submit">
+                  <i class="bi bi-geo-fill me-2"></i>Create Purok
                 </button>
               </div>
             </form>
@@ -184,77 +298,35 @@
                   <i class="bi bi-hourglass-split me-2 text-warning"></i>
                   Pending User Registrations
                 </h5>
-                <span class="badge bg-warning text-dark">{{ pending_bhw|length|add:pending_doctors|length|add:pending_nurses|length }}</span>
+                <span class="badge bg-warning text-dark">{{ pending_bhw|length|add:pending_doctors|length|add:pending_nurses|length|add:pending_midwives|length }}</span>
               </div>
               
               <div class="table-responsive">
-                <table class="table table-hover mb-0">
+                <table id="pendingRegistrationTable" class="table table-hover mb-0 datatable">
                   <thead class="bg-light">
                     <tr>
                       <th>Type</th>
-                      <th>Name</th>
-                      <th>Details</th>
-                      <th>Status</th>
+                      <th>Name</th>                    
                       <th>Assign Facility</th>
-                      <th>Actions</th>
+                      <th>Date</th>
                     </tr>
                   </thead>
                   <tbody>
                     {% for bhw in pending_bhw %}
                     <tr class="pending-user-row pending-user-clickable" style="cursor: pointer;" data-modal-target="#pendingUserModal{{ bhw.bhw_id }}">
-                      <td><span class="badge bg-info text-dark"><i class="bi bi-person-badge me-1"></i> BHW</span></td>
-                      <td>{{ bhw.first_name }} {{ bhw.last_name }}</td>
-                      <td>{{ bhw.barangay }}</td>
-                      <td><span class="badge rounded-pill bg-warning">Pending</span></td>
+                      <td><span class="badge bg-info text-dark">BHW</span></td>
+                      <td>{{ bhw.first_name }} {{ bhw.last_name }}</td>                 
                       <td>{{ bhw.assigned_barangay }}</td>
-                      <td>
-                        <div class="d-flex gap-2" onclick="event.stopPropagation();">
-                          <form method="POST" action="{% url 'approve_user' %}" style="display: inline-block; margin-right: 0.5rem;">
-                            {% csrf_token %}
-                            <input type="hidden" name="user_type" value="bhw">
-                            <input type="hidden" name="user_id" value="{{ bhw.bhw_id }}">
-                            <button type="submit" class="btn btn-success btn-sm" title="Approve">
-                              <i class="bi bi-check-circle"></i>
-                            </button>
-                          </form>
-                          <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#rejectModal{{ bhw.bhw_id }}" title="Reject">
-                            <i class="bi bi-x-circle"></i>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                      <td colspan="6" class="text-center text-muted">No pending BHW registrations</td>
+                      <td>{{ user_info.date_created }}</td>
                     </tr>
                     {% endfor %}
 
                     {% for doctor in pending_doctors %}
                     <tr class="pending-user-row pending-user-clickable" style="cursor: pointer;" data-modal-target="#pendingUserModalDoc{{ doctor.doctor_id }}">
-                      <td><span class="badge bg-primary text-white"><i class="bi bi-clipboard2-pulse me-1"></i> Doctor</span></td>
+                      <td><span class="badge bg-primary text-white">Doctor</span></td>
                       <td>{{ doctor.first_name }} {{ doctor.last_name }}</td>
                       <td>{{ doctor.specialization }}</td>
-                      <td><span class="badge rounded-pill bg-warning">Pending</span></td>
-                      <td>{{doctor.specialization }}</td>
-                      <td>
-                        <div class="d-flex gap-2" onclick="event.stopPropagation();">
-                          <form method="POST" action="{% url 'approve_user' %}" style="display: inline-block; margin-right: 0.5rem;">
-                            {% csrf_token %}
-                            <input type="hidden" name="user_type" value="doctor">
-                            <input type="hidden" name="user_id" value="{{ doctor.doctor_id }}">
-                            <button type="submit" class="btn btn-success btn-sm" title="Approve">
-                              <i class="bi bi-check-circle"></i>
-                            </button>
-                          </form>
-                          <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#rejectModal{{ doctor.doctor_id }}" title="Reject">
-                            <i class="bi bi-x-circle"></i>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                      <td colspan="6" class="text-center text-muted">No pending doctor registrations</td>
+                      <td>{{ user_info.date_created }}</td>
                     </tr>
                     {% endfor %}
 
@@ -271,23 +343,47 @@
                             {% csrf_token %}
                             <input type="hidden" name="user_type" value="nurse">
                             <input type="hidden" name="user_id" value="{{ nurse.nurse_id }}">
-                            <button type="submit" class="btn btn-success btn-sm" title="Approve">
-                              <i class="bi bi-check-circle"></i>
+                            <button type="submit" class="btn btn-outline-success btn-sm rounded-pill" title="Approve">
+                              <i class="bi bi-check-circle me-1"></i>Approve
                             </button>
                           </form>
-                          <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#rejectModal{{ nurse.nurse_id }}" title="Reject">
-                            <i class="bi bi-x-circle"></i>
+                          <button class="btn btn-outline-danger btn-sm rounded-pill" data-bs-toggle="modal" data-bs-target="#rejectModal{{ nurse.nurse_id }}" title="Reject">
+                            <i class="bi bi-x-circle me-1"></i>Reject
                           </button>
                         </div>
                       </td>
                     </tr>
-                    {% empty %}
-                    <tr>
-                      <td colspan="6" class="text-center text-muted">No pending nurse registrations</td>
+                    {% endfor %}
+
+                    {% for midwife in pending_midwives %}
+                    <tr class="pending-user-row pending-user-clickable" style="cursor: pointer;" data-modal-target="#pendingUserModalMid{{ midwife.midwife_id }}">
+                      <td><span class="badge" style="background-color: #9c27b0; color: white;"><i class="bi bi-gender-female me-1"></i> Midwife</span></td>
+                      <td>{{ midwife.first_name }} {{ midwife.last_name }}</td>
+                      <td>{{ midwife.barangay|default:"N/A" }}</td>
+                      <td><span class="badge rounded-pill bg-warning">Pending</span></td>
+                      <td>{{ midwife.midwifery_assigned_area }}</td>
+                      <td>
+                        <div class="d-flex gap-2" onclick="event.stopPropagation();">
+                          <form method="POST" action="{% url 'approve_user' %}" style="display: inline-block; margin-right: 0.5rem;">
+                            {% csrf_token %}
+                            <input type="hidden" name="user_type" value="midwife">
+                            <input type="hidden" name="user_id" value="{{ midwife.midwife_id }}">
+                            <button type="submit" class="btn btn-outline-success btn-sm rounded-pill" title="Approve">
+                              <i class="bi bi-check-circle me-1"></i>Approve
+                            </button>
+                          </form>
+                          <button class="btn btn-outline-danger btn-sm rounded-pill" data-bs-toggle="modal" data-bs-target="#rejectModal{{ midwife.midwife_id }}" title="Reject">
+                            <i class="bi bi-x-circle me-1"></i>Reject
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                     {% endfor %}
                   </tbody>
                 </table>
+                {% if not pending_bhw and not pending_doctors and not pending_nurses and not pending_midwives %}
+                <div class="text-center text-muted py-3">No pending registrations at the moment.</div>
+                {% endif %}
               </div>
             </div>
           </div>
@@ -296,78 +392,91 @@
     </div>
 
     <!-- TAB 2 for ACTIVE USERS -->
-    <div class="tab-pane fade {% if active_tab == 'tab2' %}show active{% endif %} mt-3" id="tab2" role="tabpanel" aria-labelledby="activeuser-tab">
+    <div class="tab-pane fade {% if active_tab == 'tab2' %}show active{% endif %} mt-3" id="tab2" role="tabpanel" aria-labelledby="activeusers-tab">
       <div class="row g-4">
-        <!-- Table Section -->
-        <div class="col-lg-8 col-md-7">
+        <div class="col-lg-12 col-md-12">
           <div class="card modern-card shadow-sm h-100">
             <div class="card-body">
-              <h5 class="card-title mb-4 d-flex align-items-center">
-                <i class="bi bi-building me-2"></i>
-                Healthcare Providers Directory
-              </h5>
+              <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="card-title d-flex align-items-center mb-0">
+                 
+                  Active Users
+                </h5>
+              </div>
+
+              
+
               <div class="table-responsive">
-                <table id="providersTable" class="table table-hover mb-0">
+                <table id="activeUsersTable" class="table table-hover mb-0 datatable">
                   <thead class="bg-light">
                     <tr>
-                      <th>Facility ID</th>
-                      <th>Facility Name</th>
-                      <th>Assigned BHW</th>
-                      <th>Barangay</th>
-                      <th>Status</th>
+                      <th>Username</th>
+                      <th>Full Name</th>
+                      <th>Email</th>
+                      <th>Role</th>
+                      <th>Date Created</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {% for facility in facilities %}
-                    <tr class="clickable-row" data-id="{{ facility.facility_id }}" data-facility="{{ facility.name }}" data-bhw="{{ facility.assigned_bhw }}" data-barangay="{{ facility.barangay|default:'' }}" data-latitude="{{ facility.latitude }}" data-longitude="{{ facility.longitude }}" data-first-name="{{ facility.user_id.first_name }}" data-last-name="{{ facility.user_id.last_name }}">
-                      <td>{{ facility.facility_id }}</td>
-                      <td>{{ facility.name }}</td>
-                      <td>{{ facility.assigned_bhw }}</td>
-                      <td>{{ facility.barangay|default:"Not specified" }}</td>
-                      <td><span class="badge rounded-pill bg-info text-dark">Active</span></td>
+                    {% for user_info in active_users %}
+                    <tr data-user-id="{{ user_info.user.id }}"
+                        data-username="{{ user_info.username }}"
+                        data-full-name="{{ user_info.first_name }} {{ user_info.last_name }}"
+                        data-email="{{ user_info.email|default:'N/A' }}"
+                        data-role="{{ user_info.role }}">
+                      <td><strong>{{ user_info.username }}</strong></td>
+                      <td>{{ user_info.first_name }} {{ user_info.last_name }}</td>
+                      <td>{{ user_info.email|default:"N/A" }}</td>
                       <td>
-                        <div class="d-flex gap-2">
-                          <button class="btn btn-warning btn-sm edit-button" data-bs-toggle="modal" data-bs-target="#editFacilityModal" data-bs-toggle="tooltip" title="Edit Facility">
-                            <i class="bi bi-pencil-square"></i>
+                        {% if user_info.role == 'Administrator' %}
+                          <span class="badge bg-danger">{{ user_info.role }}</span>
+                        {% elif user_info.role == 'Doctor' %}
+                          <span class="badge bg-primary">{{ user_info.role }}</span>
+                        {% elif user_info.role == 'BHW' %}
+                          <span class="badge bg-info">{{ user_info.role }}</span>
+                        
+                        {% else %}
+                          <span class="badge bg-secondary">{{ user_info.role }}</span>
+                        {% endif %}
+                      </td>
+                      <td>{{ user_info.date_created }}</td>
+                      
+                      <td>
+                        <div class="btn-group">
+                          <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" title="Actions">
+                            <i class="bi bi-three-dots-vertical"></i> 
                           </button>
-                          <button class="btn btn-danger btn-sm delete-button" data-bs-toggle="tooltip" title="Remove Facility">
-                            <i class="bi bi-trash"></i>
-                          </button>
+                          <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                              <a class="dropdown-item change-password-btn" href="#" 
+                                 data-user-id="{{ user_info.user.id }}"
+                                 data-username="{{ user_info.username }}">
+                                <i class="bi bi-key me-2"></i>Change Password
+                              </a>
+                            </li>
+                            <li>
+                              <a class="dropdown-item toggle-status-btn" href="#"
+                                 data-user-id="{{ user_info.user.id }}"
+                                 data-current-status="{{ user_info.status }}">
+                                <i class="bi bi-toggle-{% if user_info.status == 'Active' %}off{% else %}on{% endif %} me-2"></i>
+                                {% if user_info.status == 'Active' %}Set Inactive{% else %}Set Active{% endif %}
+                              </a>
+                            </li>
+                           
+                          </ul>
                         </div>
+                      </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                      <td colspan="6" class="text-center text-muted py-4">
+                        <i class="bi bi-inbox"></i> No active users found
                       </td>
                     </tr>
                     {% endfor %}
                   </tbody>
                 </table>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Provider Details Card -->
-        <div class="col-lg-4 col-md-5">
-          <div class="card modern-card p-4 shadow-sm h-100" id="infoCard">
-            <h5 class="mb-4 d-flex align-items-center">
-              <i class="bi bi-info-circle me-2"></i>
-              Facility Details
-            </h5>
-            <div id="cardContent" class="facility-details">
-              <div class="detail-item">
-                <span class="detail-label">Facility ID</span>
-                <span id="cardFacilityId" class="detail-value">Select a facility</span>
-              </div>
-              <div class="detail-item">
-                <span class="detail-label">Facility Name</span>
-                <span id="cardFacility" class="detail-value">Select a facility</span>
-              </div>
-              <div class="detail-item">
-                <span class="detail-label">Assigned BHW</span>
-                <span id="cardBHW" class="detail-value">Select a facility</span>
-              </div>
-              <div class="detail-item">
-                <span class="detail-label">Barangay</span>
-                <span id="cardBarangay" class="detail-value">Select a facility</span>
               </div>
             </div>
           </div>
@@ -423,21 +532,39 @@
                   <h6>Professional Information</h6>
                 </div>
                 <div class="info-item mb-3">
+                  <p class="info-label">Role</p>
+                  <p class="info-value">{{ bhw.bhw_sub_role }}</p>
+                </div>
+                <div class="info-item mb-3">
                   <p class="info-label">Registration Number</p>
-                  <p class="info-value">{{ bhw.registrationNumber }}</p>
+                  <p class="info-value">{{ bhw.registration_number|default:"N/A" }}</p>
                 </div>
                 <div class="info-item mb-3">
                   <p class="info-label">Accreditation Number</p>
-                  <p class="info-value">{{ bhw.accreditationNumber }}</p>
-                </div>
-                <div class="info-item mb-3">
-                  <p class="info-label">Role</p>
-                  <p class="info-value">{{ bhw.bhw_sub_role }}</p>
+                  <p class="info-value">{{ bhw.accreditation_number|default:"N/A" }}</p>
                 </div>
                 <div class="info-item mb-3">
                   <p class="info-label">Assigned Barangay</p>
                   <p class="info-value">{{ bhw.assigned_barangay }}</p>
                 </div>
+                {% if bhw.registration_certificate %}
+                <div class="info-item mb-3">
+                  <p class="info-label">Registration Certificate</p>
+                  <div class="certificate-preview">
+                    <img src="{{ bhw.registration_certificate.url }}" 
+                         alt="Registration Certificate" 
+                         class="certificate-thumbnail"
+                         data-certificate-modal="certificateModal{{ bhw.bhw_id }}"
+                         style="cursor: pointer; max-width: 200px; max-height: 200px; border-radius: 8px; border: 2px solid #e2e8f0; transition: all 0.3s ease;">
+                  </div>
+                  <small class="text-muted">Click to view full size</small>
+                </div>
+                {% else %}
+                <div class="info-item mb-3">
+                  <p class="info-label">Registration Certificate</p>
+                  <p class="info-value text-muted">No certificate uploaded</p>
+                </div>
+                {% endif %}
               </div>
             </div>
             <div class="modal-footer modern-footer">
@@ -486,6 +613,31 @@
       </div>
       {% endfor %}
 
+      <!-- Certificate Image Modals (placed outside parent modals to avoid aria-hidden conflicts) -->
+      {% for bhw in pending_bhw %}
+      {% if bhw.registration_certificate %}
+      <div class="modal fade" id="certificateModal{{ bhw.bhw_id }}" tabindex="-1" aria-labelledby="certificateModalLabel{{ bhw.bhw_id }}" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+              <h5 class="modal-title" id="certificateModalLabel{{ bhw.bhw_id }}">
+                <i class="bi bi-file-earmark-image me-2"></i>Registration Certificate - {{ bhw.first_name }} {{ bhw.last_name }}
+              </h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center p-3" style="background-color: #f8f9fa; min-height: 400px; display: flex; align-items: center; justify-content: center;">
+              <img src="{{ bhw.registration_certificate.url }}" 
+                   alt="Registration Certificate" 
+                   class="img-fluid certificate-full-image"
+                   style="max-height: 75vh; max-width: 100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+            </div>
+            
+          </div>
+        </div>
+      </div>
+      {% endif %}
+      {% endfor %}
+
       {% for doctor in pending_doctors %}
       <!-- Modern Pending Doctor Modal -->
       <div class="modal fade" id="pendingUserModalDoc{{ doctor.doctor_id }}" tabindex="-1" aria-labelledby="pendingUserModalLabelDoc{{ doctor.doctor_id }}" aria-hidden="true">
@@ -525,7 +677,11 @@
                 </div>
                 <div class="info-item mb-3">
                   <p class="info-label">Address</p>
-                  <p class="info-value">{{ doctor.street_address }}, {{ doctor.city }}, {{ doctor.province }}</p>
+                  <p class="info-value">
+                    {% if doctor.street_address %}{{ doctor.street_address }}, {% endif %}
+                    {% if doctor.barangay %}{{ doctor.barangay }}, {% endif %}
+                    {{ doctor.city }}, {{ doctor.province }}
+                  </p>
                 </div>
               </div>
               
@@ -542,14 +698,7 @@
                   <p class="info-label">License Number</p>
                   <p class="info-value">{{ doctor.license_number }}</p>
                 </div>
-                <div class="info-item mb-3">
-                  <p class="info-label">Medical School</p>
-                  <p class="info-value">{{ doctor.medical_school }}</p>
-                </div>
-                <div class="info-item mb-3">
-                  <p class="info-label">Years of Practice</p>
-                  <p class="info-value">{{ doctor.years_medical_practice }}</p>
-                </div>
+               
               </div>
             </div>
             <div class="modal-footer modern-footer">
@@ -709,111 +858,320 @@
         </div>
       </div>
       {% endfor %}
+
+      {% for midwife in pending_midwives %}
+      <!-- Modern Pending Midwife Modal -->
+      <div class="modal fade" id="pendingUserModalMid{{ midwife.midwife_id }}" tabindex="-1" aria-labelledby="pendingUserModalLabelMid{{ midwife.midwife_id }}" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+          <div class="modal-content modern-modal">
+            <div class="modal-header modern-header" style="background: linear-gradient(135deg, #9c27b0 0%, #e91e63 100%);">
+              <div class="header-content">
+                <div class="icon-wrapper">
+                  <i class="bi bi-gender-female"></i>
+                </div>
+                <div class="title-content">
+                  <h5 class="modal-title" id="pendingUserModalLabelMid{{ midwife.midwife_id }}">Pending Midwife Registration</h5>
+                  <p class="modal-subtitle">Review registration details</p>
+                </div>
+              </div>
+              <button type="button" class="btn-close modern-close" data-bs-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body modern-body">
+              <div class="form-section">
+                <div class="section-header">
+                  <i class="bi bi-person-circle"></i>
+                  <h6>Personal Information</h6>
+                </div>
+                <div class="info-item mb-3">
+                  <p class="info-label">Full Name</p>
+                  <p class="info-value">{{ midwife.first_name }} {{ midwife.middle_name }} {{ midwife.last_name }}</p>
+                </div>
+                <div class="info-item mb-3">
+                  <p class="info-label">Email</p>
+                  <p class="info-value">{{ midwife.email|default:"N/A" }}</p>
+                </div>
+                <div class="info-item mb-3">
+                  <p class="info-label">Phone</p>
+                  <p class="info-value">{{ midwife.phone }}</p>
+                </div>
+                <div class="info-item mb-3">
+                  <p class="info-label">Address</p>
+                  <p class="info-value">{{ midwife.street_address }}, {{ midwife.city }}, {{ midwife.province }} - {{ midwife.barangay }}</p>
+                </div>
+              </div>
+              
+              <div class="form-section">
+                <div class="section-header">
+                  <i class="bi bi-award"></i>
+                  <h6>Professional Information</h6>
+                </div>
+                <div class="info-item mb-3">
+                  <p class="info-label">Midwifery License Number</p>
+                  <p class="info-value">{{ midwife.midwife_license_number|default:"N/A" }}</p>
+                </div>
+                <div class="info-item mb-3">
+                  <p class="info-label">PRC License Number</p>
+                  <p class="info-value">{{ midwife.prc_license_number|default:"N/A" }}</p>
+                </div>
+                <div class="info-item mb-3">
+                  <p class="info-label">Specialization</p>
+                  <p class="info-value">{{ midwife.midwifery_specialization|default:"N/A" }}</p>
+                </div>
+                <div class="info-item mb-3">
+                  <p class="info-label">Assigned Area</p>
+                  <p class="info-value">{{ midwife.midwifery_assigned_area|default:"N/A" }}</p>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer modern-footer">
+              <form method="POST" action="{% url 'approve_user' %}" style="display: inline-block; margin-right: 0.5rem;">
+                {% csrf_token %}
+                <input type="hidden" name="user_type" value="midwife">
+                <input type="hidden" name="user_id" value="{{ midwife.midwife_id }}">
+                <button type="submit" class="btn modern-btn-approve">
+                  <i class="bi bi-check-circle me-2"></i>Approve
+                </button>
+              </form>
+              <button class="btn modern-btn-reject" data-bs-toggle="modal" data-bs-target="#rejectModal{{ midwife.midwife_id }}">
+                <i class="bi bi-x-circle me-2"></i>Reject
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reject Modal for Midwife -->
+      <div class="modal fade" id="rejectModal{{ midwife.midwife_id }}" tabindex="-1" aria-labelledby="rejectModalLabel{{ midwife.midwife_id }}" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+              <h5 class="modal-title" id="rejectModalLabel{{ midwife.midwife_id }}">Reject Midwife Registration</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{% url 'reject_user' %}">
+              {% csrf_token %}
+              <div class="modal-body">
+                <p>Are you sure you want to reject <strong>{{ midwife.first_name }} {{ midwife.last_name }}</strong>?</p>
+                <div class="mb-3">
+                  <label for="reason{{ midwife.midwife_id }}" class="form-label">Rejection Reason:</label>
+                  <textarea class="form-control" id="reason{{ midwife.midwife_id }}" name="reason" rows="3" placeholder="Enter reason for rejection" required></textarea>
+                </div>
+                <input type="hidden" name="user_type" value="midwife">
+                <input type="hidden" name="user_id" value="{{ midwife.midwife_id }}">
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-danger">Reject Registration</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
     </div>
 
-    <!-- ACCREDATED TAB 3rd TAB 3 FOR THE LIST OF BHW -->
-    <div class="tab-pane fade {% if active_tab == 'tab3' %}show active{% endif %} mt-3" id="tab3" role="tabpanel" aria-labelledby="bhwregister-tab">
-    <div class="row g-4">
-      <!-- Table Section -->
-      <div class="col-lg-12 col-md-12">
-        <div class="card modern-card shadow-sm h-100">
-          <div class="card-body">
-            
-            <!-- Header Row with Button on the Right -->
-            <div class="d-flex justify-content-between align-items-center mb-4">
-              <h5 class="card-title d-flex align-items-center mb-0">
-                <i class="bi bi-clock-history me-2"></i>
-                Accreditated Names
-              </h5>
+    <!-- TAB 3 for FACILITIES -->
+    <div class="tab-pane fade {% if active_tab == 'tab3' %}show active{% endif %} mt-3" id="tab3" role="tabpanel" aria-labelledby="facilities-tab">
+      <!-- Healthcare Provider (Facility) Button -->
+      <div class="mb-3">
+        <button class="btn btn-primary btn-lg selectHealthcareProviderBtn">
+          Add New Facility
+        </button>
+      </div>
+      <div class="row g-4">
+        <!-- Map Section -->
+        <div class="col-lg-7 col-md-12">
+          <div class="card modern-card shadow-sm h-100">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="card-title d-flex align-items-center mb-0">
+                  <i class="bi bi-geo-alt-fill me-2"></i>
+                  Facilities Map
+                </h5>
+              </div>
+              <div id="facilitiesMap" style="height: 600px; width: 100%; border-radius: 8px; border: 1px solid #e2e8f0; position: relative; background-color: #f8f9fa;">
+                <div id="mapLoading" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: #6c757d;">
+                  <div class="spinner-border spinner-border-sm" role="status" style="margin-bottom: 10px;">
+                    <span class="visually-hidden">Loading...</span>
+                  </div>
+                  <div>Loading map...</div>
+                </div>
+              </div>
             </div>
+          </div>
+        </div>
+        
+        <!-- Table Section -->
+        <div class="col-lg-5 col-md-12">
+          <div class="card modern-card shadow-sm h-100">
+            <div class="card-body">
+              
+              <!-- Header Row with Button on the Right -->
+              <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="card-title d-flex align-items-center mb-0">
+                  <i class="bi bi-clock-history me-2"></i>
+                  Healthcare Providers Directory
+                </h5>
+              </div>
 
-            <!-- Table -->
-            <div class="table-responsive">
-              <table id="providersTable" class="table table-hover mb-0">
-                <thead class="bg-light">
-                  <tr>
-                    <th>#</th>
-                    <th>Accreditation Number</th>
-                    <th>Registration Number</th>
-                    <th>Full Name</th>
-                    <th>From Facility of</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for bhw in bhwnames %}
-                  <tr class="clickable-row" 
-                      data-id="{{ bhw.facility_id }}" 
-                      data-facility="{{ bhw.facility }}" 
-                      data-first-name="{{ bhw.first_name }}" 
-                      data-last-name="{{ bhw.last_name }}">
-                    
-                    <td><input type="checkbox" class="form-check-input row-checkbox" value="{{ bhw.id }}"></td>
-                    <td>{{ bhw.accreditationNumber }}</td>
-                    <td>{{ bhw.registrationNumber }}</td>
-                    <td>{{ bhw.last_name }}, {{ bhw.first_name }} {{ bhw.middle_name }}</td>
-                    <td>{{ bhw.barangay }}</td>
-                  </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
+              <!-- Table -->
+              <div class="table-responsive">
+                <table id="facilitiesTable" class="table table-hover mb-0 datatable">
+                  <thead class="bg-light">
+                    <tr>
+                      
+                      <th>Facility Name</th>
+                      <th>Assigned BHW</th>
+                      <th>Barangay</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for facility in facilities %}
+                    <tr class="clickable-row" 
+                        data-id="{{ facility.facility_id }}" 
+                        data-facility="{{ facility.name }}" 
+                        data-bhw="{{ facility.assigned_bhw|default:'' }}" 
+                        data-barangay="{{ facility.barangay|default:'' }}" 
+                        data-latitude="{{ facility.latitude }}" 
+                        data-longitude="{{ facility.longitude }}" 
+                        data-first-name="{{ facility.user_id.first_name }}" 
+                        data-last-name="{{ facility.user_id.last_name }}">
+                      
+                      <td>{{ facility.name }}</td>
+                      <td>{{ facility.assigned_bhw }}</td>
+                      <td>{{ facility.barangay|default:"Not specified" }}</td>
+                      <td>
+                        <span class="badge bg-info">Active</span>
+                      </td>
+                      <td>
+                        <div class="btn-group" role="group">
+                          <button type="button" class="btn btn-sm btn-primary edit-button" 
+                                  data-bs-toggle="modal" 
+                                  data-bs-target="#editFacilityModal" 
+                                  title="Edit Facility">
+                            <i class="bi bi-pencil-square"></i>
+                          </button>
+                          <button type="button" class="btn btn-sm btn-danger delete-button" 
+                                  title="Remove Facility">
+                            <i class="bi bi-trash"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
-  <!-- NURSE TAB 4 -->
-  <div class="tab-pane fade {% if active_tab == 'tab4' %}show active{% endif %} mt-3" id="tab4" role="tabpanel" aria-labelledby="nurse-tab">
-    <div class="row g-4">
-      <!-- Table Section -->
-      <div class="col-lg-12 col-md-12">
-        <div class="card modern-card shadow-sm h-100">
-          <div class="card-body">
-            
-            <!-- Header Row with Button on the Right -->
-            <div class="d-flex justify-content-between align-items-center mb-4">
-              <h5 class="card-title d-flex align-items-center mb-0">
-                <i class="bi bi-clock-history me-2"></i>
-                List of Nurses
-              </h5>
-            </div>
 
-            <!-- Table -->
-            <div class="table-responsive">
-              <table id="providersTable" class="table table-hover mb-0">
-                <thead class="bg-light">
-                  <tr>
-                    <th>#</th>
-                    <th>Full Name</th>
-                    <th>Facility Assigned</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for nurse in nurses %}
-                  <tr class="clickable-row" 
-                      data-id="{{ nurse.nurse_id }}" 
-                      data-facility="{{ nurse.facility }}" 
-                      data-first-name="{{ nurse.first_name }}" 
-                      data-last-name="{{ nurse.last_name }}">
+    <!-- TAB 4 for ARCHIVE (INACTIVE USERS) -->
+    <div class="tab-pane fade {% if active_tab == 'tab4' %}show active{% endif %} mt-3" id="tab4" role="tabpanel" aria-labelledby="archive-tab">
+      <div class="row g-4">
+        <div class="col-lg-12 col-md-12">
+          <div class="card modern-card shadow-sm h-100">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="card-title d-flex align-items-center mb-0">
+                  <i class="bi bi-archive me-2"></i>
+                  Inactive Users Archive
+                </h5>
+              </div>
 
-                    <td><input type="checkbox" class="form-check-input row-checkbox" value="{{ bhw.id }}"></td>
-                    <td>{{ nurse.last_name }}, {{ nurse.first_name }} {{ nurse.middle_name }}</td>
-                    <td>{{ nurse.barangay }}</td>
-                  </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
+              
+
+              <div class="table-responsive">
+                <table id="inactiveUsersTable" class="table table-hover mb-0 datatable">
+                  <thead class="bg-light">
+                    <tr>
+                      <th>Username</th>
+                      <th>Full Name</th>
+                      <th>Email</th>
+                      <th>Role</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for user_info in inactive_users %}
+                    <tr data-username="{{ user_info.username }}"
+                        data-full-name="{{ user_info.first_name }} {{ user_info.last_name }}"
+                        data-email="{{ user_info.email|default:'N/A' }}"
+                        data-role="{{ user_info.role }}">
+                      <td><strong>{{ user_info.username }}</strong></td>
+                      <td>{{ user_info.first_name }} {{ user_info.last_name }}</td>
+                      <td>{{ user_info.email|default:"N/A" }}</td>
+                      <td>
+                        {% if user_info.role == 'Administrator' %}
+                          <span class="badge bg-danger">{{ user_info.role }}</span>
+                        {% elif user_info.role == 'Doctor' %}
+                          <span class="badge bg-primary">{{ user_info.role }}</span>
+                        {% elif user_info.role == 'BHW' %}
+                          <span class="badge bg-info">{{ user_info.role }}</span>
+                  
+                        {% else %}
+                          <span class="badge bg-secondary">{{ user_info.role }}</span>
+                        {% endif %}
+                      </td>
+                      <td>
+                        <div class="btn-group">
+                          <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle archive-actions-btn" data-bs-toggle="dropdown" data-bs-boundary="viewport" data-bs-offset="0,2" aria-expanded="false" title="Actions">
+                            <i class="bi bi-three-dots-vertical"></i> 
+                          </button>
+                          <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                              <a class="dropdown-item change-password-btn" href="#" 
+                                 data-user-id="{{ user_info.user.id }}"
+                                 data-username="{{ user_info.username }}">
+                                <i class="bi bi-key me-2"></i>Change Password
+                              </a>
+                            </li>
+                            <li>
+                              <a class="dropdown-item toggle-status-btn" href="#"
+                                 data-user-id="{{ user_info.user.id }}"
+                                 data-current-status="{{ user_info.status }}">
+                                <i class="bi bi-toggle-{% if user_info.status == 'Active' %}off{% else %}on{% endif %} me-2"></i>
+                                {% if user_info.status == 'Active' %}Set Inactive{% else %}Set Active{% endif %}
+                              </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                              <a class="dropdown-item text-danger delete-user-btn" href="#"
+                                 data-user-id="{{ user_info.user.id }}"
+                                 data-username="{{ user_info.username }}">
+                                <i class="bi bi-trash me-2"></i>Delete User
+                              </a>
+                            </li>
+                          </ul>
+                        </div>
+                      </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                      <td colspan="5" class="text-center text-muted py-4">
+                        <i class="bi bi-inbox"></i> No inactive users found
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
 
 
 
   <!-- DOCTORS TAB 5 -->
-    <div class="tab-pane fade {% if active_tab == 'tab5' %}show active{% endif %} mt-3" id="tab5" role="tabpanel" aria-labelledby="doctors-tab">
+  <div class="tab-pane fade {% if active_tab == 'tab5' %}show active{% endif %} mt-3" id="tab5" role="tabpanel" aria-labelledby="doctors-tab">
     <div class="row g-4">
       <!-- Table Section -->
       <div class="col-lg-12 col-md-12">
@@ -830,11 +1188,12 @@
 
             <!-- Table -->
             <div class="table-responsive">
-              <table id="providersTable" class="table table-hover mb-0">
+              <table id="doctorTable" class="table table-hover mb-0 datatable">
                 <thead class="bg-light">
                   <tr>
-                    <th>#</th>
                     <th>Full Name</th>
+                    <th>Status</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -845,8 +1204,26 @@
                       data-first-name="{{ doctors.first_name }}" 
                       data-last-name="{{ doctors.last_name }}">
                     
-                    <td><input type="checkbox" class="form-check-input row-checkbox" value="{{ bhw.id }}"></td>
                     <td>{{ doctors.last_name }}, {{ doctors.first_name }} {{ doctors.middle_name }}</td>
+                    <td>
+                      <span class="badge 
+                        {% if doctors.status == 'APPROVED' %}bg-success
+                        {% elif doctors.status == 'PENDING_APPROVAL' %}bg-warning
+                        {% elif doctors.status == 'REJECTED' %}bg-danger
+                        {% elif doctors.status == 'RETIRED' %}bg-secondary
+                        {% elif doctors.status == 'INACTIVE' %}bg-info
+                        {% elif doctors.status == 'SUSPENDED' %}bg-danger
+                        {% else %}bg-secondary{% endif %}">
+                        {{ doctors.get_status_display }}
+                      </span>
+                    </td>
+                    <td>
+                      <button type="button" class="btn btn-outline-primary btn-sm rounded-pill edit-doctor-btn" 
+                              data-doctor-id="{{ doctors.doctor_id }}" 
+                              title="Edit">
+                        <i class="bi bi-pencil-fill me-1"></i>Edit
+                      </button>
+                    </td>
                   </tr>
                   {% endfor %}
                 </tbody>
@@ -858,19 +1235,884 @@
     </div>
   </div>
 
+
     </div>
     </div>
 
   </div>
 
+  <!-- Change Password Modal -->
+  <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-labelledby="changePasswordModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title" id="changePasswordModalLabel">
+            <i class="bi bi-key me-2"></i>Change Password
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form id="changePasswordForm">
+          {% csrf_token %}
+          <div class="modal-body">
+            <input type="hidden" id="password_user_id" name="user_id">
+            <div class="mb-3">
+              <label for="password_username" class="form-label">Username</label>
+              <input type="text" class="form-control" id="password_username" readonly>
+            </div>
+            <div class="mb-3">
+              <label for="new_password" class="form-label">New Password</label>
+              <input type="password" class="form-control" id="new_password" name="new_password" required minlength="8" placeholder="Enter new password (min 8 characters)">
+              <small class="text-muted">Password must be at least 8 characters long</small>
+            </div>
+            <div class="mb-3">
+              <label for="confirm_password" class="form-label">Confirm Password</label>
+              <input type="password" class="form-control" id="confirm_password" required minlength="8" placeholder="Confirm new password">
+            </div>
+            <div id="passwordError" class="alert alert-danger d-none" role="alert"></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-check-circle me-2"></i>Change Password
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status Change Confirmation Modal -->
+  <div class="modal fade" id="statusChangeModal" tabindex="-1" aria-labelledby="statusChangeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="statusChangeModalLabel">Confirm Status Change</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p id="statusChangeMessage">Are you sure you want to change the status?</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="confirmStatusChangeBtn">Confirm</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- User Deactivation Confirmation Modal -->
+  <div class="modal fade" id="deactivateUserModal" tabindex="-1" aria-labelledby="deactivateUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header bg-warning text-dark">
+          <h5 class="modal-title" id="deactivateUserModalLabel">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>Confirm User Deactivation
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-warning" role="alert">
+            <i class="bi bi-info-circle me-2"></i>
+            <strong>Warning:</strong> This action will deactivate the user account and move it to the Archive tab.
+          </div>
+          <p class="mb-3">Please review the user information before confirming:</p>
+          <div class="card bg-light">
+            <div class="card-body">
+              <div class="row mb-2">
+                <div class="col-4"><strong>Username:</strong></div>
+                <div class="col-8" id="deactivateUsername">-</div>
+              </div>
+              <div class="row mb-2">
+                <div class="col-4"><strong>Full Name:</strong></div>
+                <div class="col-8" id="deactivateFullName">-</div>
+              </div>
+              <div class="row mb-2">
+                <div class="col-4"><strong>Email:</strong></div>
+                <div class="col-8" id="deactivateEmail">-</div>
+              </div>
+              <div class="row">
+                <div class="col-4"><strong>Role:</strong></div>
+                <div class="col-8" id="deactivateRole">-</div>
+              </div>
+            </div>
+          </div>
+          <p class="mt-3 mb-0 text-muted">
+            <small>
+              <i class="bi bi-shield-check me-1"></i>
+              The user will be moved to the Archive tab and can be reactivated later if needed.
+            </small>
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="bi bi-x-circle me-2"></i>Cancel
+          </button>
+          <button type="button" class="btn btn-warning" id="confirmDeactivateBtn">
+            <i class="bi bi-toggle-off me-2"></i>Yes, Deactivate User
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden CSRF token for JavaScript -->
+  <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}" id="csrfTokenInput">
+
 {% block script %}
 <!-- Add Leaflet JS -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  /* Fix dropdown overflow in table-responsive for archive tab */
+  #tab4 .table-responsive {
+    overflow-x: auto;
+    overflow-y: visible !important;
+  }
+  
+  /* Ensure parent containers don't clip dropdowns */
+  #tab4 .card-body,
+  #tab4 .card,
+  #tab4 {
+    overflow: visible !important;
+  }
+  
+  #tab4 .btn-group {
+    position: static;
+  }
+  
+  #tab4 .dropdown-menu {
+    position: absolute !important;
+    z-index: 1050 !important;
+    /* Ensure dropdown can escape container */
+    margin-top: 2px;
+  }
+  
+  /* Fix for DataTables wrapper if it exists */
+  #tab4 .dataTables_wrapper {
+    overflow: visible !important;
+    position: relative;
+  }
+  
+  #tab4 .dataTables_wrapper .table-responsive {
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+  }
+  
+  /* Ensure DataTables doesn't create clipping containers */
+  #tab4 .dataTables_scrollBody,
+  #tab4 .dataTables_scroll {
+    overflow: visible !important;
+  }
+</style>
 <script>
 let map;
 let marker;
 
+// Get CSRF token for use in JavaScript
+const csrfToken = document.getElementById('csrfTokenInput')?.value || '{{ csrf_token }}';
+
 document.addEventListener("DOMContentLoaded", function() {
+  // Initialize DataTables for relevant tables
+  function initDataTable(selector) {
+    if (typeof $ === 'undefined' || !$.fn.DataTable) {
+      console.warn('jQuery DataTables not loaded, skipping initialization for', selector);
+      return;
+    }
+    const $table = $(selector);
+    if (!$table.length) {
+      return;
+    }
+    if ($.fn.DataTable.isDataTable($table)) {
+      $table.DataTable().destroy();
+    }
+    $table.DataTable({
+      order: [],
+      responsive: true,
+      pageLength: 10,
+      lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+      language: {
+        emptyTable: "No records found",
+        search: "Search:",
+        lengthMenu: "Show _MENU_ entries",
+        info: "Showing _START_ to _END_ of _TOTAL_ entries",
+        infoEmpty: "Showing 0 to 0 of 0 entries",
+        infoFiltered: "(filtered from _MAX_ total entries)",
+        paginate: {
+          first: "First",
+          last: "Last",
+          next: "Next",
+          previous: "Previous"
+        }
+      }
+    });
+  }
+
+  // Initialize DataTables for tables except activeUsersTable and inactiveUsersTable (needs custom filtering)
+  ['#pendingRegistrationTable', '#facilitiesTable', '#doctorTable'].forEach(initDataTable);
+  
+  // Initialize Active Users Table with custom filtering
+  function initActiveUsersTable() {
+    if (typeof $ === 'undefined' || !$.fn.DataTable) {
+      console.warn('jQuery DataTables not loaded, skipping initialization for activeUsersTable');
+      return;
+    }
+    const $table = $('#activeUsersTable');
+    if (!$table.length) {
+      return;
+    }
+    if ($.fn.DataTable.isDataTable($table)) {
+      $table.DataTable().destroy();
+    }
+    
+    const activeUsersTable = $table.DataTable({
+      order: [],
+      responsive: true,
+      pageLength: 10,
+      lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+      language: {
+        emptyTable: "No records found",
+        search: "Search:",
+        lengthMenu: "Show _MENU_ entries",
+        info: "Showing _START_ to _END_ of _TOTAL_ entries",
+        infoEmpty: "Showing 0 to 0 of 0 entries",
+        infoFiltered: "(filtered from _MAX_ total entries)",
+        paginate: {
+          first: "First",
+          last: "Last",
+          next: "Next",
+          previous: "Previous"
+        }
+      },
+      columnDefs: [
+        {
+          targets: [3], // Role column
+          searchable: true
+        },
+        {
+          targets: [4], // Status column
+          searchable: true
+        }
+      ]
+    });
+    
+    // Role filter handler
+    $('#roleFilter').off('change.active-filter').on('change.active-filter', function() {
+      const roleValue = this.value;
+      activeUsersTable.column(3).search(roleValue ? '^' + roleValue + '$' : '', true, false).draw();
+    });
+    
+    // Status filter handler
+    $('#statusFilter').off('change.status-filter').on('change.status-filter', function() {
+      const statusValue = this.value;
+      activeUsersTable.column(4).search(statusValue ? '^' + statusValue + '$' : '', true, false).draw();
+    });
+    
+    // Clear filters button
+    $('#clearFiltersBtn').off('click.clear-filters').on('click.clear-filters', function() {
+      $('#roleFilter').val('');
+      $('#statusFilter').val('');
+      activeUsersTable.columns().search('').draw();
+    });
+    
+    return activeUsersTable;
+  }
+  
+  // Initialize Active Users Table
+  initActiveUsersTable();
+
+  // Initialize Inactive Users Table with custom filtering
+  function initInactiveUsersTable() {
+    if (typeof $ === 'undefined' || !$.fn.DataTable) {
+      console.warn('jQuery DataTables not loaded, skipping initialization for inactiveUsersTable');
+      return;
+    }
+    const $table = $('#inactiveUsersTable');
+    if (!$table.length) {
+      console.warn('Inactive users table not found');
+      return;
+    }
+    
+    // Check if table has proper structure
+    const theadCols = $table.find('thead th').length;
+    if (theadCols !== 5) {
+      console.error(`Expected 5 columns in thead, found ${theadCols}`);
+      return;
+    }
+    
+    // Remove empty state row with colspan before initialization (DataTables handles empty state)
+    $table.find('tbody tr').each(function() {
+      const $row = $(this);
+      const $colspanCell = $row.find('td[colspan]');
+      if ($colspanCell.length > 0) {
+        $row.remove(); // Remove empty state row, DataTables will show its own empty message
+      }
+    });
+    
+    // Verify all remaining rows have correct column count
+    const $dataRows = $table.find('tbody tr');
+    let hasInvalidRows = false;
+    $dataRows.each(function() {
+      const $row = $(this);
+      const tbodyCols = $row.find('td').length;
+      if (tbodyCols !== 5) {
+        console.error(`Row has ${tbodyCols} columns, expected 5`);
+        hasInvalidRows = true;
+      }
+    });
+    
+    if (hasInvalidRows) {
+      console.error('Table has rows with incorrect column count, skipping DataTables initialization');
+      return;
+    }
+    
+    if ($.fn.DataTable.isDataTable($table)) {
+      $table.DataTable().destroy();
+    }
+    
+    const inactiveUsersTable = $table.DataTable({
+      order: [],
+      responsive: false, // Disable responsive to avoid column issues
+      pageLength: 10,
+      lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+      language: {
+        emptyTable: "No inactive users found",
+        search: "Search:",
+        lengthMenu: "Show _MENU_ entries",
+        info: "Showing _START_ to _END_ of _TOTAL_ entries",
+        infoEmpty: "Showing 0 to 0 of 0 entries",
+        infoFiltered: "(filtered from _MAX_ total entries)",
+        paginate: {
+          first: "First",
+          last: "Last",
+          next: "Next",
+          previous: "Previous"
+        }
+      },
+      columnDefs: [
+        {
+          targets: [3], // Role column
+          searchable: true
+        },
+        {
+          targets: [4], // Actions column
+          orderable: false,
+          searchable: false
+        }
+      ]
+    });
+    
+    // Role filter handler
+    $('#archiveRoleFilter').off('change.archive-filter').on('change.archive-filter', function() {
+      const roleValue = this.value;
+      inactiveUsersTable.column(3).search(roleValue ? '^' + roleValue + '$' : '', true, false).draw();
+    });
+    
+    // Clear filters button
+    $('#clearArchiveFiltersBtn').off('click.clear-archive-filters').on('click.clear-archive-filters', function() {
+      $('#archiveRoleFilter').val('');
+      inactiveUsersTable.columns().search('').draw();
+    });
+    
+    return inactiveUsersTable;
+  }
+  
+  // Initialize Inactive Users Table only if tab4 is visible, otherwise defer
+  const tab4Element = document.getElementById('tab4');
+  if (tab4Element && tab4Element.classList.contains('show')) {
+    initInactiveUsersTable();
+  }
+
+  function handleUserStateAction(userId, action, button) {
+    if (!userId || !action) return;
+    if (button) {
+      button.disabled = true;
+    }
+    
+    // Get CSRF token - use global variable or get from DOM
+    const csrfTokenValue = typeof csrfToken !== 'undefined' ? csrfToken : 
+                          (document.getElementById('csrfTokenInput')?.value || 
+                           document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
+                           '{{ csrf_token }}');
+    
+    if (!csrfTokenValue || csrfTokenValue === '') {
+      console.error('CSRF token not found');
+      alert('Error: CSRF token not found. Please refresh the page.');
+      if (button) {
+        button.disabled = false;
+      }
+      return;
+    }
+    
+    const formData = new FormData();
+    formData.append('user_id', userId);
+    formData.append('action', action);
+    formData.append('csrfmiddlewaretoken', csrfTokenValue);
+    
+    fetch('{% url "admin_update_user_state" %}', {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(response => {
+      if (!response.ok) {
+        return response.json().then(data => {
+          throw new Error(data.error || 'Request failed');
+        });
+      }
+      return response.json();
+    })
+    .then(data => {
+      if (data.success) {
+        alert(data.message || 'Action completed successfully.');
+        window.location.reload();
+      } else {
+        alert(data.error || 'Unable to complete the requested action.');
+        if (button) {
+          button.disabled = false;
+        }
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('An unexpected error occurred: ' + error.message);
+      if (button) {
+        button.disabled = false;
+      }
+    });
+  }
+
+  // Handle deactivation confirmation button
+  const confirmDeactivateBtn = document.getElementById('confirmDeactivateBtn');
+  if (confirmDeactivateBtn) {
+    confirmDeactivateBtn.addEventListener('click', function() {
+      const userId = this.getAttribute('data-user-id');
+      const action = this.getAttribute('data-action');
+      
+      if (!userId || !action) {
+        console.error('Missing user ID or action');
+        return;
+      }
+      
+      // Disable button to prevent double-clicking
+      this.disabled = true;
+      this.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Deactivating...';
+      
+      // Close modal
+      const modal = bootstrap.Modal.getInstance(document.getElementById('deactivateUserModal'));
+      if (modal) {
+        modal.hide();
+      }
+      
+      // Perform deactivation
+      handleUserStateAction(userId, action, this);
+    });
+    
+    // Reset button when modal is hidden
+    const deactivateModal = document.getElementById('deactivateUserModal');
+    if (deactivateModal) {
+      deactivateModal.addEventListener('hidden.bs.modal', function() {
+        confirmDeactivateBtn.disabled = false;
+        confirmDeactivateBtn.innerHTML = '<i class="bi bi-toggle-off me-2"></i>Yes, Deactivate User';
+        confirmDeactivateBtn.removeAttribute('data-user-id');
+        confirmDeactivateBtn.removeAttribute('data-action');
+      });
+    }
+  }
+
+  // Facilities map variables
+  let facilitiesMap = null;
+  let facilityMarkers = [];
+  let mapInitializationAttempted = false;
+
+  // Function to initialize facilities map
+  function initializeFacilitiesMap() {
+    console.log('initializeFacilitiesMap called');
+    
+    // Check if Leaflet is loaded
+    if (typeof L === 'undefined') {
+      console.error('Leaflet library not loaded');
+      const loadingIndicator = document.getElementById('mapLoading');
+      if (loadingIndicator) {
+        loadingIndicator.innerHTML = `
+          <div style="color: #dc3545;">
+            <i class="bi bi-exclamation-triangle"></i>
+            <div style="margin-top: 10px;">Leaflet library not loaded. Please refresh the page.</div>
+          </div>
+        `;
+      }
+      return;
+    }
+
+    const mapElement = document.getElementById('facilitiesMap');
+    if (!mapElement) {
+      console.warn('Facilities map element not found');
+      return;
+    }
+
+    // Check if tab is visible - Leaflet needs visible container
+    const tab3 = document.getElementById('tab3');
+    if (!tab3) {
+      console.warn('Tab3 element not found');
+      return;
+    }
+
+    // Check if tab is visible (has 'show' class)
+    const isVisible = tab3.classList.contains('show');
+    
+    if (!isVisible) {
+      console.log('Tab3 is not visible (show class missing), deferring initialization');
+      return;
+    }
+
+    // Check if container has dimensions
+    const rect = mapElement.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) {
+      console.log('Map container has no dimensions, retrying in 200ms...', rect);
+      setTimeout(initializeFacilitiesMap, 200);
+      return;
+    }
+
+    // Prevent multiple initializations
+    if (mapInitializationAttempted && facilitiesMap) {
+      console.log('Map already initialized, just invalidating size');
+      facilitiesMap.invalidateSize();
+      return;
+    }
+
+    // If map already exists, remove it first
+    if (facilitiesMap) {
+      try {
+        facilitiesMap.remove();
+      } catch (e) {
+        console.warn('Error removing existing map:', e);
+      }
+      facilitiesMap = null;
+      facilityMarkers = [];
+    }
+
+    mapInitializationAttempted = true;
+
+    try {
+      console.log('Initializing map with dimensions:', rect.width, 'x', rect.height);
+      
+      // Hide loading indicator
+      const loadingIndicator = document.getElementById('mapLoading');
+      if (loadingIndicator) {
+        loadingIndicator.style.display = 'none';
+      }
+
+      // Clear any existing content in map container
+      mapElement.innerHTML = '';
+
+      // Initialize map
+      facilitiesMap = L.map('facilitiesMap', {
+        preferCanvas: false,
+        zoomControl: true
+      }).setView([7.587429855100546, 125.82881651697123], 12);
+      
+      console.log('Map object created:', facilitiesMap);
+
+      // Add OpenStreetMap tiles with error handling
+      const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap contributors',
+        errorTileUrl: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
+      }).addTo(facilitiesMap);
+
+      // Wait for tiles to load
+      tileLayer.on('tileload', function() {
+        console.log('Map tiles loaded');
+      });
+
+      tileLayer.on('tileerror', function(error, tile) {
+        console.warn('Tile load error:', error, tile);
+      });
+
+      // Show map loaded successfully
+      console.log('Facilities map initialized successfully');
+
+      // Get facilities data from table rows
+      const facilityRows = document.querySelectorAll('#tab3 .clickable-row');
+      const bounds = [];
+
+      console.log(`Found ${facilityRows.length} facility rows`);
+
+      facilityRows.forEach(row => {
+        const lat = parseFloat(row.dataset.latitude);
+        const lng = parseFloat(row.dataset.longitude);
+        const facilityId = row.dataset.id;
+        const facilityName = row.dataset.facility;
+        const assignedBhw = row.dataset.bhw;
+        const barangay = row.dataset.barangay || 'Not specified';
+
+        // Skip if coordinates are invalid
+        if (isNaN(lat) || isNaN(lng) || lat === 0 || lng === 0) {
+          console.warn(`Invalid coordinates for facility ${facilityId}: ${lat}, ${lng}`);
+          return;
+        }
+
+        // Create popup content
+        const popupContent = `
+          <div style="min-width: 200px;">
+            <strong>${facilityName}</strong><br>
+           
+            <strong>Assigned BHW:</strong> ${assignedBhw || 'N/A'}<br>
+            
+           
+          </div>
+        `;
+
+        // Determine icon based on facility type
+        let icon = L.icon({
+          iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png",
+          shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+          iconSize: [25, 41],
+          iconAnchor: [12, 41],
+          popupAnchor: [1, -34],
+          shadowSize: [41, 41],
+        });
+
+        // Use custom icons for MHO and BHC facilities
+        if (facilityName && facilityName.toUpperCase().includes('MHO')) {
+          icon = L.divIcon({
+            className: 'facility-marker mho-marker',
+            html: `
+              <svg width="32" height="40" viewBox="0 0 32 40" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
+                <path d="M16 0 C10 0, 4 4, 4 10 C4 16, 16 32, 16 32 C16 32, 28 16, 28 10 C28 4, 22 0, 16 0 Z" 
+                      fill="#2563eb" stroke="none"/>
+                <circle cx="16" cy="14" r="6" fill="white"/>
+              </svg>
+            `,
+            iconSize: [32, 40],
+            iconAnchor: [16, 40],
+            popupAnchor: [0, -40]
+          });
+        } else if (facilityName && facilityName.toUpperCase().includes('BHC')) {
+          icon = L.divIcon({
+            className: 'facility-marker bhc-marker',
+            html: `
+              <svg width="32" height="40" viewBox="0 0 32 40" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
+                <path d="M16 0 C10 0, 4 4, 4 10 C4 16, 16 32, 16 32 C16 32, 28 16, 28 10 C28 4, 22 0, 16 0 Z" 
+                      fill="#10b981" stroke="none"/>
+                <circle cx="16" cy="14" r="6" fill="white"/>
+              </svg>
+            `,
+            iconSize: [32, 40],
+            iconAnchor: [16, 40],
+            popupAnchor: [0, -40]
+          });
+        }
+
+        // Create marker
+        const marker = L.marker([lat, lng], { icon })
+          .addTo(facilitiesMap)
+          .bindPopup(popupContent, {
+            maxWidth: 250,
+            className: 'facility-popup'
+          });
+
+        // Store facility ID with marker for easy lookup
+        marker.facilityId = facilityId;
+        marker.facilityRow = row;
+
+        // Store marker and add to bounds
+        facilityMarkers.push(marker);
+        bounds.push([lat, lng]);
+
+        // Add click event to highlight table row
+        marker.on('click', function() {
+          // Remove active class from all rows
+          facilityRows.forEach(r => r.classList.remove('active'));
+          // Add active class to corresponding row
+          row.classList.add('active');
+          // Scroll to row if needed
+          row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        });
+
+        // Add hover effect
+        marker.on('mouseover', function() {
+          marker.setZIndexOffset(2000);
+        });
+
+        marker.on('mouseout', function() {
+          marker.setZIndexOffset(1000);
+        });
+      });
+
+      console.log(`Added ${facilityMarkers.length} markers to map`);
+
+      // Fit map to show all markers if there are any
+      if (bounds.length > 0) {
+        facilitiesMap.fitBounds(bounds, { padding: [50, 50] });
+      }
+
+      // Invalidate size multiple times to ensure proper rendering
+      setTimeout(() => {
+        if (facilitiesMap) {
+          facilitiesMap.invalidateSize();
+        }
+      }, 100);
+      
+      setTimeout(() => {
+        if (facilitiesMap) {
+          facilitiesMap.invalidateSize();
+        }
+      }, 300);
+    } catch (error) {
+      console.error('Error initializing facilities map:', error);
+      // Show error message
+      const loadingIndicator = document.getElementById('mapLoading');
+      if (loadingIndicator) {
+        loadingIndicator.innerHTML = `
+          <div style="color: #dc3545;">
+            <i class="bi bi-exclamation-triangle"></i>
+            <div style="margin-top: 10px;">Failed to load map. Please refresh the page.</div>
+          </div>
+        `;
+      }
+    }
+  }
+
+  // Re-adjust columns when tabs become visible (DataTables within hidden tabs)
+  const tabElList = document.querySelectorAll('button[data-bs-toggle="tab"]');
+  tabElList.forEach(function (tabEl) {
+    tabEl.addEventListener('shown.bs.tab', function (event) {
+      const targetSelector = event.target.getAttribute('data-bs-target');
+      if (!targetSelector) return;
+      const table = document.querySelector(`${targetSelector} table.datatable`);
+      if (table && $.fn.DataTable.isDataTable(table)) {
+        $(table).DataTable().columns.adjust().responsive.recalc();
+      }
+      // Reinitialize Active Users table if tab2 is shown
+      if (targetSelector === '#tab2') {
+        setTimeout(function() {
+          if ($('#activeUsersTable').length && !$.fn.DataTable.isDataTable('#activeUsersTable')) {
+            initActiveUsersTable();
+          } else if ($.fn.DataTable.isDataTable('#activeUsersTable')) {
+            $('#activeUsersTable').DataTable().columns.adjust().responsive.recalc();
+          }
+        }, 100);
+      }
+      // Initialize facilities map if tab3 is shown
+      if (targetSelector === '#tab3') {
+        console.log('Tab3 shown event triggered');
+        // Wait for tab animation to complete and container to be visible
+        setTimeout(function() {
+          console.log('Calling initializeFacilitiesMap from tab event');
+          initializeFacilitiesMap();
+        }, 400);
+      }
+      // Initialize Inactive Users table if tab4 is shown
+      if (targetSelector === '#tab4') {
+        setTimeout(function() {
+          if ($('#inactiveUsersTable').length && !$.fn.DataTable.isDataTable('#inactiveUsersTable')) {
+            initInactiveUsersTable();
+            // Adjust columns after initialization to ensure proper sizing
+            if ($.fn.DataTable.isDataTable('#inactiveUsersTable')) {
+              $('#inactiveUsersTable').DataTable().columns.adjust();
+            }
+          } else if ($.fn.DataTable.isDataTable('#inactiveUsersTable')) {
+            $('#inactiveUsersTable').DataTable().columns.adjust();
+          }
+          
+          // Fix dropdown positioning for archive tab - append to body to escape table container
+          const archiveDropdowns = document.querySelectorAll('#tab4 .archive-actions-btn');
+          archiveDropdowns.forEach(function(dropdownToggle) {
+            const dropdownMenu = dropdownToggle.nextElementSibling;
+            if (!dropdownMenu || !dropdownMenu.classList.contains('dropdown-menu')) return;
+            
+            const originalParent = dropdownMenu.parentElement;
+            let isMovedToBody = false;
+            
+            // When dropdown shows, move it to body and position it correctly
+            dropdownToggle.addEventListener('show.bs.dropdown', function(e) {
+              if (!isMovedToBody && dropdownMenu.parentElement !== document.body) {
+                const buttonRect = dropdownToggle.getBoundingClientRect();
+                
+                // Move to body BEFORE Bootstrap positions it
+                document.body.appendChild(dropdownMenu);
+                isMovedToBody = true;
+                
+                dropdownMenu.style.position = 'fixed';
+                dropdownMenu.style.zIndex = '9999';
+                dropdownMenu.classList.add('show');
+                
+                // Calculate position after a brief delay to ensure menu is rendered
+                setTimeout(function() {
+                  const menuWidth = dropdownMenu.offsetWidth || 200;
+                  
+                  // Position: right-aligned with button (for dropdown-menu-end)
+                  // Align right edge of menu with right edge of button
+                  const left = buttonRect.right - menuWidth;
+                  const top = buttonRect.bottom + 2;
+                  
+                  dropdownMenu.style.left = Math.max(8, left) + 'px'; // Ensure it doesn't go off-screen left
+                  dropdownMenu.style.top = top + 'px';
+                }, 0);
+              }
+            });
+            
+            // When dropdown hides, return it to original parent
+            dropdownToggle.addEventListener('hidden.bs.dropdown', function() {
+              if (isMovedToBody && dropdownMenu.parentElement === document.body && originalParent) {
+                originalParent.appendChild(dropdownMenu);
+                dropdownMenu.style.position = '';
+                dropdownMenu.style.top = '';
+                dropdownMenu.style.left = '';
+                dropdownMenu.style.zIndex = '';
+                isMovedToBody = false;
+              }
+            });
+          });
+        }, 100);
+      }
+    });
+  });
+
+  // Also listen for when tab3 becomes visible using MutationObserver
+  const tab3Element = document.getElementById('tab3');
+  if (tab3Element) {
+    const observer = new MutationObserver(function(mutations) {
+      mutations.forEach(function(mutation) {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+          const hasShow = tab3Element.classList.contains('show');
+          if (hasShow && !facilitiesMap) {
+            console.log('Tab3 show class detected via MutationObserver');
+            setTimeout(function() {
+              initializeFacilitiesMap();
+            }, 300);
+          }
+        }
+      });
+    });
+    
+    observer.observe(tab3Element, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+  }
+
+  // Initialize facilities map if tab3 is active on page load
+  if (tab3Element && tab3Element.classList.contains('show')) {
+    console.log('Tab3 is active on page load, initializing map');
+    setTimeout(function() {
+      initializeFacilitiesMap();
+    }, 600);
+  }
+
+  // Make function globally accessible for debugging
+  window.initializeFacilitiesMap = initializeFacilitiesMap;
+  
+  // Fallback: Try to initialize map after 2 seconds if not already initialized
+  setTimeout(function() {
+    const tab3 = document.getElementById('tab3');
+    if (tab3 && tab3.classList.contains('show') && !facilitiesMap) {
+      console.log('Fallback: Attempting to initialize map after 2 seconds');
+      initializeFacilitiesMap();
+    }
+  }, 2000);
+
   // Handle provider type selection
   document.getElementById('selectDoctor').addEventListener('click', function() {
     // Close type selection modal
@@ -882,15 +2124,72 @@ document.addEventListener("DOMContentLoaded", function() {
     doctorModal.show();
   });
 
-  document.getElementById('selectNurse').addEventListener('click', function() {
-    // Close type selection modal
-    const typeModal = bootstrap.Modal.getInstance(document.getElementById('providerTypeModal'));
-    typeModal.hide();
+  const selectPurokBtn = document.getElementById('selectPurok');
+  if (selectPurokBtn) {
+    selectPurokBtn.addEventListener('click', function() {
+      // Close type selection modal
+      const typeModal = bootstrap.Modal.getInstance(document.getElementById('providerTypeModal'));
+      if (typeModal) {
+        typeModal.hide();
+      }
+      
+      // Load barangays for dropdown
+      loadBarangaysForPurok();
+      
+      // Show the purok creation modal
+      const purokModalElement = document.getElementById('purokModal');
+      if (purokModalElement) {
+        const purokModal = new bootstrap.Modal(purokModalElement);
+        purokModal.show();
+      } else {
+        console.error('Purok modal element not found');
+      }
+    });
+  } else {
+    console.error('Select Purok button not found');
+  }
+
+  // Function to load barangays for purok modal
+  function loadBarangaysForPurok() {
+    const barangaySelect = document.getElementById('purok_barangay_id');
+    if (!barangaySelect) return;
     
-    // Show the nurse registration modal
-    const nurseModal = new bootstrap.Modal(document.getElementById('nurseModal'));
-    nurseModal.show();
-  });
+    // Clear existing options except the first one
+    barangaySelect.innerHTML = '<option value="" disabled selected>Select Barangay</option>';
+    
+    // Fetch barangays from API
+    fetch('{% url "facilities:get_barangays" %}')
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
+      .then(data => {
+        if (data && data.length > 0) {
+          data.forEach(barangay => {
+            const option = document.createElement('option');
+            option.value = barangay.barangay_id;
+            option.textContent = barangay.name;
+            barangaySelect.appendChild(option);
+          });
+        } else {
+          const option = document.createElement('option');
+          option.value = '';
+          option.textContent = 'No barangays available';
+          option.disabled = true;
+          barangaySelect.appendChild(option);
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching barangays:', error);
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = 'Error loading barangays';
+        option.disabled = true;
+        barangaySelect.appendChild(option);
+      });
+  }
 
   document.getElementById('selectBHW').addEventListener('click', function() {
     // Close type selection modal
@@ -902,23 +2201,84 @@ document.addEventListener("DOMContentLoaded", function() {
     bhwModal.show();
   });
 
-  document.getElementById('selectHealthcareProvider').addEventListener('click', function() {
-    // Close type selection modal
-    const typeModal = bootstrap.Modal.getInstance(document.getElementById('providerTypeModal'));
-    typeModal.hide();
-    
-    // Show the existing healthcare provider registration modal
-    const registerModal = new bootstrap.Modal(document.getElementById('registerModal'));
-    registerModal.show();
+  const selectBarangayBtn = document.getElementById('selectBarangay');
+  if (selectBarangayBtn) {
+    selectBarangayBtn.addEventListener('click', function() {
+      // Close type selection modal
+      const typeModal = bootstrap.Modal.getInstance(document.getElementById('providerTypeModal'));
+      if (typeModal) {
+        typeModal.hide();
+      }
+      
+      // Show the barangay registration modal
+      const barangayModalElement = document.getElementById('barangayModal');
+      if (barangayModalElement) {
+        const barangayModal = new bootstrap.Modal(barangayModalElement);
+        barangayModal.show();
+      } else {
+        console.error('Barangay modal element not found');
+      }
+    });
+  } else {
+    console.error('Select Barangay button not found');
+  }
+
+  // Handle Healthcare Provider (Facility) button - works from both modal and tab
+  // Use event delegation to handle all buttons with this class
+  document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('selectHealthcareProviderBtn') || e.target.closest('.selectHealthcareProviderBtn')) {
+      const button = e.target.classList.contains('selectHealthcareProviderBtn') ? e.target : e.target.closest('.selectHealthcareProviderBtn');
+      
+      // Close type selection modal if it's open
+      const typeModal = bootstrap.Modal.getInstance(document.getElementById('providerTypeModal'));
+      if (typeModal) {
+        typeModal.hide();
+      }
+      
+      // Show the existing healthcare provider registration modal
+      const registerModalElement = document.getElementById('registerModal');
+      if (registerModalElement) {
+        const registerModal = new bootstrap.Modal(registerModalElement);
+        registerModal.show();
+      } else {
+        console.error('Register modal element not found');
+      }
+    }
   });
 
-  // Only handle clickable rows in Tab 1 (facilities table), not in pending users tab
-  const rows = document.querySelectorAll("#tab1 .clickable-row");
+  // Only handle clickable rows in Tab 3 (facilities table), not in pending users tab
+  const rows = document.querySelectorAll("#tab3 .clickable-row");
 
   rows.forEach(row => {
     row.addEventListener("click", function() {
       rows.forEach(r => r.classList.remove("active"));
       this.classList.add("active");
+
+      // Focus on corresponding marker on map if map is initialized
+      if (facilitiesMap && this.dataset.latitude && this.dataset.longitude) {
+        const lat = parseFloat(this.dataset.latitude);
+        const lng = parseFloat(this.dataset.longitude);
+        if (!isNaN(lat) && !isNaN(lng)) {
+          // Find the marker for this facility using stored facility ID
+          const facilityId = this.dataset.id;
+          const marker = facilityMarkers.find(m => m.facilityId === facilityId);
+          
+          if (marker) {
+            // Open popup and pan to marker
+            marker.openPopup();
+            facilitiesMap.setView([lat, lng], Math.max(facilitiesMap.getZoom(), 14), {
+              animate: true,
+              duration: 0.5
+            });
+          } else {
+            // If marker not found, just pan to location
+            facilitiesMap.setView([lat, lng], Math.max(facilitiesMap.getZoom(), 14), {
+              animate: true,
+              duration: 0.5
+            });
+          }
+        }
+      }
 
       if (document.getElementById("cardFacilityId")) {
         document.getElementById("cardFacilityId").innerText = this.dataset.id;
@@ -1029,7 +2389,1198 @@ document.addEventListener("DOMContentLoaded", function() {
       deleteModal.show();
     });
   });
+
+  // Status change handler variables
+  let pendingStatusChange = {
+    type: null,
+    id: null,
+    status: null,
+    statusDisplay: null,
+    url: null
+  };
+
+  // Function to update status badge
+  function updateStatusBadge(row, newStatus, statusDisplay) {
+    const statusCell = row.querySelector('td:nth-last-child(2)'); // Status is second to last column
+    if (statusCell) {
+      const badge = statusCell.querySelector('.badge');
+      if (badge) {
+        badge.className = 'badge';
+        if (newStatus === 'APPROVED') {
+          badge.classList.add('bg-success');
+        } else if (newStatus === 'PENDING_APPROVAL') {
+          badge.classList.add('bg-warning');
+        } else if (newStatus === 'REJECTED' || newStatus === 'SUSPENDED') {
+          badge.classList.add('bg-danger');
+        } else if (newStatus === 'RETIRED') {
+          badge.classList.add('bg-secondary');
+        } else if (newStatus === 'INACTIVE') {
+          badge.classList.add('bg-info');
+        }
+        badge.textContent = statusDisplay;
+      }
+    }
+  }
+
+  // Function to execute status change
+  function executeStatusChange() {
+    const formData = new FormData();
+    formData.append(pendingStatusChange.type + '_id', pendingStatusChange.id);
+    formData.append('status', pendingStatusChange.status);
+    formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+    
+    fetch(pendingStatusChange.url, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        const row = document.querySelector(`tr[data-id="${pendingStatusChange.id}"]`);
+        if (row) {
+          updateStatusBadge(row, pendingStatusChange.status, data.status_display);
+        }
+        alert(data.message || 'Status updated successfully!');
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      } else {
+        alert('Error: ' + (data.message || 'Failed to update status'));
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('An error occurred while updating the status. Please try again.');
+    });
+  }
+
+  // Confirm button handler
+  document.getElementById('confirmStatusChangeBtn').addEventListener('click', function() {
+    executeStatusChange();
+    bootstrap.Modal.getInstance(document.getElementById('statusChangeModal')).hide();
+  });
+
+  // Handle status change for BHW
+  document.querySelectorAll('.status-change-btn').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const bhwId = this.getAttribute('data-bhw-id');
+      const newStatus = this.getAttribute('data-status');
+      const statusDisplay = this.textContent.trim();
+      
+      if (!bhwId || !newStatus) {
+        alert('Error: Missing required information');
+        return;
+      }
+      
+      pendingStatusChange = {
+        type: 'bhw',
+        id: bhwId,
+        status: newStatus,
+        statusDisplay: statusDisplay,
+        url: '{% url "update_bhw_status" %}'
+      };
+      
+      document.getElementById('statusChangeMessage').textContent = 
+        `Are you sure you want to change the status to "${statusDisplay}"?`;
+      const modal = new bootstrap.Modal(document.getElementById('statusChangeModal'));
+      modal.show();
+    });
+  });
+
+  // Handle status change for Nurse
+  document.querySelectorAll('.status-change-nurse-btn').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const nurseId = this.getAttribute('data-nurse-id');
+      const newStatus = this.getAttribute('data-status');
+      const statusDisplay = this.textContent.trim();
+      
+      if (!nurseId || !newStatus) {
+        alert('Error: Missing required information');
+        return;
+      }
+      
+      pendingStatusChange = {
+        type: 'nurse',
+        id: nurseId,
+        status: newStatus,
+        statusDisplay: statusDisplay,
+        url: '{% url "update_nurse_status" %}'
+      };
+      
+      document.getElementById('statusChangeMessage').textContent = 
+        `Are you sure you want to change the status to "${statusDisplay}"?`;
+      const modal = new bootstrap.Modal(document.getElementById('statusChangeModal'));
+      modal.show();
+    });
+  });
+
+  // Handle status change for Doctor
+  document.querySelectorAll('.status-change-doctor-btn').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const doctorId = this.getAttribute('data-doctor-id');
+      const newStatus = this.getAttribute('data-status');
+      const statusDisplay = this.textContent.trim();
+      
+      if (!doctorId || !newStatus) {
+        alert('Error: Missing required information');
+        return;
+      }
+      
+      pendingStatusChange = {
+        type: 'doctor',
+        id: doctorId,
+        status: newStatus,
+        statusDisplay: statusDisplay,
+        url: '{% url "update_doctor_status" %}'
+      };
+      
+      document.getElementById('statusChangeMessage').textContent = 
+        `Are you sure you want to change the status to "${statusDisplay}"?`;
+      const modal = new bootstrap.Modal(document.getElementById('statusChangeModal'));
+      modal.show();
+    });
+  });
+
+  // Handle edit button for BHW
+  document.querySelectorAll('.edit-bhw-btn').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      const bhwId = this.getAttribute('data-bhw-id');
+      
+      // Fetch BHW data
+      fetch(`{% url "edit_bhw" 0 %}`.replace('0', bhwId), {
+        method: 'GET',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success && data.bhw) {
+          const bhw = data.bhw;
+          
+          // Check if edit modal exists, if not create it
+          let editModal = document.getElementById('editBhwModal');
+          if (!editModal) {
+            // Create edit modal dynamically with modern styling
+            const modalHTML = `
+              <div class="modal fade" id="editBhwModal" tabindex="-1" aria-labelledby="editBhwModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
+                  <div class="modal-content modern-modal">
+                    <form id="editBhwForm" class="bhw-form">
+                      <div class="modal-header modern-header" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                        <div class="header-content">
+                          <div class="icon-wrapper">
+                            <i class="bi bi-person-badge-fill"></i>
+                          </div>
+                          <div class="title-content">
+                            <h5 class="modal-title" id="editBhwModalLabel">Edit BHW Information</h5>
+                            <p class="modal-subtitle">Update barangay health worker details</p>
+                          </div>
+                        </div>
+                        <button type="button" class="btn-close modern-close" data-bs-dismiss="modal" aria-label="Close">
+                          <span aria-hidden="true">&times;</span>
+                        </button>
+                      </div>
+                      <div class="modal-body modern-body">
+                        <input type="hidden" name="bhw_id" id="edit_bhw_id" value="${bhw.bhw_id}">
+                        
+                        <!-- Personal Information Section -->
+                        <div class="form-section">
+                          <div class="section-header">
+                            <i class="bi bi-person-circle"></i>
+                            <h6>Personal Information</h6>
+                          </div>
+                          <div class="row g-3">
+                            <div class="col-md-4">
+                              <div class="form-floating">
+                                <input type="text" class="form-control modern-input" name="first_name" id="edit_first_name" placeholder="First Name" value="${bhw.first_name}" required>
+                                <label for="edit_first_name"><i class="bi bi-person me-2"></i>First Name</label>
+                              </div>
+                            </div>
+                            <div class="col-md-4">
+                              <div class="form-floating">
+                                <input type="text" class="form-control modern-input" name="middle_name" id="edit_middle_name" placeholder="Middle Name" value="${bhw.middle_name || ''}">
+                                <label for="edit_middle_name"><i class="bi bi-person me-2"></i>Middle Name</label>
+                              </div>
+                            </div>
+                            <div class="col-md-4">
+                              <div class="form-floating">
+                                <input type="text" class="form-control modern-input" name="last_name" id="edit_last_name" placeholder="Last Name" value="${bhw.last_name}" required>
+                                <label for="edit_last_name"><i class="bi bi-person me-2"></i>Last Name</label>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Professional Information Section -->
+                        <div class="form-section">
+                          <div class="section-header">
+                            <i class="bi bi-award"></i>
+                            <h6>Professional Information</h6>
+                          </div>
+                          <div class="row g-3">
+                            <div class="col-md-6">
+                              <div class="form-floating">
+                                <input type="text" class="form-control modern-input" name="accreditation_number" id="edit_accreditation_number" placeholder="Accreditation Number (e.g., 32-424)" pattern="^\\d{2}-\\d{3}$" maxlength="6" title="Format must be exactly 2 digits, dash, 3 digits (e.g., 32-424)" value="${bhw.accreditation_number || ''}" required>
+                                <label for="edit_accreditation_number"><i class="bi bi-shield-check me-2"></i>Accreditation Number</label>
+                              </div>
+                              <small class="text-muted">Format: XX-XXX (e.g., 32-424)</small>
+                            </div>
+                            <div class="col-md-6">
+                              <div class="form-floating">
+                                <input type="text" class="form-control modern-input" name="registration_number" id="edit_registration_number" placeholder="Registration Number (e.g., 32-424)" pattern="^\\d{2}-\\d{3}$" maxlength="6" title="Format must be exactly 2 digits, dash, 3 digits (e.g., 32-424)" value="${bhw.registration_number || ''}" required>
+                                <label for="edit_registration_number"><i class="bi bi-card-checklist me-2"></i>Registration Number</label>
+                              </div>
+                              <small class="text-muted">Format: XX-XXX (e.g., 32-424)</small>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Contact Information Section -->
+                        <div class="form-section">
+                          <div class="section-header">
+                            <i class="bi bi-telephone"></i>
+                            <h6>Contact Information</h6>
+                          </div>
+                          <div class="row g-3">
+                            <div class="col-md-12">
+                              <div class="form-floating">
+                                <input type="tel" class="form-control modern-input" name="phone" id="edit_phone" placeholder="Phone Number (e.g., 09123456789)" pattern="^09\\d{9}$" maxlength="11" title="Phone number must be exactly 11 digits starting with 09" value="${bhw.phone || ''}">
+                                <label for="edit_phone"><i class="bi bi-phone me-2"></i>Phone Number (Optional)</label>
+                              </div>
+                              <small class="text-muted">Format: 09XXXXXXXXX (11 digits, must start with 09)</small>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Status Information Section -->
+                        <div class="form-section">
+                          <div class="section-header">
+                            <i class="bi bi-toggle-on"></i>
+                            <h6>Status</h6>
+                          </div>
+                          <div class="row g-3">
+                            <div class="col-md-12">
+                              <div class="form-floating">
+                                <select class="form-select modern-input" name="status" id="edit_status" required>
+                                  <option value="PENDING_APPROVAL" ${bhw.status === 'PENDING_APPROVAL' ? 'selected' : ''}>Pending Approval</option>
+                                  <option value="ACTIVE" ${bhw.status === 'ACTIVE' ? 'selected' : ''}>Active</option>
+                                  <option value="INACTIVE" ${bhw.status === 'INACTIVE' ? 'selected' : ''}>Inactive</option>
+                                  <option value="RETIRED" ${bhw.status === 'RETIRED' ? 'selected' : ''}>Retired</option>
+                                  <option value="SUSPENDED" ${bhw.status === 'SUSPENDED' ? 'selected' : ''}>Suspended</option>
+                                  <option value="REJECTED" ${bhw.status === 'REJECTED' ? 'selected' : ''}>Rejected</option>
+                                </select>
+                                <label for="edit_status"><i class="bi bi-toggle-on me-2"></i>Status</label>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="modal-footer modern-footer">
+                        <button type="button" class="btn btn-outline-secondary modern-btn-cancel" data-bs-dismiss="modal">
+                          <i class="bi bi-x-circle me-2"></i>Cancel
+                        </button>
+                        <button type="submit" class="btn btn-success modern-btn-submit">
+                          <i class="bi bi-check-circle me-2"></i>Save Changes
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            editModal = document.getElementById('editBhwModal');
+          }
+          
+          // Populate form fields
+          document.getElementById('edit_bhw_id').value = bhw.bhw_id;
+          document.getElementById('edit_first_name').value = bhw.first_name;
+          document.getElementById('edit_middle_name').value = bhw.middle_name || '';
+          document.getElementById('edit_last_name').value = bhw.last_name;
+          document.getElementById('edit_accreditation_number').value = bhw.accreditation_number || '';
+          document.getElementById('edit_registration_number').value = bhw.registration_number || '';
+          document.getElementById('edit_phone').value = bhw.phone || '';
+          document.getElementById('edit_status').value = bhw.status || 'PENDING_APPROVAL';
+          
+          // Handle form submission
+          const form = document.getElementById('editBhwForm');
+          form.onsubmit = function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(form);
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+            
+            fetch(`{% url "edit_bhw" 0 %}`.replace('0', bhw.bhw_id), {
+              method: 'POST',
+              body: formData,
+              headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+              }
+            })
+            .then(response => response.json())
+            .then(data => {
+              if (data.success) {
+                alert(data.message || 'BHW information updated successfully!');
+                bootstrap.Modal.getInstance(editModal).hide();
+                window.location.reload();
+              } else {
+                alert('Error: ' + (data.message || 'Failed to update BHW information'));
+              }
+            })
+            .catch(error => {
+              console.error('Error:', error);
+              alert('An error occurred while updating the BHW information. Please try again.');
+            });
+          };
+          
+          // Show modal
+          const modal = new bootstrap.Modal(editModal);
+          modal.show();
+        } else {
+          alert('Error: Failed to load BHW information');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while loading the BHW information. Please try again.');
+      });
+    });
+  });
+
+  // Handle edit button for Nurse
+  document.querySelectorAll('.edit-nurse-btn').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      const nurseId = this.getAttribute('data-nurse-id');
+      
+      // Fetch Nurse data
+      fetch(`{% url "edit_nurse" 0 %}`.replace('0', nurseId), {
+        method: 'GET',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success && data.nurse) {
+          const nurse = data.nurse;
+          
+          // Check if edit modal exists, if not create it
+          let editModal = document.getElementById('editNurseModal');
+          if (!editModal) {
+            const modalHTML = `
+              <div class="modal fade" id="editNurseModal" tabindex="-1" aria-labelledby="editNurseModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title" id="editNurseModalLabel">Edit Nurse Name</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form id="editNurseForm">
+                      <div class="modal-body">
+                        <input type="hidden" name="nurse_id" id="edit_nurse_id" value="${nurse.nurse_id}">
+                        <div class="row g-3">
+                          <div class="col-md-4">
+                            <label class="form-label">First Name</label>
+                            <input type="text" class="form-control" name="first_name" id="edit_nurse_first_name" value="${nurse.first_name}" required>
+                          </div>
+                          <div class="col-md-4">
+                            <label class="form-label">Middle Name</label>
+                            <input type="text" class="form-control" name="middle_name" id="edit_nurse_middle_name" value="${nurse.middle_name}">
+                          </div>
+                          <div class="col-md-4">
+                            <label class="form-label">Last Name</label>
+                            <input type="text" class="form-control" name="last_name" id="edit_nurse_last_name" value="${nurse.last_name}" required>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            editModal = document.getElementById('editNurseModal');
+          }
+          
+          // Populate form fields
+          document.getElementById('edit_nurse_id').value = nurse.nurse_id;
+          document.getElementById('edit_nurse_first_name').value = nurse.first_name;
+          document.getElementById('edit_nurse_middle_name').value = nurse.middle_name || '';
+          document.getElementById('edit_nurse_last_name').value = nurse.last_name;
+          
+          // Handle form submission
+          const form = document.getElementById('editNurseForm');
+          form.onsubmit = function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(form);
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+            
+            fetch(`{% url "edit_nurse" 0 %}`.replace('0', nurse.nurse_id), {
+              method: 'POST',
+              body: formData,
+              headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+              }
+            })
+            .then(response => response.json())
+            .then(data => {
+              if (data.success) {
+                alert(data.message || 'Nurse information updated successfully!');
+                bootstrap.Modal.getInstance(editModal).hide();
+                window.location.reload();
+              } else {
+                alert('Error: ' + (data.message || 'Failed to update nurse information'));
+              }
+            })
+            .catch(error => {
+              console.error('Error:', error);
+              alert('An error occurred while updating the nurse information. Please try again.');
+            });
+          };
+          
+          // Show modal
+          const modal = new bootstrap.Modal(editModal);
+          modal.show();
+        } else {
+          alert('Error: Failed to load nurse information');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while loading the nurse information. Please try again.');
+      });
+    });
+  });
+
+  // Handle edit button for Doctor
+  document.querySelectorAll('.edit-doctor-btn').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      const doctorId = this.getAttribute('data-doctor-id');
+      
+      // Fetch Doctor data
+      fetch(`{% url "edit_doctor" 0 %}`.replace('0', doctorId), {
+        method: 'GET',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success && data.doctor) {
+          const doctor = data.doctor;
+          
+          // Check if edit modal exists, if not create it
+          let editModal = document.getElementById('editDoctorModal');
+          if (!editModal) {
+            const modalHTML = `
+              <div class="modal fade" id="editDoctorModal" tabindex="-1" aria-labelledby="editDoctorModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
+                  <div class="modal-content modern-modal">
+                    <form id="editDoctorForm" class="bhw-form">
+                      <div class="modal-header modern-header" style="background: linear-gradient(135deg, #0d6efd 0%, #6610f2 100%);">
+                        <div class="header-content">
+                          <div class="icon-wrapper">
+                            <i class="bi bi-clipboard2-pulse"></i>
+                          </div>
+                          <div class="title-content">
+                            <h5 class="modal-title" id="editDoctorModalLabel">Edit Doctor Information</h5>
+                            <p class="modal-subtitle">Update medical professional details</p>
+                          </div>
+                        </div>
+                        <button type="button" class="btn-close modern-close" data-bs-dismiss="modal" aria-label="Close">
+                          <span aria-hidden="true">&times;</span>
+                        </button>
+                      </div>
+                      <div class="modal-body modern-body">
+                        <input type="hidden" name="doctor_id" id="edit_doctor_id" value="${doctor.doctor_id}">
+                        <div class="form-section">
+                          <div class="section-header">
+                            <i class="bi bi-person-circle"></i>
+                            <h6>Personal Information</h6>
+                          </div>
+                          <div class="row g-3">
+                            <div class="col-md-4">
+                              <div class="form-floating">
+                                <input type="text" class="form-control modern-input" name="first_name" id="edit_doctor_first_name" placeholder="First Name" value="${doctor.first_name}" required>
+                                <label for="edit_doctor_first_name"><i class="bi bi-person me-2"></i>First Name</label>
+                              </div>
+                            </div>
+                            <div class="col-md-4">
+                              <div class="form-floating">
+                                <input type="text" class="form-control modern-input" name="middle_name" id="edit_doctor_middle_name" placeholder="Middle Name" value="${doctor.middle_name || ''}">
+                                <label for="edit_doctor_middle_name"><i class="bi bi-person me-2"></i>Middle Name</label>
+                              </div>
+                            </div>
+                            <div class="col-md-4">
+                              <div class="form-floating">
+                                <input type="text" class="form-control modern-input" name="last_name" id="edit_doctor_last_name" placeholder="Last Name" value="${doctor.last_name}" required>
+                                <label for="edit_doctor_last_name"><i class="bi bi-person me-2"></i>Last Name</label>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="modal-footer modern-footer">
+                        <button type="button" class="btn btn-outline-secondary modern-btn-cancel" data-bs-dismiss="modal">
+                          <i class="bi bi-x-circle me-2"></i>Cancel
+                        </button>
+                        <button type="submit" class="btn btn-success modern-btn-submit">
+                          <i class="bi bi-check-circle me-2"></i>Save Changes
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            editModal = document.getElementById('editDoctorModal');
+          }
+          
+          // Populate form fields
+          document.getElementById('edit_doctor_id').value = doctor.doctor_id;
+          document.getElementById('edit_doctor_first_name').value = doctor.first_name;
+          document.getElementById('edit_doctor_middle_name').value = doctor.middle_name || '';
+          document.getElementById('edit_doctor_last_name').value = doctor.last_name;
+          
+          // Handle form submission
+          const form = document.getElementById('editDoctorForm');
+          form.onsubmit = function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(form);
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+            
+            fetch(`{% url "edit_doctor" 0 %}`.replace('0', doctor.doctor_id), {
+              method: 'POST',
+              body: formData,
+              headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+              }
+            })
+            .then(response => response.json())
+            .then(data => {
+              if (data.success) {
+                alert(data.message || 'Doctor information updated successfully!');
+                bootstrap.Modal.getInstance(editModal).hide();
+                window.location.reload();
+              } else {
+                alert('Error: ' + (data.message || 'Failed to update doctor information'));
+              }
+            })
+            .catch(error => {
+              console.error('Error:', error);
+              alert('An error occurred while updating the doctor information. Please try again.');
+            });
+          };
+          
+          // Show modal
+          const modal = new bootstrap.Modal(editModal);
+          modal.show();
+        } else {
+          alert('Error: Failed to load doctor information');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while loading the doctor information. Please try again.');
+      });
+    });
+  });
+
+  // Handle edit button for Approved BHW
+  document.querySelectorAll('.edit-approved-bhw-btn').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      const approvedBhwId = this.getAttribute('data-approved-bhw-id');
+      
+      // Fetch ApprovedBHW data
+      fetch(`{% url "edit_approved_bhw" 0 %}`.replace('0', approvedBhwId), {
+        method: 'GET',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success && data.bhw) {
+          const bhw = data.bhw;
+          
+          // Check if edit modal exists, if not create it
+          let editModal = document.getElementById('editApprovedBhwModal');
+          if (!editModal) {
+            // Create edit modal dynamically with modern styling
+            const modalHTML = `
+              <div class="modal fade" id="editApprovedBhwModal" tabindex="-1" aria-labelledby="editApprovedBhwModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
+                  <div class="modal-content modern-modal">
+                    <form id="editApprovedBhwForm" class="bhw-form">
+                      <div class="modal-header modern-header" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                        <div class="header-content">
+                          <div class="icon-wrapper">
+                            <i class="bi bi-person-badge-fill"></i>
+                          </div>
+                          <div class="title-content">
+                            <h5 class="modal-title" id="editApprovedBhwModalLabel">Edit Approved BHW Information</h5>
+                            <p class="modal-subtitle">Update whitelist entry details</p>
+                          </div>
+                        </div>
+                        <button type="button" class="btn-close modern-close" data-bs-dismiss="modal" aria-label="Close">
+                          <span aria-hidden="true">&times;</span>
+                        </button>
+                      </div>
+                      <div class="modal-body modern-body">
+                        <input type="hidden" name="approved_bhw_id" id="edit_approved_bhw_id" value="${bhw.approved_bhw_id}">
+                        
+                        <!-- Personal Information Section -->
+                        <div class="form-section">
+                          <div class="section-header">
+                            <i class="bi bi-person-circle"></i>
+                            <h6>Personal Information</h6>
+                          </div>
+                          <div class="row g-3">
+                            <div class="col-md-4">
+                              <div class="form-floating">
+                                <input type="text" class="form-control modern-input" name="first_name" id="edit_approved_first_name" placeholder="First Name" value="${bhw.first_name}" required>
+                                <label for="edit_approved_first_name"><i class="bi bi-person me-2"></i>First Name</label>
+                              </div>
+                            </div>
+                            <div class="col-md-4">
+                              <div class="form-floating">
+                                <input type="text" class="form-control modern-input" name="middle_name" id="edit_approved_middle_name" placeholder="Middle Name" value="${bhw.middle_name || ''}">
+                                <label for="edit_approved_middle_name"><i class="bi bi-person me-2"></i>Middle Name</label>
+                              </div>
+                            </div>
+                            <div class="col-md-4">
+                              <div class="form-floating">
+                                <input type="text" class="form-control modern-input" name="last_name" id="edit_approved_last_name" placeholder="Last Name" value="${bhw.last_name}" required>
+                                <label for="edit_approved_last_name"><i class="bi bi-person me-2"></i>Last Name</label>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Professional Information Section -->
+                        <div class="form-section">
+                          <div class="section-header">
+                            <i class="bi bi-award"></i>
+                            <h6>Professional Information</h6>
+                          </div>
+                          <div class="row g-3">
+                            <div class="col-md-6">
+                              <div class="form-floating">
+                                <input type="text" class="form-control modern-input" name="accreditation_number" id="edit_approved_accreditation_number" placeholder="Accreditation Number (e.g., 32-424)" pattern="^\\d{2}-\\d{3}$" maxlength="6" title="Format must be exactly 2 digits, dash, 3 digits (e.g., 32-424)" value="${bhw.accreditation_number || ''}" required>
+                                <label for="edit_approved_accreditation_number"><i class="bi bi-shield-check me-2"></i>Accreditation Number</label>
+                              </div>
+                              <small class="text-muted">Format: XX-XXX (e.g., 32-424)</small>
+                            </div>
+                            <div class="col-md-6">
+                              <div class="form-floating">
+                                <input type="text" class="form-control modern-input" name="registration_number" id="edit_approved_registration_number" placeholder="Registration Number (e.g., 32-424)" pattern="^\\d{2}-\\d{3}$" maxlength="6" title="Format must be exactly 2 digits, dash, 3 digits (e.g., 32-424)" value="${bhw.registration_number || ''}" required>
+                                <label for="edit_approved_registration_number"><i class="bi bi-card-checklist me-2"></i>Registration Number</label>
+                              </div>
+                              <small class="text-muted">Format: XX-XXX (e.g., 32-424)</small>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Contact Information Section -->
+                        <div class="form-section">
+                          <div class="section-header">
+                            <i class="bi bi-telephone"></i>
+                            <h6>Contact Information</h6>
+                          </div>
+                          <div class="row g-3">
+                            <div class="col-md-6">
+                              <div class="form-floating">
+                                <input type="tel" class="form-control modern-input" name="phone" id="edit_approved_phone" placeholder="Phone Number (e.g., 09123456789)" pattern="^09\\d{9}$" maxlength="11" title="Phone number must be exactly 11 digits starting with 09" value="${bhw.phone || ''}">
+                                <label for="edit_approved_phone"><i class="bi bi-phone me-2"></i>Phone Number (Optional)</label>
+                              </div>
+                              <small class="text-muted">Format: 09XXXXXXXXX (11 digits, must start with 09)</small>
+                            </div>
+                            <div class="col-md-6">
+                              <div class="form-floating">
+                                <input type="email" class="form-control modern-input" name="email" id="edit_approved_email" placeholder="Email Address" value="${bhw.email || ''}">
+                                <label for="edit_approved_email"><i class="bi bi-envelope me-2"></i>Email Address (Optional)</label>
+                              </div>
+                            </div>
+                            <div class="col-md-12">
+                              <div class="form-floating">
+                                <input type="text" class="form-control modern-input" name="barangay" id="edit_approved_barangay" placeholder="Barangay" value="${bhw.barangay || ''}">
+                                <label for="edit_approved_barangay"><i class="bi bi-geo-alt me-2"></i>Barangay (Optional)</label>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Status Information Section -->
+                        <div class="form-section">
+                          <div class="section-header">
+                            <i class="bi bi-toggle-on"></i>
+                            <h6>Status</h6>
+                          </div>
+                          <div class="row g-3">
+                            <div class="col-md-12">
+                              <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="is_active" id="edit_approved_is_active" ${bhw.is_active ? 'checked' : ''}>
+                                <label class="form-check-label" for="edit_approved_is_active">
+                                  <i class="bi bi-toggle-on me-2"></i>Active Status
+                                </label>
+                                <small class="form-text text-muted d-block mt-1">Set to inactive to revoke registration access</small>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="modal-footer modern-footer">
+                        <button type="button" class="btn btn-outline-secondary modern-btn-cancel" data-bs-dismiss="modal">
+                          <i class="bi bi-x-circle me-2"></i>Cancel
+                        </button>
+                        <button type="submit" class="btn btn-success modern-btn-submit">
+                          <i class="bi bi-check-circle me-2"></i>Save Changes
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            editModal = document.getElementById('editApprovedBhwModal');
+          }
+          
+          // Populate form fields
+          document.getElementById('edit_approved_bhw_id').value = bhw.approved_bhw_id;
+          document.getElementById('edit_approved_first_name').value = bhw.first_name;
+          document.getElementById('edit_approved_middle_name').value = bhw.middle_name || '';
+          document.getElementById('edit_approved_last_name').value = bhw.last_name;
+          document.getElementById('edit_approved_accreditation_number').value = bhw.accreditation_number || '';
+          document.getElementById('edit_approved_registration_number').value = bhw.registration_number || '';
+          document.getElementById('edit_approved_phone').value = bhw.phone || '';
+          document.getElementById('edit_approved_email').value = bhw.email || '';
+          document.getElementById('edit_approved_barangay').value = bhw.barangay || '';
+          document.getElementById('edit_approved_is_active').checked = bhw.is_active;
+          
+          // Handle form submission
+          const form = document.getElementById('editApprovedBhwForm');
+          form.onsubmit = function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(form);
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+            formData.append('is_active', document.getElementById('edit_approved_is_active').checked ? 'true' : 'false');
+            
+            fetch(`{% url "edit_approved_bhw" 0 %}`.replace('0', bhw.approved_bhw_id), {
+              method: 'POST',
+              body: formData,
+              headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+              }
+            })
+            .then(response => response.json())
+            .then(data => {
+              if (data.success) {
+                alert(data.message || 'Approved BHW information updated successfully!');
+                bootstrap.Modal.getInstance(editModal).hide();
+                window.location.reload();
+              } else {
+                alert('Error: ' + (data.message || 'Failed to update Approved BHW information'));
+              }
+            })
+            .catch(error => {
+              console.error('Error:', error);
+              alert('An error occurred while updating the Approved BHW information. Please try again.');
+            });
+          };
+          
+          // Show modal
+          const modal = new bootstrap.Modal(editModal);
+          modal.show();
+        } else {
+          alert('Error: Failed to load Approved BHW information');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while loading the Approved BHW information. Please try again.');
+      });
+    });
+  });
+
+  // Handle change password button (using event delegation for DataTables)
+  document.addEventListener('click', function(e) {
+    const passwordBtn = e.target.closest('.change-password-btn');
+    if (passwordBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      // Close dropdown if it's open
+      const dropdown = passwordBtn.closest('.btn-group');
+      if (dropdown) {
+        const dropdownToggle = dropdown.querySelector('.dropdown-toggle');
+        if (dropdownToggle) {
+          const bsDropdown = bootstrap.Dropdown.getInstance(dropdownToggle);
+          if (bsDropdown) {
+            bsDropdown.hide();
+          }
+        }
+      }
+      
+      const userId = passwordBtn.getAttribute('data-user-id');
+      const username = passwordBtn.getAttribute('data-username');
+      
+      document.getElementById('password_user_id').value = userId;
+      document.getElementById('password_username').value = username;
+      document.getElementById('new_password').value = '';
+      document.getElementById('confirm_password').value = '';
+      document.getElementById('passwordError').classList.add('d-none');
+      
+      const modal = new bootstrap.Modal(document.getElementById('changePasswordModal'));
+      modal.show();
+      return;
+    }
+    
+    const toggleStatusBtn = e.target.closest('.toggle-status-btn');
+    if (toggleStatusBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      // Close dropdown if it's open
+      const dropdown = toggleStatusBtn.closest('.btn-group');
+      if (dropdown) {
+        const dropdownToggle = dropdown.querySelector('.dropdown-toggle');
+        if (dropdownToggle) {
+          const bsDropdown = bootstrap.Dropdown.getInstance(dropdownToggle);
+          if (bsDropdown) {
+            bsDropdown.hide();
+          }
+        }
+      }
+      
+      const userId = toggleStatusBtn.getAttribute('data-user-id');
+      const currentStatus = toggleStatusBtn.getAttribute('data-current-status');
+      const nextAction = currentStatus === 'Active' ? 'deactivate' : 'activate';
+      
+      // If deactivating, show confirmation modal with user details
+      if (currentStatus === 'Active' && nextAction === 'deactivate') {
+        // Get user info from table row
+        const row = toggleStatusBtn.closest('tr');
+        if (row) {
+          const username = row.getAttribute('data-username') || row.querySelector('td:first-child strong')?.textContent || 'Unknown';
+          const fullName = row.getAttribute('data-full-name') || row.querySelector('td:nth-child(2)')?.textContent?.trim() || 'Unknown';
+          const email = row.getAttribute('data-email') || row.querySelector('td:nth-child(3)')?.textContent?.trim() || 'N/A';
+          const role = row.getAttribute('data-role') || row.querySelector('td:nth-child(4) .badge')?.textContent?.trim() || 'Unknown';
+          
+          // Populate modal with user information
+          document.getElementById('deactivateUsername').textContent = username;
+          document.getElementById('deactivateFullName').textContent = fullName;
+          document.getElementById('deactivateEmail').textContent = email;
+          document.getElementById('deactivateRole').textContent = role;
+          
+          // Store user ID and action for confirmation
+          const confirmBtn = document.getElementById('confirmDeactivateBtn');
+          confirmBtn.setAttribute('data-user-id', userId);
+          confirmBtn.setAttribute('data-action', 'deactivate');
+          
+          // Show modal
+          const deactivateModal = new bootstrap.Modal(document.getElementById('deactivateUserModal'));
+          deactivateModal.show();
+        }
+      } else {
+        // For activation, use simple confirm
+        const confirmMessage = 'Set this user to active?';
+        if (confirm(confirmMessage)) {
+          handleUserStateAction(userId, nextAction, toggleStatusBtn);
+        }
+      }
+      return;
+    }
+    
+    const deleteBtn = e.target.closest('.delete-user-btn');
+    if (deleteBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      // Close dropdown if it's open
+      const dropdown = deleteBtn.closest('.btn-group');
+      if (dropdown) {
+        const dropdownToggle = dropdown.querySelector('.dropdown-toggle');
+        if (dropdownToggle) {
+          const bsDropdown = bootstrap.Dropdown.getInstance(dropdownToggle);
+          if (bsDropdown) {
+            bsDropdown.hide();
+          }
+        }
+      }
+      
+      const userId = deleteBtn.getAttribute('data-user-id');
+      const username = deleteBtn.getAttribute('data-username');
+      if (confirm(`Are you sure you want to delete user "${username}"? This cannot be undone.`)) {
+        handleUserStateAction(userId, 'delete', deleteBtn);
+      }
+    }
+  });
+
+  // Handle password change form submission
+  document.getElementById('changePasswordForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const userId = document.getElementById('password_user_id').value;
+    const newPassword = document.getElementById('new_password').value;
+    const confirmPassword = document.getElementById('confirm_password').value;
+    const errorDiv = document.getElementById('passwordError');
+    
+    // Clear previous errors
+    errorDiv.classList.add('d-none');
+    errorDiv.textContent = '';
+    
+    // Validate passwords match
+    if (newPassword !== confirmPassword) {
+      errorDiv.textContent = 'Passwords do not match!';
+      errorDiv.classList.remove('d-none');
+      return;
+    }
+    
+    // Validate password length
+    if (newPassword.length < 8) {
+      errorDiv.textContent = 'Password must be at least 8 characters long!';
+      errorDiv.classList.remove('d-none');
+      return;
+    }
+    
+    // Submit password change
+    const formData = new FormData();
+    formData.append('user_id', userId);
+    formData.append('new_password', newPassword);
+    formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+    
+    fetch('{% url "admin_change_user_password" %}', {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert(data.message || 'Password updated successfully!');
+        bootstrap.Modal.getInstance(document.getElementById('changePasswordModal')).hide();
+      } else {
+        errorDiv.textContent = data.error || 'Failed to update password';
+        errorDiv.classList.remove('d-none');
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      errorDiv.textContent = 'An error occurred while updating the password. Please try again.';
+      errorDiv.classList.remove('d-none');
+    });
+  });
+});
+
+// Handle certificate modal opening to fix aria-hidden accessibility issue
+document.addEventListener('DOMContentLoaded', function() {
+  // Handle certificate thumbnail clicks
+  document.querySelectorAll('.certificate-thumbnail').forEach(function(thumbnail) {
+    thumbnail.addEventListener('click', function(e) {
+      e.preventDefault();
+      const modalId = this.getAttribute('data-certificate-modal');
+      const certificateModal = document.getElementById(modalId);
+      
+      if (certificateModal) {
+        // Find the parent modal (BHW details modal)
+        const parentModal = this.closest('.modal');
+        const parentModalElement = parentModal;
+        
+        // Open certificate modal using Bootstrap's modal API
+        const certModalInstance = new bootstrap.Modal(certificateModal, {
+          backdrop: true,
+          keyboard: true,
+          focus: true
+        });
+        
+        // Before showing certificate modal, ensure parent modal doesn't have aria-hidden conflicting
+        certificateModal.addEventListener('show.bs.modal', function onShow() {
+          if (parentModalElement) {
+            // Remove the event listener after first use to avoid conflicts
+            certificateModal.removeEventListener('show.bs.modal', onShow);
+            
+            // Use inert attribute approach - mark parent as inert when child is shown
+            // This is the modern way to handle nested modals
+            if (parentModalElement.hasAttribute('inert')) {
+              parentModalElement.removeAttribute('inert');
+            }
+            // Ensure parent modal remains visible but not interactive
+            parentModalElement.setAttribute('aria-hidden', 'true');
+            parentModalElement.style.pointerEvents = 'none';
+          }
+        }, { once: true });
+        
+        // When certificate modal is hidden, restore parent modal interactivity
+        certificateModal.addEventListener('hidden.bs.modal', function onHidden() {
+          if (parentModalElement) {
+            // Remove the event listener after first use
+            certificateModal.removeEventListener('hidden.bs.modal', onHidden);
+            
+            // Restore parent modal interactivity
+            parentModalElement.removeAttribute('aria-hidden');
+            parentModalElement.style.pointerEvents = '';
+            
+            // Return focus to parent modal
+            const focusableElements = parentModalElement.querySelectorAll(
+              'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+            );
+            if (focusableElements.length > 0) {
+              focusableElements[0].focus();
+            }
+          }
+        }, { once: true });
+        
+        certModalInstance.show();
+      }
+    });
+  });
 });
 </script>
+
+<style>
+/* Barangay button hover effect */
+#selectBarangay {
+  transition: all 0.3s ease;
+}
+
+#selectBarangay:hover {
+  background-color: #28a745 !important;
+  color: white !important;
+  border-color: #28a745 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+}
+
+#selectBarangay:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
+}
+
+/* Purok button hover effect */
+#selectPurok {
+  transition: all 0.3s ease;
+}
+
+#selectPurok:hover {
+  background-color: #17a2b8 !important;
+  color: white !important;
+  border-color: #17a2b8 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(23, 162, 184, 0.3);
+}
+
+#selectPurok:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(23, 162, 184, 0.3);
+}
+
+/* Certificate thumbnail hover effect */
+.certificate-thumbnail {
+  transition: all 0.3s ease;
+  object-fit: cover;
+}
+
+.certificate-thumbnail:hover {
+  transform: scale(1.05);
+  border-color: #3b82f6 !important;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.certificate-preview {
+  margin-top: 8px;
+}
+
+/* Certificate full image modal styling */
+.certificate-full-image {
+  transition: transform 0.3s ease;
+}
+
+.certificate-full-image:hover {
+  transform: scale(1.02);
+}
+
+/* Ensure nested modals work properly - certificate modal should appear above parent modal */
+.modal-backdrop.show {
+  z-index: 1040;
+}
+
+.modal.show {
+  z-index: 1055;
+}
+
+/* Certificate modal specific styling - higher z-index for nested modal */
+.modal[id^="certificateModal"] {
+  z-index: 1060 !important;
+}
+
+.modal[id^="certificateModal"] + .modal-backdrop {
+  z-index: 1055 !important;
+}
+
+/* Facilities map styling */
+#facilitiesMap {
+  min-height: 400px;
+  z-index: 1;
+}
+
+#facilitiesMap .leaflet-container {
+  border-radius: 8px;
+}
+
+/* Facility marker popup styling */
+.facility-popup {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.facility-popup strong {
+  color: #2563eb;
+}
+
+/* Facility marker icons */
+.facility-marker {
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.facility-marker:hover {
+  transform: scale(1.1);
+}
+
+.mho-marker svg path {
+  fill: #2563eb;
+}
+
+.bhc-marker svg path {
+  fill: #10b981;
+}
+</style>
 {% endblock %}
 {% endblock %}

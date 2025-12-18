@@ -53,9 +53,8 @@
           <div class="d-flex align-items-center justify-content-between flex-wrap mb-3">
             <img src="{% static 'images/LGU-NEWCORELLA.png' %}" alt="LGU New Corella Logo" class="report-logo mb-3 mb-lg-0">
             <div class="text-center flex-grow-1 px-lg-4">
-              <h4 class="text-primary mb-1">System Usage &amp; Adoption Scorecard</h4>
+              <h4 class="text-primary mb-1 text-uppercase">SYSTEM USAGE &amp; ADOPTION SCORECARD</h4>
               <p class="text-muted mb-0">Monthly referral and medical record activity by facility</p>
-              <small class="text-muted">Reporting Year: {{ year }}</small>
             </div>
             <img src="{% static 'images/MHO-LOGO.png' %}" alt="MHO Logo" class="report-logo mb-3 mb-lg-0 d-none d-sm-block">
           </div>
@@ -291,7 +290,6 @@
           <p>Purok 5, Poblacion, New Corella | rhunewcorella@yahoo.com | (+63) 970-093-3480</p>
         </div>
         <h2 style="text-align:center; margin-bottom: 8px;">${reportTitle}</h2>
-        <p style="text-align:center; margin-bottom: 16px;">Reporting Year: ${year}</p>
         <div class="section">
           <h4>Facility Usage Matrix</h4>
           ${scorecardHtml}

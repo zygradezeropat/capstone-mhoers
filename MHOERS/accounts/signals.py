@@ -4,7 +4,7 @@ from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
 from django.db import transaction
 
-from accounts.models import BHWRegistration, Doctors, Nurses
+from accounts.models import BHWRegistration, Doctors, Nurses, Midwives
 from referrals.utils import send_sms_iprog
 
 
@@ -22,7 +22,8 @@ def _mark_transition(instance, model_cls):
         prev_status = None
 
     curr_status = getattr(instance, "status", None)
-    if prev_status != "APPROVED" and curr_status == "APPROVED":
+    # Check for ACTIVE status (which is the approved status in the models)
+    if prev_status != "ACTIVE" and curr_status == "ACTIVE":
         became_approved = True
     instance._became_approved = became_approved
 
@@ -40,6 +41,11 @@ def _doc_pre_save(sender, instance: Doctors, **kwargs):
 @receiver(pre_save, sender=Nurses)
 def _nurse_pre_save(sender, instance: Nurses, **kwargs):
     _mark_transition(instance, Nurses)
+
+
+@receiver(pre_save, sender=Midwives)
+def _midwife_pre_save(sender, instance: Midwives, **kwargs):
+    _mark_transition(instance, Midwives)
 
 
 def _send_approval_sms_async(phone_number: str, first_name: str, last_name: str):
@@ -68,6 +74,14 @@ def _doc_post_save(sender, instance: Doctors, created: bool, **kwargs):
 
 @receiver(post_save, sender=Nurses)
 def _nurse_post_save(sender, instance: Nurses, created: bool, **kwargs):
+    if getattr(instance, "_became_approved", False):
+        phone = (instance.phone or "").strip()
+        if phone:
+            transaction.on_commit(lambda: _send_approval_sms_async(phone, instance.first_name or "", instance.last_name or ""))
+
+
+@receiver(post_save, sender=Midwives)
+def _midwife_post_save(sender, instance: Midwives, created: bool, **kwargs):
     if getattr(instance, "_became_approved", False):
         phone = (instance.phone or "").strip()
         if phone:

@@ -12,8 +12,11 @@
         <img src="{% static 'images/newcorellalogo.png' %}" alt="Logo" />
       </a>
       <div class="header-text">
-        <h3 class="app-title">MHO-NewCorella</h3>
-        <span class="username">{{ request.user.username }}</span>
+        <h3 class="app-title doctor-name-bold">{{ request.user.first_name }} {{ request.user.last_name }}</h3>
+        <span class="username">BHW</span>
+        {% if user_facility %}
+          <span class="username">{{ user_facility }}</span>
+        {% endif %}
       </div>
     </div>
     
@@ -36,11 +39,21 @@
             <span class="nav-label">Dashboard</span>
           </a>
         </li>
+        <li class="nav-item">
+          <a
+            href="{% url 'patients:barangayPatients' %}"
+            class="nav-link {% if active_page == 'barangayPatients' %}active{% endif %}"
+            data-tooltip="Patients"
+          >
+            <i class="bi bi-list-ul"></i>
+            <span class="nav-label">Patients</span>
+          </a>
+        </li>
 
         <li class="nav-item">
           <a href="{% url 'referrals:assessment' %}" class="nav-link {% if active_page == 'assessment' %}active{% endif %}" data-tooltip="Assessment">
             <i class="bi bi-menu-button-wide"></i>
-            <span class="nav-label">Assessment</span>
+            <span class="nav-label">Consultation Form</span>
           </a>
         </li>
 
@@ -51,23 +64,11 @@
             data-tooltip="Referral"
           >
             <i class="bi bi-person-add"></i>
-            <span class="nav-label">Referral</span>
-            {% if active_referrals_count > 0 %}
-              <span class="notification-badge">{{ active_referrals_count }}</span>
-            {% endif %}
+            <span class="nav-label">Referrals</span>
           </a> 
         </li>
 
-        <li class="nav-item">
-          <a
-            href="{% url 'patients:barangayPatients' %}"
-            class="nav-link {% if active_page == 'barangayPatients' %}active{% endif %}"
-            data-tooltip="Patients"
-          >
-            <i class="bi bi-list-ul"></i>
-            <span class="nav-label">Patients/History</span>
-          </a>
-        </li>
+       
 
         <li class="nav-item">
           <a
@@ -92,12 +93,14 @@
     {% endif %}
 
     <ul class="nav-list secondary-nav">
+      {% if is_approved %}
       <li class="nav-item">
         <a href="{% url 'profile' %}" class="nav-link {% if active_page == 'profile' %}active{% endif %}" data-tooltip="Profile">
           <i class="bi bi-person-circle"></i>
           <span class="nav-label">Profile</span>
         </a>
       </li>
+      {% endif %}
       <li class="nav-item">
         <a href="{% url 'logout' %}" class="nav-link" data-tooltip="Logout">
           <i class="bi bi-box-arrow-left"></i>

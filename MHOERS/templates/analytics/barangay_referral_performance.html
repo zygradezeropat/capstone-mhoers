@@ -49,8 +49,8 @@
             <img src="{% static 'images/LGU-NEWCORELLA.png' %}" alt="LGU New Corella Logo" class="report-logo mb-3 mb-lg-0">
             <div class="text-center flex-grow-1 px-lg-4">
               <h4 class="text-primary mb-1">Barangay Referral Performance Summary</h4>
-              <p class="text-muted mb-0">Monthly and YTD referral status by facility with average completion time</p>
-              <small class="text-muted">Reporting Period: {{ month_name }} {{ selected_year }}</small>
+              <p class="text-muted mb-0">Monthly referral status by facility with average completion time</p>
+              <small class="text-muted">Period: {{ month_name }} {{ selected_year }}</small>
             </div>
             <img src="{% static 'images/MHO-LOGO.png' %}" alt="MHO Logo" class="report-logo mb-3 mb-lg-0 d-none d-sm-block">
           </div>
@@ -102,22 +102,20 @@
       <div class="table-responsive">
         <table class="table table-bordered align-middle">
           <thead class="table-light">
-            <tr>
-              <th rowspan="2" class="text-center">Facility</th>
-              <th colspan="{{ monthly_column_span }}" class="text-center">Monthly ({{ month_name }} {{ selected_year }})</th>
-              <th colspan="{{ monthly_column_span }}" class="text-center">Year-To-Date ({{ selected_year }})</th>
+            <tr class="table-secondary">
+              <th colspan="{{ total_columns }}" class="text-center fw-bold py-2">
+                Reporting Period: {{ month_name }}{% if 'to' not in month_name %} {{ selected_year }}{% endif %}
+              </th>
             </tr>
             <tr>
+              <th class="text-center">Facility</th>
               {% for status in status_keys %}
-                <th class="text-center">{{ status_labels|dict_get:status }}</th>
+                <th class="text-center status-{{ status }}">{{ status_labels|dict_get:status }}</th>
               {% endfor %}
-              <th class="text-center">Total</th>
-              <th class="text-center">Avg Days to Close</th>
-              {% for status in status_keys %}
-                <th class="text-center">{{ status_labels|dict_get:status }}</th>
-              {% endfor %}
-              <th class="text-center">Total</th>
-              <th class="text-center">Avg Days to Close</th>
+              
+              <th class="text-center">Overdue FU</th>
+              <th class="text-center">Scheduled FU</th>
+           
             </tr>
           </thead>
           <tbody>
@@ -126,27 +124,12 @@
                 <tr>
                   <td class="fw-semibold">{{ entry.facility.name }}</td>
                   {% for status in status_keys %}
-                    <td class="text-center">{{ entry.monthly.counts|dict_get:status }}</td>
+                    <td class="text-center status-{{ status }}">{{ entry.monthly.counts|dict_get:status }}</td>
                   {% endfor %}
-                  <td class="text-center fw-semibold">{{ entry.monthly.total }}</td>
-                  <td class="text-center">
-                    {% if entry.monthly.avg_days_to_close is not None %}
-                      {{ entry.monthly.avg_days_to_close|floatformat:2 }}
-                    {% else %}
-                      N/A
-                    {% endif %}
-                  </td>
-                  {% for status in status_keys %}
-                    <td class="text-center">{{ entry.ytd.counts|dict_get:status }}</td>
-                  {% endfor %}
-                  <td class="text-center fw-semibold">{{ entry.ytd.total }}</td>
-                  <td class="text-center">
-                    {% if entry.ytd.avg_days_to_close is not None %}
-                      {{ entry.ytd.avg_days_to_close|floatformat:2 }}
-                    {% else %}
-                      N/A
-                    {% endif %}
-                  </td>
+                 
+                  <td class="text-center">{{ entry.monthly.overdue_fu }}</td>
+                  <td class="text-center">{{ entry.monthly.scheduled_fu }}</td>
+                
                 </tr>
               {% endfor %}
             {% else %}
@@ -162,27 +145,11 @@
               <tr class="table-secondary">
                 <th>Total</th>
                 {% for status in status_keys %}
-                  <th class="text-center">{{ summary_totals.monthly|dict_get:status }}</th>
+                  <th class="text-center status-{{ status }}">{{ summary_totals.monthly|dict_get:status }}</th>
                 {% endfor %}
-                <th class="text-center fw-semibold">{{ summary_totals.monthly.total }}</th>
-                <th class="text-center">
-                  {% if summary_totals.monthly.avg_days_to_close is not None %}
-                    {{ summary_totals.monthly.avg_days_to_close|floatformat:2 }}
-                  {% else %}
-                    N/A
-                  {% endif %}
-                </th>
-                {% for status in status_keys %}
-                  <th class="text-center">{{ summary_totals.ytd|dict_get:status }}</th>
-                {% endfor %}
-                <th class="text-center fw-semibold">{{ summary_totals.ytd.total }}</th>
-                <th class="text-center">
-                  {% if summary_totals.ytd.avg_days_to_close is not None %}
-                    {{ summary_totals.ytd.avg_days_to_close|floatformat:2 }}
-                  {% else %}
-                    N/A
-                  {% endif %}
-                </th>
+                
+                <th class="text-center fw-semibold">{{ summary_totals.overdue_fu }}</th>
+                <th class="text-center fw-semibold">{{ summary_totals.scheduled_fu }}</th>
               </tr>
             </tfoot>
           {% endif %}
@@ -192,7 +159,8 @@
       <div class="mt-3">
         <small class="text-muted d-block">Notes:</small>
         <small class="text-muted d-block">• Counts reflect referrals created within the selected month and year.</small>
-        <small class="text-muted d-block">• Average days to close is computed from completed referrals only (created_at to completed_at).</small>
+        <small class="text-muted d-block">• Overdue FU: Follow-ups past their scheduled date (excluding completed visits).</small>
+        <small class="text-muted d-block">• Scheduled FU: Follow-ups scheduled for future dates (excluding completed visits).</small>
         <small class="text-muted d-block">• Generated on {{ report_generated_at|date:'F d, Y h:i A' }}.</small>
       </div>
     </div>
@@ -262,7 +230,7 @@
         <style>
           @page { 
             size: A4 landscape; 
-            margin: 20mm 15mm;
+            margin: 10mm 15mm 15mm 15mm;
           }
           * {
             font-family: Arial, sans-serif !important;
@@ -279,8 +247,8 @@
           .print-header {
             text-align: center;
             border-bottom: 2px solid #000;
-            padding: 8px 0;
-            margin-bottom: 15px;
+            padding: 4px 0 6px;
+            margin-bottom: 12px;
             page-break-after: avoid;
             page-break-inside: avoid;
           }
@@ -288,7 +256,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
           }
           .print-header .logo-container img {
             width: 80px;
@@ -367,12 +335,12 @@
           @media print {
             @page {
               size: A4 landscape;
-              margin: 20mm 15mm 20mm 15mm;
+              margin: 12mm 15mm 15mm 15mm;
             }
             body {
               margin: 0;
               padding: 0;
-              padding-top: 110px;
+              padding-top: 90px;
             }
             .print-header {
               position: fixed;
@@ -381,7 +349,7 @@
               right: 0;
               background: white;
               z-index: 1000;
-              padding: 8px 15mm;
+              padding: 4px 15mm 6px 15mm;
               margin: 0;
               border-bottom: 2px solid #000;
               page-break-after: avoid;

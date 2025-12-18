@@ -2,9 +2,9 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from analytics.models import Disease
 from patients.models import Medical_History, Patient
-from referrals.models import Referral
+from referrals.models import Referral, FollowUpVisit
 from facilities.models import Facility
-from accounts.models import BHWRegistration, Doctors, Nurses
+from accounts.models import BHWRegistration, Doctors, Nurses, Midwives
 from collections import Counter, defaultdict
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
@@ -23,6 +23,54 @@ SINGAPORE_TZ = ZoneInfo('Asia/Singapore')
 
 def now_in_singapore():
     return timezone.now().astimezone(SINGAPORE_TZ)
+
+
+def is_doctor_user(user):
+    """Check if user is an active doctor"""
+    try:
+        doctor_profile = Doctors.objects.get(user=user)
+        return doctor_profile.status == 'ACTIVE'
+    except Doctors.DoesNotExist:
+        return False
+
+
+def get_user_facilities(user, user_id=None):
+    """
+    Get facilities accessible to a user, handling both regular users and BHW users.
+    For BHW users, gets facility from BHWRegistration model.
+    For staff/superuser, returns all facilities or filters by user_id if provided.
+    """
+    if user.is_staff or user.is_superuser:
+        # If user_id is provided, filter facilities to those associated with that user
+        if user_id:
+            # Check if the target user is a BHW
+            try:
+                bhw_profile = BHWRegistration.objects.select_related('facility').get(user_id=user_id)
+                if bhw_profile.facility:
+                    return Facility.objects.filter(pk=bhw_profile.facility.pk).order_by('name')
+            except BHWRegistration.DoesNotExist:
+                pass
+            # Otherwise, check regular user facilities
+            return Facility.objects.filter(users__id=user_id).distinct().order_by('name')
+        else:
+            return Facility.objects.all().order_by('name')
+    else:
+        # For non-staff users, check if they are BHW
+        try:
+            bhw_profile = BHWRegistration.objects.select_related('facility').get(user=user)
+            if bhw_profile.facility:
+                return Facility.objects.filter(pk=bhw_profile.facility.pk).order_by('name')
+        except BHWRegistration.DoesNotExist:
+            pass
+        
+        # If not BHW, check shared_facilities or users relationship
+        if hasattr(user, 'shared_facilities'):
+            facilities = user.shared_facilities.all()
+            if facilities.exists():
+                return facilities.order_by('name')
+        
+        # Fallback to users relationship
+        return Facility.objects.filter(users=user).order_by('name')
 
 def get_disease_diagnosis_counts(request):
     """
@@ -272,9 +320,28 @@ def get_referral_statistics(request):
     API endpoint to return referral statistics for the current user's facilities.
     Returns monthly and yearly referral data.
     For non-staff users, returns only their own referrals from their assigned facilities.
+    Supports date filtering via date_from and date_to parameters.
     """
     year = int(request.GET.get('year', datetime.now().year))    
     view_type = request.GET.get('view_type', 'monthly')
+    
+    # Get date filters
+    date_from_str = request.GET.get('date_from', '')
+    date_to_str = request.GET.get('date_to', '')
+    date_from = None
+    date_to = None
+    
+    if date_from_str:
+        try:
+            date_from = datetime.strptime(date_from_str, '%Y-%m-%d').date()
+        except ValueError:
+            pass
+    
+    if date_to_str:
+        try:
+            date_to = datetime.strptime(date_to_str, '%Y-%m-%d').date()
+        except ValueError:
+            pass
 
     if request.user.is_staff or request.user.is_superuser:
         # Staff/admin: get all facilities
@@ -300,10 +367,35 @@ def get_referral_statistics(request):
         if not request.user.is_staff and not request.user.is_superuser:
             user_data = []
             for month_num in range(1, 13):
-                count = referrals_qs.filter(
+                month_filter = referrals_qs.filter(
                     created_at__year=year,
                     created_at__month=month_num,
-                ).count()
+                )
+                
+                # Apply date range filter if provided
+                if date_from and date_to:
+                    # Check if this month falls within the date range
+                    month_start = datetime(year, month_num, 1).date()
+                    # Get last day of month
+                    last_day = calendar.monthrange(year, month_num)[1]
+                    month_end = datetime(year, month_num, last_day).date()
+                    
+                    # Only include month if it overlaps with date range
+                    if month_end >= date_from and month_start <= date_to:
+                        month_filter = month_filter.filter(
+                            created_at__date__gte=date_from,
+                            created_at__date__lte=date_to
+                        )
+                    else:
+                        # Month doesn't overlap with date range, set count to 0
+                        user_data.append(0)
+                        continue
+                elif date_from:
+                    month_filter = month_filter.filter(created_at__date__gte=date_from)
+                elif date_to:
+                    month_filter = month_filter.filter(created_at__date__lte=date_to)
+                
+                count = month_filter.count()
                 user_data.append(count)
             
             return JsonResponse({
@@ -325,11 +417,36 @@ def get_referral_statistics(request):
             for facility in facilities:
                 facility_data = []
                 for month_num in range(1, 13):
-                    count = Referral.objects.filter(
+                    month_filter = Referral.objects.filter(
                         patient__facility=facility,
                         created_at__year=year,
                         created_at__month=month_num,
-                    ).count()
+                    )
+                    
+                    # Apply date range filter if provided
+                    if date_from and date_to:
+                        # Check if this month falls within the date range
+                        month_start = datetime(year, month_num, 1).date()
+                        # Get last day of month
+                        last_day = calendar.monthrange(year, month_num)[1]
+                        month_end = datetime(year, month_num, last_day).date()
+                        
+                        # Only include month if it overlaps with date range
+                        if month_end >= date_from and month_start <= date_to:
+                            month_filter = month_filter.filter(
+                                created_at__date__gte=date_from,
+                                created_at__date__lte=date_to
+                            )
+                        else:
+                            # Month doesn't overlap with date range, set count to 0
+                            facility_data.append(0)
+                            continue
+                    elif date_from:
+                        month_filter = month_filter.filter(created_at__date__gte=date_from)
+                    elif date_to:
+                        month_filter = month_filter.filter(created_at__date__lte=date_to)
+                    
+                    count = month_filter.count()
                     facility_data.append(count)
                 data[facility.name] = facility_data
 
@@ -355,9 +472,32 @@ def get_referral_statistics(request):
         if not request.user.is_staff and not request.user.is_superuser:
             user_data = []
             for year_val in years:
-                count = referrals_qs.filter(
+                year_filter = referrals_qs.filter(
                     created_at__year=year_val,
-                ).count()
+                )
+                
+                # Apply date range filter if provided
+                if date_from and date_to:
+                    # Check if this year overlaps with the date range
+                    year_start = datetime(year_val, 1, 1).date()
+                    year_end = datetime(year_val, 12, 31).date()
+                    
+                    # Only include year if it overlaps with date range
+                    if year_end >= date_from and year_start <= date_to:
+                        year_filter = year_filter.filter(
+                            created_at__date__gte=date_from,
+                            created_at__date__lte=date_to
+                        )
+                    else:
+                        # Year doesn't overlap with date range, set count to 0
+                        user_data.append(0)
+                        continue
+                elif date_from:
+                    year_filter = year_filter.filter(created_at__date__gte=date_from)
+                elif date_to:
+                    year_filter = year_filter.filter(created_at__date__lte=date_to)
+                
+                count = year_filter.count()
                 user_data.append(count)
             
             return JsonResponse({
@@ -379,10 +519,33 @@ def get_referral_statistics(request):
             for facility in facilities:
                 facility_data = []
                 for year_val in years:
-                    count = Referral.objects.filter(
+                    year_filter = Referral.objects.filter(
                         patient__facility=facility,
                         created_at__year=year_val,
-                    ).count()
+                    )
+                    
+                    # Apply date range filter if provided
+                    if date_from and date_to:
+                        # Check if this year overlaps with the date range
+                        year_start = datetime(year_val, 1, 1).date()
+                        year_end = datetime(year_val, 12, 31).date()
+                        
+                        # Only include year if it overlaps with date range
+                        if year_end >= date_from and year_start <= date_to:
+                            year_filter = year_filter.filter(
+                                created_at__date__gte=date_from,
+                                created_at__date__lte=date_to
+                            )
+                        else:
+                            # Year doesn't overlap with date range, set count to 0
+                            facility_data.append(0)
+                            continue
+                    elif date_from:
+                        year_filter = year_filter.filter(created_at__date__gte=date_from)
+                    elif date_to:
+                        year_filter = year_filter.filter(created_at__date__lte=date_to)
+                    
+                    count = year_filter.count()
                     facility_data.append(count)
                 data[facility.name] = facility_data
 
@@ -612,7 +775,8 @@ def get_system_usage_data(request):
                     Q(shared_facilities=facility) |
                     Q(bhwregistration__facility=facility) |
                     Q(doctors__facility=facility) |
-                    Q(nurses__facility=facility)
+                    Q(nurses__facility=facility) |
+                    Q(midwives__facility=facility)
                 ).distinct()
                 
                 # Count login events from LoginLog model for these users in this month
@@ -690,50 +854,110 @@ def system_usage_scorecard_report(request):
 
     year = parse_int(request.GET.get('year'), now.year) or now.year
     user_id = parse_int(request.GET.get('user_id'))
+    
+    # Get date_from and date_to parameters for direct date filtering
+    date_from_str = request.GET.get('date_from', '')
+    date_to_str = request.GET.get('date_to', '')
+    date_from = None
+    date_to = None
+    
+    if date_from_str:
+        try:
+            from datetime import datetime
+            date_from = datetime.strptime(date_from_str, '%Y-%m-%d').date()
+        except ValueError:
+            pass
+    
+    if date_to_str:
+        try:
+            from datetime import datetime
+            date_to = datetime.strptime(date_to_str, '%Y-%m-%d').date()
+        except ValueError:
+            pass
 
-    if request.user.is_staff or request.user.is_superuser:
-        # If user_id is provided, filter facilities to those associated with that user
-        if user_id:
-            facilities_qs = Facility.objects.filter(users__id=user_id).distinct().order_by('name')
-        else:
-            facilities_qs = Facility.objects.all().order_by('name')
-    else:
-        facilities_qs = request.user.shared_facilities.all().order_by('name')
-
+    # Get facilities for the user (handles BHW users)
+    facilities_qs = get_user_facilities(request.user, user_id)
     facilities = list(facilities_qs)
-    month_labels = [calendar.month_abbr[i] for i in range(1, 13)]
+    
+    # Determine which months to display based on date range
+    if date_from and date_to:
+        # Calculate months in the date range
+        from datetime import datetime
+        months_in_range = []
+        current_date = date_from.replace(day=1)  # Start from first day of start month
+        end_date = date_to
+        
+        while current_date <= end_date:
+            months_in_range.append(current_date.month)
+            # Move to next month
+            if current_date.month == 12:
+                current_date = current_date.replace(year=current_date.year + 1, month=1)
+            else:
+                current_date = current_date.replace(month=current_date.month + 1)
+        
+        # Remove duplicates and sort
+        months_in_range = sorted(list(set(months_in_range)))
+        month_labels = [calendar.month_abbr[month] for month in months_in_range]
+        month_indices = months_in_range
+    else:
+        # Show all 12 months if no date range
+        month_labels = [calendar.month_abbr[i] for i in range(1, 13)]
+        month_indices = list(range(1, 13))
 
     scorecard = []
-    summary_referrals = [0] * 12
-    summary_medical = [0] * 12
+    summary_referrals = [0] * len(month_indices)
+    summary_medical = [0] * len(month_indices)
 
     for facility in facilities:
         referrals_per_month = []
         medical_per_month = []
-        for month_idx in range(1, 13):
+        for month_idx in month_indices:
+            # Build referral filters - if date range provided, filter by date within that month
             referral_filters = {
                 'patient__facility': facility,
-                'created_at__year': year,
-                'created_at__month': month_idx
             }
+            
+            if date_from and date_to:
+                # Filter by date range, but only count if the month falls within the range
+                referral_filters['created_at__date__gte'] = date_from
+                referral_filters['created_at__date__lte'] = date_to
+                referral_filters['created_at__month'] = month_idx
+            else:
+                referral_filters['created_at__year'] = year
+                referral_filters['created_at__month'] = month_idx
+            
             # Filter by user_id if provided
             if user_id:
                 referral_filters['user_id'] = user_id
             referral_count = Referral.objects.filter(**referral_filters).count()
             
+            # Build medical history filters
             medical_filters = {
                 'patient_id__facility': facility,
-                'diagnosed_date__year': year,
-                'diagnosed_date__month': month_idx
             }
+            
+            if date_from and date_to:
+                # Filter by date range, but only count if the month falls within the range
+                medical_filters['diagnosed_date__gte'] = date_from
+                medical_filters['diagnosed_date__lte'] = date_to
+                medical_filters['diagnosed_date__month'] = month_idx
+            else:
+                medical_filters['diagnosed_date__year'] = year
+                medical_filters['diagnosed_date__month'] = month_idx
+            
             # Filter by user_id if provided
             if user_id:
                 medical_filters['user_id'] = user_id
+            
+            # Only count Medical_History entries from completed referrals
+            medical_filters['referral__status'] = 'completed'
             medical_count = Medical_History.objects.filter(**medical_filters).count()
             referrals_per_month.append(referral_count)
             medical_per_month.append(medical_count)
-            summary_referrals[month_idx - 1] += referral_count
-            summary_medical[month_idx - 1] += medical_count
+            # Find index in month_indices list (not month_idx - 1)
+            month_position = month_indices.index(month_idx)
+            summary_referrals[month_position] += referral_count
+            summary_medical[month_position] += medical_count
 
         scorecard.append({
             'facility': facility,
@@ -746,10 +970,13 @@ def system_usage_scorecard_report(request):
     context = {
         'year': year,
         'month_labels': month_labels,
+        'month_indices': month_indices,  # Add month_indices to context
         'scorecard': scorecard,
         'summary_referrals': summary_referrals,
         'summary_medical': summary_medical,
         'report_generated_at': now,
+        'date_from': date_from,  # Add date_from to context
+        'date_to': date_to,  # Add date_to to context
     }
 
     return render(request, 'analytics/system_usage_scorecard.html', context)
@@ -771,19 +998,98 @@ def morbidity_report(request):
     year = parse_int(request.GET.get('year'), now.year) or now.year
     raw_month = parse_int(request.GET.get('month'))
     month = raw_month if raw_month and 1 <= raw_month <= 12 else None
+    month_from = parse_int(request.GET.get('month_from'), None)
+    month_to = parse_int(request.GET.get('month_to'), None)
+    # If month_from and month_to are provided, use them; otherwise fall back to single month
+    if month_from and month_to:
+        month_from = month_from if 1 <= month_from <= 12 else None
+        month_to = month_to if 1 <= month_to <= 12 else None
+    
+    # Get date_from and date_to parameters for direct date filtering
+    date_from_str = request.GET.get('date_from', '')
+    date_to_str = request.GET.get('date_to', '')
+    date_from = None
+    date_to = None
+    
+    if date_from_str:
+        try:
+            from datetime import datetime
+            date_from = datetime.strptime(date_from_str, '%Y-%m-%d').date()
+        except ValueError:
+            pass
+    
+    if date_to_str:
+        try:
+            from datetime import datetime
+            date_to = datetime.strptime(date_to_str, '%Y-%m-%d').date()
+        except ValueError:
+            pass
+    
     user_id = parse_int(request.GET.get('user_id'))
+    facility_id = parse_int(request.GET.get('facility_id'))
 
-    # Build base queryset
-    histories = Medical_History.objects.filter(diagnosed_date__year=year)
-    if month:
-        histories = histories.filter(diagnosed_date__month=month)
-    # Filter by user_id if provided (for user-specific reports)
-    if user_id:
+    # Check if user is a doctor - if so, auto-filter by referrals examined by this doctor
+    is_doctor = is_doctor_user(request.user)
+    if is_doctor and not user_id:
+        # Get referral IDs for referrals examined by this doctor
+        doctor_referral_ids = Referral.objects.filter(
+            examined_by=request.user
+        ).values_list('referral_id', flat=True)
+        # Filter medical histories linked to those referrals
+        histories = Medical_History.objects.filter(
+            referral_id__in=doctor_referral_ids
+        )
+    else:
+        # Build base queryset
+        histories = Medical_History.objects.all()
+    
+    # Priority: date_from/date_to > month_from/month_to > month > year
+    if date_from and date_to:
+        histories = histories.filter(diagnosed_date__gte=date_from, diagnosed_date__lte=date_to)
+    elif date_from:
+        histories = histories.filter(diagnosed_date__gte=date_from)
+    elif date_to:
+        histories = histories.filter(diagnosed_date__lte=date_to)
+    elif month_from and month_to:
+        histories = histories.filter(diagnosed_date__year=year, diagnosed_date__month__gte=month_from, diagnosed_date__month__lte=month_to)
+    elif month:
+        histories = histories.filter(diagnosed_date__year=year, diagnosed_date__month=month)
+    else:
+        histories = histories.filter(diagnosed_date__year=year)
+    
+    # For BHW users: filter by facility instead of user_id
+    # Check if requesting user is a BHW (not a doctor, not staff/superuser)
+    is_bhw = False
+    bhw_facility = None
+    if not is_doctor and not request.user.is_staff and not request.user.is_superuser:
+        try:
+            bhw_profile = BHWRegistration.objects.select_related('facility').get(user=request.user)
+            if bhw_profile.facility:
+                is_bhw = True
+                bhw_facility = bhw_profile.facility
+        except BHWRegistration.DoesNotExist:
+            pass
+    
+    # Filter by facility_id if provided (explicit filter)
+    if facility_id:
+        histories = histories.filter(patient_id__facility_id=facility_id)
+    # For BHW users without explicit user_id: filter by their facility
+    elif is_bhw and bhw_facility and not user_id:
+        histories = histories.filter(patient_id__facility=bhw_facility)
+    # Filter by user_id if provided (for staff/superuser user-specific reports)
+    # But if doctor and no explicit user_id param, we already filtered by examined_by referrals above
+    elif user_id and not (is_doctor and not request.GET.get('user_id')):
         histories = histories.filter(user_id=user_id)
+    
+    # Filter to only include Medical_History records from completed referrals
+    # Only show diagnoses from referrals that have been completed (status='completed')
+    # Exclude records without a referral link (they're not part of the referral workflow)
+    histories = histories.filter(referral__status='completed')
 
     # Normalize illnesses similar to API logic
-    disease_names = list(Disease.objects.values_list('name', 'critical_level'))
-    disease_name_map = {name.lower(): {'name': name, 'critical_level': level} for name, level in disease_names}
+    disease_data = Disease.objects.values_list('name', 'icd_code', 'critical_level')
+    disease_name_map = {name.lower(): {'name': name, 'icd_code': icd_code, 'critical_level': level} 
+                        for name, icd_code, level in disease_data}
 
     normalized_counts = Counter()
     diagnosis_meta = {}
@@ -801,8 +1107,9 @@ def morbidity_report(request):
 
         disease_info = disease_name_map.get(normalized, {})
         display_name = disease_info.get('name') or illness.title() or 'Unspecified'
+        icd_code = disease_info.get('icd_code', 'N/A')
         critical_level = disease_info.get('critical_level', 'N/A')
-        diagnosis_meta.setdefault(display_name, critical_level)
+        diagnosis_meta.setdefault(display_name, {'icd_code': icd_code, 'critical_level': critical_level})
         normalized_counts[display_name] += 1
 
         raw_entries.append({
@@ -831,11 +1138,19 @@ def morbidity_report(request):
 
     top_diagnoses_rows = []
     for name, count in top_diagnoses:
-        critical = diagnosis_meta.get(name, 'N/A')
+        meta = diagnosis_meta.get(name, {})
+        if isinstance(meta, dict):
+            critical = meta.get('critical_level', 'N/A')
+            icd_code = meta.get('icd_code', 'N/A')
+        else:
+            # Backward compatibility for old format
+            critical = meta if meta != 'N/A' else 'N/A'
+            icd_code = 'N/A'
         row_class, badge_variant = classify_level(critical)
         percent = round((count / total_cases) * 100, 2) if total_cases else 0
         top_diagnoses_rows.append({
             'name': name,
+            'icd_code': icd_code,
             'count': count,
             'critical': critical,
             'row_class': row_class,
@@ -860,14 +1175,50 @@ def morbidity_report(request):
         key = diagnose.diagnosed_date.strftime('%b')
         monthly_totals[key][display_name] += 1
 
-    # Build list of months from January to December
-    month_labels = [calendar.month_abbr[i] for i in range(1, 13)]
+    # Determine which months to show based on date range
+    if date_from and date_to:
+        # Calculate month range from dates
+        start_month = date_from.month
+        end_month = date_to.month
+        # If dates span multiple years, include all months from start to end
+        if date_from.year == date_to.year:
+            month_labels = [calendar.month_abbr[i] for i in range(start_month, end_month + 1)]
+        else:
+            # Cross-year range: include months from start to Dec, then Jan to end
+            month_labels = [calendar.month_abbr[i] for i in range(start_month, 13)]
+            month_labels.extend([calendar.month_abbr[i] for i in range(1, end_month + 1)])
+    elif date_from:
+        # Only start date: show from that month to December of the same year
+        start_month = date_from.month
+        month_labels = [calendar.month_abbr[i] for i in range(start_month, 13)]
+    elif date_to:
+        # Only end date: show from January to that month
+        end_month = date_to.month
+        month_labels = [calendar.month_abbr[i] for i in range(1, end_month + 1)]
+    elif month_from and month_to:
+        # Month range provided
+        month_labels = [calendar.month_abbr[i] for i in range(month_from, month_to + 1)]
+    elif month:
+        # Single month
+        month_labels = [calendar.month_abbr[month]]
+    else:
+        # Build list of months from January to December (default)
+        month_labels = [calendar.month_abbr[i] for i in range(1, 13)]
 
-    # Ensure each month has counts for top diagnosis entries
+    # Build trend_table for ALL diagnoses (not just top 10)
+    # This allows Monthly Trend to show all diagnoses even if there are more than 10
     trend_table = []
-    for label, _ in top_diagnoses:
+    # Use all diagnoses sorted by count (descending), not limited to top 10
+    all_diagnoses = normalized_counts.most_common()  # Get all diagnoses sorted by count
+    for label, _ in all_diagnoses:
+        meta = diagnosis_meta.get(label, {})
+        if isinstance(meta, dict):
+            icd_code = meta.get('icd_code', 'N/A')
+        else:
+            icd_code = 'N/A'
         row = {
             'diagnosis': label,
+            'icd_code': icd_code,
             'monthly_counts': [monthly_totals[m].get(label, 0) for m in month_labels],
         }
         row['total'] = sum(row['monthly_counts'])
@@ -891,6 +1242,7 @@ def morbidity_report(request):
         'month_labels': month_labels,
         'raw_entries': raw_entries[:50],  # limit for print readability
         'diagnosis_meta': diagnosis_meta,
+        'active_page': 'morbidity_report',
     }
 
     return render(request, 'analytics/morbidity_report.html', context)
@@ -902,36 +1254,60 @@ def facility_workforce_masterlist(request):
 
     now = now_in_singapore()
 
-    facilities = Facility.objects.all().order_by('name')
+    def parse_int(value, fallback=None):
+        try:
+            parsed = int(value)
+            return parsed
+        except (TypeError, ValueError):
+            return fallback
+
+    user_id = parse_int(request.GET.get('user_id'))
+
+    # Determine facilities visible to the current user
+    facilities_qs = get_user_facilities(request.user, user_id)
+    facilities = list(facilities_qs)
+    facility_ids = [f.pk for f in facilities]
 
     roster = []
 
+    # Filter BHWs to only those in accessible facilities
     bhw_map = defaultdict(list)
-    for bhw in BHWRegistration.objects.select_related('facility').all().order_by('last_name'):
+    bhw_query = BHWRegistration.objects.select_related('facility').filter(status='ACTIVE')
+    if facility_ids:
+        bhw_query = bhw_query.filter(facility_id__in=facility_ids)
+    for bhw in bhw_query.order_by('last_name'):
         if bhw.facility_id:
             bhw_map[bhw.facility_id].append(bhw)
 
+    # Filter doctors to only those in accessible facilities
     doctor_map = defaultdict(list)
-    for doctor in Doctors.objects.select_related('facility').all().order_by('last_name'):
+    doctor_query = Doctors.objects.select_related('facility').filter(status='ACTIVE')
+    if facility_ids:
+        doctor_query = doctor_query.filter(facility_id__in=facility_ids)
+    for doctor in doctor_query.order_by('last_name'):
         if doctor.facility_id:
             doctor_map[doctor.facility_id].append(doctor)
-
-    nurse_map = defaultdict(list)
-    for nurse in Nurses.objects.select_related('facility').all().order_by('last_name'):
-        if nurse.facility_id:
-            nurse_map[nurse.facility_id].append(nurse)
 
     for facility in facilities:
         roster.append({
             'facility': facility,
             'bhws': bhw_map.get(facility.pk, []),
             'doctors': doctor_map.get(facility.pk, []),
-            'nurses': nurse_map.get(facility.pk, []),
         })
+
+    # Get all active doctors for MHO table (regardless of facility assignment)
+    # But only if user is staff/superuser or if no user_id filter is applied
+    if (request.user.is_staff or request.user.is_superuser) and not user_id:
+        all_doctors = Doctors.objects.filter(status='ACTIVE').order_by('last_name', 'first_name')
+    else:
+        # For non-staff users or when filtering by user_id, only show doctors from their facilities
+        all_doctors = Doctors.objects.filter(status='ACTIVE', facility_id__in=facility_ids).order_by('last_name', 'first_name') if facility_ids else Doctors.objects.none()
 
     context = {
         'roster': roster,
+        'all_doctors': all_doctors,
         'generated_at': now,
+        'is_staff': request.user.is_staff or request.user.is_superuser,
     }
 
     return render(request, 'analytics/facility_workforce_masterlist.html', context)
@@ -954,89 +1330,159 @@ def barangay_referral_performance_report(request):
     year = parse_int(request.GET.get('year'), now.year) or now.year
     raw_month = parse_int(request.GET.get('month'), None)
     month = raw_month if raw_month and 1 <= raw_month <= 12 else None
+    month_from = parse_int(request.GET.get('month_from'), None)
+    month_to = parse_int(request.GET.get('month_to'), None)
+    # If month_from and month_to are provided, use them; otherwise fall back to single month
+    if month_from and month_to:
+        month_from = month_from if 1 <= month_from <= 12 else None
+        month_to = month_to if 1 <= month_to <= 12 else None
+    
+    # Get date_from and date_to parameters for direct date filtering
+    date_from_str = request.GET.get('date_from', '')
+    date_to_str = request.GET.get('date_to', '')
+    date_from = None
+    date_to = None
+    
+    if date_from_str:
+        try:
+            from datetime import datetime
+            date_from = datetime.strptime(date_from_str, '%Y-%m-%d').date()
+        except ValueError:
+            pass
+    
+    if date_to_str:
+        try:
+            from datetime import datetime
+            date_to = datetime.strptime(date_to_str, '%Y-%m-%d').date()
+        except ValueError:
+            pass
+    
     user_id = parse_int(request.GET.get('user_id'))
 
-    month_name = calendar.month_name[month] if month else 'All Months'
+    # Determine month_name for display - prioritize date range if provided
+    if date_from and date_to:
+        month_name = f"{date_from.strftime('%B %d, %Y')} to {date_to.strftime('%B %d, %Y')}"
+    elif month_from and month_to:
+        if month_from == month_to:
+            # If same month, just show the month name
+            month_name = calendar.month_name[month_from]
+        else:
+            month_name = f"{calendar.month_name[month_from]} to {calendar.month_name[month_to]}"
+    elif month:
+        month_name = calendar.month_name[month]
+    else:
+        month_name = 'All Months'
 
     # Determine facilities visible to the current user
-    if request.user.is_staff or request.user.is_superuser:
-        # If user_id is provided, filter facilities to those associated with that user
-        if user_id:
-            facilities_qs = Facility.objects.filter(users__id=user_id).distinct().order_by('name')
-        else:
-            facilities_qs = Facility.objects.all().order_by('name')
-    else:
-        if hasattr(request.user, 'shared_facilities'):
-            facilities_qs = request.user.shared_facilities.all().order_by('name')
-        else:
-            facilities_qs = Facility.objects.filter(users=request.user).order_by('name')
-
+    facilities_qs = get_user_facilities(request.user, user_id)
     facilities = list(facilities_qs)
 
-    status_keys = ['pending', 'in-progress', 'completed', 'cancelled']
+    status_keys = ['pending', 'in-progress', 'completed']
     status_labels = {
         'pending': 'Pending',
         'in-progress': 'In-Progress',
-        'completed': 'Completed',
-        'cancelled': 'Cancelled',
+        'completed': 'Completed Referral',
     }
-    duration_expr = ExpressionWrapper(F('completed_at') - F('created_at'), output_field=DurationField())
 
-    def duration_to_days(value):
-        if not value:
-            return None
-        return round(value.total_seconds() / 86400, 2)
-
+    today = now.date()
     facilities_data = []
 
     for facility in facilities:
+        # Build referral filters - priority: date_from/date_to > month_from/month_to > month > year
         monthly_filters = {
             'patient__facility': facility,
-            'created_at__year': year,
         }
-        if month:
+        
+        if date_from and date_to:
+            monthly_filters['created_at__date__gte'] = date_from
+            monthly_filters['created_at__date__lte'] = date_to
+        elif date_from:
+            monthly_filters['created_at__date__gte'] = date_from
+        elif date_to:
+            monthly_filters['created_at__date__lte'] = date_to
+        elif month_from and month_to:
+            monthly_filters['created_at__year'] = year
+            monthly_filters['created_at__month__gte'] = month_from
+            monthly_filters['created_at__month__lte'] = month_to
+        elif month:
+            monthly_filters['created_at__year'] = year
             monthly_filters['created_at__month'] = month
+        else:
+            monthly_filters['created_at__year'] = year
+        
         # Filter by user_id if provided
         if user_id:
             monthly_filters['user_id'] = user_id
 
         monthly_qs = Referral.objects.filter(**monthly_filters)
 
-        ytd_filters = {
-            'patient__facility': facility,
-            'created_at__year': year,
-        }
-        # Filter by user_id if provided
-        if user_id:
-            ytd_filters['user_id'] = user_id
-        
-        ytd_qs = Referral.objects.filter(**ytd_filters)
-
         monthly_counts = {status: monthly_qs.filter(status=status).count() for status in status_keys}
-        ytd_counts = {status: ytd_qs.filter(status=status).count() for status in status_keys}
-
         monthly_total = sum(monthly_counts.values())
-        ytd_total = sum(ytd_counts.values())
 
-        monthly_avg_duration = monthly_qs.filter(status='completed', completed_at__isnull=False).aggregate(
-            avg_duration=Avg(duration_expr)
-        )['avg_duration']
+        # Count follow-ups for this facility
+        # Get all medical histories with follow-up dates for patients in this facility
+        # We count all follow-ups regardless of when they were created, but filter by followup_date
+        followup_filters = {
+            'patient_id__facility': facility,
+            'followup_date__isnull': False,
+        }
+        
+        # Filter by user_id if provided (for user-specific reports)
+        if user_id:
+            followup_filters['user_id'] = user_id
+        
+        # Filter follow-ups by their scheduled date (followup_date), not creation date
+        # Priority: date_from/date_to > month_from/month_to > month > year
+        if date_from and date_to:
+            followup_filters['followup_date__gte'] = date_from
+            followup_filters['followup_date__lte'] = date_to
+        elif date_from:
+            followup_filters['followup_date__gte'] = date_from
+        elif date_to:
+            followup_filters['followup_date__lte'] = date_to
+        elif month_from and month_to:
+            followup_filters['followup_date__year'] = year
+            followup_filters['followup_date__month__gte'] = month_from
+            followup_filters['followup_date__month__lte'] = month_to
+        elif month:
+            followup_filters['followup_date__year'] = year
+            followup_filters['followup_date__month'] = month
+        else:
+            # For all months, count follow-ups scheduled in the selected year
+            followup_filters['followup_date__year'] = year
 
-        ytd_avg_duration = ytd_qs.filter(status='completed', completed_at__isnull=False).aggregate(
-            avg_duration=Avg(duration_expr)
-        )['avg_duration']
+        followups_qs = Medical_History.objects.filter(**followup_filters)
+        
+        # Get completed follow-up visits to exclude them
+        completed_followup_ids = set(
+            FollowUpVisit.objects.filter(
+                status='completed',
+                medical_history__in=followups_qs
+            ).values_list('medical_history_id', flat=True)
+        )
+
+        # Count overdue and scheduled follow-ups
+        overdue_count = 0
+        scheduled_count = 0
+        
+        for followup in followups_qs:
+            # Skip if there's a completed visit
+            if followup.history_id in completed_followup_ids:
+                continue
+            
+            # Count based on current status (overdue = past due date, scheduled = future)
+            if followup.followup_date < today:
+                overdue_count += 1
+            else:
+                scheduled_count += 1
 
         facilities_data.append({
             'facility': facility,
             'monthly': {
                 'counts': monthly_counts,
                 'total': monthly_total,
-                'avg_days_to_close': duration_to_days(monthly_avg_duration),
-            },
-            'ytd': {
-                'counts': ytd_counts,
-                'total': ytd_total,
-                'avg_days_to_close': duration_to_days(ytd_avg_duration),
+                'overdue_fu': overdue_count,
+                'scheduled_fu': scheduled_count,
             },
         })
 
@@ -1044,51 +1490,17 @@ def barangay_referral_performance_report(request):
 
     summary_totals = {
         'monthly': {status: 0 for status in status_keys},
-        'ytd': {status: 0 for status in status_keys},
+        'overdue_fu': 0,
+        'scheduled_fu': 0,
     }
 
     for entry in facilities_data:
         for status in status_keys:
             summary_totals['monthly'][status] += entry['monthly']['counts'][status]
-            summary_totals['ytd'][status] += entry['ytd']['counts'][status]
+        summary_totals['overdue_fu'] += entry['monthly']['overdue_fu']
+        summary_totals['scheduled_fu'] += entry['monthly']['scheduled_fu']
 
     summary_totals['monthly']['total'] = sum(summary_totals['monthly'][status] for status in status_keys)
-    summary_totals['ytd']['total'] = sum(summary_totals['ytd'][status] for status in status_keys)
-
-    # Compute overall averages using combined querysets
-    all_monthly_filters = {
-        'patient__facility__in': facility_ids,
-        'created_at__year': year,
-    }
-    if month:
-        all_monthly_filters['created_at__month'] = month
-    # Filter by user_id if provided
-    if user_id:
-        all_monthly_filters['user_id'] = user_id
-
-    all_monthly_qs = Referral.objects.filter(**all_monthly_filters) if facility_ids else Referral.objects.none()
-
-    all_ytd_filters = {
-        'patient__facility__in': facility_ids,
-        'created_at__year': year,
-    }
-    # Filter by user_id if provided
-    if user_id:
-        all_ytd_filters['user_id'] = user_id
-    
-    all_ytd_qs = Referral.objects.filter(**all_ytd_filters) if facility_ids else Referral.objects.none()
-
-    summary_totals['monthly']['avg_days_to_close'] = duration_to_days(
-        all_monthly_qs.filter(status='completed', completed_at__isnull=False).aggregate(
-            avg_duration=Avg(duration_expr)
-        )['avg_duration']
-    )
-
-    summary_totals['ytd']['avg_days_to_close'] = duration_to_days(
-        all_ytd_qs.filter(status='completed', completed_at__isnull=False).aggregate(
-            avg_duration=Avg(duration_expr)
-        )['avg_duration']
-    )
 
     # Month and year selection helpers
     month_options = [{'value': '', 'label': 'All Months'}]
@@ -1099,8 +1511,8 @@ def barangay_referral_performance_report(request):
         'summary_totals': summary_totals,
         'status_keys': status_keys,
         'status_labels': status_labels,
-        'monthly_column_span': len(status_keys) + 2,
-        'total_columns': ((len(status_keys) + 2) * 2) + 1,
+        'monthly_column_span': len(status_keys) + 3,
+        'total_columns': len(status_keys) + 4,
         'selected_year': year,
         'selected_month': month,
         'selected_month_value': str(month) if month else '',
@@ -1128,28 +1540,66 @@ def referral_registry_report(request):
     year = parse_int(request.GET.get('year'), now.year) or now.year
     raw_month = parse_int(request.GET.get('month'))
     month = raw_month if raw_month and 1 <= raw_month <= 12 else None
+    month_from = parse_int(request.GET.get('month_from'), None)
+    month_to = parse_int(request.GET.get('month_to'), None)
+    # If month_from and month_to are provided, use them; otherwise fall back to single month
+    if month_from and month_to:
+        month_from = month_from if 1 <= month_from <= 12 else None
+        month_to = month_to if 1 <= month_to <= 12 else None
+    
+    # Get date_from and date_to parameters for direct date filtering
+    date_from_str = request.GET.get('date_from', '')
+    date_to_str = request.GET.get('date_to', '')
+    date_from = None
+    date_to = None
+    
+    if date_from_str:
+        try:
+            from datetime import datetime
+            date_from = datetime.strptime(date_from_str, '%Y-%m-%d').date()
+        except ValueError:
+            pass
+    
+    if date_to_str:
+        try:
+            from datetime import datetime
+            date_to = datetime.strptime(date_to_str, '%Y-%m-%d').date()
+        except ValueError:
+            pass
+    
     facility_id = parse_int(request.GET.get('facility_id'))
     status_filter = request.GET.get('status') or ''
     user_id = parse_int(request.GET.get('user_id'))
 
+    # Check if user is a doctor - if so, auto-filter by examined_by
+    is_doctor = is_doctor_user(request.user)
+    
     # Determine accessible facilities based on user
-    if request.user.is_staff or request.user.is_superuser:
-        # If user_id is provided, filter facilities to those associated with that user
-        if user_id:
-            facilities_qs = Facility.objects.filter(users__id=user_id).distinct().order_by('name')
-        else:
-            facilities_qs = Facility.objects.all().order_by('name')
-    else:
-        facilities_qs = request.user.shared_facilities.all().order_by('name')
-
+    facilities_qs = get_user_facilities(request.user, user_id)
     facilities = list(facilities_qs)
 
-    referrals = Referral.objects.select_related('patient', 'patient__facility', 'user').filter(
-        created_at__year=year
-    ).order_by('-created_at')
+    # Build referrals queryset
+    if is_doctor and not user_id:
+        # For doctors, filter by examined_by (referrals they examined)
+        referrals = Referral.objects.select_related('patient', 'patient__facility', 'user').filter(
+            examined_by=request.user
+        ).order_by('-created_at')
+    else:
+        referrals = Referral.objects.select_related('patient', 'patient__facility', 'user').order_by('-created_at')
 
-    if month:
-        referrals = referrals.filter(created_at__month=month)
+    # Priority: date_from/date_to > month_from/month_to > month > year
+    if date_from and date_to:
+        referrals = referrals.filter(created_at__date__gte=date_from, created_at__date__lte=date_to)
+    elif date_from:
+        referrals = referrals.filter(created_at__date__gte=date_from)
+    elif date_to:
+        referrals = referrals.filter(created_at__date__lte=date_to)
+    elif month_from and month_to:
+        referrals = referrals.filter(created_at__year=year, created_at__month__gte=month_from, created_at__month__lte=month_to)
+    elif month:
+        referrals = referrals.filter(created_at__year=year, created_at__month=month)
+    else:
+        referrals = referrals.filter(created_at__year=year)
 
     if facility_id:
         referrals = referrals.filter(patient__facility_id=facility_id)
@@ -1158,7 +1608,8 @@ def referral_registry_report(request):
         referrals = referrals.filter(status=status_filter)
     
     # Filter by user_id if provided (for user-specific reports)
-    if user_id:
+    # But if doctor and no explicit user_id param, we already filtered by examined_by above
+    if user_id and not (is_doctor and not request.GET.get('user_id')):
         referrals = referrals.filter(user_id=user_id)
 
     # Prepare registry entries
@@ -1183,7 +1634,19 @@ def referral_registry_report(request):
             'user': referral.user.get_full_name() if referral.user else '',
         })
 
-    month_name = calendar.month_name[month] if month else 'All Months'
+    # Determine month_name for display - prioritize date range if provided
+    if date_from and date_to:
+        month_name = f"{date_from.strftime('%B %d, %Y')} to {date_to.strftime('%B %d, %Y')}"
+    elif month_from and month_to:
+        if month_from == month_to:
+            # If same month, just show the month name
+            month_name = calendar.month_name[month_from]
+        else:
+            month_name = f"{calendar.month_name[month_from]} to {calendar.month_name[month_to]}"
+    elif month:
+        month_name = calendar.month_name[month]
+    else:
+        month_name = 'All Months'
 
     month_options = [{'value': '', 'label': 'All Months'}]
     month_options.extend({'value': str(idx), 'label': calendar.month_name[idx]} for idx in range(1, 13))
@@ -1208,6 +1671,7 @@ def referral_registry_report(request):
         'selected_month_value': str(month) if month else '',
         'month_options': month_options,
         'report_generated_at': now,
+        'active_page': 'referral_registry_report',
     }
 
     return render(request, 'analytics/referral_registry_report.html', context)
@@ -1218,20 +1682,27 @@ def get_disease_peak_predictions(request):
     """
     API endpoint to get disease peak predictions for 2025.
     Returns predicted disease peaks for each month.
+    Supports month range filtering and disease filtering.
     Uses caching to avoid regenerating predictions.
     
     Query parameters:
         - month: Optional specific month name (e.g., "January")
+        - month_from: Start month for range (e.g., "March")
+        - month_to: End month for range (e.g., "May")
+        - disease: Optional disease code to filter (e.g., "J06.9")
         - samples_per_month: Number of samples to simulate (default: 100)
         - use_db: Use Django database instead of CSV (default: false)
     
     Returns:
-        JSON response with predictions for each month or error message
+        JSON response with predictions for each month or aggregated range
     """
     from django.core.cache import cache
     import hashlib
     
-    month = request.GET.get('month', None)  # Optional: specific month
+    month = request.GET.get('month', None)
+    month_from = request.GET.get('month_from', None)
+    month_to = request.GET.get('month_to', None)
+    disease_filter = request.GET.get('disease', None)
     samples_per_month = int(request.GET.get('samples_per_month', 100))
     use_db = request.GET.get('use_db', 'false').lower() == 'true'
     
@@ -1239,8 +1710,12 @@ def get_disease_peak_predictions(request):
     cache_key_parts = ['disease_peak_predictions', str(use_db), str(samples_per_month)]
     if month:
         cache_key_parts.append(month)
+    elif month_from and month_to:
+        cache_key_parts.append(f'{month_from}_{month_to}')
     else:
         cache_key_parts.append('all_months')
+    if disease_filter:
+        cache_key_parts.append(disease_filter)
     cache_key = hashlib.md5('_'.join(cache_key_parts).encode()).hexdigest()
     
     # Check cache first
@@ -1251,20 +1726,329 @@ def get_disease_peak_predictions(request):
             "cached": True
         })
     
-    # Generate predictions
-    result = predict_disease_peak_for_month(
-        month_name=month,
-        samples_per_month=samples_per_month,
-        use_db=use_db
-    )
+    # NEW: Calculate from barangay predictions to ensure consistency
+    # This ensures main predictions match barangay breakdown totals
+    from analytics.ml_utils import predict_barangay_disease_peak_2025
     
-    if "error" in result:
-        return JsonResponse(result, status=400)
+    barangay_predictions = predict_barangay_disease_peak_2025(use_db=use_db)
+    
+    if "error" in barangay_predictions:
+        # Fallback to original method if barangay predictions fail
+        result = predict_disease_peak_for_month(
+            month_name=month,
+            samples_per_month=samples_per_month,
+            use_db=use_db
+        )
+        if "error" in result:
+            return JsonResponse(result, status=400)
+    else:
+        # Aggregate barangay predictions to get main totals
+        # This ensures consistency between main predictions and barangay breakdown
+        month_names = {
+            "January": 1, "February": 2, "March": 3, "April": 4,
+            "May": 5, "June": 6, "July": 7, "August": 8,
+            "September": 9, "October": 10, "November": 11, "December": 12
+        }
+        
+        result = {}
+        
+        for month_name, month_num in month_names.items():
+            # Aggregate all diseases across all barangays for this month
+            all_diseases = {}
+            peak_disease = None
+            peak_count = 0
+            
+            for barangay_name, monthly_data in barangay_predictions.items():
+                if month_num in monthly_data:
+                    month_data = monthly_data[month_num]
+                    for disease, count in month_data.get('all_diseases', {}).items():
+                        all_diseases[disease] = all_diseases.get(disease, 0) + count
+                        
+                        # Track peak disease
+                        if all_diseases[disease] > peak_count:
+                            peak_count = all_diseases[disease]
+                            peak_disease = disease
+            
+            if all_diseases:
+                result[month_name] = {
+                    'disease': peak_disease if peak_disease else "Unknown",
+                    'count': int(peak_count),
+                    'total_samples': sum(all_diseases.values()),
+                    'all_diseases': all_diseases
+                }
+            else:
+                result[month_name] = {
+                    'disease': "Unknown",
+                    'count': 0,
+                    'total_samples': 0,
+                    'all_diseases': {}
+                }
+    
+    # Filter by disease if specified
+    # Note: We keep all_diseases intact so heat index can compare against all diseases
+    if disease_filter:
+        filtered_result = {}
+        for month_name, month_data in result.items():
+            if disease_filter in month_data.get('all_diseases', {}):
+                filtered_result[month_name] = {
+                    'disease': disease_filter,
+                    'count': month_data['all_diseases'][disease_filter],
+                    'total_samples': month_data['all_diseases'][disease_filter],
+                    'all_diseases': month_data.get('all_diseases', {})  # Keep ALL diseases for comparison
+                }
+        result = filtered_result
+    
+    # Aggregate month range if specified
+    if month_from and month_to:
+        month_names = {
+            "January": 1, "February": 2, "March": 3, "April": 4,
+            "May": 5, "June": 6, "July": 7, "August": 8,
+            "September": 9, "October": 10, "November": 11, "December": 12
+        }
+        
+        from_idx = month_names.get(month_from, 1)
+        to_idx = month_names.get(month_to, 12)
+        
+        # Aggregate all diseases across the range
+        aggregated_diseases = {}
+        total_cases = 0
+        peak_disease = None
+        peak_count = 0
+        
+        for month_name, month_num in month_names.items():
+            if from_idx <= month_num <= to_idx:
+                if month_name in result:
+                    month_data = result[month_name]
+                    for disease, count in month_data.get('all_diseases', {}).items():
+                        aggregated_diseases[disease] = aggregated_diseases.get(disease, 0) + count
+                        total_cases += count
+                        
+                        if aggregated_diseases[disease] > peak_count:
+                            peak_count = aggregated_diseases[disease]
+                            peak_disease = disease
+        
+        # Return aggregated result
+        aggregated_result = {
+            f"{month_from} - {month_to}": {
+                'disease': peak_disease if peak_disease else "Unknown",
+                'count': peak_count,
+                'total_samples': total_cases,
+                'all_diseases': aggregated_diseases
+            }
+        }
+        
+        cache.set(cache_key, aggregated_result, 3600)
+        return JsonResponse(aggregated_result)
     
     # Cache predictions for 1 hour
     cache.set(cache_key, result, 3600)  # 1 hour
     
     return JsonResponse(result)
+
+
+@login_required
+def get_historical_disease_data(request):
+    """
+    API endpoint to get historical disease data for 2023-2024.
+    Returns actual disease cases from database/CSV.
+    Supports month range filtering and disease filtering.
+    
+    Query parameters:
+        - year: Year to get data for (2023 or 2024)
+        - month: Optional specific month name (e.g., "January")
+        - month_from: Start month for range (e.g., "March")
+        - month_to: End month for range (e.g., "May")
+        - disease: Optional disease code to filter (e.g., "J06.9")
+        - use_db: Use Django database instead of CSV (default: true)
+    
+    Returns:
+        JSON response with historical data in same format as predictions
+    """
+    from django.core.cache import cache
+    from django.db.models import Q, Count
+    from datetime import datetime
+    import hashlib
+    import pandas as pd
+    
+    year = int(request.GET.get('year', 2024))
+    month = request.GET.get('month', None)
+    month_from = request.GET.get('month_from', None)
+    month_to = request.GET.get('month_to', None)
+    disease_filter = request.GET.get('disease', None)
+    use_db = request.GET.get('use_db', 'true').lower() == 'true'
+    
+    # Only allow 2023-2024 for historical data
+    if year not in [2023, 2024]:
+        return JsonResponse({"error": f"Historical data only available for 2023-2024. Year {year} not supported."}, status=400)
+    
+    # Create cache key
+    cache_key_parts = ['historical_disease_data', str(year), str(use_db)]
+    if month:
+        cache_key_parts.append(month)
+    elif month_from and month_to:
+        cache_key_parts.append(f'{month_from}_{month_to}')
+    else:
+        cache_key_parts.append('all_months')
+    if disease_filter:
+        cache_key_parts.append(disease_filter)
+    cache_key = hashlib.md5('_'.join(cache_key_parts).encode()).hexdigest()
+    
+    # Check cache first
+    cached_result = cache.get(cache_key)
+    if cached_result:
+        return JsonResponse({
+            **cached_result,
+            "cached": True,
+            "data_type": "historical"
+        })
+    
+    # Load historical data
+    if use_db:
+        from referrals.models import Referral
+        from analytics.ml_utils import queryset_to_disease_peak_dataframe
+        
+        referrals = Referral.objects.filter(
+            created_at__year=year
+        ).exclude(
+            Q(patient__isnull=True) | 
+            Q(initial_diagnosis__isnull=True) | 
+            Q(initial_diagnosis='')
+        ).select_related('patient', 'facility')
+        
+        if not referrals.exists():
+            return JsonResponse({"error": f"No referral data found for year {year}"}, status=400)
+        
+        df = queryset_to_disease_peak_dataframe(referrals)
+    else:
+        from analytics.ml_utils import load_disease_peak_csv_data
+        try:
+            df = load_disease_peak_csv_data(
+                csv_2023_path=None,
+                csv_2024_path=None
+            )
+            # Filter by year
+            df['DATE'] = pd.to_datetime(df['DATE'], errors='coerce')
+            df = df[df['DATE'].dt.year == year]
+        except Exception as e:
+            return JsonResponse({"error": f"Error loading CSV data: {str(e)}"}, status=400)
+    
+    if df.empty:
+        return JsonResponse({"error": f"No data available for year {year}"}, status=400)
+    
+    # Process DATE column
+    if 'DATE' not in df.columns:
+        if 'CREATED_AT' in df.columns:
+            df['DATE'] = pd.to_datetime(df['CREATED_AT'], errors='coerce')
+        else:
+            return JsonResponse({"error": "No date column found in data"}, status=400)
+    
+    df['DATE'] = pd.to_datetime(df['DATE'], errors='coerce')
+    df = df.dropna(subset=['DATE'])
+    
+    # Filter by allowed ICD codes
+    allowed_icd = ['T14.1', 'W54.99', 'J06.9', 'Z00', 'I10.1']
+    df = df[df['ICD10 CODE'].isin(allowed_icd)]
+    
+    # Store disease filter but don't apply it yet - we need all diseases for comparison
+    selected_disease = disease_filter
+    
+    if df.empty:
+        return JsonResponse({"error": "No data remaining after filtering"}, status=400)
+    
+    # Aggregate monthly by disease (aggregate ALL diseases first)
+    df['MONTH_NAME'] = df['DATE'].dt.strftime('%B')
+    monthly_counts = df.groupby(['MONTH_NAME', 'ICD10 CODE']).size().reset_index(name='cases')
+    
+    # Format results to match prediction format
+    month_names = {
+        "January": 1, "February": 2, "March": 3, "April": 4,
+        "May": 5, "June": 6, "July": 7, "August": 8,
+        "September": 9, "October": 10, "November": 11, "December": 12
+    }
+    
+    results = {}
+    target_months = [month] if month and month in month_names else list(month_names.keys())
+    
+    for month_name in target_months:
+        month_data = monthly_counts[monthly_counts['MONTH_NAME'] == month_name]
+        
+        all_diseases = {}
+        peak_disease = None
+        peak_count = 0
+        
+        for _, row in month_data.iterrows():
+            disease_code = str(row['ICD10 CODE'])
+            cases = int(row['cases'])
+            all_diseases[disease_code] = cases
+            
+            if cases > peak_count:
+                peak_count = cases
+                peak_disease = disease_code
+        
+        if all_diseases:
+            # If disease filter is specified, use it as the peak disease for display
+            # but keep all_diseases intact for heat index comparison
+            display_disease = selected_disease if selected_disease and selected_disease in all_diseases else peak_disease
+            display_count = all_diseases.get(display_disease, 0) if display_disease else int(peak_count)
+            
+            results[month_name] = {
+                'disease': display_disease if display_disease else "Unknown",
+                'count': int(display_count),
+                'total_samples': sum(all_diseases.values()),
+                'all_diseases': all_diseases  # Keep ALL diseases for comparison
+            }
+        else:
+            results[month_name] = {
+                'disease': "Unknown",
+                'count': 0,
+                'total_samples': 0,
+                'all_diseases': {}
+            }
+    
+    # Aggregate month range if specified
+    if month_from and month_to:
+        from_idx = month_names.get(month_from, 1)
+        to_idx = month_names.get(month_to, 12)
+        
+        aggregated_diseases = {}
+        total_cases = 0
+        peak_disease = None
+        peak_count = 0
+        
+        for month_name, month_num in month_names.items():
+            if from_idx <= month_num <= to_idx:
+                if month_name in results:
+                    month_data = results[month_name]
+                    for disease, count in month_data.get('all_diseases', {}).items():
+                        aggregated_diseases[disease] = aggregated_diseases.get(disease, 0) + count
+                        total_cases += count
+                        
+                        if aggregated_diseases[disease] > peak_count:
+                            peak_count = aggregated_diseases[disease]
+                            peak_disease = disease
+        
+        aggregated_result = {
+            f"{month_from} - {month_to}": {
+                'disease': peak_disease if peak_disease else "Unknown",
+                'count': peak_count,
+                'total_samples': total_cases,
+                'all_diseases': aggregated_diseases
+            },
+            "data_type": "historical",
+            "year": year
+        }
+        
+        cache.set(cache_key, aggregated_result, 3600)
+        return JsonResponse(aggregated_result)
+    
+    # Cache for 1 hour
+    cache.set(cache_key, results, 3600)
+    
+    return JsonResponse({
+        **results,
+        "data_type": "historical",
+        "year": year
+    })
 
 
 @login_required
@@ -1408,6 +2192,319 @@ def get_barangay_disease_peak_predictions(request):
     cache.set(cache_key, result, 3600)  # 1 hour
     
     return JsonResponse(result)
+
+
+@login_required
+def get_barangay_heatmap_data(request):
+    """
+    Get barangay predictions with facility coordinates for heatmap.
+    Matches CSV barangay names to facility names/barangay fields.
+    
+    Query parameters:
+        - use_db: Use Django database instead of CSV (default: false)
+    
+    Returns:
+        JSON response with structure:
+        {
+            "Kauswagan": {
+                "1": {  # Month number (1-12)
+                    "total_cases": 24,
+                    "diseases": {"T14.1": 10, "J06.9": 14},
+                    "coordinates": [
+                        {"lat": 7.58, "lng": 125.82, "facility_name": "Kauswagan MHO"}
+                    ]
+                }
+            }
+        }
+    """
+    from facilities.models import Facility
+    from django.core.cache import cache
+    import hashlib
+    
+    use_db = request.GET.get('use_db', 'false').lower() == 'true'
+    
+    # Create cache key
+    cache_key = hashlib.md5(f'barangay_heatmap_data_{use_db}'.encode()).hexdigest()
+    
+    # Check cache first
+    cached_result = cache.get(cache_key)
+    if cached_result:
+        return JsonResponse({
+            **cached_result,
+            "cached": True
+        })
+    
+    # Get barangay predictions (from CSV or database)
+    barangay_predictions = predict_barangay_disease_peak_2025(use_db=use_db)
+    
+    if "error" in barangay_predictions:
+        return JsonResponse(barangay_predictions, status=400)
+    
+    # Get all facilities
+    facilities = Facility.objects.all()
+    
+    # Match barangay to facilities and combine
+    results = {}
+    for barangay_name, monthly_data in barangay_predictions.items():
+        # Find facilities matching this barangay
+        # Match if: barangay name is in facility name, or facility.barangay matches
+        matching_facilities = []
+        for facility in facilities:
+            facility_name_upper = (facility.name or '').upper()
+            facility_barangay_upper = (facility.barangay or '').upper()
+            barangay_upper = barangay_name.upper()
+            
+            # Match if barangay name appears in facility name or facility.barangay matches
+            if (barangay_upper in facility_name_upper or 
+                facility_barangay_upper == barangay_upper or
+                facility_name_upper == barangay_upper):
+                matching_facilities.append({
+                    'lat': float(facility.latitude),
+                    'lng': float(facility.longitude),
+                    'facility_name': facility.name
+                })
+        
+        if not matching_facilities:
+            continue  # Skip if no matching facilities
+        
+        results[barangay_name] = {}
+        for month_num, month_data in monthly_data.items():
+            # Month is already a number (1-12) from predict_barangay_disease_peak_2025
+            if not isinstance(month_num, int) or month_num < 1 or month_num > 12:
+                continue
+            
+            # Extract diseases and total cases
+            if isinstance(month_data, dict):
+                all_diseases = month_data.get('all_diseases', {})
+                # Sum all diseases for this month
+                total_cases = sum(all_diseases.values()) if isinstance(all_diseases, dict) else 0
+            else:
+                all_diseases = {}
+                total_cases = 0
+            
+            results[barangay_name][month_num] = {
+                'total_cases': total_cases,
+                'diseases': all_diseases,
+                'coordinates': matching_facilities
+            }
+    
+    # Cache for 1 hour
+    cache.set(cache_key, results, 3600)
+    
+    return JsonResponse(results)
+
+
+@login_required
+def get_barangay_breakdown(request):
+    """
+    Get barangay breakdown for a specific month and disease.
+    
+    Query parameters:
+        - year: Year (2023, 2024, or 2025)
+        - month: Month name (e.g., "April")
+        - disease: Disease code (e.g., "J06.9")
+        - use_db: Use database (default: true)
+    
+    Returns:
+        JSON with structure:
+        {
+            "total_cases": 38,
+            "barangays": [
+                {"name": "Kauswagan", "cases": 12, "percentage": 31.6},
+                {"name": "Poblacion", "cases": 8, "percentage": 21.1},
+                ...
+            ]
+        }
+    """
+    import pandas as pd
+    from django.core.cache import cache
+    import hashlib
+    
+    year = int(request.GET.get('year', 2025))
+    month = request.GET.get('month', 'January')
+    disease = request.GET.get('disease', 'T14.1')
+    use_db = request.GET.get('use_db', 'true').lower() == 'true'
+    
+    month_map = {
+        "January": 1, "February": 2, "March": 3, "April": 4,
+        "May": 5, "June": 6, "July": 7, "August": 8,
+        "September": 9, "October": 10, "November": 11, "December": 12
+    }
+    month_num = month_map.get(month, 1)
+    
+    # Create cache key
+    cache_key = hashlib.md5(f'barangay_breakdown_{year}_{month}_{disease}_{use_db}'.encode()).hexdigest()
+    cached_result = cache.get(cache_key)
+    if cached_result:
+        return JsonResponse(cached_result)
+    
+    if year < 2025:
+        # Get historical barangay data
+        from referrals.models import Referral
+        from analytics.ml_utils import queryset_to_disease_peak_dataframe
+        
+        referrals = Referral.objects.filter(
+            created_at__year=year,
+            created_at__month=month_num
+        ).exclude(
+            Q(patient__isnull=True) | 
+            Q(initial_diagnosis__isnull=True) | 
+            Q(initial_diagnosis='')
+        ).select_related('patient', 'facility')
+        
+        if not referrals.exists():
+            return JsonResponse({
+                "total_cases": 0,
+                "barangays": [],
+                "month": month,
+                "year": year,
+                "disease": disease
+            })
+        
+        df = queryset_to_disease_peak_dataframe(referrals)
+        df = df[df['ICD10 CODE'] == disease]
+        
+        if df.empty:
+            return JsonResponse({
+                "total_cases": 0,
+                "barangays": [],
+                "month": month,
+                "year": year,
+                "disease": disease
+            })
+        
+        # Group by barangay
+        if 'SITIO/BARANGAY' in df.columns:
+            barangay_counts = df.groupby('SITIO/BARANGAY').size().reset_index(name='cases')
+        else:
+            return JsonResponse({
+                "total_cases": 0,
+                "barangays": [],
+                "month": month,
+                "year": year,
+                "disease": disease
+            })
+        
+    else:
+        # Get predicted barangay data
+        from analytics.ml_utils import predict_barangay_disease_peak_2025
+        
+        barangay_predictions = predict_barangay_disease_peak_2025(use_db=use_db)
+        
+        if "error" in barangay_predictions:
+            return JsonResponse(barangay_predictions, status=400)
+        
+        barangay_list = []
+        for barangay_name, monthly_data in barangay_predictions.items():
+            if month_num in monthly_data:
+                month_data = monthly_data[month_num]
+                if disease in month_data.get('all_diseases', {}):
+                    cases = month_data['all_diseases'][disease]
+                    barangay_list.append({
+                        'SITIO/BARANGAY': barangay_name,
+                        'cases': cases
+                    })
+        
+        if not barangay_list:
+            return JsonResponse({
+                "total_cases": 0,
+                "barangays": [],
+                "month": month,
+                "year": year,
+                "disease": disease
+            })
+        
+        barangay_counts = pd.DataFrame(barangay_list)
+    
+    if barangay_counts.empty:
+        return JsonResponse({
+            "total_cases": 0,
+            "barangays": [],
+            "month": month,
+            "year": year,
+            "disease": disease
+        })
+    
+    total_cases = int(barangay_counts['cases'].sum())
+    
+    if total_cases == 0:
+        return JsonResponse({
+            "total_cases": 0,
+            "barangays": [],
+            "month": month,
+            "year": year,
+            "disease": disease
+        })
+    
+    # Calculate percentages and sort
+    barangay_counts['percentage'] = (barangay_counts['cases'] / total_cases * 100).round(1)
+    barangay_counts = barangay_counts.sort_values('cases', ascending=False)
+    
+    # Format response
+    barangays = []
+    for _, row in barangay_counts.iterrows():
+        barangays.append({
+            "name": str(row['SITIO/BARANGAY']),
+            "cases": int(row['cases']),
+            "percentage": float(row['percentage'])
+        })
+    
+    result = {
+        "total_cases": total_cases,
+        "barangays": barangays,
+        "month": month,
+        "year": year,
+        "disease": disease
+    }
+    
+    # Cache for 1 hour
+    cache.set(cache_key, result, 3600)
+    
+    return JsonResponse(result)
+
+
+@login_required
+def new_heatmap_view(request):
+    """
+    View for the new heat index map page using time-series forecasting.
+    Displays disease heat index based on the new best-model forecasting approach.
+    """
+    context = {
+        'active_page': 'new_heatmap'
+    }
+    return render(request, 'analytics/new_heatmap.html', context)
+
+
+@login_required
+def doctor_report(request):
+    """
+    Doctor-specific report page for generating and previewing reports.
+    Similar to user_report but tailored for doctors with only relevant reports.
+    """
+    # Check if user is a doctor
+    if not is_doctor_user(request.user):
+        from django.contrib import messages
+        from django.shortcuts import redirect
+        messages.error(request, "Access denied. This page is for doctors only.")
+        return redirect('home')
+    
+    # Get doctor's referral statistics for context
+    from datetime import datetime
+    current_year = datetime.now().year
+    
+    # Get doctor's referrals (examined by this doctor)
+    doctor_referrals = Referral.objects.filter(examined_by=request.user, created_at__year=current_year)
+    total_referrals = doctor_referrals.count()
+    completed_referrals = doctor_referrals.filter(status='completed').count()
+    
+    context = {
+        'active_page': 'doctor_report',
+        'total_referrals': total_referrals,
+        'completed_referrals': completed_referrals,
+        'current_year': current_year,
+    }
+    
+    return render(request, 'analytics/doctor_report.html', context)
 
 
 

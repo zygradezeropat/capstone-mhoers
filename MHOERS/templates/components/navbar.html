@@ -20,6 +20,7 @@
     border: none;
     background: transparent;
     transition: transform 0.2s ease;
+    position: relative !important;
   }
   .notification-btn:hover {
     transform: scale(1.1);
@@ -49,6 +50,28 @@
     animation: pulse 2s infinite;
   }
   
+  /* Notification badge styling - Bootstrap 5 compatible */
+  #notif-count {
+    min-width: 18px;
+    height: 18px;
+    line-height: 1;
+    padding: 0.25em 0.4em;
+    font-weight: 600;
+    font-size: 0.7rem !important;
+    z-index: 10;
+    animation: pulse 2s infinite;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* Hide badge when display: none is set or when empty */
+  #notif-count[style*="display: none"],
+  #notif-count:empty {
+    display: none !important;
+    visibility: hidden !important;
+  }
+  
   @keyframes pulse {
     0% { transform: scale(1); }
     50% { transform: scale(1.1); }
@@ -59,7 +82,7 @@
 <nav class="navbar navbar-expand-lg bg-white shadow-sm px-4">
   <div class="container-fluid">
     <a class="navbar-brand d-flex align-items-center" href="#">
-      <i class="bi bi-hospital me-2 text-success"></i>
+      
       <span class="fw-semibold">New Corella E-Referral System</span>
     </a>
     
@@ -87,7 +110,7 @@
         {% if request.user.is_authenticated %}
           {% if request.user.is_staff or request.user.is_superuser %}
             {% if unread_count > 0 or pending_users_count > 0 %}
-              <span class="position-absolute top-0 end-0 translate-middle badge rounded-pill bg-danger">
+              <span id="notif-count" class="position-absolute top-0 end-0 translate-middle badge rounded-pill bg-danger">
                 {% if unread_count > 0 and pending_users_count > 0 %}
                   {{ unread_count|add:pending_users_count }}
                 {% elif unread_count > 0 %}
@@ -98,9 +121,16 @@
                 <span class="visually-hidden"></span>
               </span>
             {% endif %}
+          {% elif is_doctor %}
+            {% if unread_count > 0 %}
+              <span id="notif-count" class="position-absolute top-0 end-0 translate-middle badge rounded-pill bg-danger">
+                {{ unread_count }}
+                <span class="visually-hidden"></span>
+              </span>
+            {% endif %}
           {% else %}
             {% if user_unread_count > 0 %}
-              <span class="position-absolute top-0 end-0 translate-middle badge rounded-pill bg-danger">
+              <span id="notif-count" class="position-absolute top-0 end-0 translate-middle badge rounded-pill bg-danger">
                 {{ user_unread_count }}
                 <span class="visually-hidden"></span>
               </span>
@@ -145,7 +175,15 @@
               </a>
             </li> 
           {% empty %}
-            {% if not request.user.is_staff and not request.user.is_superuser or pending_users_count == 0 %}
+            {% if request.user.is_staff or request.user.is_superuser %}
+              {% if pending_users_count == 0 %}
+                <li>
+                  <div class="dropdown-item text-center py-3 text-muted">
+                    <i class="bi bi-inbox me-2"></i>No notifications
+                  </div>
+                </li>
+              {% endif %}
+            {% else %}
               <li>
                 <div class="dropdown-item text-center py-3 text-muted">
                   <i class="bi bi-inbox me-2"></i>No notifications
@@ -164,12 +202,7 @@
       </div>
 
       <!-- User Profile -->
-      <div class="d-flex align-items-center">
-        <a href="{% url 'profile' %}" class="nav-link {% if active_page == 'profile' %}active{% endif %} text-decoration-none d-flex align-items-center gap-2">
-          <img src="{% static 'images/newcorellalogo.png' %}" class="avatar" alt="Profile">
-          <span class="fw-medium text-dark">{{ request.user.username }}</span>
-        </a>
-      </div>
+     
     </div>
   </div>
 </nav>
@@ -177,11 +210,10 @@
 <!-- Bootstrap is loaded in base.html -->
 
 <script>
-// Update message count periodically
-function updateMessageCount() {
-  fetch('{% url "chat:unread_count" %}')
-    .then(response => response.json())
-    .then(data => {
+// Update message count using SmartPolling
+let messageCountPoller = null;
+
+function updateMessageCount(data) {
       if (data.success) {
         const badge = document.querySelector('.nav-link .badge');
         if (data.unread_count > 0) {
@@ -190,27 +222,50 @@ function updateMessageCount() {
           } else {
             // Create badge if it doesn't exist
             const messageLink = document.querySelector('a[href="{% url "chat:chat_home" %}"]');
+        if (messageLink) {
             const icon = messageLink.querySelector('i');
             const badge = document.createElement('span');
             badge.className = 'position-absolute top-0 end-0 translate-middle badge rounded-pill bg-danger';
             badge.style.fontSize = '0.7rem';
             badge.textContent = data.unread_count;
             messageLink.appendChild(badge);
+        }
           }
         } else {
           // Remove badge if no unread messages
+      const badge = document.querySelector('.nav-link .badge');
           if (badge) {
             badge.remove();
           }
         }
       }
-    })
-    .catch(error => console.error('Error updating message count:', error));
 }
 
-// Update message count every 30 seconds
+// Initialize message count polling when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
-  updateMessageCount();
-  setInterval(updateMessageCount, 30000);
+  // Initialize message count polling
+  if (typeof SmartPolling !== 'undefined') {
+    messageCountPoller = new SmartPolling(
+      '{% url "chat:unread_count" %}',
+      updateMessageCount,
+      { minInterval: 5000, maxInterval: 30000 } // 5-30 seconds for messages
+    );
+    messageCountPoller.start();
+    
+    // Pause when tab is hidden
+    document.addEventListener('visibilitychange', () => {
+      messageCountPoller.handleVisibilityChange();
+    });
+  } else {
+    // Fallback to simple polling if SmartPolling not loaded
+    function updateMessageCountFallback() {
+      fetch('{% url "chat:unread_count" %}')
+        .then(response => response.json())
+        .then(data => updateMessageCount(data))
+        .catch(error => console.error('Error updating message count:', error));
+    }
+    updateMessageCountFallback();
+    setInterval(updateMessageCountFallback, 30000);
+  }
 });
 </script>

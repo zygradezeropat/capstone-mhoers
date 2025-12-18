@@ -4,6 +4,9 @@
 
 <link rel="stylesheet" href="{% static 'css/admin_dashboard.css' %}" />
 
+<!-- Flatpickr CSS for custom date picker -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
 <style>
   #reportPreviewContainer {
     animation: fadeIn 0.3s ease;
@@ -35,10 +38,10 @@
   
   /* Constrain logo size in preview */
   #reportContent .report-logo {
-    width: 80px !important;
-    height: 80px !important;
-    max-width: 80px !important;
-    max-height: 80px !important;
+    width: 95px !important;
+    height: 95px !important;
+    max-width: 95px !important;
+    max-height: 95px !important;
     object-fit: contain;
   }
   
@@ -79,25 +82,184 @@
       display: none !important;
     }
   }
+  
+  /* Custom Flatpickr Date Picker Styles - Black and White */
+  .flatpickr-calendar {
+    font-family: 'Roboto', sans-serif;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border: 1px solid #000;
+    background-color: #fff;
+  }
+  
+  .flatpickr-months {
+    background-color: #000;
+    border-radius: 8px 8px 0 0;
+    padding: 10px;
+  }
+  
+  .flatpickr-month {
+    color: #fff;
+  }
+  
+  .flatpickr-current-month {
+    color: #fff;
+    font-weight: 600;
+  }
+  
+  .flatpickr-prev-month,
+  .flatpickr-next-month {
+    color: #fff;
+    fill: #fff;
+    padding: 5px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+  }
+  
+  .flatpickr-prev-month:hover,
+  .flatpickr-next-month:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+  }
+  
+  .flatpickr-weekdays {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #000;
+  }
+  
+  .flatpickr-weekday {
+    color: #000;
+    font-weight: 600;
+    font-size: 0.85rem;
+  }
+  
+  .flatpickr-day {
+    border-radius: 6px;
+    margin: 2px;
+    transition: all 0.2s;
+    color: #000;
+  }
+  
+  .flatpickr-day:hover {
+    background-color: #e9ecef;
+    border-color: #000;
+  }
+  
+  .flatpickr-day.selected,
+  .flatpickr-day.startRange,
+  .flatpickr-day.endRange {
+    background-color: #000;
+    border-color: #000;
+    color: #fff;
+    font-weight: 600;
+  }
+  
+  .flatpickr-day.inRange {
+    background-color: #e9ecef;
+    border-color: #000;
+    color: #000;
+  }
+  
+  .flatpickr-day.today {
+    border-color: #000;
+    border-width: 2px;
+    font-weight: 600;
+  }
+  
+  .flatpickr-day.today:hover {
+    background-color: #000;
+    color: #fff;
+  }
+  
+  .flatpickr-day.flatpickr-disabled,
+  .flatpickr-day.prevMonthDay,
+  .flatpickr-day.nextMonthDay {
+    color: #999;
+    opacity: 0.5;
+  }
+  
+  .flatpickr-time {
+    border-top: 1px solid #000;
+    padding: 10px;
+    background-color: #fff;
+  }
+  
+  .flatpickr-time input {
+    border-radius: 4px;
+    border: 1px solid #000;
+    color: #000;
+  }
+  
+  .flatpickr-time input:hover {
+    background-color: #f8f9fa;
+  }
+  
+  /* Month and Year Dropdown Styles - Black and White */
+  .flatpickr-monthDropdown-months,
+  .flatpickr-yearDropdown {
+    background-color: #fff;
+    border: 1px solid #000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+  
+  .flatpickr-monthDropdown-month,
+  .flatpickr-yearDropdown-year {
+    color: #000;
+    background-color: #fff;
+  }
+  
+  .flatpickr-monthDropdown-month:hover,
+  .flatpickr-yearDropdown-year:hover {
+    background-color: #e9ecef;
+    color: #000;
+  }
+  
+  .flatpickr-monthDropdown-month.selected,
+  .flatpickr-yearDropdown-year.selected {
+    background-color: #000 !important;
+    color: #fff !important;
+  }
+  
+  .flatpickr-monthDropdown-month.flatpickr-disabled,
+  .flatpickr-yearDropdown-year.flatpickr-disabled {
+    color: #999;
+    opacity: 0.5;
+  }
+  
+  /* Custom input styling */
+  .custom-date-input {
+    cursor: pointer;
+    background-color: white;
+    color: #000;
+  }
+  
+  .custom-date-input:focus {
+    border-color: #000;
+    box-shadow: 0 0 0 0.2rem rgba(0, 0, 0, 0.25);
+  }
+  
+  .input-group .btn:hover {
+    background-color: #333 !important;
+    border-color: #333 !important;
+  }
+  
+  .input-group .btn:focus {
+    box-shadow: 0 0 0 0.2rem rgba(0, 0, 0, 0.25);
+  }
 </style>
 
 <!-- Navbar Include -->
 {% include 'components/navbar.html' %}
 
 <div class="container-fluid py-4">
-  <div class="row mb-4">
-    <div class="col-12">
-      <h4 class="text-primary mb-0">Analytics Dashboard</h4>
-      <p class="text-muted">Monitor and analyze healthcare metrics and performance</p>
-    </div>
-  </div>
+  
 
   <!-- Tab Navigation -->
-  {% include 'components/tabbar/tabbar.html' with tab1_name="Referral Statistics" tab1_icon="bi-graph-up" tab1_count=0 tab2_name="Common Diagnoses" tab2_icon="bi-clipboard2-pulse" tab3_name="Barangay Performance" tab3_icon="bi-bar-chart" tab5_name="Generate Reports" tab5_icon="bi-printer" active_tab="tab5" show_pending_fallback=False %}
+  {% include 'components/tabbar/tabbar.html' with tab5_name="Generate Reports" tab5_icon="bi-printer" active_tab="tab5" tab1_count=0 show_pending_fallback=False %}
 
   <!-- Tab Content -->
   <div class="tab-content" id="dashboardTabContent">
     <!-- Tab 1: Referral Statistics -->
+    {% comment %}
     <div class="tab-pane fade" id="tab1" role="tabpanel">
       <div class="card border-0 shadow-sm">
         <div class="card-body p-4">
@@ -114,8 +276,10 @@
         </div>
       </div>
     </div>
+    {% endcomment %}
 
     <!-- Tab 2: Common Diagnoses -->
+    {% comment %}
     <div class="tab-pane fade" id="tab2" role="tabpanel">
       <div class="row g-4">
         <div class="col-md-6">
@@ -140,8 +304,10 @@
         </div>
       </div>
     </div>
+    {% endcomment %}
 
     <!-- Tab 3: Barangay Performance -->
+    {% comment %}
     <div class="tab-pane fade" id="tab3" role="tabpanel">
       <div class="card border-0 shadow-sm">
         <div class="card-body p-4">
@@ -161,12 +327,13 @@
         </div>
       </div>
     </div>
-    
+    {% endcomment %}
 
     <!-- Tab 5: Reports -->
     <div class="tab-pane fade show active" id="tab5" role="tabpanel">
       <div class="card border-0 shadow-sm">
         <div class="card-body p-4">
+          {% if request.user.is_superuser and not is_doctor %}
           <h5 class="fw-bold mb-4">Export Referral Reports (CSV)</h5>
           
           <form id="exportCsvForm" method="get" action="{% url 'referrals:export_referrals_csv' %}">
@@ -181,41 +348,35 @@
                 </select>
               </div>
               <div class="col-md-3">
-                <label for="exportYear" class="form-label small mb-1">Year</label>
-                <input type="number" class="form-control" id="exportYear" name="year" placeholder="e.g. 2025" min="2000" max="2100">
+                <label for="exportStartDate" class="form-label small mb-1">START DATE</label>
+                <div class="input-group">
+                  <input type="text" class="form-control custom-date-input" id="exportStartDate" name="date_from" placeholder="Select start date" readonly>
+                  <button type="button" class="btn" style="background-color: #000; color: white; border: 1px solid #000;" id="exportStartDateBtn">
+                    <i class="bi bi-calendar3"></i>
+                  </button>
+                </div>
               </div>
               <div class="col-md-3">
-                <label for="exportMonth" class="form-label small mb-1">Month</label>
-                <select class="form-select" id="exportMonth" name="month">
-                  <option value="">All</option>
-                  <option value="1">January</option>
-                  <option value="2">February</option>
-                  <option value="3">March</option>
-                  <option value="4">April</option>
-                  <option value="5">May</option>
-                  <option value="6">June</option>
-                  <option value="7">July</option>
-                  <option value="8">August</option>
-                  <option value="9">September</option>
-                  <option value="10">October</option>
-                  <option value="11">November</option>
-                  <option value="12">December</option>
-                </select>
+                <label for="exportEndDate" class="form-label small mb-1">END DATE</label>
+                <div class="input-group">
+                  <input type="text" class="form-control custom-date-input" id="exportEndDate" name="date_to" placeholder="Select end date" readonly>
+                  <button type="button" class="btn" style="background-color: #000; color: white; border: 1px solid #000;" id="exportEndDateBtn">
+                    <i class="bi bi-calendar3"></i>
+                  </button>
+                </div>
               </div>
               <div class="col-md-3">
+                <label class="form-label small mb-1 d-block">&nbsp;</label>
                 <button type="submit" class="btn btn-outline-primary w-100">
                   <i class="bi bi-file-earmark-spreadsheet me-2"></i>Export CSV
                 </button>
               </div>
             </div>
           </form>
-          
-          <p class="text-muted small mt-3 mb-0">
-            <i class="bi bi-info-circle me-1"></i>Tip: Leave fields blank to export all.
-          </p>
+          {% endif %}
 
           <!-- Printable Reports Section -->
-          <div class="mt-5">
+          <div class="{% if request.user.is_superuser and not is_doctor %}mt-5{% endif %}">
             <h5 class="fw-bold mb-4">Generate Printable Reports</h5>
             
             <div class="row g-3 align-items-end">
@@ -224,60 +385,53 @@
                 <select class="form-select" id="printReportSelect">
                   <option value="">-- Choose a report --</option>
                   <option value="{% url 'barangay_referral_performance_report' %}">
-                    📄 Barangay Referral Performance Summary
+                    Barangay Referral Performance Summary
                   </option>
                   <option value="{% url 'morbidity_report' %}">
-                    📊 Morbidity & Top-Diagnosis Report
+                    Top-Diagnosis
                   </option>
                   <option value="{% url 'facility_workforce_masterlist' %}">
-                    👥 Facility & Workforce Masterlist
+                    Facility & Workforce Masterlist
                   </option>
                   <option value="{% url 'referral_registry_report' %}">
-                    ❤️ Referral Registry with Vital Signs
+                    Referral Registry with Vital Signs
                   </option>
                   <option value="{% url 'system_usage_scorecard_report' %}">
-                    📈 System Usage & Adoption Scorecard
+                    System Usage & Adoption Scorecard
                   </option>
                 </select>
               </div>
               <div class="col-md-3">
-                <label for="printYear" class="form-label small mb-1">Year</label>
-                <input type="number" class="form-control" id="printYear" placeholder="e.g. 2025" min="2000" max="2100">
+                <label for="printStartDate" class="form-label small mb-1">START DATE</label>
+                <div class="input-group">
+                  <input type="text" class="form-control custom-date-input" id="printStartDate" name="start_date" placeholder="Select start date" readonly>
+                  <button type="button" class="btn" style="background-color: #000; color: white; border: 1px solid #000;" id="printStartDateBtn">
+                    <i class="bi bi-calendar3"></i>
+                  </button>
+                </div>
               </div>
               <div class="col-md-3">
-                <label for="printMonth" class="form-label small mb-1">Month</label>
-                <select class="form-select" id="printMonth">
-                  <option value="">All</option>
-                  <option value="1">January</option>
-                  <option value="2">February</option>
-                  <option value="3">March</option>
-                  <option value="4">April</option>
-                  <option value="5">May</option>
-                  <option value="6">June</option>
-                  <option value="7">July</option>
-                  <option value="8">August</option>
-                  <option value="9">September</option>
-                  <option value="10">October</option>
-                  <option value="11">November</option>
-                  <option value="12">December</option>
-                </select>
+                <label for="printEndDate" class="form-label small mb-1">END DATE</label>
+                <div class="input-group">
+                  <input type="text" class="form-control custom-date-input" id="printEndDate" name="end_date" placeholder="Select end date" readonly>
+                  <button type="button" class="btn" style="background-color: #000; color: white; border: 1px solid #000;" id="printEndDateBtn">
+                    <i class="bi bi-calendar3"></i>
+                  </button>
+                </div>
               </div>
               <div class="col-md-3">
+                <label class="form-label small mb-1 d-block">&nbsp;</label>
                 <button type="button" class="btn btn-outline-primary w-100" onclick="generatePrintableReport()">
                   <i class="bi bi-printer me-2"></i>Preview
                 </button>
               </div>
             </div>
             
-            <p class="text-muted small mt-3 mb-0">
-              <i class="bi bi-info-circle me-1"></i>Tip: Leave fields blank to generate report for all data.
-            </p>
-            
             <!-- Report Preview Container -->
             <div id="reportPreviewContainer" class="mt-4" style="display: none;">
               <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
-                  <h6 class="mb-0 fw-bold">
+                  <h6 class="mb-0 fw-bold" id="reportPreviewTitle">
                     <i class="bi bi-file-earmark-text me-2"></i>Report Preview
                   </h6>
                   <div>
@@ -309,21 +463,257 @@
 </div>
 
 {% block script %}
+<!-- Flatpickr JS for custom date picker -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+{% comment %}
 <script src="{% static 'js/user/line_chart_user.js' %}"></script>
 <script src="{% static 'js/user/topDiagnosedPie_chart_user.js' %}"></script>
 <script src="{% static 'js/user/barangay_performance_user.js' %}"></script>
+{% endcomment %}
 
 <script>
+  // Initialize Flatpickr for custom date pickers
+  document.addEventListener('DOMContentLoaded', function() {
+    const printStartDateInput = document.getElementById('printStartDate');
+    const printEndDateInput = document.getElementById('printEndDate');
+    const printStartDateBtn = document.getElementById('printStartDateBtn');
+    const printEndDateBtn = document.getElementById('printEndDateBtn');
+    
+    const exportStartDateInput = document.getElementById('exportStartDate');
+    const exportEndDateInput = document.getElementById('exportEndDate');
+    const exportStartDateBtn = document.getElementById('exportStartDateBtn');
+    const exportEndDateBtn = document.getElementById('exportEndDateBtn');
+    
+    // Update print date constraints dynamically
+    function updatePrintDateConstraints() {
+      if (printStartDatePicker && printEndDatePicker) {
+        const startDate = printStartDatePicker.selectedDates[0];
+        const endDate = printEndDatePicker.selectedDates[0];
+        
+        if (startDate) {
+          printEndDatePicker.set('minDate', startDate);
+        } else {
+          printEndDatePicker.set('minDate', null);
+        }
+        
+        if (endDate) {
+          printStartDatePicker.set('maxDate', endDate);
+        } else {
+          printStartDatePicker.set('maxDate', null);
+        }
+      }
+    }
+    
+    // Update export date constraints dynamically
+    function updateExportDateConstraints() {
+      if (exportStartDatePicker && exportEndDatePicker) {
+        const startDate = exportStartDatePicker.selectedDates[0];
+        const endDate = exportEndDatePicker.selectedDates[0];
+        
+        if (startDate) {
+          exportEndDatePicker.set('minDate', startDate);
+        } else {
+          exportEndDatePicker.set('minDate', null);
+        }
+        
+        if (endDate) {
+          exportStartDatePicker.set('maxDate', endDate);
+        } else {
+          exportStartDatePicker.set('maxDate', null);
+        }
+      }
+    }
+    
+    // Initialize Flatpickr for PRINT START DATE
+    let printStartDatePicker = null;
+    if (printStartDateInput) {
+      printStartDatePicker = flatpickr(printStartDateInput, {
+        dateFormat: "Y-m-d",
+        altInput: false,
+        allowInput: false,
+        clickOpens: true,
+        theme: "default",
+        onChange: function(selectedDates, dateStr, instance) {
+          printStartDateInput.value = dateStr;
+          updatePrintDateConstraints();
+          printStartDateInput.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      });
+      
+      if (printStartDateBtn) {
+        printStartDateBtn.addEventListener('click', function() {
+          printStartDatePicker.open();
+        });
+      }
+    }
+    
+    // Initialize Flatpickr for PRINT END DATE
+    let printEndDatePicker = null;
+    if (printEndDateInput) {
+      printEndDatePicker = flatpickr(printEndDateInput, {
+        dateFormat: "Y-m-d",
+        altInput: false,
+        allowInput: false,
+        clickOpens: true,
+        theme: "default",
+        onChange: function(selectedDates, dateStr, instance) {
+          printEndDateInput.value = dateStr;
+          updatePrintDateConstraints();
+          printEndDateInput.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      });
+      
+      if (printEndDateBtn) {
+        printEndDateBtn.addEventListener('click', function() {
+          printEndDatePicker.open();
+        });
+      }
+    }
+    
+    // Initialize print constraints
+    updatePrintDateConstraints();
+    
+    // Initialize Flatpickr for CSV EXPORT START DATE
+    let exportStartDatePicker = null;
+    if (exportStartDateInput) {
+      exportStartDatePicker = flatpickr(exportStartDateInput, {
+        dateFormat: "Y-m-d",
+        altInput: false,
+        allowInput: false,
+        clickOpens: true,
+        theme: "default",
+        onChange: function(selectedDates, dateStr, instance) {
+          exportStartDateInput.value = dateStr;
+          updateExportDateConstraints();
+          exportStartDateInput.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      });
+      
+      if (exportStartDateBtn) {
+        exportStartDateBtn.addEventListener('click', function() {
+          exportStartDatePicker.open();
+        });
+      }
+    }
+    
+    // Initialize Flatpickr for CSV EXPORT END DATE
+    let exportEndDatePicker = null;
+    if (exportEndDateInput) {
+      exportEndDatePicker = flatpickr(exportEndDateInput, {
+        dateFormat: "Y-m-d",
+        altInput: false,
+        allowInput: false,
+        clickOpens: true,
+        theme: "default",
+        onChange: function(selectedDates, dateStr, instance) {
+          exportEndDateInput.value = dateStr;
+          updateExportDateConstraints();
+          exportEndDateInput.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      });
+      
+      if (exportEndDateBtn) {
+        exportEndDateBtn.addEventListener('click', function() {
+          exportEndDatePicker.open();
+        });
+      }
+    }
+    
+    // Initialize export constraints
+    updateExportDateConstraints();
+    
+    // Add form validation for CSV export
+    const exportCsvForm = document.getElementById('exportCsvForm');
+    if (exportCsvForm) {
+      exportCsvForm.addEventListener('submit', function(e) {
+        // Validate date range if both dates are provided
+        if (exportStartDateInput && exportEndDateInput && 
+            exportStartDateInput.value && exportEndDateInput.value) {
+          const startDate = new Date(exportStartDateInput.value);
+          const endDate = new Date(exportEndDateInput.value);
+          
+          if (startDate > endDate) {
+            e.preventDefault();
+            exportStartDateInput.classList.add('is-invalid');
+            exportEndDateInput.classList.add('is-invalid');
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'invalid-feedback';
+            errorDiv.textContent = 'START DATE cannot be greater than END DATE.';
+            exportEndDateInput.parentElement.appendChild(errorDiv);
+            exportEndDateInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return false;
+          }
+        }
+      });
+    }
+  });
+
   function generatePrintableReport() {
     const reportSelect = document.getElementById('printReportSelect');
-    const yearInput = document.getElementById('printYear');
-    const monthSelect = document.getElementById('printMonth');
+    const startDateInput = document.getElementById('printStartDate');
+    const endDateInput = document.getElementById('printEndDate');
     const previewContainer = document.getElementById('reportPreviewContainer');
     const reportContent = document.getElementById('reportContent');
     const loadingIndicator = document.getElementById('reportLoadingIndicator');
     
+    // Reset previous error states
+    if (startDateInput) startDateInput.classList.remove('is-invalid');
+    if (endDateInput) endDateInput.classList.remove('is-invalid');
+    
+    // Remove any existing error messages
+    const existingErrors = document.querySelectorAll('.invalid-feedback');
+    existingErrors.forEach(error => error.remove());
+    
     if (!reportSelect.value) {
       alert('Please select a report type.');
+      return;
+    }
+    
+    // Validate that both dates are required
+    let hasErrors = false;
+    
+    if (!startDateInput.value || startDateInput.value.trim() === '') {
+      startDateInput.classList.add('is-invalid');
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'invalid-feedback';
+      errorDiv.textContent = 'START DATE is required.';
+      startDateInput.parentElement.appendChild(errorDiv);
+      hasErrors = true;
+    }
+    
+    if (!endDateInput.value || endDateInput.value.trim() === '') {
+      endDateInput.classList.add('is-invalid');
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'invalid-feedback';
+      errorDiv.textContent = 'END DATE is required.';
+      endDateInput.parentElement.appendChild(errorDiv);
+      hasErrors = true;
+    }
+    
+    // If there are validation errors, stop here
+    if (hasErrors) {
+      // Scroll to first error field
+      const firstError = document.querySelector('.is-invalid');
+      if (firstError) {
+        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        firstError.focus();
+      }
+      return;
+    }
+    
+    // Validate date range
+    const startDate = new Date(startDateInput.value);
+    const endDate = new Date(endDateInput.value);
+    
+    if (startDate > endDate) {
+      startDateInput.classList.add('is-invalid');
+      endDateInput.classList.add('is-invalid');
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'invalid-feedback';
+      errorDiv.textContent = 'START DATE cannot be greater than END DATE.';
+      endDateInput.parentElement.appendChild(errorDiv);
+      endDateInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
     
@@ -331,12 +721,36 @@
     let url = reportSelect.value;
     const params = new URLSearchParams();
     
-    if (yearInput.value) {
-      params.append('year', yearInput.value);
-    }
-    
-    if (monthSelect.value) {
-      params.append('month', monthSelect.value);
+    if (startDateInput.value && endDateInput.value) {
+      const startDate = new Date(startDateInput.value);
+      const endDate = new Date(endDateInput.value);
+      
+      // Extract year and month from dates for backward compatibility with report views
+      const startYear = startDate.getFullYear();
+      const startMonth = startDate.getMonth() + 1;
+      const endYear = endDate.getFullYear();
+      const endMonth = endDate.getMonth() + 1;
+      
+      // Add year (use start year, or end year if different)
+      params.append('year', startYear);
+      
+      // If same year and month, use single month
+      if (startYear === endYear && startMonth === endMonth) {
+        params.append('month', startMonth);
+      } else {
+        // Use month range
+        params.append('month_from', startMonth);
+        params.append('month_to', endMonth);
+        // If different years, we need to handle this - for now use the range
+        if (startYear !== endYear) {
+          params.set('year', startYear);
+          // Note: This might need adjustment based on how reports handle cross-year ranges
+        }
+      }
+      
+      // Also add date_from and date_to for reports that support direct date filtering
+      params.append('date_from', startDateInput.value);
+      params.append('date_to', endDateInput.value);
     }
     
     // Append query string if there are any parameters
@@ -392,6 +806,16 @@
       
       // Clone the report card to preserve original structure
       const clonedCard = reportCard.cloneNode(true);
+      
+      // Remove notes section from print output
+      const notesSections = clonedCard.querySelectorAll('.notes-list, .mt-3.notes-list, .print-notes, .mt-3 small');
+      notesSections.forEach(notes => {
+        // Check if it's a notes section (contains "Notes:" or "Generated on" text)
+        const notesText = notes.textContent || '';
+        if (notesText.includes('Notes:') || notesText.includes('Generated on') || notesText.includes('Counts reflect') || notesText.includes('Possible Rabies') || notesText.includes('Gastrointestinal Issue')) {
+          notes.remove();
+        }
+      });
       
       // Remove filter forms and buttons (but preserve header with logos and title)
       const forms = clonedCard.querySelectorAll('form.d-print-none, form[method="get"]');
@@ -454,15 +878,66 @@
         console.warn('Header section not found in cloned card');
       }
       
+      // Check if this is a Barangay Performance report
+      const isBarangayPerformance = url.includes('barangay-referral-performance');
+
+      // Determine the extended report title
+      const reportTitleMap = [
+        { keys: ['barangay-referral-performance'], title: 'Barangay Performance Summary' },
+        { keys: ['morbidity'], title: 'TOP DIAGNOSIS REPORT' },
+        { keys: ['facility_workforce_masterlist', 'facility-workforce'], title: 'FACILITY & WORKFORCE MASTERLIST' },
+        { keys: ['referral_registry_report', 'referral-registry'], title: 'REFERRAL REGISTRY WITH VITAL SIGNS' },
+        { keys: ['system_usage_scorecard', 'system-usage-scorecard'], title: 'SYSTEM USAGE & ADOPTION SCORECARD' },
+      ];
+
+      let reportTitle = 'Report Preview';
+      const selectedUrl = reportSelect.value || '';
+      for (const entry of reportTitleMap) {
+        const keys = entry.keys || [entry.key];
+        if (keys.some(key => selectedUrl.includes(key))) {
+          reportTitle = entry.title;
+          break;
+        }
+      }
+
+      const previewTitleEl = document.getElementById('reportPreviewTitle');
+      if (previewTitleEl) {
+        previewTitleEl.innerHTML = `<i class="bi bi-file-earmark-text me-2"></i>${reportTitle}`;
+      }
+      
+      // Format date for display (e.g., "November 01, 2025")
+      function formatDateForDisplay(dateString) {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        const months = ['January', 'February', 'March', 'April', 'May', 'June', 
+                       'July', 'August', 'September', 'October', 'November', 'December'];
+        const month = months[date.getMonth()];
+        const day = String(date.getDate()).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${month} ${day}, ${year}`;
+      }
+      
+      // Get reporting period date range
+      let reportingPeriodHtml = '';
+      if (!isBarangayPerformance && startDateInput.value && endDateInput.value) {
+        const startDateFormatted = formatDateForDisplay(startDateInput.value);
+        const endDateFormatted = formatDateForDisplay(endDateInput.value);
+        reportingPeriodHtml = `<div style="font-size: 10pt; color: #333; margin-top: 4px; font-weight: 500;">Reporting Period: ${startDateFormatted} to ${endDateFormatted}</div>`;
+      }
+      
       // Replace the middle section with official address information
       const middleSection = clonedCard.querySelector('.text-center.flex-grow-1.px-lg-4, .text-center');
       if (middleSection) {
         middleSection.innerHTML = `
-          <h6 class="mb-1">Republic of the Philippines</h6>
-          <h6 class="mb-1">Province of Davao del Norte</h6>
-          <h5 class="mb-1">Municipality of New Corella</h5>
-          <h6 class="mb-1">Municipal Health Office</h6>
-          <p class="mb-0 text-muted small">Purok 5, Poblacion, New Corella | rhunewcorella@yahoo.com | (+63) 970-093-3480</p>
+          <div style="font-size: 11pt; line-height: 1.3;">
+            <div style="font-weight: bold; margin-bottom: 2px;">Republic of the Philippines</div>
+            <div style="font-weight: bold; margin-bottom: 2px;">Province of Davao del Norte</div>
+            <div style="font-weight: bold; font-size: 12pt; margin-bottom: 2px;">Municipality of New Corella</div>
+            <div style="font-weight: bold; margin-bottom: 2px;">Municipal Health Office</div>
+            <div style="font-size: 9pt; color: #666; margin-top: 3px;">Purok 5, Poblacion, New Corella | rhunewcorella@yahoo.com | (+63) 970-093-3480</div>
+            <div class="mt-4" style="font-weight: bold; font-size: 13pt; text-transform: uppercase; letter-spacing: 0.5px;">${reportTitle}</div>
+            ${reportingPeriodHtml}
+          </div>
         `;
       } else {
         console.warn('Middle section not found for address replacement');
@@ -624,7 +1099,11 @@
                             text.includes('reflect') ||
                             text.includes('accreditation') || 
                             text.includes('personnel records') ||
-                            text.includes('personnel');
+                            text.includes('personnel') ||
+                            text.includes('Possible Rabies') ||
+                            text.includes('Gastrointestinal Issue') ||
+                            text.includes('DOH Form 48') ||
+                            text.includes('LBM-related');
       
       if (isNotesSection) {
         // Find the parent container (usually a div with mt-3 or mb-3)
@@ -756,7 +1235,7 @@
         <style>
           @page { 
             size: A4 landscape; 
-            margin: 20mm 15mm;
+            margin: 0mm 12mm 12mm 12mm;
             @top-center { content: ""; }
             @bottom-center { content: ""; }
             @top-left { content: ""; }
@@ -772,7 +1251,7 @@
             font-family: Arial, sans-serif; 
             font-size: 12pt;
             margin: 0;
-            padding: 15px;
+            padding: 0 12mm 12mm;
             color: #000;
             line-height: 1.5;
           }
@@ -783,7 +1262,7 @@
             padding: 0 !important;
           }
           .card-body {
-            padding: 10px !important;
+            padding: 6mm 0 0 0 !important;
             margin: 0 !important;
           }
           h1, h2, h3, h4, h5, h6 {
@@ -797,6 +1276,18 @@
           h3 { font-size: 14pt; }
           h4 { font-size: 13pt; }
           h5, h6 { font-size: 12pt; }
+          /* Override for header middle section to prevent oversized text */
+          .d-flex.align-items-center .text-center div {
+            font-size: 11pt !important;
+            line-height: 1.3 !important;
+            margin-bottom: 2px !important;
+          }
+          .d-flex.align-items-center .text-center div[style*="font-size: 12pt"] {
+            font-size: 12pt !important;
+          }
+          .d-flex.align-items-center .text-center div[style*="font-size: 9pt"] {
+            font-size: 9pt !important;
+          }
           p, small, span, div {
             font-family: Arial, sans-serif !important;
             font-size: 12pt;
@@ -805,16 +1296,29 @@
           .d-flex.align-items-center {
             margin-bottom: 15px !important;
             page-break-after: avoid;
+            padding: 5px 0 !important;
+            gap: 15px !important;
           }
           .report-logo,
           img[alt*="Logo"],
           img[src*="LGU"],
           img[src*="MHO"] {
-            width: 70px !important;
-            height: 70px !important;
-            max-width: 70px !important;
-            max-height: 70px !important;
+            width: 95px !important;
+            height: 95px !important;
+            max-width: 95px !important;
+            max-height: 95px !important;
             object-fit: contain;
+            margin: 0 10px !important;
+            padding: 0 !important;
+            display: block !important;
+          }
+          .d-flex.align-items-center > div {
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+          .text-center.flex-grow-1 {
+            padding: 0 15px !important;
+            margin: 0 !important;
           }
           .table-responsive {
             page-break-inside: avoid;
@@ -915,11 +1419,11 @@
           @media print {
             @page {
               size: A4 landscape;
-              margin: 20mm 15mm;
+              margin: 10mm 12mm 12mm 12mm;
             }
             body {
               margin: 0;
-              padding: 10px;
+              padding: 0 12mm 12mm;
             }
             table {
               page-break-inside: avoid !important;

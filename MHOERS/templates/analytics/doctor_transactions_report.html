@@ -1,0 +1,526 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{% static 'css/admin_dashboard.css' %}">
+<!-- Flatpickr CSS for custom date picker -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+<style>
+  /* Date Range Picker Styles */
+  .input-group .form-control {
+    border-right: none;
+  }
+  
+  .input-group .btn {
+    border-left: none;
+    padding: 0.375rem 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .input-group .btn:hover {
+    background-color: #333 !important;
+    border-color: #333 !important;
+  }
+  
+  .input-group .btn:focus {
+    box-shadow: 0 0 0 0.2rem rgba(0, 0, 0, 0.25);
+  }
+  
+  .form-label {
+    font-weight: 500;
+    color: #495057;
+  }
+  
+  /* Custom input styling */
+  .custom-date-input {
+    cursor: pointer;
+    background-color: white;
+    color: #000;
+  }
+  
+  .custom-date-input:focus {
+    border-color: #000;
+    box-shadow: 0 0 0 0.2rem rgba(0, 0, 0, 0.25);
+  }
+  
+  /* Custom Flatpickr Date Picker Styles - Black and White */
+  .flatpickr-calendar {
+    font-family: 'Roboto', sans-serif;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border: 1px solid #000;
+    background-color: #fff;
+  }
+  
+  .flatpickr-months {
+    background-color: #000;
+    border-radius: 8px 8px 0 0;
+    padding: 10px;
+  }
+  
+  .flatpickr-month {
+    color: #fff;
+  }
+  
+  .flatpickr-current-month {
+    color: #fff;
+    font-weight: 600;
+  }
+  
+  .flatpickr-prev-month,
+  .flatpickr-next-month {
+    color: #fff;
+    fill: #fff;
+    padding: 5px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+  }
+  
+  .flatpickr-prev-month:hover,
+  .flatpickr-next-month:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+  }
+  
+  .flatpickr-weekdays {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #000;
+  }
+  
+  .flatpickr-weekday {
+    color: #000;
+    font-weight: 600;
+    font-size: 0.85rem;
+  }
+  
+  .flatpickr-day {
+    border-radius: 6px;
+    margin: 2px;
+    transition: all 0.2s;
+    color: #000;
+  }
+  
+  .flatpickr-day:hover {
+    background-color: #e9ecef;
+    border-color: #000;
+  }
+  
+  .flatpickr-day.selected,
+  .flatpickr-day.startRange,
+  .flatpickr-day.endRange {
+    background-color: #000;
+    border-color: #000;
+    color: #fff;
+    font-weight: 600;
+  }
+  
+  .flatpickr-day.inRange {
+    background-color: #e9ecef;
+    border-color: #000;
+    color: #000;
+  }
+  
+  .flatpickr-day.today {
+    border-color: #000;
+    border-width: 2px;
+    font-weight: 600;
+  }
+  
+  .flatpickr-day.today:hover {
+    background-color: #000;
+    color: #fff;
+  }
+  
+  .flatpickr-day.flatpickr-disabled,
+  .flatpickr-day.prevMonthDay,
+  .flatpickr-day.nextMonthDay {
+    color: #999;
+    opacity: 0.5;
+  }
+  
+  .flatpickr-time {
+    border-top: 1px solid #000;
+    padding: 10px;
+    background-color: #fff;
+  }
+  
+  .flatpickr-time input {
+    border-radius: 4px;
+    border: 1px solid #000;
+    color: #000;
+  }
+  
+  .flatpickr-time input:hover {
+    background-color: #f8f9fa;
+  }
+  
+  .report-logo {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+  }
+
+  @media print {
+    .d-print-none {
+      display: none !important;
+    }
+    
+    body {
+      background: white !important;
+      color: black !important;
+    }
+    
+    .container-fluid {
+      padding: 0 !important;
+    }
+    
+    .card {
+      border: none !important;
+      box-shadow: none !important;
+      page-break-inside: avoid;
+    }
+    
+    .card-body {
+      padding: 1rem !important;
+    }
+    
+    .table {
+      font-size: 0.7rem;
+      border-collapse: collapse;
+      width: 100%;
+      page-break-inside: auto;
+    }
+    
+    .table th,
+    .table td {
+      padding: 0.35rem 0.5rem;
+      border: 1px solid #000 !important;
+      vertical-align: top;
+    }
+    
+    .table thead {
+      display: table-header-group;
+    }
+    
+    .table tbody tr {
+      page-break-inside: avoid;
+      page-break-after: auto;
+    }
+    
+    .table tbody tr:nth-child(even) {
+      background-color: #f9f9f9 !important;
+    }
+    
+    .report-logo {
+      width: 60px !important;
+      height: 60px !important;
+    }
+    
+    h4 {
+      font-size: 1.1rem !important;
+      margin-bottom: 0.5rem !important;
+    }
+    
+    p, small {
+      font-size: 0.85rem !important;
+    }
+    
+    @page {
+      size: A4 portrait;
+      margin: 1.5cm 1cm;
+    }
+    
+    /* Prevent page breaks inside important sections */
+    .table-responsive {
+      overflow: visible !important;
+    }
+  }
+
+  .filter-section {
+    background-color: #f8f9fa;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .stats-card {
+    border-left: 4px solid;
+    transition: transform 0.2s;
+  }
+
+  .stats-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  }
+
+  .stats-card.pending {
+    border-left-color: #ffc107;
+  }
+
+  .stats-card.in-progress {
+    border-left-color: #0d6efd;
+  }
+
+  .stats-card.completed {
+    border-left-color: #198754;
+  }
+</style>
+
+{% include 'components/navbar.html' %}
+
+<div class="container-fluid py-4">
+  <!-- Page Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4 d-print-none">
+    <h2 class="mb-0">
+      Transactions Report
+    </h2>
+    <button type="button" class="btn btn-outline-primary" onclick="printDoctorReport()">
+      <i class="bi bi-printer me-2"></i>Print Report
+    </button>
+  </div>
+
+  <!-- Filter Section -->
+  <div class="filter-section d-print-none">
+    <h5 class="mb-3">Filter Options</h5>
+    <form method="get" id="filterForm">
+      <div class="row g-3 align-items-end">
+        <div class="col-md-3">
+          <label for="filterStartDate" class="form-label small mb-1">START DATE</label>
+          <div class="input-group">
+            <input type="text" class="form-control custom-date-input" id="filterStartDate" name="date_from" placeholder="Select start date" readonly value="{{ date_from }}">
+            <button type="button" class="btn" style="background-color: #000; color: white; border: 1px solid #000;" id="filterStartDateBtn">
+              <i class="bi bi-calendar3"></i>
+            </button>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <label for="filterEndDate" class="form-label small mb-1">END DATE</label>
+          <div class="input-group">
+            <input type="text" class="form-control custom-date-input" id="filterEndDate" name="date_to" placeholder="Select end date" readonly value="{{ date_to }}">
+            <button type="button" class="btn" style="background-color: #000; color: white; border: 1px solid #000;" id="filterEndDateBtn">
+              <i class="bi bi-calendar3"></i>
+            </button>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label small mb-1 d-block">&nbsp;</label>
+          <button type="submit" class="btn btn-primary w-100">
+            <i class="bi bi-search me-2"></i>Apply Filters
+          </button>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label small mb-1 d-block">&nbsp;</label>
+          <a href="{% url 'doctor_transactions_report' %}" class="btn btn-outline-secondary w-100">
+            <i class="bi bi-arrow-counterclockwise me-2"></i>Reset
+          </a>
+        </div>
+      </div>
+      <p class="text-muted small mt-3 mb-0">
+        <i class="bi bi-info-circle me-1"></i>Tip: Select a date range (START DATE to END DATE) to filter reports. Leave fields blank to show all data.
+      </p>
+    </form>
+  </div>
+
+  
+
+  <!-- Report Header (Print) -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-4">
+      <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center mb-4">
+        <div class="flex-grow-1">
+          <div class="d-flex align-items-center justify-content-between flex-wrap mb-3">
+            <img src="{% static 'images/LGU-NEWCORELLA.png' %}" alt="LGU New Corella Logo" class="report-logo mb-3 mb-lg-0">
+            <div class="text-center flex-grow-1 px-lg-4">
+              <h4 class="text-primary mb-1">Doctor Transactions Report</h4>
+              <p class="text-muted mb-0">Dr. {{ doctor_profile.first_name }} {{ doctor_profile.last_name }}</p>
+              {% if date_from_obj and date_to_obj %}
+                <small class="text-muted">
+                  Period: {{ date_from_obj|date:"M d, Y" }} - {{ date_to_obj|date:"M d, Y" }}
+                </small>
+              {% elif date_from_obj %}
+                <small class="text-muted">
+                  Period: {{ date_from_obj|date:"M d, Y" }}
+                </small>
+              {% else %}
+                <small class="text-muted">All Time Records</small>
+              {% endif %}
+            </div>
+            <img src="{% static 'images/MHO-LOGO.png' %}" alt="MHO Logo" class="report-logo mb-3 mb-lg-0 d-none d-sm-block">
+          </div>
+        </div>
+      </div>
+
+      <!-- Transactions Table -->
+      <div class="table-responsive">
+        <table class="table table-bordered table-hover">
+          <thead class="table-light">
+            <tr>
+              <th>Date & Time</th>
+              <th>Patient Name</th>
+              <th>Facility</th>
+              <th>Final Diagnosis</th>
+              <th>Completed At</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if referrals %}
+              {% for referral in referrals %}
+              <tr>
+                <td>{{ referral.created_at|date:"M d, Y h:i A" }}</td>
+                <td>
+                  <strong>{{ referral.patient.first_name }} {{ referral.patient.last_name }}</strong>
+                </td>
+                <td>{{ referral.patient.facility.name|default:"N/A" }}</td>
+                <td>{{ referral.final_diagnosis|default:"N/A"|truncatewords:15 }}</td>
+                <td>
+                  {% if referral.completed_at %}
+                    {{ referral.completed_at|date:"M d, Y h:i A" }}
+                  {% else %}
+                    <span class="text-muted">-</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            {% else %}
+              <tr>
+                <td colspan="5" class="text-center text-muted py-4">
+                  <i class="bi bi-inbox me-2"></i>No completed transactions found for the selected period.
+                </td>
+              </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Report Footer -->
+      <div class="mt-4 pt-3 border-top">
+        <div class="row">
+          <div class="col-md-6">
+            <small class="text-muted">
+              <strong>Generated:</strong> {{ now_datetime|date:"F d, Y h:i A" }}
+            </small>
+          </div>
+          <div class="col-md-6 text-md-end">
+            <small class="text-muted">
+              <strong>Total Records:</strong> {{ total_referrals }}
+            </small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Flatpickr JS for custom date picker -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+<script>
+// Print function for doctor report
+function printDoctorReport() {
+  // Use browser's native print dialog
+  window.print();
+}
+
+// Initialize Flatpickr for filter date pickers
+document.addEventListener('DOMContentLoaded', function() {
+  const filterStartDateInput = document.getElementById('filterStartDate');
+  const filterEndDateInput = document.getElementById('filterEndDate');
+  const filterStartDateBtn = document.getElementById('filterStartDateBtn');
+  const filterEndDateBtn = document.getElementById('filterEndDateBtn');
+  
+  // Update date constraints dynamically
+  function updateFilterDateConstraints() {
+    if (filterStartDatePicker && filterEndDatePicker) {
+      const startDate = filterStartDatePicker.selectedDates[0];
+      const endDate = filterEndDatePicker.selectedDates[0];
+      
+      if (startDate) {
+        filterEndDatePicker.set('minDate', startDate);
+      } else {
+        filterEndDatePicker.set('minDate', null);
+      }
+      
+      if (endDate) {
+        filterStartDatePicker.set('maxDate', endDate);
+      } else {
+        filterStartDatePicker.set('maxDate', null);
+      }
+    }
+  }
+  
+  // Initialize Flatpickr for START DATE
+  let filterStartDatePicker = null;
+  if (filterStartDateInput) {
+    filterStartDatePicker = flatpickr(filterStartDateInput, {
+      dateFormat: "Y-m-d",
+      altInput: false,
+      allowInput: false,
+      clickOpens: true,
+      theme: "default",
+      onChange: function(selectedDates, dateStr, instance) {
+        // Update the actual input value for form submission
+        filterStartDateInput.value = dateStr;
+        // Update constraints
+        updateFilterDateConstraints();
+        // Trigger change event for auto-filter
+        filterStartDateInput.dispatchEvent(new Event('change', { bubbles: true }));
+      },
+      onClose: function(selectedDates, dateStr, instance) {
+        // Ensure value is set
+        if (dateStr) {
+          filterStartDateInput.value = dateStr;
+        }
+      }
+    });
+    
+    // Make button trigger the picker
+    if (filterStartDateBtn) {
+      filterStartDateBtn.addEventListener('click', function() {
+        filterStartDatePicker.open();
+      });
+    }
+  }
+  
+  // Initialize Flatpickr for END DATE
+  let filterEndDatePicker = null;
+  if (filterEndDateInput) {
+    filterEndDatePicker = flatpickr(filterEndDateInput, {
+      dateFormat: "Y-m-d",
+      altInput: false,
+      allowInput: false,
+      clickOpens: true,
+      theme: "default",
+      onChange: function(selectedDates, dateStr, instance) {
+        // Update the actual input value for form submission
+        filterEndDateInput.value = dateStr;
+        // Update constraints
+        updateFilterDateConstraints();
+        // Trigger change event for auto-filter
+        filterEndDateInput.dispatchEvent(new Event('change', { bubbles: true }));
+      },
+      onClose: function(selectedDates, dateStr, instance) {
+        // Ensure value is set
+        if (dateStr) {
+          filterEndDateInput.value = dateStr;
+        }
+      }
+    });
+    
+    // Make button trigger the picker
+    if (filterEndDateBtn) {
+      filterEndDateBtn.addEventListener('click', function() {
+        filterEndDatePicker.open();
+      });
+    }
+  }
+  
+  // Initialize constraints
+  updateFilterDateConstraints();
+});
+</script>
+
+{% endblock %}
+

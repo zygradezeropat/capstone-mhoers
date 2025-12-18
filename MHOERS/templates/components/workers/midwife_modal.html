@@ -1,0 +1,422 @@
+<!-- Midwife Registration Modal -->
+<div class="modal fade" id="midwifeModal" tabindex="-1" role="dialog" aria-labelledby="midwifeModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
+    <div class="modal-content modern-modal">
+      <form method="POST" action="{% url 'create_midwife' %}" class="midwife-form"> 
+        {% csrf_token %}
+        <div class="modal-header modern-header">
+          <div class="header-content">
+            <div class="icon-wrapper">
+              <i class="bi bi-gender-female"></i>
+            </div>
+            <div class="title-content">
+              <h5 class="modal-title" id="midwifeModalLabel">Add New Midwife</h5>
+              <p class="modal-subtitle">Register a new midwifery professional</p>
+            </div>
+          </div>
+          <button type="button" class="btn-close modern-close" data-bs-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+
+        <div class="modal-body modern-body">
+          {% if messages %}
+            <div class="alert alert-danger modern-alert">
+              <i class="bi bi-exclamation-triangle-fill me-2"></i>
+              {% for message in messages %}
+                <p class="mb-0">{{ message }}</p>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <!-- Personal Information Section -->
+          <div class="form-section">
+            <div class="section-header">
+              <i class="bi bi-person-circle"></i>
+              <h6>Personal Information</h6>
+            </div>
+            <div class="row g-3">
+              <div class="col-md-4">
+                <div class="form-floating">
+                  <input type="text" name="first_name" id="midwife_first_name" class="form-control modern-input" placeholder="First Name" required>
+                  <label for="midwife_first_name"><i class="bi bi-person me-2"></i>First Name</label>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-floating">
+                  <input type="text" name="last_name" id="midwife_last_name" class="form-control modern-input" placeholder="Last Name" required>
+                  <label for="midwife_last_name"><i class="bi bi-person me-2"></i>Last Name</label>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-floating">
+                  <input type="text" name="middle_name" id="midwife_middle_name" class="form-control modern-input" placeholder="Middle Name">
+                  <label for="midwife_middle_name"><i class="bi bi-person me-2"></i>Middle Name</label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Professional Information Section -->
+          <div class="form-section">
+            <div class="section-header">
+              <i class="bi bi-award"></i>
+              <h6>Professional Information</h6>
+            </div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <div class="form-floating">
+                  <input type="text" name="username" id="midwife_username" class="form-control modern-input" placeholder="Username" required>
+                  <label for="midwife_username"><i class="bi bi-at me-2"></i>Username</label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-floating">
+                  <input type="text" name="license_number" id="midwife_license_number" class="form-control modern-input" placeholder="Midwifery License Number" required>
+                  <label for="midwife_license_number"><i class="bi bi-shield-check me-2"></i>Midwifery License Number</label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-floating">
+                  <input type="text" name="prc_license_number" id="midwife_prc_license_number" class="form-control modern-input" placeholder="PRC License Number">
+                  <label for="midwife_prc_license_number"><i class="bi bi-shield-check me-2"></i>PRC License Number</label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-floating">
+                  <select name="specialization" id="midwife_specialization" class="form-select modern-select">
+                    <option value="" disabled selected>Select midwifery specialization</option>
+                    <option value="Maternal and Child Health">Maternal and Child Health</option>
+                    <option value="Antenatal Care">Antenatal Care</option>
+                    <option value="Postnatal Care">Postnatal Care</option>
+                    <option value="Family Planning">Family Planning</option>
+                    <option value="Reproductive Health">Reproductive Health</option>
+                    <option value="Community Midwifery">Community Midwifery</option>
+                    <option value="Clinical Midwifery">Clinical Midwifery</option>
+                    <option value="Other">Other</option>
+                  </select>
+                  <label for="midwife_specialization"><i class="bi bi-gender-female me-2"></i>Midwifery Specialization</label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Contact Information Section -->
+          <div class="form-section">
+            <div class="section-header">
+              <i class="bi bi-telephone"></i>
+              <h6>Contact Information</h6>
+            </div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <div class="form-floating">
+                  <input type="email" name="email" id="midwife_email" class="form-control modern-input" placeholder="Email Address" required>
+                  <label for="midwife_email"><i class="bi bi-envelope me-2"></i>Email Address</label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-floating">
+                  <input type="tel" name="phone" id="midwife_phone" class="form-control modern-input" placeholder="Phone Number" required>
+                  <label for="midwife_phone"><i class="bi bi-phone me-2"></i>Phone Number</label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Address Information Section -->
+          <div class="form-section">
+            <div class="section-header">
+              <i class="bi bi-geo-alt"></i>
+              <h6>Address Information</h6>
+            </div>
+            <div class="row g-3">
+              <div class="col-12">
+                <div class="form-floating">
+                  <input type="text" name="street_address" id="midwife_street_address" class="form-control modern-input" placeholder="Street Address">
+                  <label for="midwife_street_address"><i class="bi bi-house me-2"></i>Street Address</label>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-floating">
+                  <input type="text" name="barangay" id="midwife_barangay" class="form-control modern-input" placeholder="Barangay">
+                  <label for="midwife_barangay"><i class="bi bi-geo-alt me-2"></i>Barangay</label>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-floating">
+                  <input type="text" name="city" id="midwife_city" class="form-control modern-input" placeholder="City">
+                  <label for="midwife_city"><i class="bi bi-building me-2"></i>City</label>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-floating">
+                  <input type="text" name="province" id="midwife_province" class="form-control modern-input" placeholder="Province">
+                  <label for="midwife_province"><i class="bi bi-map me-2"></i>Province</label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-floating">
+                  <input type="text" name="postal_code" id="midwife_postal_code" class="form-control modern-input" placeholder="Postal Code">
+                  <label for="midwife_postal_code"><i class="bi bi-mailbox me-2"></i>Postal Code</label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-floating">
+                  <select name="facility" id="midwife_facility" class="form-select modern-select">
+                    <option value="" disabled selected>Select Facility (Optional)</option>
+                    {% for facility in facilities %}
+                      <option value="{{ facility.facility_id }}">{{ facility.name }}</option>
+                    {% endfor %}
+                  </select>
+                  <label for="midwife_facility"><i class="bi bi-building me-2"></i>Assigned Facility</label>
+                </div>
+              </div>
+              <div class="col-12">
+                <div class="form-floating">
+                  <input type="text" name="assigned_area" id="midwife_assigned_area" class="form-control modern-input" placeholder="Assigned Area">
+                  <label for="midwife_assigned_area"><i class="bi bi-geo-alt-fill me-2"></i>Assigned Area</label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Account Security Section -->
+          <div class="form-section">
+            <div class="section-header">
+              <i class="bi bi-shield-lock"></i>
+              <h6>Account Security</h6>
+            </div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <div class="form-floating">
+                  <input type="password" name="password1" id="midwife_password1" class="form-control modern-input" placeholder="Create Password" required>
+                  <label for="midwife_password1"><i class="bi bi-key me-2"></i>Create Password</label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-floating">
+                  <input type="password" name="password2" id="midwife_password2" class="form-control modern-input" placeholder="Verify Password" required>
+                  <label for="midwife_password2"><i class="bi bi-key-fill me-2"></i>Verify Password</label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer modern-footer">
+          <button type="button" class="btn btn-outline-secondary modern-btn-cancel" data-bs-dismiss="modal">
+            <i class="bi bi-x-circle me-2"></i>Cancel
+          </button>
+          <button type="submit" class="btn btn-primary modern-btn-submit">
+            <i class="bi bi-person-plus me-2"></i>Create Midwife Account
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+.midwife-form .modern-modal {
+  border: none;
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
+
+.midwife-form .modern-header {
+  background: linear-gradient(135deg, #9c27b0 0%, #e91e63 100%);
+  color: white;
+  border: none;
+  padding: 2rem;
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.midwife-form .header-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.midwife-form .icon-wrapper {
+  width: 60px;
+  height: 60px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+.midwife-form .title-content h5 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.midwife-form .modal-subtitle {
+  font-size: 0.9rem;
+  opacity: 0.9;
+  margin: 0;
+}
+
+.midwife-form .modern-close {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 10px;
+  color: white;
+  font-size: 1.5rem;
+  padding: 0.75rem;
+  opacity: 1;
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1050;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.midwife-form .modern-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+  color: white;
+  transform: scale(1.1);
+}
+
+.midwife-form .modern-close:focus {
+  box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.5);
+  color: white;
+}
+
+.midwife-form .modern-close span {
+  font-size: 1.5rem;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.midwife-form .modern-body {
+  padding: 2rem;
+  background: #f8f9fa;
+}
+
+.midwife-form .form-section {
+  background: white;
+  border-radius: 15px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e9ecef;
+}
+
+.midwife-form .section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #f1f3f4;
+}
+
+.midwife-form .section-header i {
+  color: #9c27b0;
+  font-size: 1.2rem;
+}
+
+.midwife-form .section-header h6 {
+  color: #2c3e50;
+  font-weight: 600;
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.midwife-form .modern-input, .midwife-form .modern-select {
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  padding: 1rem 0.75rem;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  background: #f8f9fa;
+}
+
+.midwife-form .modern-input:focus, .midwife-form .modern-select:focus {
+  border-color: #9c27b0;
+  box-shadow: 0 0 0 0.2rem rgba(156, 39, 176, 0.25);
+  background: white;
+}
+
+.midwife-form .form-floating > label {
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.midwife-form .modern-alert {
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+  color: white;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.midwife-form .modern-footer {
+  background: white;
+  border: none;
+  padding: 1.5rem 2rem;
+  border-top: 1px solid #e9ecef;
+}
+
+.midwife-form .modern-btn-cancel {
+  border: 2px solid #6c757d;
+  border-radius: 10px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.midwife-form .modern-btn-cancel:hover {
+  background: #6c757d;
+  border-color: #6c757d;
+  transform: translateY(-2px);
+}
+
+.midwife-form .modern-btn-submit {
+  background: linear-gradient(135deg, #9c27b0 0%, #e91e63 100%);
+  border: none;
+  border-radius: 10px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.midwife-form .modern-btn-submit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(156, 39, 176, 0.4);
+}
+
+@media (max-width: 768px) {
+  .midwife-form .modal-xl {
+    max-width: 95%;
+  }
+  
+  .midwife-form .modern-header {
+    padding: 1.5rem;
+  }
+  
+  .midwife-form .modern-body {
+    padding: 1.5rem;
+  }
+  
+  .midwife-form .header-content {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+</style>
+

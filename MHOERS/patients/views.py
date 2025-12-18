@@ -1,10 +1,10 @@
 from django.shortcuts import render
 from patients.models import Patient
-from referrals.models import Referral
+from referrals.models import Referral, FollowUpVisit
 from facilities.models import Facility
 from .forms import PatientForm
 from django.contrib import messages
-from django.shortcuts import render, redirect 
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, OuterRef, Subquery
 from django.http import JsonResponse
@@ -23,6 +23,13 @@ logger = logging.getLogger(__name__)
 def addPatient(request):
     if request.method == 'POST':
         form = PatientForm(request.POST)
+        
+        # Get the redirect URL from POST data or HTTP Referer
+        next_url = request.POST.get('next') or request.META.get('HTTP_REFERER', None)
+        # Default to barangayPatients if no redirect URL provided
+        if not next_url or next_url == request.build_absolute_uri():
+            next_url = 'patients:barangayPatients'
+        
         if form.is_valid():
             first_name = form.cleaned_data['first_name']
             middle_name = form.cleaned_data['middle_name'] 
@@ -38,54 +45,236 @@ def addPatient(request):
 
             if existing_patient:
                 messages.error(request, "Patient with this name already exists.")
-                return redirect('patients:barangayPatients')
+                # Redirect to named URL or full URL
+                if next_url.startswith('http'):
+                    return redirect(next_url)
+                return redirect(next_url)
 
             # Get the facility associated with the current user
-            facility = Facility.objects.filter(users=request.user).first()
+            # First check if user is BHW and get facility from BHWRegistration
+            facility = None
+            try:
+                from accounts.models import BHWRegistration
+                bhw_profile = BHWRegistration.objects.get(user=request.user)
+                facility = bhw_profile.facility
+            except BHWRegistration.DoesNotExist:
+                # If not BHW, check shared_facilities
+                facility = Facility.objects.filter(users=request.user).first()
+            
             if facility:
                 patient = form.save(commit=False)
                 patient.user = request.user
                 patient.facility = facility
                 patient.save()
                 messages.success(request, "Patient added successfully!")
-                return redirect('patients:barangayPatients')
+                
+                # Redirect to named URL or full URL
+                # If redirecting to assessment, add patient_id parameter
+                if next_url.startswith('http'):
+                    from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
+                    parsed = urlparse(next_url)
+                    
+                    # Check if URL contains 'assessment'
+                    if 'assessment' in parsed.path:
+                        # Add patient_id to query parameters
+                        query_params = parse_qs(parsed.query)
+                        query_params['patient_id'] = [str(patient.patients_id)]
+                        new_query = urlencode(query_params, doseq=True)
+                        next_url = urlunparse((parsed.scheme, parsed.netloc, parsed.path, parsed.params, new_query, parsed.fragment))
+                    
+                    return redirect(next_url)
+                else:
+                    # For named URLs like 'patients:barangayPatients'
+                    return redirect(next_url)
             else:
                 messages.error(request, "No facility found for this user.")
-                return redirect('patients:barangayPatients')
+                # Redirect to named URL or full URL
+                if next_url.startswith('http'):
+                    return redirect(next_url)
+                return redirect(next_url)
         else:
             messages.error(request, "Form is invalid.")
             print("❌ Form is invalid")
             print(form.errors)
     else:
         form = PatientForm()
+    
+    # Load barangays for dropdown
+    from facilities.models import Barangay
+    barangays = Barangay.objects.filter(is_active=True).order_by('name')
+    
+    # Get user's facility and its barangay
+    user_facility_barangay_id = None
+    user_facility_barangay_name = None
+    facility = None
+    
+    # First check if user is BHW and get facility from BHWRegistration
+    try:
+        from accounts.models import BHWRegistration
+        bhw_profile = BHWRegistration.objects.get(user=request.user)
+        facility = bhw_profile.facility
+    except BHWRegistration.DoesNotExist:
+        # If not BHW, check shared_facilities
+        facility = Facility.objects.filter(users=request.user).first()
+    
+    # If facility exists and has a barangay, find the matching Barangay object
+    if facility and facility.barangay:
+        user_facility_barangay_name = facility.barangay
+        try:
+            # Try to find barangay by name (case-insensitive)
+            barangay_obj = Barangay.objects.filter(
+                name__iexact=user_facility_barangay_name,
+                is_active=True
+            ).first()
+            if barangay_obj:
+                user_facility_barangay_id = barangay_obj.barangay_id
+        except Exception:
+            pass
 
-    return render(request, 'patients/user/patient_list.html', {'active_page': 'barangayPatients','form': form})
+    return render(request, 'patients/user/patient_list.html', {
+        'active_page': 'barangayPatients',
+        'form': form,
+        'barangays': barangays,
+        'user_facility_barangay_id': user_facility_barangay_id,
+        'user_facility_barangay_name': user_facility_barangay_name
+    })
 
 @login_required
 def barangayPatients(request):
-    facility = request.user.shared_facilities.first() 
+    from datetime import datetime, timedelta
+    from referrals.models import FollowUpVisit
+    
     user = request.user
     latest_referral_subquery = Referral.objects.filter(
         patient=OuterRef('pk')
     ).order_by('-created_at')
 
     # Filter patients by facility instead of individual user
+    # First check if user is BHW and get facility from BHWRegistration
+    facility = None
     try:
-        facility = Facility.objects.get(users=user)
+        from accounts.models import BHWRegistration
+        bhw_profile = BHWRegistration.objects.get(user=user)
+        facility = bhw_profile.facility
+    except BHWRegistration.DoesNotExist:
+        # If not BHW, check shared_facilities
+        try:
+            facility = Facility.objects.get(users=user)
+        except Facility.DoesNotExist:
+            pass
+    
+    if facility:
         patients = Patient.objects.filter(facility=facility).annotate(
             referral_count=Count('referral'),
             latest_referral_id=Subquery(latest_referral_subquery.values('referral_id')[:1]), 
             latest_referral_date=Subquery(latest_referral_subquery.values('created_at')[:1]),
+        ).order_by('-patients_id')  # Newest patients first
+        
+        # Get medical history for patients in this facility
+        medical_history = Medical_History.objects.filter(
+            patient_id__facility=facility
+        ).select_related('patient_id', 'user_id').order_by('-history_id')
+        
+        # Get follow-ups for patients in this facility
+        followups_qs = Medical_History.objects.filter(
+            followup_date__isnull=False,
+            patient_id__facility=facility
+        ).select_related('patient_id', 'user_id')
+        
+        # Get all completed follow-up visit medical_history IDs
+        completed_medical_history_ids = set(
+            FollowUpVisit.objects.filter(
+                status='completed',
+                medical_history__in=followups_qs
+            ).values_list('medical_history_id', flat=True)
         )
-    except Facility.DoesNotExist:
+        
+        # Process follow-ups with status
+        today = datetime.now().date()
+        followups_list = []
+        
+        for followup in followups_qs:
+            has_completed_visit = followup.history_id in completed_medical_history_ids
+            
+            if not has_completed_visit:
+                followup_date = followup.followup_date
+                
+                if followup_date == today:
+                    status = 'today'
+                elif followup_date < today:
+                    status = 'overdue'
+                else:
+                    status = 'upcoming'
+                
+                followups_list.append({
+                    'medical_history': followup,
+                    'patient_id': followup.patient_id.patients_id,
+                    'patient_name': f"{followup.patient_id.first_name} {followup.patient_id.last_name}",
+                    'followup_date': followup.followup_date,
+                    'illness_name': followup.illness_name or 'N/A',
+                    'notes': followup.notes,
+                    'advice': followup.advice,
+                    'status': status,
+                })
+        
+        # Sort follow-ups: overdue, today, upcoming
+        followups_list.sort(key=lambda x: (
+            0 if x['status'] == 'overdue' else 1 if x['status'] == 'today' else 2,
+            x['followup_date']
+        ))
+        
+    else:
         # If user has no facility, return empty queryset
         patients = Patient.objects.none().annotate(
             referral_count=Count('referral'),
             latest_referral_id=Subquery(latest_referral_subquery.values('referral_id')[:1]),
             latest_referral_date=Subquery(latest_referral_subquery.values('created_at')[:1]),
         )
+        medical_history = Medical_History.objects.none()
+        followups_list = []
+    
+    # Load barangays for dropdown in add patient modal
+    from facilities.models import Barangay
+    barangays = Barangay.objects.filter(is_active=True).order_by('name')
+    
+    # Get user's facility barangay for auto-population
+    user_facility_barangay_id = None
+    user_facility_barangay_name = None
+    
+    # If facility exists and has a barangay, find the matching Barangay object
+    if facility and facility.barangay:
+        user_facility_barangay_name = facility.barangay
+        try:
+            # Try to find barangay by name (case-insensitive)
+            barangay_obj = Barangay.objects.filter(
+                name__iexact=user_facility_barangay_name,
+                is_active=True
+            ).first()
+            if barangay_obj:
+                user_facility_barangay_id = barangay_obj.barangay_id
+        except Exception:
+            pass
+    
+    # Create form instance for the modal
+    form = PatientForm()
+    
+    # Get active tab from request
+    active_tab = request.GET.get('tab', 'tab1')
 
-    return render(request, 'patients/user/patient_list.html', {'active_page': 'barangayPatients', 'patients': patients, 'facility': facility})
+    return render(request, 'patients/user/patient_list.html', {
+        'active_page': 'barangayPatients', 
+        'patients': patients, 
+        'facility': facility,
+        'barangays': barangays,
+        'form': form,
+        'medical_history': medical_history,
+        'followups': followups_list,
+        'active_tab': active_tab,
+        'user_facility_barangay_id': user_facility_barangay_id,
+        'user_facility_barangay_name': user_facility_barangay_name,
+        'medical_history_count': medical_history.count() if medical_history else 0,
+        'followups_count': len(followups_list),
+    })
 
 @login_required
 def editPatients(request):
@@ -97,14 +286,26 @@ def editPatients(request):
         latest_referral_subquery = Referral.objects.filter(patient=OuterRef('pk')).order_by('-created_at')
         
         # Filter patients by facility instead of individual user
+        # First check if user is BHW and get facility from BHWRegistration
+        facility = None
         try:
-            facility = Facility.objects.get(users=user)
+            from accounts.models import BHWRegistration
+            bhw_profile = BHWRegistration.objects.get(user=user)
+            facility = bhw_profile.facility
+        except BHWRegistration.DoesNotExist:
+            # If not BHW, check shared_facilities
+            try:
+                facility = Facility.objects.get(users=user)
+            except Facility.DoesNotExist:
+                pass
+        
+        if facility:
             patients = Patient.objects.filter(facility=facility).annotate(
                 referral_count=Count('referral'),
                 latest_referral_id=Subquery(latest_referral_subquery.values('referral_id')[:1]),
                 latest_referral_date=Subquery(latest_referral_subquery.values('created_at')[:1]),
             )
-        except Facility.DoesNotExist:
+        else:
             # If user has no facility, return empty queryset
             patients = Patient.objects.none().annotate(
                 referral_count=Count('referral'),
@@ -114,7 +315,9 @@ def editPatients(request):
 
         try:
             # Update the patient lookup to also check facility
-            facility = Facility.objects.get(users=user)
+            if not facility:
+                raise Facility.DoesNotExist("No facility found for this user")
+            
             patient = Patient.objects.get(patients_id=patient_id, facility=facility)
             
             # Update patient information - Basic Info
@@ -175,7 +378,19 @@ def deletePatient(request):
         user = request.user
         try:
             # Get the facility associated with the current user
-            facility = Facility.objects.get(users=user)
+            # First check if user is BHW and get facility from BHWRegistration
+            facility = None
+            try:
+                from accounts.models import BHWRegistration
+                bhw_profile = BHWRegistration.objects.get(user=user)
+                facility = bhw_profile.facility
+            except BHWRegistration.DoesNotExist:
+                # If not BHW, check shared_facilities
+                facility = Facility.objects.get(users=user)
+            
+            if not facility:
+                raise Facility.DoesNotExist("No facility found for this user")
+            
             patient = Patient.objects.get(patients_id=patient_id, facility=facility)
             patient.delete()
             messages.success(request, "Patient deleted successfully!")
@@ -205,10 +420,22 @@ def search_patients(request):
         # Scope to current user's facility patients unless staff
         if not request.user.is_staff:
             # Get the facility associated with the current user
+            # First check if user is BHW and get facility from BHWRegistration
+            facility = None
             try:
-                facility = Facility.objects.get(users=request.user)
+                from accounts.models import BHWRegistration
+                bhw_profile = BHWRegistration.objects.get(user=request.user)
+                facility = bhw_profile.facility
+            except BHWRegistration.DoesNotExist:
+                # If not BHW, check shared_facilities
+                try:
+                    facility = Facility.objects.get(users=request.user)
+                except Facility.DoesNotExist:
+                    pass
+            
+            if facility:
                 qs = qs.filter(facility=facility)
-            except Facility.DoesNotExist:
+            else:
                 # If user has no facility, return empty results
                 qs = qs.none()
 
@@ -351,23 +578,63 @@ def get_medical_history_followups(request):
         followups_query = Medical_History.objects.filter(
             followup_date__gte=start_date,
             followup_date__lte=end_date
-        ).select_related('patient_id')
+        ).select_related('patient_id', 'referral', 'referral__examined_by')
         
-        # Filter by current user's facility unless user is admin (staff)
-        if not request.user.is_staff:
-            # For regular users, only show follow-ups for patients in their facility
+        # Check if user is a doctor
+        is_doctor = False
+        try:
+            from accounts.models import Doctors
+            doctor_profile = Doctors.objects.get(user=request.user)
+            if doctor_profile.status == 'ACTIVE':
+                is_doctor = True
+        except Doctors.DoesNotExist:
+            pass
+        
+        # Doctors can see all follow-ups (no filter needed)
+        # For non-doctor users (BHW), filter by facility
+        if not request.user.is_staff and not is_doctor:
+            # For non-doctor users (BHW), filter by facility
+            facility = None
+            
+            # Check if user is BHW and get facility from BHWRegistration
             try:
-                facility = Facility.objects.get(users=request.user)
+                from accounts.models import BHWRegistration
+                bhw_profile = BHWRegistration.objects.select_related('facility').get(user=request.user)
+                if bhw_profile.facility:
+                    facility = bhw_profile.facility
+            except BHWRegistration.DoesNotExist:
+                pass
+            
+            # If not BHW, check shared_facilities (ManyToMany relationship)
+            if not facility:
+                try:
+                    facility = Facility.objects.get(users=request.user)
+                except Facility.DoesNotExist:
+                    pass
+            
+            if facility:
                 followups_query = followups_query.filter(
                     patient_id__facility=facility
                 )
-            except Facility.DoesNotExist:
+            else:
                 # If user has no facility, return empty queryset
                 followups_query = followups_query.none()
         # Admin users (is_staff=True) can see all follow-ups, so no additional filtering
         
+        # Exclude follow-ups that have a completed follow-up visit
+        from referrals.models import FollowUpVisit
+        completed_medical_history_ids = FollowUpVisit.objects.filter(
+            status='completed'
+        ).values_list('medical_history_id', flat=True).distinct()
+        
+        followups_query = followups_query.exclude(history_id__in=completed_medical_history_ids)
+        
         # Get the filtered followups
-        followups = followups_query.values(
+        # Only include follow-ups that have a referral link (to ensure examined_by filter works)
+        followups = followups_query.filter(
+            referral__isnull=False
+        ).values(
+            'history_id',  # Add medical history ID
             'followup_date',
             'patient_id__patients_id',
             'patient_id__first_name',
@@ -386,6 +653,7 @@ def get_medical_history_followups(request):
                 followups_by_date[date_key] = []
             
             followups_by_date[date_key].append({
+                'medical_history_id': followup['history_id'],
                 'patient_id': followup['patient_id__patients_id'],
                 'patient_name': f"{followup['patient_id__first_name']} {followup['patient_id__last_name']}",
                 'illness_name': followup['illness_name'],
@@ -431,10 +699,28 @@ def send_today_checkup_sms(request, patient_id: int):
                 patient = Patient.objects.get(patients_id=patient_id)
             else:
                 # For regular users, check facility
-                facility = Facility.objects.get(users=user)
+                facility = None
+                
+                # Check if user is BHW and get facility from BHWRegistration
+                try:
+                    from accounts.models import BHWRegistration
+                    bhw_profile = BHWRegistration.objects.select_related('facility').get(user=user)
+                    if bhw_profile.facility:
+                        facility = bhw_profile.facility
+                except BHWRegistration.DoesNotExist:
+                    pass
+                
+                # If not BHW, check shared_facilities (ManyToMany relationship)
+                if not facility:
+                    try:
+                        facility = Facility.objects.get(users=user)
+                    except Facility.DoesNotExist:
+                        pass
+                
+                if not facility:
+                    return JsonResponse({'ok': False, 'error': 'No facility for user'}, status=403)
+                
                 patient = Patient.objects.get(patients_id=patient_id, facility=facility)
-        except Facility.DoesNotExist:
-            return JsonResponse({'ok': False, 'error': 'No facility for user'}, status=403)
         except Patient.DoesNotExist:
             return JsonResponse({'ok': False, 'error': 'Patient not found'}, status=404)
 
@@ -477,3 +763,74 @@ def send_today_checkup_sms(request, patient_id: int):
         return JsonResponse(result, status=status)
     except Exception as e:
         return JsonResponse({'ok': False, 'error': str(e)}, status=500)
+
+
+@login_required
+def record_followup_visit(request):
+    """
+    API endpoint to record a follow-up visit.
+    Saves data to FollowUpVisit model and links to Medical_History.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+    
+    try:
+        patient_id = request.POST.get('patient_id')
+        medical_history_id = request.POST.get('medical_history_id')
+        
+        if not patient_id or not medical_history_id:
+            return JsonResponse({'success': False, 'error': 'Missing required fields'}, status=400)
+        
+        # Get patient and medical history
+        patient = get_object_or_404(Patient, patients_id=patient_id)
+        medical_history = get_object_or_404(Medical_History, history_id=medical_history_id)
+        
+        # Get visit date
+        visit_date_str = request.POST.get('visit_date')
+        if not visit_date_str:
+            return JsonResponse({'success': False, 'error': 'Visit date is required'}, status=400)
+        
+        visit_date = datetime.strptime(visit_date_str, '%Y-%m-%d').date()
+        
+        # Create FollowUpVisit record
+        followup_visit = FollowUpVisit.objects.create(
+            medical_history=medical_history,
+            patient=patient,
+            user=request.user,
+            visit_date=visit_date,
+            status=request.POST.get('status', 'completed'),
+            
+            # Vital signs
+            weight=request.POST.get('weight') or None,
+            height=request.POST.get('height') or None,
+            bp_systolic=request.POST.get('bp_systolic') or None,
+            bp_diastolic=request.POST.get('bp_diastolic') or None,
+            pulse_rate=request.POST.get('pulse_rate') or None,
+            respiratory_rate=request.POST.get('respiratory_rate') or None,
+            temperature=request.POST.get('temperature') or None,
+            oxygen_saturation=request.POST.get('oxygen_saturation') or None,
+            
+            # Visit information
+            current_symptoms=request.POST.get('current_symptoms', ''),
+            treatment_response=request.POST.get('treatment_response', ''),
+            new_medications=request.POST.get('new_medications', ''),
+            visit_notes=request.POST.get('visit_notes', ''),
+            next_followup_date=datetime.strptime(request.POST.get('next_followup_date'), '%Y-%m-%d').date() if request.POST.get('next_followup_date') and request.POST.get('next_followup_date').strip() else None,
+        )
+        
+        # If there's a next follow-up date, update the medical history
+        if followup_visit.next_followup_date:
+            medical_history.followup_date = followup_visit.next_followup_date
+            medical_history.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Follow-up visit recorded successfully',
+            'followup_visit_id': followup_visit.followup_id
+        })
+        
+    except ValueError as e:
+        return JsonResponse({'success': False, 'error': f'Invalid date format: {str(e)}'}, status=400)
+    except Exception as e:
+        logger.error(f"Error recording follow-up visit: {str(e)}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)

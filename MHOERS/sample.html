@@ -1,86 +1,84 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Disease Spike Heatmap</title>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <style>
-    #map { height: 90vh; width: 100%; }
-    .controls { padding: 10px; background: #fff; position: absolute; top: 10px; left: 50%; transform: translateX(-50%); z-index: 1000; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.3); }
-    select { padding: 5px 10px; border-radius: 5px; border: 1px solid #ccc; }
-    .legend { background: #fff; padding: 10px; line-height: 1.5; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.3); }
-    .legend-color { display:inline-block; width:20px; height:20px; margin-right:5px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <!-- BOOTSTRAP LOADING (Important!) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <title>Patient Info</title>
+
+    <style>
+        .patient-info-section {
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #fff;
+        }
+
+        .modern-form-group {
+            margin-bottom: 15px;
+        }
+    </style>
 </head>
-<body>
+<body class="p-4">
 
-<div class="controls">
-  <label for="monthSelect"><b>Filter Month:</b></label>
-  <select id="monthSelect">
-    <option value="all">All Months</option>
-    <option value="1">January</option>
-    <option value="2">February</option>
-    <option value="3">March</option>
-    <option value="4">April</option>
-    <option value="5">May</option>
-    <option value="6">June</option>
-    <option value="7">July</option>
-    <option value="8">August</option>
-    <option value="9">September</option>
-    <option value="10">October</option>
-    <option value="11">November</option>
-    <option value="12">December</option>
-  </select>
+<div class="container">
+    <div class="referral-section-card patient-info-section">
+        <div class="referral-section-header mb-3">
+            <h6 class="referral-section-title fw-bold">Patient Information</h6>
+        </div>
+
+        <div class="row g-3">
+
+            <!-- ROW 1 -->
+            <div class="col-md-4">
+                <div class="modern-form-group">
+                    <label class="modern-form-label" for="viewReferralPatientName">Patient Name</label>
+                    <input type="text" class="form-control bg-light" id="viewReferralPatientName" disabled>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="modern-form-group">
+                    <label class="modern-form-label" for="viewReferralDateField">Referral Date</label>
+                    <input type="text" class="form-control bg-light" id="viewReferralDateField" disabled>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="modern-form-group">
+                    <label class="modern-form-label" for="viewReferralFrom">Refer From</label>
+                    <input type="text" class="form-control bg-light" id="viewReferralFrom" disabled>
+                </div>
+            </div>
+
+            <!-- ROW 2 -->
+            <div class="col-md-4">
+                <div class="modern-form-group">
+                    <label class="modern-form-label" for="viewReferralSex">Sex</label>
+                    <input type="text" class="form-control bg-light" id="viewReferralSex" disabled>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="modern-form-group">
+                    <label class="modern-form-label" for="viewReferralHeight">Height (CM)</label>
+                    <input type="text" class="form-control bg-light" id="viewReferralHeight" disabled>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="modern-form-group">
+                    <label class="modern-form-label" for="viewReferralWeight">Weight (KG)</label>
+                    <input type="text" class="form-control bg-light" id="viewReferralWeight" disabled>
+                </div>
+            </div>
+
+        </div>
+    </div>
 </div>
 
-<div id="map"></div>
-<script>
-const diseaseSpikes = [
-  { disease: "W54.99", month: 7, count: 15.565, lat: 7.31, lng: 125.68 },
-  { disease: "J15", month: 3, count: 8.227, lat: 7.33, lng: 125.70 },
-  { disease: "Z00", month: 9, count: 7.008, lat: 7.32, lng: 125.72 }
-];
-
-// Adjust map view for new points
-const map = L.map('map').setView([7.33, 125.69], 12);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
-
-// Update getColor to handle larger counts
-function getColor(count) {
-  if (count > 12) return { color: 'red', opacity: 0.9 };
-  if (count > 8) return { color: 'orange', opacity: 0.7 };
-  if (count > 4) return { color: 'yellow', opacity: 0.5 };
-  return { color: 'green', opacity: 0.3 };
-}
-
-let markersLayer = L.layerGroup().addTo(map);
-
-function updateHeatmap(selectedMonth) {
-  markersLayer.clearLayers();
-
-  diseaseSpikes.forEach(d => {
-    if (selectedMonth === "all" || d.month == selectedMonth) {
-      const { color, opacity } = getColor(d.count);
-      L.circle([d.lat, d.lng], {
-        radius: 600,  // adjust radius for visibility
-        color: color,
-        fillColor: color,
-        fillOpacity: opacity
-      }).addTo(markersLayer)
-        .bindPopup(`<b>Disease:</b> ${d.disease}<br><b>Count:</b> ${d.count}`);
-    }
-  });
-}
-
-// Initial load
-updateHeatmap("all");
-
-// Month filter
-document.getElementById("monthSelect").addEventListener("change", function() {
-  updateHeatmap(this.value);
-});
-</script>
+</body>
+</html>

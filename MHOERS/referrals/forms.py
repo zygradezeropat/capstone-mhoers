@@ -2,6 +2,7 @@ from django import forms
 from django.forms import ModelForm
 from .models import *
 from patients.models import Patient
+from analytics.models import Disease
 
 class ReferralForm(forms.ModelForm):
     patient = forms.ModelChoiceField(
@@ -76,6 +77,18 @@ class ReferralForm(forms.ModelForm):
         widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 4})
     )
     
+    # NEW FIELD: Disease selection from database
+    disease = forms.ModelChoiceField(
+        queryset=Disease.objects.all().order_by('name'),
+        required=False,
+        empty_label="Select from Disease Database (Recommended)",
+        widget=forms.Select(attrs={
+            'class': 'form-control',
+            'id': 'disease-select'
+        }),
+        help_text="Select a verified disease from the database"
+    )
+    
     # Additional fields from CSV
     referral_type = forms.ChoiceField(
         choices=Referral.REFERRAL_TYPE_CHOICES,
@@ -136,6 +149,7 @@ class ReferralForm(forms.ModelForm):
         model = Referral
         fields = ['patient', 'weight', 'height', 'bp_systolic', 'bp_diastolic', 'pulse_rate', 'respiratory_rate', 
                   'temperature', 'oxygen_saturation', 'chief_complaint', 'symptoms', 'work_up_details',
+                  'disease',  # Add disease field
                   'referral_type', 'cause', 'treatments', 'remarks',
                   # Lifestyle/Social History
                   'is_smoker', 'smoking_sticks_per_day', 'is_alcoholic', 'alcohol_bottles_per_year',

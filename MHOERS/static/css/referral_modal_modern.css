@@ -114,6 +114,73 @@
   color: #dc3545;
 }
 
+/* Fix: Ensure first section card in default layout is always visible */
+#viewReferralDefaultLayout > .referral-section-card:first-child {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+
+#viewReferralDefaultLayout > .referral-section-card:first-child .row {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+#viewReferralDefaultLayout > .referral-section-card:first-child .col-md-4,
+#viewReferralDefaultLayout > .referral-section-card:first-child .modern-form-group,
+#viewReferralDefaultLayout > .referral-section-card:first-child .modern-input-wrapper,
+#viewReferralDefaultLayout > .referral-section-card:first-child input,
+#viewReferralDefaultLayout > .referral-section-card:first-child textarea {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+#viewReferralDefaultLayout > .referral-section-card:first-child label {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Force Patient Information section to always be visible */
+.patient-info-section {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+
+.patient-info-section .row {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.patient-info-section .col-md-4 {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.patient-info-section .modern-form-group,
+.patient-info-section .modern-input-wrapper,
+.patient-info-section input,
+.patient-info-section textarea {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.patient-info-section label {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
 /* Additional Info Section */
 .additional-info-section {
   border-left: 4px solid #6f42c1;
@@ -242,6 +309,23 @@
 .vital-sign-wrapper .form-control.vital-critical {
   border-color: #dc3545;
   background-color: #fff5f5;
+}
+
+/* Remove vital indicator colors in edit referral modal */
+#editReferralModal .vital-indicator {
+  display: none !important;
+}
+
+#editReferralModal .vital-sign-wrapper .form-control.vital-normal,
+#editReferralModal .vital-sign-wrapper .form-control.vital-warning,
+#editReferralModal .vital-sign-wrapper .form-control.vital-critical {
+  border-color: #dee2e6 !important;
+  background-color: #f8f9fa !important;
+}
+
+#editReferralModal .vital-sign-wrapper .form-control {
+  border-color: #dee2e6 !important;
+  background-color: #f8f9fa !important;
 }
 
 /* Validation Feedback */

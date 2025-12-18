@@ -4,7 +4,7 @@
 
 <link rel="stylesheet" href="{% static 'css/dashboard.css' %}" />
 {% include 'components/navbar.html' %}
-{% include 'components/tabbar/tabbar.html' with tab1_name="Gen. Patient Info" tab2_name="Additional Info" tab3_name="Chief Complaint" tab4_name="Work Up Done" tab5_name="Vital Signs" show_pending_fallback=False %}
+{% include 'components/tabbar/tabbar.html' with tab1_name="Gen. Patient Info" tab2_name="Additional Info" tab3_name="Chief Complaint" tab4_name="Vital Signs" tab5_name="Work Up Done" show_pending_fallback=False %}
 {% include 'components/patients/addpatients.html' %}
 
 <style>
@@ -17,15 +17,9 @@ ul#dashboardTab.nav .nav-link {
 </style>
 
 <div class="bg-light py-4">
-  <div class="d-flex justify-content-between align-items-center mb-4 mr-3">
-        <h4 class="mb-0 text-primary"></h4>
-        <button class="btn btn-success shadow-sm" data-bs-toggle="modal" data-bs-target="#registerModal">
-  <i class="bi bi-person-plus-fill"></i>
-  <span class="ml-2">Add Patient</span>
-</button>
-      </div>
 
-  <form id="referralForm" method="POST" action="{% url 'referrals:create_referral' %}" class="needs-validation" novalidate>
+
+  <form id="referralForm" method="POST" action="{% url 'referrals:create_referral' %}" class="needs-validation" novalidate onsubmit="return false;">
     {% csrf_token %}
     <div class="container"> 
       <div class="tab-content shadow-sm bg-white rounded p-4" id="assessmentTabContent">
@@ -67,7 +61,7 @@ ul#dashboardTab.nav .nav-link {
           <div class="card border-0 bg-light mb-4" style="border-left: 4px solid #6f42c1;">
             <div class="card-body">
               <h6 class="text-primary mb-3">
-                <i class="bi bi-heart-pulse-fill" style="color: #6f42c1;"></i> Lifestyle & Social History
+                Lifestyle & Social History
               </h6>
               <div class="row">
                 <div class="col-md-6 mb-3">
@@ -77,7 +71,7 @@ ul#dashboardTab.nav .nav-link {
                   </div>
                 </div>
                 <div class="col-md-6 mb-3">
-                  <label class="form-label text-muted">Sticks/Packs per Day</label>
+                  <label class="form-label text-muted">Stick/s per Day</label>
                   <input type="number" class="form-control" id="smoking_sticks_per_day" name="smoking_sticks_per_day" min="0" placeholder="Enter number" disabled>
                 </div>
                 <div class="col-md-6 mb-3">
@@ -85,7 +79,7 @@ ul#dashboardTab.nav .nav-link {
                     <input class="form-check-input" type="checkbox" id="is_alcoholic" name="is_alcoholic">
                     <label class="form-check-label" for="is_alcoholic">Alcoholic</label>
                   </div>
-                </div>
+                </div> 
                 <div class="col-md-6 mb-3">
                   <label class="form-label text-muted">Bottles per Year</label>
                   <input type="number" class="form-control" id="alcohol_bottles_per_year" name="alcohol_bottles_per_year" min="0" placeholder="Enter number" disabled>
@@ -98,15 +92,27 @@ ul#dashboardTab.nav .nav-link {
                 </div>
                 <div class="col-md-6 mb-3">
                   <label class="form-label text-muted">Family Planning Type</label>
+                  <!-- Female Family Planning Options -->
                   <select class="form-control" id="family_planning_type" name="family_planning_type" disabled>
                     <option value="">Select Type</option>
-                    <option value="DMPA">DMPA</option>
+                    <option value="DMPA">DMPA (Depo-Provera Injection)</option>
                     <option value="IMPLANT">IMPLANT</option>
                     <option value="IUD">IUD</option>
                     <option value="PILLS">PILLS</option>
+                    <option value="CONDOM">CONDOM </option>
+                  </select>
+                  <!-- Male Family Planning Options (hidden by default) -->
+                  <select class="form-control" id="family_planning_type_male" name="family_planning_type" disabled style="display: none;">
+                    <option value="">Select Type</option>
+                    <option value="CONDOM">CONDOM</option>
+                    <option value="VASECTOMY">VASECTOMY</option>
+                    <option value="WITHDRAWAL">WITHDRAWAL</option>
+                    
                   </select>
                 </div>
               </div>
+              
+             
             </div>
           </div>
 
@@ -114,48 +120,80 @@ ul#dashboardTab.nav .nav-link {
           <div class="card border-0 bg-light mb-4" id="menstrualHistoryCard" style="border-left: 4px solid #e91e63; display: none;">
             <div class="card-body">
               <h6 class="text-primary mb-3">
-                <i class="bi bi-calendar-heart-fill" style="color: #e91e63;"></i> Menstrual History
+                 Menstrual History
               </h6>
-              <div class="row">
-                <div class="col-md-4 mb-3">
-                  <label class="form-label text-muted">Menarche (Age)</label>
-                  <input type="number" class="form-control" id="menarche" name="menarche" min="0" max="20" placeholder="Age">
-                </div>
-                <div class="col-md-4 mb-3">
-                  <div class="form-check mt-4">
-                    <input class="form-check-input" type="checkbox" id="sexually_active" name="sexually_active">
-                    <label class="form-check-label" for="sexually_active">Sexually Active</label>
+              
+              <!-- Group 1: Initial Menstrual Information -->
+              <div class="mb-4">
+                <h6 class="text-muted mb-3" style="font-size: 0.9rem; font-weight: 600;">Initial Information</h6>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <div class="form-check mt-4">
+                      <input class="form-check-input" type="checkbox" id="have_period" name="have_period">
+                      <label class="form-check-label" for="have_period">Have Period</label>
+                    </div>
                   </div>
                 </div>
-                <div class="col-md-4 mb-3">
-                  <label class="form-label text-muted">Number of Partners</label>
-                  <input type="number" class="form-control" id="number_of_partners" name="number_of_partners" min="0" placeholder="Enter number">
-                </div>
-                <div class="col-md-4 mb-3">
-                  <div class="form-check mt-4">
-                    <input class="form-check-input" type="checkbox" id="is_menopause" name="is_menopause">
-                    <label class="form-check-label" for="is_menopause">Menopause</label>
+              </div>
+
+              <!-- Group 2: Current Period Details (conditional - shown if "Have Period" checked) -->
+              <div class="mb-4" id="currentPeriodDetails" style="display: none;">
+                <h6 class="text-muted mb-3" style="font-size: 0.9rem; font-weight: 600;">Current Period Details</h6>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label text-muted">Menarche (Age)</label>
+                    <input type="number" class="form-control" id="menarche" name="menarche" min="0" max="20" placeholder="Age">
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label text-muted">Last Menstrual Period (LMP)</label>
+                    <input type="date" class="form-control" id="last_menstrual_period" name="last_menstrual_period">
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label text-muted">Period Duration (Days)</label>
+                    <input type="number" class="form-control" id="period_duration" name="period_duration" min="0" placeholder="Days">
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label text-muted">Period Interval (Days)</label>
+                    <input type="number" class="form-control" id="period_interval" name="period_interval" min="0" placeholder="Days between">
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label text-muted">Pads per Day</label>
+                    <input type="number" class="form-control" id="pads_per_day" name="pads_per_day" min="0" placeholder="Number">
                   </div>
                 </div>
-                <div class="col-md-4 mb-3">
-                  <label class="form-label text-muted">Menopause Age</label>
-                  <input type="number" class="form-control" id="menopause_age" name="menopause_age" min="0" max="100" placeholder="Age">
+              </div>
+
+              <!-- Group 3: Sexual Activity -->
+              <div class="mb-4">
+                <h6 class="text-muted mb-3" style="font-size: 0.9rem; font-weight: 600;">Sexual Activity</h6>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" id="sexually_active" name="sexually_active">
+                      <label class="form-check-label" for="sexually_active">Sexually Active</label>
+                    </div>
+                  </div>
+                  <div class="col-md-6 mb-3" id="numberOfPartnersField" style="display: none;">
+                    <label class="form-label text-muted">Number of Partners</label>
+                    <input type="number" class="form-control" id="number_of_partners" name="number_of_partners" min="0" placeholder="Enter number">
+                  </div>
                 </div>
-                <div class="col-md-4 mb-3">
-                  <label class="form-label text-muted">Last Menstrual Period (LMP)</label>
-                  <input type="date" class="form-control" id="last_menstrual_period" name="last_menstrual_period">
-                </div>
-                <div class="col-md-4 mb-3">
-                  <label class="form-label text-muted">Period Duration (Days)</label>
-                  <input type="number" class="form-control" id="period_duration" name="period_duration" min="0" placeholder="Days">
-                </div>
-                <div class="col-md-4 mb-3">
-                  <label class="form-label text-muted">Period Interval (Days)</label>
-                  <input type="number" class="form-control" id="period_interval" name="period_interval" min="0" placeholder="Days between">
-                </div>
-                <div class="col-md-4 mb-3">
-                  <label class="form-label text-muted">Pads per Day</label>
-                  <input type="number" class="form-control" id="pads_per_day" name="pads_per_day" min="0" placeholder="Number">
+              </div>
+
+              <!-- Group 4: Menopause Information (conditional - shown if "Menopause" checked) -->
+              <div class="mb-4">
+                <h6 class="text-muted mb-3" style="font-size: 0.9rem; font-weight: 600;">Menopause</h6>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" id="is_menopause" name="is_menopause">
+                      <label class="form-check-label" for="is_menopause">Menopause</label>
+                    </div>
+                  </div>
+                  <div class="col-md-6 mb-3" id="menopauseAgeField" style="display: none;">
+                    <label class="form-label text-muted">Menopause Age</label>
+                    <input type="number" class="form-control" id="menopause_age" name="menopause_age" min="0" max="100" placeholder="Age">
+                  </div>
                 </div>
               </div>
             </div>
@@ -165,42 +203,74 @@ ul#dashboardTab.nav .nav-link {
           <div class="card border-0 bg-light mb-4" id="pregnancyHistoryCard" style="border-left: 4px solid #ff6b9d; display: none;">
             <div class="card-body">
               <h6 class="text-primary mb-3">
-                <i class="bi bi-heart-fill" style="color: #ff6b9d;"></i> Pregnancy History
+                Pregnancy History
               </h6>
-              <div class="row">
-                <div class="col-md-4 mb-3">
-                  <div class="form-check mt-4">
-                    <input class="form-check-input" type="checkbox" id="is_pregnant" name="is_pregnant">
-                    <label class="form-check-label" for="is_pregnant">Currently Pregnant</label>
+              
+              <!-- Group 1: Current Pregnancy Status -->
+              <div class="mb-4">
+                <h6 class="text-muted mb-3" style="font-size: 0.9rem; font-weight: 600;">Current Status</h6>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" id="is_pregnant" name="is_pregnant">
+                      <label class="form-check-label" for="is_pregnant">Currently Pregnant</label>
+                    </div>
                   </div>
                 </div>
-                <div class="col-md-4 mb-3">
-                  <label class="form-label text-muted">Gravidity</label>
-                  <input type="number" class="form-control" id="gravidity" name="gravidity" min="0" placeholder="Number of pregnancies">
+              </div>
+
+              <!-- Group 2: Pregnancy Summary -->
+              <div class="mb-4">
+                <h6 class="text-muted mb-3" style="font-size: 0.9rem; font-weight: 600;">Pregnancy Summary</h6>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label text-muted">Gravidity</label>
+                    <input type="number" class="form-control" id="gravidity" name="gravidity" min="0" placeholder="Number of pregnancies">
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label text-muted">Parity</label>
+                    <input type="number" class="form-control" id="parity" name="parity" min="0" placeholder="Number of births">
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <div class="form-check mt-4">
+                      <input class="form-check-input" type="checkbox" id="has_given_birth" name="has_given_birth">
+                      <label class="form-check-label" for="has_given_birth">Has Given Birth</label>
+                    </div>
+                  </div>
                 </div>
-                <div class="col-md-4 mb-3">
-                  <label class="form-label text-muted">Parity</label>
-                  <input type="number" class="form-control" id="parity" name="parity" min="0" placeholder="Number of births">
+              </div>
+
+              <!-- Group 3: Birth History (conditional - shown if "Has Given Birth" checked) -->
+              <div class="mb-4" id="birthHistoryDetails" style="display: none;">
+                <h6 class="text-muted mb-3" style="font-size: 0.9rem; font-weight: 600;">Birth History</h6>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label text-muted">Type of Delivery</label>
+                    <input type="text" class="form-control" id="delivery_type" name="delivery_type" placeholder="e.g., Normal, CS">
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label text-muted">Living Children</label>
+                    <input type="number" class="form-control" id="living_children" name="living_children" min="0" placeholder="Number">
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label text-muted">Full Term Births</label>
+                    <input type="number" class="form-control" id="full_term_births" name="full_term_births" min="0" placeholder="Number">
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label text-muted">Premature Births</label>
+                    <input type="number" class="form-control" id="premature_births" name="premature_births" min="0" placeholder="Number">
+                  </div>
                 </div>
-                <div class="col-md-4 mb-3">
-                  <label class="form-label text-muted">Type of Delivery</label>
-                  <input type="text" class="form-control" id="delivery_type" name="delivery_type" placeholder="e.g., Normal, CS">
-                </div>
-                <div class="col-md-4 mb-3">
-                  <label class="form-label text-muted">Full Term Births</label>
-                  <input type="number" class="form-control" id="full_term_births" name="full_term_births" min="0" placeholder="Number">
-                </div>
-                <div class="col-md-4 mb-3">
-                  <label class="form-label text-muted">Premature Births</label>
-                  <input type="number" class="form-control" id="premature_births" name="premature_births" min="0" placeholder="Number">
-                </div>
-                <div class="col-md-4 mb-3">
-                  <label class="form-label text-muted">Abortions</label>
-                  <input type="number" class="form-control" id="abortions" name="abortions" min="0" placeholder="Number">
-                </div>
-                <div class="col-md-4 mb-3">
-                  <label class="form-label text-muted">Living Children</label>
-                  <input type="number" class="form-control" id="living_children" name="living_children" min="0" placeholder="Number">
+              </div>
+
+              <!-- Group 4: Pregnancy Outcomes -->
+              <div class="mb-4">
+                <h6 class="text-muted mb-3" style="font-size: 0.9rem; font-weight: 600;">Pregnancy Outcomes</h6>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label text-muted">Abortions</label>
+                    <input type="number" class="form-control" id="abortions" name="abortions" min="0" placeholder="Number">
+                  </div>
                 </div>
               </div>
             </div>
@@ -210,33 +280,17 @@ ul#dashboardTab.nav .nav-link {
         <!-- Tab 3: Chief Complaint -->
         <div class="tab-pane fade" id="tab3" role="tabpanel">
           <h5 class="text-primary mb-4"><i class="bi bi-clipboard2-pulse"></i> Patient Complaints</h5>
-          <div class="card border-0 bg-light mb-4">
-            <div class="card-body">
-              <label class="form-label text-muted">Chief Complaint</label>
-              <textarea class="form-control" name="chief_complaint" rows="3" required placeholder="Enter the main complaint"></textarea>
-            </div>
-          </div>
           <div class="card border-0 bg-light">
             <div class="card-body">
-              <label class="form-label text-muted">Detailed Symptoms</label>
-              <textarea class="form-control" name="symptoms" rows="4" placeholder="Enter detailed symptoms"></textarea>
+              <label class="form-label text-muted">Chief Complaint & Symptoms</label>
+              <textarea class="form-control" name="chief_complaint" id="chief_complaint" rows="6" required placeholder="Enter the chief complaint and detailed symptoms"></textarea>
+              <input type="hidden" name="symptoms" id="symptoms" value="">
             </div>
           </div>
         </div>
 
-        <!-- Tab 4: Work Up Done -->
+        <!-- Tab 4: Vital Signs -->
         <div class="tab-pane fade" id="tab4" role="tabpanel">
-          <h5 class="text-primary mb-4"><i class="bi bi-journal-medical"></i> Medical Procedures</h5>
-          <div class="card border-0 bg-light">
-            <div class="card-body">
-              <label class="form-label text-muted">Work Up Procedures Done</label>
-              <textarea class="form-control" name="work_up_details" rows="4" placeholder="Enter work up procedures performed"></textarea>
-            </div>
-          </div>
-        </div>
-
-        <!-- Tab 5: Vital Signs -->
-        <div class="tab-pane fade" id="tab5" role="tabpanel">
           <h5 class="text-primary mb-4"><i class="bi bi-heart-pulse"></i> Patient Vital Signs</h5>
           <div class="row mb-4">
             <div class="col-md-3">
@@ -305,6 +359,17 @@ ul#dashboardTab.nav .nav-link {
             </div>
           </div>
         </div>
+
+        <!-- Tab 5: Work Up Done -->
+        <div class="tab-pane fade" id="tab5" role="tabpanel">
+          <h5 class="text-primary mb-4"><i class="bi bi-journal-medical"></i> Medical Procedures</h5>
+          <div class="card border-0 bg-light">
+            <div class="card-body">
+              <label class="form-label text-muted">Work Up Procedures Done</label>
+              <textarea class="form-control" name="work_up_details" rows="4" placeholder="Enter work up procedures performed"></textarea>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Navigation Buttons -->
@@ -321,7 +386,7 @@ ul#dashboardTab.nav .nav-link {
 </div>
 
 <!-- Modal for Incomplete Form -->
-<div class="modal fade" id="incompleteFormModal" tabindex="-1" aria-labelledby="incompleteFormModalLabel" aria-hidden="true" >
+<div class="modal fade" id="incompleteFormModal" tabindex="-1" aria-labelledby="incompleteFormModalLabel">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header bg-warning text-white">
@@ -340,8 +405,35 @@ ul#dashboardTab.nav .nav-link {
   </div>
 </div>
 
+<!-- Modal for Pending Referral Warning -->
+<div class="modal fade" id="pendingReferralModal" tabindex="-1" aria-labelledby="pendingReferralModalLabel">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-warning text-dark">
+        <h5 class="modal-title" id="pendingReferralModalLabel">
+          <i class="bi bi-exclamation-triangle-fill"></i> Pending Referral Found
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="text-center mb-3">
+          <i class="bi bi-exclamation-triangle text-warning" style="font-size: 3rem;"></i>
+        </div>
+        <h6 class="text-center mb-3">This person has a pending referral</h6>
+        <p class="text-muted text-center mb-0">
+          The selected patient already has a pending or in-progress referral. 
+          Please wait for the current referral to be completed before creating a new one.
+        </p>
+      </div>
+      <div class="modal-footer justify-content-center">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Modal for Referral Confirmation -->
-<div class="modal fade" id="referralConfirmationModal" tabindex="-1" role="dialog" aria-labelledby="referralConfirmationModalLabel" aria-hidden="true">
+<div class="modal fade" id="referralConfirmationModal" tabindex="-1" role="dialog" aria-labelledby="referralConfirmationModalLabel">
   <div class="modal-dialog modal-dialog-centered" role="document">
     <div class="modal-content">
       <div class="modal-header bg-success text-white">
@@ -379,9 +471,76 @@ ul#dashboardTab.nav .nav-link {
     const nextBtn = document.getElementById("nextBtn");
     const prevBtn = document.getElementById("prevBtn");
     const form = document.getElementById("referralForm");
-    const incompleteModal = new bootstrap.Modal(document.getElementById("incompleteFormModal"));
-    const confirmationModal = new bootstrap.Modal(document.getElementById("referralConfirmationModal"));
+    const incompleteModalEl = document.getElementById("incompleteFormModal");
+    const confirmationModalEl = document.getElementById("referralConfirmationModal");
+    const pendingReferralModalEl = document.getElementById("pendingReferralModal");
+    
+    const incompleteModal = new bootstrap.Modal(incompleteModalEl);
+    const confirmationModal = new bootstrap.Modal(confirmationModalEl);
+    const pendingReferralModal = new bootstrap.Modal(pendingReferralModalEl);
     const navLinks = document.querySelectorAll("#dashboardTab .nav-link");
+
+    // Function to clean up modal backdrop
+    function cleanupModalBackdrop() {
+      // Remove any lingering backdrop elements
+      const backdrops = document.querySelectorAll('.modal-backdrop');
+      backdrops.forEach(backdrop => {
+        backdrop.remove();
+      });
+      // Remove modal-open class from body
+      document.body.classList.remove('modal-open');
+      // Reset body padding if it was added
+      document.body.style.paddingRight = '';
+      // Remove overflow hidden if it was added
+      document.body.style.overflow = '';
+    }
+
+    // Add event listeners to clean up backdrop when modals are shown and hidden
+    if (incompleteModalEl) {
+      incompleteModalEl.addEventListener('show.bs.modal', function() {
+        // Clean up any existing backdrops before showing
+        cleanupModalBackdrop();
+      });
+      incompleteModalEl.addEventListener('hidden.bs.modal', function() {
+        cleanupModalBackdrop();
+      });
+    }
+    
+    if (confirmationModalEl) {
+      confirmationModalEl.addEventListener('show.bs.modal', function() {
+        cleanupModalBackdrop();
+      });
+      confirmationModalEl.addEventListener('hidden.bs.modal', function() {
+        cleanupModalBackdrop();
+      });
+    }
+    
+    if (pendingReferralModalEl) {
+      pendingReferralModalEl.addEventListener('show.bs.modal', function() {
+        cleanupModalBackdrop();
+      });
+      pendingReferralModalEl.addEventListener('hidden.bs.modal', function() {
+        cleanupModalBackdrop();
+      });
+    }
+
+    // Global handler for all modal close buttons
+    document.addEventListener('click', function(e) {
+      if (e.target && (
+        e.target.hasAttribute('data-bs-dismiss') && e.target.getAttribute('data-bs-dismiss') === 'modal' ||
+        e.target.closest('[data-bs-dismiss="modal"]')
+      )) {
+        // Small delay to ensure Bootstrap has processed the close
+        setTimeout(cleanupModalBackdrop, 100);
+      }
+    });
+
+    // Clean up on ESC key press
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        setTimeout(cleanupModalBackdrop, 100);
+      }
+    });
 
     let currentTab = 0;
 
@@ -507,8 +666,14 @@ ul#dashboardTab.nav .nav-link {
     function checkPatientSex(sex) {
       if (sex && sex.toLowerCase() === 'female') {
         $('#menstrualHistoryCard, #pregnancyHistoryCard').show();
+        // Show female family planning options
+        $('#family_planning_type').show();
+        $('#family_planning_type_male').hide();
       } else {
         $('#menstrualHistoryCard, #pregnancyHistoryCard').hide();
+        // Show male family planning options
+        $('#family_planning_type').hide();
+        $('#family_planning_type_male').show();
       }
     }
 
@@ -529,12 +694,15 @@ ul#dashboardTab.nav .nav-link {
         })
         .then(data => {
           console.log('Referral data received:', data);
+          // Always clear Additional Info tab fields - they should not be auto-populated
+          clearReferralFields();
+          
           if (data.success && data.referral) {
-            console.log('Populating form with referral data:', data.referral);
-            populateFormFromReferral(data.referral);
+            console.log('Referral data found, but Additional Info fields will remain empty');
+            // Additional Info tab fields are intentionally NOT populated
+            // populateFormFromReferral(data.referral); // Disabled - Additional Info should be entered fresh
           } else {
             console.log('No referral data found for patient');
-            clearReferralFields();
           }
         })
         .catch(error => {
@@ -544,85 +712,15 @@ ul#dashboardTab.nav .nav-link {
     }
 
     // Function to populate form fields from referral data
+    // Note: Additional Info tab (Tab 2) fields are NOT auto-populated - users must enter fresh data
     function populateFormFromReferral(referralData) {
       console.log('populateFormFromReferral called with:', referralData);
       
-      // Lifestyle & Social History
-      // Handle is_smoker
-      const isSmoker = referralData.is_smoker === true || referralData.is_smoker === 'true' || referralData.is_smoker === 1;
-      console.log('is_smoker value:', referralData.is_smoker, 'converted to:', isSmoker);
+      // Additional Info tab (Tab 2) fields are NOT auto-populated
+      // Lifestyle & Social History, Menstrual History, and Pregnancy History
+      // are intentionally left empty so users enter fresh data for each referral
       
-      if ($('#is_smoker').length) {
-        $('#is_smoker').prop('checked', isSmoker).trigger('change');
-        $('#smoking_sticks_per_day').prop('disabled', !isSmoker);
-        if (referralData.smoking_sticks_per_day !== null && referralData.smoking_sticks_per_day !== undefined) {
-          console.log('Setting smoking_sticks_per_day to:', referralData.smoking_sticks_per_day);
-          $('#smoking_sticks_per_day').val(referralData.smoking_sticks_per_day);
-        }
-      } else {
-        console.error('is_smoker checkbox not found in DOM');
-      }
-      
-      // Handle is_alcoholic
-      const isAlcoholic = referralData.is_alcoholic === true || referralData.is_alcoholic === 'true' || referralData.is_alcoholic === 1;
-      if ($('#is_alcoholic').length) {
-        $('#is_alcoholic').prop('checked', isAlcoholic).trigger('change');
-        $('#alcohol_bottles_per_year').prop('disabled', !isAlcoholic);
-        if (referralData.alcohol_bottles_per_year !== null && referralData.alcohol_bottles_per_year !== undefined) {
-          $('#alcohol_bottles_per_year').val(referralData.alcohol_bottles_per_year);
-        }
-      }
-      
-      // Handle family_planning
-      const familyPlanning = referralData.family_planning === true || referralData.family_planning === 'true' || referralData.family_planning === 1;
-      if ($('#family_planning').length) {
-        $('#family_planning').prop('checked', familyPlanning).trigger('change');
-        $('#family_planning_type').prop('disabled', !familyPlanning);
-        if (referralData.family_planning_type) {
-          $('#family_planning_type').val(referralData.family_planning_type);
-        }
-      }
-
-      // Menstrual History
-      if (referralData.menarche !== null && referralData.menarche !== undefined) {
-        $('#menarche').val(referralData.menarche);
-      }
-      
-      // Handle sexually_active
-      const sexuallyActive = referralData.sexually_active === true || referralData.sexually_active === 'true' || referralData.sexually_active === 1;
-      if ($('#sexually_active').length && referralData.sexually_active !== undefined && referralData.sexually_active !== null) {
-        $('#sexually_active').prop('checked', sexuallyActive);
-      }
-      
-      if (referralData.number_of_partners !== null && referralData.number_of_partners !== undefined) {
-        $('#number_of_partners').val(referralData.number_of_partners);
-      }
-      
-      // Handle is_menopause
-      const isMenopause = referralData.is_menopause === true || referralData.is_menopause === 'true' || referralData.is_menopause === 1;
-      if ($('#is_menopause').length && referralData.is_menopause !== undefined && referralData.is_menopause !== null) {
-        $('#is_menopause').prop('checked', isMenopause);
-      }
-      
-      if (referralData.menopause_age !== null && referralData.menopause_age !== undefined) {
-        $('#menopause_age').val(referralData.menopause_age);
-      }
-      
-      if (referralData.last_menstrual_period) {
-        $('#last_menstrual_period').val(referralData.last_menstrual_period);
-      }
-      
-      if (referralData.period_duration !== null && referralData.period_duration !== undefined) {
-        $('#period_duration').val(referralData.period_duration);
-      }
-      
-      if (referralData.period_interval !== null && referralData.period_interval !== undefined) {
-        $('#period_interval').val(referralData.period_interval);
-      }
-      
-      if (referralData.pads_per_day !== null && referralData.pads_per_day !== undefined) {
-        $('#pads_per_day').val(referralData.pads_per_day);
-      }
+      // Only populate fields from other tabs if needed (currently none)
     }
 
     // Function to clear referral fields
@@ -630,34 +728,143 @@ ul#dashboardTab.nav .nav-link {
       // Clear lifestyle fields
       $('#is_smoker, #is_alcoholic, #family_planning').prop('checked', false);
       $('#smoking_sticks_per_day, #alcohol_bottles_per_year').val('').prop('disabled', true);
-      $('#family_planning_type').val('').prop('disabled', true);
+      $('#family_planning_type, #family_planning_type_male').val('').prop('disabled', true);
       
       // Clear menstrual history fields
-      $('#menarche, #number_of_partners, #menopause_age, #period_duration, #period_interval, #pads_per_day').val('');
-      $('#sexually_active, #is_menopause').prop('checked', false);
-      $('#last_menstrual_period').val('');
+      $('#menarche').val('');
+      $('#have_period, #sexually_active, #is_menopause').prop('checked', false);
+      $('#last_menstrual_period, #period_duration, #period_interval, #pads_per_day').val('');
+      $('#number_of_partners, #menopause_age').val('');
+      
+      // Hide conditional sections
+      $('#currentPeriodDetails, #numberOfPartnersField, #menopauseAgeField').hide();
+      
+      // Clear pregnancy history fields
+      $('#is_pregnant, #has_given_birth').prop('checked', false);
+      $('#gravidity, #parity, #delivery_type, #full_term_births, #premature_births, #abortions, #living_children').val('');
+      
+      // Hide conditional sections
+      $('#birthHistoryDetails').hide();
+      
+      // Ensure checkboxes are enabled (they are independent)
+      $('#have_period, #is_pregnant').prop('disabled', false);
     }
 
     // Handle conditional enabling of lifestyle fields
     $('#is_smoker').on('change', function() {
-      $('#smoking_sticks_per_day').prop('disabled', !$(this).is(':checked'));
-      if (!$(this).is(':checked')) {
-        $('#smoking_sticks_per_day').val('');
+      const isChecked = $(this).is(':checked');
+      const field = $('#smoking_sticks_per_day');
+      const label = field.closest('.col-md-6').find('label');
+      
+      field.prop('disabled', !isChecked);
+      if (!isChecked) {
+        field.val('').removeClass('is-invalid');
+        label.html('Stick/s per Day');
+      } else {
+        label.html('Stick/s per Day <span class="text-danger">*</span>');
       }
     });
 
     $('#is_alcoholic').on('change', function() {
-      $('#alcohol_bottles_per_year').prop('disabled', !$(this).is(':checked'));
-      if (!$(this).is(':checked')) {
-        $('#alcohol_bottles_per_year').val('');
+      const isChecked = $(this).is(':checked');
+      const field = $('#alcohol_bottles_per_year');
+      const label = field.closest('.col-md-6').find('label');
+      
+      field.prop('disabled', !isChecked);
+      if (!isChecked) {
+        field.val('').removeClass('is-invalid');
+        label.html('Bottles per Year');
+      } else {
+        label.html('Bottles per Year <span class="text-danger">*</span>');
       }
     });
 
     $('#family_planning').on('change', function() {
-      $('#family_planning_type').prop('disabled', !$(this).is(':checked'));
-      if (!$(this).is(':checked')) {
-        $('#family_planning_type').val('');
+      const isChecked = $(this).is(':checked');
+      const field = $('#family_planning_type');
+      const fieldMale = $('#family_planning_type_male');
+      const label = field.closest('.col-md-6').find('label');
+      
+      // Enable/disable based on which field is visible
+      if (field.is(':visible')) {
+        field.prop('disabled', !isChecked);
+        if (!isChecked) {
+          field.val('').removeClass('is-invalid');
+        }
+      } else if (fieldMale.is(':visible')) {
+        fieldMale.prop('disabled', !isChecked);
+        if (!isChecked) {
+          fieldMale.val('').removeClass('is-invalid');
+        }
       }
+      
+      if (!isChecked) {
+        label.html('Family Planning Type');
+      } else {
+        label.html('Family Planning Type <span class="text-danger">*</span>');
+      }
+    });
+
+    // Handle "Have Period" checkbox - show/hide current period details
+    $('#have_period').on('change', function() {
+      const isChecked = $(this).is(':checked');
+      const periodDetails = $('#currentPeriodDetails');
+      
+      if (isChecked) {
+        periodDetails.slideDown(300);
+      } else {
+        periodDetails.slideUp(300);
+        // Clear period-related fields when unchecked
+        $('#menarche, #last_menstrual_period, #period_duration, #period_interval, #pads_per_day').val('').removeClass('is-invalid');
+      }
+    });
+
+    // Handle "Sexually Active" checkbox - show/hide number of partners
+    $('#sexually_active').on('change', function() {
+      const isChecked = $(this).is(':checked');
+      const partnersField = $('#numberOfPartnersField');
+      
+      if (isChecked) {
+        partnersField.slideDown(300);
+      } else {
+        partnersField.slideUp(300);
+        // Clear number of partners when unchecked
+        $('#number_of_partners').val('').removeClass('is-invalid');
+      }
+    });
+
+    // Handle "Menopause" checkbox - show/hide menopause age
+    $('#is_menopause').on('change', function() {
+      const isChecked = $(this).is(':checked');
+      const menopauseAgeField = $('#menopauseAgeField');
+      
+      if (isChecked) {
+        menopauseAgeField.slideDown(300);
+      } else {
+        menopauseAgeField.slideUp(300);
+        // Clear menopause age when unchecked
+        $('#menopause_age').val('').removeClass('is-invalid');
+      }
+    });
+
+    // Handle "Has Given Birth" checkbox - show/hide birth history details
+    $('#has_given_birth').on('change', function() {
+      const isChecked = $(this).is(':checked');
+      const birthHistoryDetails = $('#birthHistoryDetails');
+      
+      if (isChecked) {
+        birthHistoryDetails.slideDown(300);
+      } else {
+        birthHistoryDetails.slideUp(300);
+        // Clear birth-related fields when unchecked
+        $('#delivery_type, #full_term_births, #premature_births, #living_children').val('').removeClass('is-invalid');
+      }
+    });
+
+    // Handle "Currently Pregnant" checkbox
+    $('#is_pregnant').on('change', function() {
+      const isChecked = $(this).is(':checked');
+      // No longer connected to "Have Period" checkbox - they are independent
     });
 
     function showTab(index) {
@@ -683,6 +890,89 @@ ul#dashboardTab.nav .nav-link {
       const fields = tabs[index].querySelectorAll("input, select, textarea");
       let valid = true;
       
+      // Tab 2 (Additional Info) is optional - allow progression but validate connected fields
+      if (index === 1) {
+        // Check if smoker is checked but sticks per day is empty (connected fields)
+        const isSmokerChecked = document.getElementById('is_smoker').checked;
+        const smokingSticksField = document.getElementById('smoking_sticks_per_day');
+        if (isSmokerChecked) {
+          if (!smokingSticksField.value || smokingSticksField.value.trim() === "") {
+            smokingSticksField.classList.add('is-invalid');
+            valid = false; // Connected field validation - blocks progression
+          } else {
+            smokingSticksField.classList.remove('is-invalid');
+          }
+        } else {
+          smokingSticksField.classList.remove('is-invalid');
+        }
+        
+        // Check if alcoholic is checked but bottles per year is empty (connected fields)
+        const isAlcoholicChecked = document.getElementById('is_alcoholic').checked;
+        const alcoholBottlesField = document.getElementById('alcohol_bottles_per_year');
+        if (isAlcoholicChecked) {
+          if (!alcoholBottlesField.value || alcoholBottlesField.value.trim() === "") {
+            alcoholBottlesField.classList.add('is-invalid');
+            valid = false; // Connected field validation - blocks progression
+          } else {
+            alcoholBottlesField.classList.remove('is-invalid');
+          }
+        } else {
+          alcoholBottlesField.classList.remove('is-invalid');
+        }
+        
+        // Check if family planning is checked but type is empty (connected fields)
+        const familyPlanningChecked = document.getElementById('family_planning').checked;
+        if (familyPlanningChecked) {
+          const familyPlanningTypeField = $('#family_planning_type');
+          const familyPlanningTypeFieldMale = $('#family_planning_type_male');
+          
+          // Check which field is visible using jQuery
+          let activeField = null;
+          let fieldValue = '';
+          
+          if (familyPlanningTypeField.is(':visible')) {
+            activeField = familyPlanningTypeField[0];
+            fieldValue = familyPlanningTypeField.val() || '';
+          } else if (familyPlanningTypeFieldMale.is(':visible')) {
+            activeField = familyPlanningTypeFieldMale[0];
+            fieldValue = familyPlanningTypeFieldMale.val() || '';
+          } else {
+            // Fallback: check both and use the one with a value
+            const val1 = familyPlanningTypeField.val() || '';
+            const val2 = familyPlanningTypeFieldMale.val() || '';
+            if (val1) {
+              activeField = familyPlanningTypeField[0];
+              fieldValue = val1;
+            } else if (val2) {
+              activeField = familyPlanningTypeFieldMale[0];
+              fieldValue = val2;
+            } else {
+              // Neither has value, use the first one for validation
+              activeField = familyPlanningTypeField[0];
+              fieldValue = '';
+            }
+          }
+          
+          if (activeField) {
+            fieldValue = fieldValue.trim();
+            if (!fieldValue || fieldValue === "") {
+              activeField.classList.add('is-invalid');
+              valid = false; // Connected field validation - blocks progression
+            } else {
+              activeField.classList.remove('is-invalid');
+            }
+          }
+        } else {
+          // Remove invalid class from both fields when unchecked
+          $('#family_planning_type, #family_planning_type_male').removeClass('is-invalid');
+        }
+        
+        // Tab 2 is optional - don't validate standalone fields, only connected ones
+        // Allow progression even if other fields are empty
+        return valid; // Return early - only connected field validation matters
+      }
+      
+      // Standard validation for required fields in other tabs
       for (let field of fields) {
         if (field.required) {
           if (!field.value || field.value.trim() === "") {
@@ -699,19 +989,65 @@ ul#dashboardTab.nav .nav-link {
     // Initialize first tab
     showTab(currentTab);
 
-    nextBtn.addEventListener("click", () => {
+    // Track submission state - declare before use
+    let isSubmitting = false;
+
+    nextBtn.addEventListener("click", async (e) => {
+      // Prevent event bubbling and default behavior
+      e.preventDefault();
+      e.stopPropagation();
+      
       if (!isTabValid(currentTab)) {
         incompleteModal.show();
         return;
+      }
+
+      // Check for pending referral when on tab 1 (patient selection)
+      if (currentTab === 0) {
+        let patientId = null;
+        
+        // Get patient ID - handle both Select2 and regular select
+        if (typeof $ !== 'undefined' && $('#patientSelect').length && $('#patientSelect').data('select2')) {
+          // Select2 is initialized
+          patientId = $('#patientSelect').val();
+        } else {
+          // Regular select
+          const patientSelect = document.getElementById('patientSelect');
+          patientId = patientSelect ? patientSelect.value : null;
+        }
+        
+        if (patientId) {
+          try {
+            const response = await fetch(`{% url 'referrals:check_pending_referral' '0' %}`.replace('0', patientId));
+            const data = await response.json();
+            
+            if (data.success && data.has_pending) {
+              // Show pending referral modal and prevent progression
+              pendingReferralModal.show();
+              return;
+            }
+          } catch (error) {
+            console.error('Error checking pending referral:', error);
+            // Continue if there's an error checking
+          }
+        }
       }
 
       if (currentTab < tabs.length - 1) {
         currentTab++;
         showTab(currentTab);
       } else {
+        // Prevent duplicate submission - check BEFORE calling function
+        if (isSubmitting) {
+          console.log('❌ Already submitting, ignoring click');
+          e.preventDefault();
+          e.stopPropagation();
+          return false;
+        }
         // Add form validation before submit
         if (form.checkValidity()) {
           // Submit form via AJAX to show confirmation modal
+          console.log('🚀 Calling submitFormWithConfirmation from button click');
           submitFormWithConfirmation();
         } else {
           incompleteModal.show();
@@ -721,29 +1057,90 @@ ul#dashboardTab.nav .nav-link {
 
     // Function to submit form and show confirmation modal
     function submitFormWithConfirmation() {
+      // Prevent duplicate calls - check FIRST (double check)
+      if (isSubmitting) {
+        console.log('❌ Submission already in progress, ignoring duplicate call');
+        return false;
+      }
+      
+      // Mark as submitting IMMEDIATELY - before anything else
+      // Use a more aggressive approach - set multiple flags
+      isSubmitting = true;
+      window._referralSubmitting = true;  // Global flag as backup
+      console.log('✅ Starting submission, isSubmitting = true');
+      
+      // Also check global flag
+      if (window._referralSubmitting && isSubmitting === false) {
+        console.log('❌ Global flag indicates submission in progress');
+        return false;
+      }
+      
+      // Disable button to prevent multiple clicks
+      nextBtn.disabled = true;
+      nextBtn.style.pointerEvents = 'none';
+      nextBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Submitting...';
+      
+      // Sync symptoms field with chief_complaint (merged field)
+      const chiefComplaintValue = document.getElementById('chief_complaint').value;
+      document.getElementById('symptoms').value = chiefComplaintValue;
+      
+      // Add a unique submission ID to prevent duplicate processing on backend
+      const submissionId = Date.now() + '-' + Math.random().toString(36).substr(2, 9);
       const formData = new FormData(form);
+      formData.append('submission_id', submissionId);
+      
+      console.log('📤 Submitting referral with ID:', submissionId);
       
       fetch(form.action, {
         method: 'POST',
         body: formData,
         headers: {
-          'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-        }
+          'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        cache: 'no-cache'
       })
       .then(response => {
-        if (response.ok) {
-          // Show confirmation modal
-          confirmationModal.show();
+        console.log('Response received:', response.status);
+        return response.json().then(data => ({ status: response.status, data }));
+      })
+      .then(({ status, data }) => {
+        if (status === 200 && data.success) {
+          // Submission successful - redirect to referral list
+          console.log('✅ Submission successful');
+          // Reset flags
+          isSubmitting = false;
+          window._referralSubmitting = false;
+          // Redirect to referral list
+          window.location.href = "{% url 'referrals:referral_list' %}";
         } else {
+          // Reset on error
+          isSubmitting = false;
+          window._referralSubmitting = false;
+          nextBtn.disabled = false;
+          nextBtn.style.pointerEvents = 'auto';
+          nextBtn.innerHTML = 'Submit <i class="bi bi-check-lg"></i>';
           // Handle error
-          alert('There was an error submitting the referral. Please try again.');
         }
       })
       .catch(error => {
         console.error('Error:', error);
-        alert('There was an error submitting the referral. Please try again.');
+        // Reset on error
+        isSubmitting = false;
+        window._referralSubmitting = false;
+        nextBtn.disabled = false;
+        nextBtn.style.pointerEvents = 'auto';
+        nextBtn.innerHTML = 'Submit <i class="bi bi-check-lg"></i>';
+        
       });
     }
+    
+    // Prevent form default submission completely - only allow button click
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    });
 
     prevBtn.addEventListener("click", () => {
       if (currentTab > 0) {
@@ -762,6 +1159,15 @@ ul#dashboardTab.nav .nav-link {
       form.reset();
       currentTab = 0;
       showTab(currentTab);
+      
+      // Reset submission state
+      isSubmitting = false;
+      window._referralSubmitting = false;
+      
+      // Reset button state
+      nextBtn.disabled = false;
+      nextBtn.style.pointerEvents = 'auto';
+      nextBtn.innerHTML = 'Next <i class="bi bi-arrow-right"></i>';
       
       // Reset Select2 if it exists
       if (typeof $ !== 'undefined' && typeof $.fn.select2 !== 'undefined') {

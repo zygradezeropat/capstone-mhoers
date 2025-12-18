@@ -6,19 +6,64 @@ from django.contrib.auth.models import Group
 from patients.models import Patient
 from referrals.models import Referral
 from analytics.ml_utils import predict_disease_for_referral, random_forest_regression_prediction_time
-from django.db.models import Count
+from analytics.models import Disease
+from django.db.models import Count, Q
 from facilities.models import Facility
+
+def is_doctor(user):
+    """Check if user is a doctor"""
+    try:
+        from accounts.models import Doctors
+        doctor = Doctors.objects.get(user=user)
+        return doctor.status == 'ACTIVE'
+    except:
+        return False
+
+def is_bhw_user(user):
+    """Check if user is a BHW (not staff/superuser)"""
+    if user.is_staff or user.is_superuser:
+        return False
+    try:
+        from accounts.models import BHWRegistration
+        bhw = BHWRegistration.objects.get(user=user)
+        return bhw.status == 'ACTIVE'
+    except:
+        return False
 
 @login_required
 def check_notifications(request):
     # Filter notifications based on user role
-    if request.user.is_staff or request.user.is_superuser:
-        # Admins receive referral_sent notifications
-        unread_count = Notification.objects.filter(
-            recipient=request.user, 
-            is_read=False,
-            notification_type='referral_sent'
-        ).count()
+    if is_doctor(request.user):
+        # Doctors only receive notifications about referrals from BHW
+        # Get BHW user IDs
+        from accounts.models import BHWRegistration
+        bhw_user_ids = list(BHWRegistration.objects.filter(
+            status='ACTIVE'
+        ).exclude(
+            user__is_staff=True
+        ).exclude(
+            user__is_superuser=True
+        ).values_list('user_id', flat=True))
+        
+        # Only filter by BHW user IDs if there are any BHW users
+        if bhw_user_ids:
+            unread_count = Notification.objects.filter(
+                recipient=request.user, 
+                is_read=False,
+                notification_type='referral_sent',
+                referral__user_id__in=bhw_user_ids
+            ).count()
+        else:
+            # No active BHW users, so no notifications
+            unread_count = 0
+    elif request.user.is_staff or request.user.is_superuser:
+        # Admins only receive account approval request notifications
+        # Count pending users (BHW, Doctors, Nurses)
+        from accounts.models import BHWRegistration, Doctors, Nurses
+        pending_bhw_count = BHWRegistration.objects.filter(status='PENDING_APPROVAL').count()
+        pending_doctors_count = Doctors.objects.filter(status='PENDING_APPROVAL').count()
+        pending_nurses_count = Nurses.objects.filter(status='PENDING_APPROVAL').count()
+        unread_count = pending_bhw_count + pending_doctors_count + pending_nurses_count
     else:
         # Users receive referral_completed notifications
         unread_count = Notification.objects.filter(
@@ -32,12 +77,34 @@ def check_notifications(request):
 @login_required
 def notifications_list(request):
     # Filter notifications based on user role
-    if request.user.is_staff or request.user.is_superuser:
-        # Admins see referral_sent notifications (only their own notifications)
-        notifications = Notification.objects.filter(
-            recipient=request.user,
-            notification_type='referral_sent'
-        ).select_related('referral__user').order_by('-created_at')
+    if is_doctor(request.user):
+        # Doctors only see notifications about referrals from BHW
+        # Get BHW user IDs
+        from accounts.models import BHWRegistration
+        bhw_user_ids = list(BHWRegistration.objects.filter(
+            status='ACTIVE'
+        ).exclude(
+            user__is_staff=True
+        ).exclude(
+            user__is_superuser=True
+        ).values_list('user_id', flat=True))
+        
+        # Only filter by BHW user IDs if there are any BHW users
+        if bhw_user_ids:
+            notifications = Notification.objects.filter(
+                recipient=request.user,
+                notification_type='referral_sent',
+                referral__user_id__in=bhw_user_ids
+            ).select_related('referral__user').order_by('-created_at')
+        else:
+            notifications = Notification.objects.none()
+        
+        admin_notif = None
+        all_referrals = None
+    elif request.user.is_staff or request.user.is_superuser:
+        # Admins only see account approval requests (handled by pending_users_count in template)
+        # No Notification objects shown for admins
+        notifications = Notification.objects.none()
         
         # No separate admin_notif - just use notifications
         admin_notif = None
@@ -83,73 +150,19 @@ def mark_notification_read(request, notification_id):
     notification.is_read = True
     notification.save()
     
-    context = {
-        'active_page': 'notifications'
-    }
-    # Get all patients
-    patients = Patient.objects.annotate(
-    referral_count=Count('referral'))
-    
-    # get all facilities
-    facility = Facility.objects.all()
-    
-    #get only the IDS 
-    patientsFat = Patient.objects.select_related('facility').all()
-    
-    # Filter referrals based on their status
-    pending_referrals = Referral.objects.filter(status='pending')
-    active_referrals = Referral.objects.filter(status='in-progress')
-    referred_referrals = Referral.objects.filter(status='completed')
-    rejected_referrals = Referral.objects.filter(status='rejected')
-    
-    # Get predictions for all referrals
-    predictions = {}
-    for referral in pending_referrals | active_referrals | referred_referrals | rejected_referrals:
-        # Get disease prediction
-        disease_pred = predict_disease_for_referral(referral.referral_id)
-        # Get completion time prediction
-        time_pred =random_forest_regression_prediction_time(referral.referral_id)
-        # Store both predictions in a tuple
-        predictions[referral.referral_id] = (disease_pred, time_pred)
-        
-    
-    
-    # Context data
-    context = {
-        'active_page': 'referral_list',
-        'active_tab': 'tab1',
-        'facility': facility,
-        'patients': patients,
-        'patientFat': patientsFat,
-        'pending_referrals': pending_referrals,
-        'active_referrals': active_referrals,
-        'referred_referrals': referred_referrals,
-        'rejected_referrals': rejected_referrals,
-        'predictions': predictions,
-    }
-
-    # Template selection based on user role
-    if request.user.is_staff:
-        template = 'patients/admin/patient_list.html'
-        page = 'patient_list'
+    # Redirect based on user role
+    if is_doctor(request.user):
+        # Doctor goes to patients page with assessment mode
+        from django.urls import reverse
+        return redirect(reverse('referrals:patient_list') + '?mode=assessment')
+    elif is_bhw_user(request.user):
+        # BHW goes to referral_list
+        from django.urls import reverse
+        return redirect(reverse('referrals:referral_list'))
     else:
-        template = 'patients/user/referral_list.html'
-        page = 'referral_list'
-    # Context data
-    context = {
-        'active_page': page,
-        'active_tab': 'tab1',
-        'facility': facility,
-        'patients': patients,
-        'patientFat': patientsFat,
-        'pending_referrals': pending_referrals,
-        'active_referrals': active_referrals,
-        'referred_referrals': referred_referrals,
-        'rejected_referrals': rejected_referrals,
-        'predictions': predictions,
-    }
-    
-    return render(request, template, context)
+        # For staff/superuser or other users, go to referral_list
+        from django.urls import reverse
+        return redirect(reverse('referrals:referral_list'))
     
 
 @login_required
@@ -230,17 +243,37 @@ def debug_notifications(request):
 def mark_all_notifications_read(request):
     """Mark all relevant notifications as read for the current user."""
     # Determine which notification types are relevant to the current user
-    if request.user.is_staff or request.user.is_superuser:
-        relevant_type = 'referral_sent'
+    if is_doctor(request.user):
+        # Doctors only mark notifications about referrals from BHW as read
+        from accounts.models import BHWRegistration
+        bhw_user_ids = list(BHWRegistration.objects.filter(
+            status='ACTIVE'
+        ).exclude(
+            user__is_staff=True
+        ).exclude(
+            user__is_superuser=True
+        ).values_list('user_id', flat=True))
+        
+        # Only filter by BHW user IDs if there are any BHW users
+        if bhw_user_ids:
+            updated_count = Notification.objects.filter(
+                recipient=request.user,
+                is_read=False,
+                notification_type='referral_sent',
+                referral__user_id__in=bhw_user_ids
+            ).update(is_read=True)
+        else:
+            updated_count = 0
+    elif request.user.is_staff or request.user.is_superuser:
+        # Admins don't have Notification objects - only account approval requests (handled by pending_users_count)
+        updated_count = 0
     else:
         relevant_type = 'referral_completed'
-
-    # Mark all unread notifications of the relevant type as read
-    updated_count = Notification.objects.filter(
-        recipient=request.user,
-        is_read=False,
-        notification_type=relevant_type,
-    ).update(is_read=True)
+        updated_count = Notification.objects.filter(
+            recipient=request.user,
+            is_read=False,
+            notification_type=relevant_type,
+        ).update(is_read=True)
 
     # Redirect back to notifications list
     return redirect('notifications:notification_list')

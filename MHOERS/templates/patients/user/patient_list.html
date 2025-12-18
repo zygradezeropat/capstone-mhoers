@@ -5,6 +5,84 @@
 
 <!-- Stylesheets -->
 <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css" />
+
+<style>
+  /* DataTables Search Field Styling */
+  .dataTables_wrapper .dataTables_filter {
+    text-align: right;
+    float: right;
+    width: 100%; 
+    margin-bottom: 0;
+  }
+  
+  .dataTables_wrapper .dataTables_filter label {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-bottom: 0;
+  }
+  
+  .dataTables_wrapper .dataTables_filter input {
+    width: 100% !important;
+    max-width: none;
+    margin-left: 0.5em;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #ced4da;
+    font-size: 0.875rem;
+    flex: 1;
+  }
+  
+  .dataTables_wrapper .dataTables_filter input:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+    outline: none;
+  }
+  
+  @media (max-width: 768px) {
+    .dataTables_wrapper .dataTables_filter {
+      text-align: left;
+      float: none;
+      width: 100%;
+    }
+    
+    .dataTables_wrapper .dataTables_filter label {
+      justify-content: flex-start;
+    }
+    
+    .dataTables_wrapper .dataTables_filter input {
+      width: 100% !important;
+      max-width: 100%;
+      margin-left: 0.5em;
+    }
+  }
+  
+  /* Clickable referral item hover effect */
+  .clickable-referral-item:hover {
+    background-color: #f0f0f0 !important;
+    border-color: #007bff !important;
+  }
+  
+  .clickable-referral-item:active {
+    background-color: #e0e0e0 !important;
+  }
+  
+  /* Make patient table rows clickable (except action column) */
+  #patientTable tbody tr.patient-row td:not(:last-child) {
+    cursor: pointer;
+  }
+  
+  #patientTable tbody tr.patient-row:hover td:not(:last-child) {
+    background-color: #f8f9fa;
+  }
+  
+  /* Ensure action column is not clickable */
+  #patientTable tbody tr.patient-row td:last-child {
+    cursor: default;
+  }
+</style>
 
 <!-- Includes -->
 {% include 'components/navbar.html' %}
@@ -12,6 +90,7 @@
 {% include 'components/patients/viewpatients.html' %}
 {% include 'components/patients/editpatients.html' %}
 {% include 'components/patients/deletepatients.html' %}
+{% include 'components/referral/referral_modal.html' %}
 
 <!-- Main Content -->
 <div class="container-fluid py-4">
@@ -20,21 +99,22 @@
 
       <!-- Header -->
       <div class="d-flex justify-content-between align-items-center mb-4">
-        <h4 class="mb-0 text-primary">Patient Records</h4>
+        <h4 class="mb-0"></h4>
         <button class="btn btn-success shadow-sm" data-bs-toggle="modal" data-bs-target="#registerModal">
           <i class="bi bi-person-plus-fill"></i>
           <span class="ml-2">Add Patient</span>
         </button>
       </div>
 
-      {% if patients %}
       <!-- Patients Table -->
+      {% if patients %}
       <div class="card border-0 shadow-sm rounded-lg">
         <div class="card-body p-4">
           <div class="table-responsive">
             <table id="patientTable" class="table table-hover align-middle">
               <thead class="bg-light">
                 <tr>
+                  <th style="display: none;">ID</th>
                   <th>Patient Information</th>
                   <th>Age</th>
                   <th>Location</th>
@@ -45,82 +125,81 @@
               </thead>
               <tbody>
                 {% for patient in patients %}
-                <tr data-id="{{ patient.patients_id }}">
+                <tr data-id="{{ patient.patients_id }}" 
+                    class="patient-row"
+                    data-patients-id="{{ patient.patients_id }}"
+                    data-first-name="{{ patient.first_name }}"
+                    data-middle-name="{{ patient.middle_name|default:'' }}"
+                    data-last-name="{{ patient.last_name }}"
+                    data-patient-id="{{ patient.patients_id }}"
+                    data-date-of-birth="{{ patient.date_of_birth|date:'Y-m-d' }}"
+                    data-age="{{ patient.age }}"
+                    data-sex="{{ patient.sex }}"
+                    data-address="{{ patient.p_address }}"
+                    data-phone="{{ patient.p_number }}"
+                    data-sitio="{{ patient.sitio|default:'Not specified' }}"
+                    data-barangay="{{ patient.barangay|default:'Not specified' }}"
+                    data-civil-status="{{ patient.civil_status|default:'Not specified' }}"
+                    data-phic-status="{% if patient.phic_status == 'M' %}Member{% elif patient.phic_status == 'D' %}Dependent{% else %}Not specified{% endif %}"
+                    data-cct-beneficiary="{% if patient.cct_beneficiary %}Yes{% else %}No{% endif %}"
+                    data-is-pwd="{% if patient.is_pwd %}Yes{% else %}No{% endif %}"
+                    data-philhealth-number="{{ patient.philhealth_number|default:'' }}"
+                    data-philhealth-category="{{ patient.philhealth_category|default:'' }}"
+                    data-referral-count="{{ patient.referral_count|default:0 }}"
+                    data-last-referred="{{ patient.latest_referral_date|date:'M d, Y h:i A'|default:'Not yet referred' }}"
+                    data-family-history-hypertension="{% if patient.family_history_hypertension %}Yes{% else %}No{% endif %}"
+                    data-family-history-diabetes="{% if patient.family_history_diabetes %}Yes{% else %}No{% endif %}"
+                    data-family-history-cancer="{% if patient.family_history_cancer %}Yes{% else %}No{% endif %}"
+                    data-family-history-asthma="{% if patient.family_history_asthma %}Yes{% else %}No{% endif %}"
+                    data-family-history-epilepsy="{% if patient.family_history_epilepsy %}Yes{% else %}No{% endif %}"
+                    data-family-history-tuberculosis="{% if patient.family_history_tuberculosis %}Yes{% else %}No{% endif %}"
+                    data-family-history-others="{{ patient.family_history_others|default:'' }}">
+                  <td style="display: none;">{{ patient.patients_id }}</td>
                   <td>
                     <div class="d-flex align-items-center">
-                      <div class="avatar-circle bg-primary-soft me-3">
-                        <i class="bi bi-person-circle text-primary fs-4"></i>
-                      </div>
+                      
                       <div>
                         <h6 class="mb-1 text-dark">{{ patient.first_name }} {{ patient.middle_name }} {{ patient.last_name }}</h6>
                         
                       </div>
                     </div>
                   </td>
-                  <td><i class="bi bi-calendar3 text-success me-2"></i>{{ patient.age }}</td>
-                  <td><i class="bi bi-geo-alt-fill text-danger me-2"></i>{{ patient.p_address }}</td>
-                  <td><i class="bi bi-gender-ambiguous text-info me-2"></i>{{ patient.sex }}</td>
-                  <td><i class="bi bi-telephone-fill text-primary me-2"></i>{{ patient.p_number }}</td>
+                  <td>{{ patient.age }}</td>
+                  <td>{{ patient.p_address }}</td>
+                  <td>{{ patient.sex }}</td>
+                  <td>{{ patient.p_number }}</td>
                   <td>
-                    <div class="btn-group">
-                      <!-- View Button -->
-                      <button class="btn btn-outline-primary btn-sm rounded-pill view-button"
-                        data-id="{{ patient.patients_id }}"
-                        data-vpatient="{{ patient.first_name }} {{ patient.middle_name }} {{ patient.last_name }}"
-                        data-vbdate="{{ patient.date_of_birth|date:'m/d/Y' }}"
-                        data-vaddress="{{ patient.p_address }}"
-                        data-vsex="{{ patient.sex }}"
-                        data-vsitio="{{ patient.sitio|default:'Not specified' }}"
-                        data-vbarangay="{{ patient.barangay|default:'Not specified' }}"
-                        data-vcivilstatus="{{ patient.civil_status|default:'Not specified' }}"
-                        data-vphicstatus="{% if patient.phic_status == 'M' %}Member{% elif patient.phic_status == 'D' %}Dependent{% else %}Not specified{% endif %}"
-                        data-vcctbeneficiary="{% if patient.cct_beneficiary %}Yes{% else %}No{% endif %}"
-                        data-vispwd="{% if patient.is_pwd %}Yes{% else %}No{% endif %}"
-                        data-vreferralcount="{{ patient.referral_count }}"
-                        data-vlastreferred="{{ patient.latest_referral_date|date:'M d, Y h:i A' }}"
-                        data-bs-toggle="modal"
-                        data-bs-target="#viewPatients">
-                        <i class="bi bi-eye-fill me-1"></i> View
-                      </button>
-
-                      <!-- Edit Button -->
-                      <button class="btn btn-outline-warning btn-sm rounded-pill edit-button"
-                        data-id="{{ patient.patients_id }}"
-                        data-firstname="{{ patient.first_name }}"
-                        data-middlename="{{ patient.middle_name|default:'' }}"
-                        data-lastname="{{ patient.last_name }}"
-                        data-eaddress="{{ patient.p_address }}"
-                        data-ebday="{{ patient.date_of_birth|date:'Y-m-d' }}"
-                        data-enum="{{ patient.p_number }}"
-                        data-esex="{{ patient.sex }}"
-                        data-civilstatus="{{ patient.civil_status|default:'' }}"
-                        data-phicstatus="{{ patient.phic_status|default:'' }}"
-                        data-cctbeneficiary="{{ patient.cct_beneficiary|yesno:'true,false' }}"
-                        data-ispwd="{{ patient.is_pwd|yesno:'true,false' }}"
-                        data-philhealthnumber="{{ patient.philhealth_number|default:'' }}"
-                        data-philhealthcategory="{{ patient.philhealth_category|default:'' }}"
-                        data-familyhistoryhypertension="{{ patient.family_history_hypertension|yesno:'true,false' }}"
-                        data-familyhistorydiabetes="{{ patient.family_history_diabetes|yesno:'true,false' }}"
-                        data-familyhistorycancer="{{ patient.family_history_cancer|yesno:'true,false' }}"
-                        data-familyhistoryasthma="{{ patient.family_history_asthma|yesno:'true,false' }}"
-                        data-familyhistoryepilepsy="{{ patient.family_history_epilepsy|yesno:'true,false' }}"
-                        data-familyhistorytuberculosis="{{ patient.family_history_tuberculosis|yesno:'true,false' }}"
-                        data-familyhistoryothers="{{ patient.family_history_others|default:'' }}"
-                        data-bs-toggle="modal"
-                        data-bs-target="#editPatients">
-                        <i class="bi bi-pencil-fill me-1"></i> Edit
-                      </button>
-
-                      <!-- Delete Button -->
-                      <button class="btn btn-outline-danger btn-sm rounded-pill delete-button"
-                        data-id="{{ patient.patients_id }}"
-                        data-patient = "{{patient.first_name}}"
-                        data-bs-toggle="modal"
-                        data-bs-target="#deletePatient">
-                        <i class="bi bi-trash-fill me-1"></i> Delete
-                      </button>
-                    </div>
-                  </td>
+  <div class="btn-group">
+    <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" title="Actions">
+      <i class="bi bi-gear"></i> 
+    </button>
+    <ul class="dropdown-menu dropdown-menu-end">
+      <li>
+        <a class="dropdown-item consultation-button" href="#" 
+           data-patient-id="{{ patient.patients_id }}"
+           data-first-name="{{ patient.first_name }}"
+           data-middle-name="{{ patient.middle_name|default:'' }}"
+           data-last-name="{{ patient.last_name }}"
+           data-sex="{{ patient.sex }}">
+           Consultation
+        </a>
+      </li>
+      <li><hr class="dropdown-divider"></li>
+      <li>
+        <a class="dropdown-item view-button" href="#" 
+           data-id="{{ patient.patients_id }}">
+           View
+        </a>
+      </li>
+      <li>
+        <a class="dropdown-item edit-button" href="#"
+           data-id="{{ patient.patients_id }}">
+           Edit
+        </a>
+      </li>
+    </ul>
+  </div>
+</td>
                 </tr>
                 {% endfor %}
               </tbody>
@@ -138,21 +217,467 @@
   </div>
 </div>
 
+<!-- Consultation Form Modal -->
+<div class="modal fade" id="consultationModal" tabindex="-1" aria-labelledby="consultationModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="consultationModalLabel">
+          <i class="bi bi-clipboard-pulse"></i> Create Consultation/Referral
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-0">
+        <link rel="stylesheet" href="{% static 'css/dashboard.css' %}" />
+        <div id="consultationTabbarContainer">
+          {% include 'components/tabbar/tabbar.html' with tab1_name="Gen. Patient Info" tab2_name="Additional Info" tab3_name="Chief Complaint" tab4_name="Vital Signs" tab5_name="Work Up Done" show_pending_fallback=False %}
+        </div>
+        
+        <style>
+          /* Only disable the top navigation tabs in modal */
+          #consultationModal ul#dashboardTab.nav .nav-link {
+            pointer-events: none;
+            cursor: not-allowed;
+          }
+          
+          /* Ensure modal tabs are properly scoped */
+          #consultationModal .tab-content {
+            min-height: 400px;
+          }
+        </style>
+
+        <div class="bg-light py-4">
+          <form id="modalReferralForm" method="POST" action="{% url 'referrals:create_referral' %}" class="needs-validation" novalidate onsubmit="return false;">
+            {% csrf_token %}
+            <div class="container"> 
+              <div class="tab-content shadow-sm bg-white rounded p-4" id="assessmentTabContent">
+                
+                <!-- Tab 1: General Info with Searchable Dropdown -->
+                <div class="tab-pane show active" id="tab1" role="tabpanel">
+                  <div class="row mb-4">
+                    <div class="col-md-8 mx-auto">
+                      <div class="card border-0 shadow-sm">
+                        <div class="card-body">
+                          <h5 class="card-title text-primary mb-4">
+                            <i class="bi bi-person-lines-fill"></i> Patient Selection
+                          </h5>
+                          <div class="form-group">
+                            <select class="form-control form-control-lg" required name="patient" id="modalPatientSelect" style="width: 100%;">
+                              <option value="" disabled>Select Patient</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Tab 2: Additional Information -->
+                <div class="tab-pane fade" id="tab2" role="tabpanel">
+                  <h5 class="text-primary mb-4"><i class="bi bi-info-circle"></i> Additional Referral Information</h5>
+
+                  <!-- Lifestyle & Social History Section -->
+                  <div class="card border-0 bg-light mb-4" style="border-left: 4px solid #6f42c1;">
+                    <div class="card-body">
+                      <h6 class="text-primary mb-3">Lifestyle & Social History</h6>
+                      <div class="row">
+                        <div class="col-md-6 mb-3">
+                          <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="modal_is_smoker" name="is_smoker">
+                            <label class="form-check-label" for="modal_is_smoker">Smoker</label>
+                          </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                          <label class="form-label text-muted">Stick/s per Day</label>
+                          <input type="number" class="form-control" id="modal_smoking_sticks_per_day" name="smoking_sticks_per_day" min="0" placeholder="Enter number" disabled>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                          <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="modal_is_alcoholic" name="is_alcoholic">
+                            <label class="form-check-label" for="modal_is_alcoholic">Alcoholic</label>
+                          </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                          <label class="form-label text-muted">Bottles per Year</label>
+                          <input type="number" class="form-control" id="modal_alcohol_bottles_per_year" name="alcohol_bottles_per_year" min="0" placeholder="Enter number" disabled>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                          <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="modal_family_planning" name="family_planning">
+                            <label class="form-check-label" for="modal_family_planning">Family Planning</label>
+                          </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                          <label class="form-label text-muted">Family Planning Type</label>
+                          <!-- Female Family Planning Options -->
+                          <select class="form-control" id="modal_family_planning_type" name="family_planning_type" disabled>
+                            <option value="">Select Type</option>
+                            <option value="DMPA">DMPA (Depo-Provera Injection)</option>
+                            <option value="IMPLANT">IMPLANT</option>
+                            <option value="IUD">IUD</option>
+                            <option value="PILLS">PILLS</option>
+                            <option value="CONDOM">CONDOM </option>
+                          </select>
+                          <!-- Male Family Planning Options (hidden by default) -->
+                          <select class="form-control" id="modal_family_planning_type_male" name="family_planning_type" disabled style="display: none;">
+                            <option value="">Select Type</option>
+                            <option value="CONDOM">CONDOM</option>
+                            <option value="VASECTOMY">VASECTOMY</option>
+                            <option value="WITHDRAWAL">WITHDRAWAL</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Menstrual History Section (for Female patients) -->
+                  <div class="card border-0 bg-light mb-4" id="modal_menstrualHistoryCard" style="border-left: 4px solid #e91e63; display: none;">
+                    <div class="card-body">
+                      <h6 class="text-primary mb-3">Menstrual History</h6>
+                      
+                      <!-- Group 1: Initial Menstrual Information -->
+                      <div class="mb-4">
+                        <h6 class="text-muted mb-3" style="font-size: 0.9rem; font-weight: 600;">Initial Information</h6>
+                        <div class="row">
+                          <div class="col-md-6 mb-3">
+                            <div class="form-check mt-4">
+                              <input class="form-check-input" type="checkbox" id="modal_have_period" name="have_period">
+                              <label class="form-check-label" for="modal_have_period">Have Period</label>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Group 2: Current Period Details -->
+                      <div class="mb-4" id="modal_currentPeriodDetails" style="display: none;">
+                        <h6 class="text-muted mb-3" style="font-size: 0.9rem; font-weight: 600;">Current Period Details</h6>
+                        <div class="row">
+                          <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">Menarche (Age)</label>
+                            <input type="number" class="form-control" id="modal_menarche" name="menarche" min="0" max="20" placeholder="Age">
+                          </div>
+                          <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">Last Menstrual Period (LMP)</label>
+                            <input type="date" class="form-control" id="modal_last_menstrual_period" name="last_menstrual_period">
+                          </div>
+                          <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">Period Duration (Days)</label>
+                            <input type="number" class="form-control" id="modal_period_duration" name="period_duration" min="0" placeholder="Days">
+                          </div>
+                          <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">Period Interval (Days)</label>
+                            <input type="number" class="form-control" id="modal_period_interval" name="period_interval" min="0" placeholder="Days between">
+                          </div>
+                          <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">Pads per Day</label>
+                            <input type="number" class="form-control" id="modal_pads_per_day" name="pads_per_day" min="0" placeholder="Number">
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Group 3: Sexual Activity -->
+                      <div class="mb-4">
+                        <h6 class="text-muted mb-3" style="font-size: 0.9rem; font-weight: 600;">Sexual Activity</h6>
+                        <div class="row">
+                          <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                              <input class="form-check-input" type="checkbox" id="modal_sexually_active" name="sexually_active">
+                              <label class="form-check-label" for="modal_sexually_active">Sexually Active</label>
+                            </div>
+                          </div>
+                          <div class="col-md-6 mb-3" id="modal_numberOfPartnersField" style="display: none;">
+                            <label class="form-label text-muted">Number of Partners</label>
+                            <input type="number" class="form-control" id="modal_number_of_partners" name="number_of_partners" min="0" placeholder="Enter number">
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Group 4: Menopause Information -->
+                      <div class="mb-4">
+                        <h6 class="text-muted mb-3" style="font-size: 0.9rem; font-weight: 600;">Menopause</h6>
+                        <div class="row">
+                          <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                              <input class="form-check-input" type="checkbox" id="modal_is_menopause" name="is_menopause">
+                              <label class="form-check-label" for="modal_is_menopause">Menopause</label>
+                            </div>
+                          </div>
+                          <div class="col-md-6 mb-3" id="modal_menopauseAgeField" style="display: none;">
+                            <label class="form-label text-muted">Menopause Age</label>
+                            <input type="number" class="form-control" id="modal_menopause_age" name="menopause_age" min="0" max="100" placeholder="Age">
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Pregnancy History Section (for Female patients) -->
+                  <div class="card border-0 bg-light mb-4" id="modal_pregnancyHistoryCard" style="border-left: 4px solid #ff6b9d; display: none;">
+                    <div class="card-body">
+                      <h6 class="text-primary mb-3">Pregnancy History</h6>
+                      
+                      <!-- Group 1: Current Pregnancy Status -->
+                      <div class="mb-4">
+                        <h6 class="text-muted mb-3" style="font-size: 0.9rem; font-weight: 600;">Current Status</h6>
+                        <div class="row">
+                          <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                              <input class="form-check-input" type="checkbox" id="modal_is_pregnant" name="is_pregnant">
+                              <label class="form-check-label" for="modal_is_pregnant">Currently Pregnant</label>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Group 2: Pregnancy Summary -->
+                      <div class="mb-4">
+                        <h6 class="text-muted mb-3" style="font-size: 0.9rem; font-weight: 600;">Pregnancy Summary</h6>
+                        <div class="row">
+                          <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">Gravidity</label>
+                            <input type="number" class="form-control" id="modal_gravidity" name="gravidity" min="0" placeholder="Number of pregnancies">
+                          </div>
+                          <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">Parity</label>
+                            <input type="number" class="form-control" id="modal_parity" name="parity" min="0" placeholder="Number of births">
+                          </div>
+                          <div class="col-md-6 mb-3">
+                            <div class="form-check mt-4">
+                              <input class="form-check-input" type="checkbox" id="modal_has_given_birth" name="has_given_birth">
+                              <label class="form-check-label" for="modal_has_given_birth">Has Given Birth</label>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Group 3: Birth History -->
+                      <div class="mb-4" id="modal_birthHistoryDetails" style="display: none;">
+                        <h6 class="text-muted mb-3" style="font-size: 0.9rem; font-weight: 600;">Birth History</h6>
+                        <div class="row">
+                          <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">Type of Delivery</label>
+                            <input type="text" class="form-control" id="modal_delivery_type" name="delivery_type" placeholder="e.g., Normal, CS">
+                          </div>
+                          <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">Living Children</label>
+                            <input type="number" class="form-control" id="modal_living_children" name="living_children" min="0" placeholder="Number">
+                          </div>
+                          <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">Full Term Births</label>
+                            <input type="number" class="form-control" id="modal_full_term_births" name="full_term_births" min="0" placeholder="Number">
+                          </div>
+                          <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">Premature Births</label>
+                            <input type="number" class="form-control" id="modal_premature_births" name="premature_births" min="0" placeholder="Number">
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Group 4: Pregnancy Outcomes -->
+                      <div class="mb-4">
+                        <h6 class="text-muted mb-3" style="font-size: 0.9rem; font-weight: 600;">Pregnancy Outcomes</h6>
+                        <div class="row">
+                          <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">Abortions</label>
+                            <input type="number" class="form-control" id="modal_abortions" name="abortions" min="0" placeholder="Number">
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Tab 3: Chief Complaint -->
+                <div class="tab-pane fade" id="tab3" role="tabpanel">
+                  <h5 class="text-primary mb-4"><i class="bi bi-clipboard2-pulse"></i> Patient Complaints</h5>
+                  <div class="card border-0 bg-light">
+                    <div class="card-body">
+                      <label class="form-label text-muted">Chief Complaint & Symptoms</label>
+                      <textarea class="form-control" name="chief_complaint" id="modal_chief_complaint" rows="6" required placeholder="Enter the chief complaint and detailed symptoms"></textarea>
+                      <input type="hidden" name="symptoms" id="modal_symptoms" value="">
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Tab 4: Vital Signs -->
+                <div class="tab-pane fade" id="tab4" role="tabpanel">
+                  <h5 class="text-primary mb-4"><i class="bi bi-heart-pulse"></i> Patient Vital Signs</h5>
+                  <div class="row mb-4">
+                    <div class="col-md-3">
+                      <div class="card border-0 bg-light h-100">
+                        <div class="card-body">
+                          <label class="form-label text-muted">Weight (kg)</label>
+                          <input type="number" class="form-control form-control-lg" step="0.1" min="0" required name="weight" placeholder="" />
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-md-3">
+                      <div class="card border-0 bg-light h-100">
+                        <div class="card-body">
+                          <label class="form-label text-muted">Height (cm)</label>
+                          <input type="number" class="form-control form-control-lg" step="0.1" min="0" required name="height" placeholder="" />
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="card border-0 bg-light h-100">
+                        <div class="card-body">
+                          <label class="form-label text-muted">Blood Pressure</label>
+                          <div class="input-group">
+                            <input type="number" class="form-control form-control-lg" step="1" min="0" required name="bp_systolic" placeholder="Systolic" />
+                            <div class="input-group-append input-group-prepend">
+                              <span class="input-group-text">/</span>
+                            </div>
+                            <input type="number" class="form-control form-control-lg" step="1" min="0" required name="bp_diastolic" placeholder="Diastolic" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-md-3">
+                      <div class="card border-0 bg-light h-100">
+                        <div class="card-body">
+                          <label class="form-label text-muted">Pulse Rate (bpm)</label>
+                          <input type="number" class="form-control form-control-lg" step="1" min="0" max="150" required name="pulse_rate" placeholder="" />
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-md-3">
+                      <div class="card border-0 bg-light h-100">
+                        <div class="card-body">
+                          <label class="form-label text-muted">Respiratory Rate</label>
+                          <input type="number" class="form-control form-control-lg" step="1" min="0" required name="respiratory_rate" placeholder="" />
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-md-3">
+                      <div class="card border-0 bg-light h-100">
+                        <div class="card-body">
+                          <label class="form-label text-muted">Temperature (°C)</label>
+                          <input type="number" class="form-control form-control-lg" step="0.1" min="30" max="45" required name="temperature" placeholder="" />
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-md-3">
+                      <div class="card border-0 bg-light h-100">
+                        <div class="card-body">
+                          <label class="form-label text-muted">O2 Saturation (%)</label>
+                          <input type="number" class="form-control form-control-lg" step="1" min="0" max="100" required name="oxygen_saturation" placeholder="" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Tab 5: Work Up Done -->
+                <div class="tab-pane fade" id="tab5" role="tabpanel">
+                  <h5 class="text-primary mb-4"><i class="bi bi-journal-medical"></i> Medical Procedures</h5>
+                  <div class="card border-0 bg-light">
+                    <div class="card-body">
+                      <label class="form-label text-muted">Work Up Procedures Done</label>
+                      <textarea class="form-control" name="work_up_details" rows="4" placeholder="Enter work up procedures performed"></textarea>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Navigation Buttons -->
+              <div class="d-flex justify-content-between mt-4">
+                <button class="btn btn-outline-secondary btn-lg px-4" id="modalPrevBtn" type="button">
+                  <i class="bi bi-arrow-left"></i> Previous
+                </button>
+                <button class="btn btn-primary btn-lg px-4" id="modalNextBtn" type="button">
+                  Next <i class="bi bi-arrow-right"></i>
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal for Incomplete Form -->
+<div class="modal fade" id="modalIncompleteFormModal" tabindex="-1" aria-labelledby="modalIncompleteFormModalLabel">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-warning text-white">
+        <h5 class="modal-title" id="modalIncompleteFormModalLabel">
+          <i class="bi bi-exclamation-triangle"></i> Incomplete Form
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-0">Please complete all required fields in the current tab before proceeding.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal for Pending Referral Warning -->
+<div class="modal fade" id="modalPendingReferralModal" tabindex="-1" aria-labelledby="modalPendingReferralModalLabel">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-warning text-dark">
+        <h5 class="modal-title" id="modalPendingReferralModalLabel">
+          <i class="bi bi-exclamation-triangle-fill"></i> Pending Referral Found
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="text-center mb-3">
+          <i class="bi bi-exclamation-triangle text-warning" style="font-size: 3rem;"></i>
+        </div>
+        <h6 class="text-center mb-3">This person has a pending referral</h6>
+        <p class="text-muted text-center mb-0">
+          The selected patient already has a pending or in-progress referral. 
+          Please wait for the current referral to be completed before creating a new one.
+        </p>
+      </div>
+      <div class="modal-footer justify-content-center">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 {% block script %}
 <!-- Scripts -->
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.1/js/dataTables.bootstrap4.min.js"></script>
-
+<!-- Note: jQuery and DataTables are already loaded in base.html -->
 <script>
-  $(document).ready(function () {
-    // Initialize DataTable
-    $('#patientTable').DataTable({
-      order: [[0, "asc"]],
-      pageLength: 10,
-      lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+  // Since jQuery is loaded in base.html before this script block, it should be available
+  // But we'll wait for it just to be safe
+  (function() {
+    function initPatientList() {
+      // Ensure jQuery and DataTables are available
+      if (typeof jQuery === 'undefined') {
+        console.error('jQuery is not loaded');
+        return;
+      }
+      
+      if (typeof jQuery.fn.DataTable === 'undefined') {
+        console.error('DataTables is not loaded');
+        return;
+      }
+      
+      var $ = jQuery;
+      
+      $(document).ready(function () {
+    // Modern DataTables configuration matching the design
+    const tableConfig = {
+      responsive: true,
+      dom: '<"row mb-3"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+           '<"row"<"col-sm-12"tr>>' +
+           '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
       language: {
-        search: "Search:",
+        search: "_INPUT_",
+        searchPlaceholder: "Search records...",
+        emptyTable: "No records available.",
         lengthMenu: "Show _MENU_ entries",
         info: "Showing _START_ to _END_ of _TOTAL_ entries",
         infoEmpty: "Showing 0 to 0 of 0 entries",
@@ -163,130 +688,1461 @@
           next: "Next",
           previous: "Previous"
         }
+      },
+      pageLength: 10,
+      lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+      columnDefs: [
+        { 
+          targets: 0,  // Hidden ID column
+          visible: false,
+          searchable: false
+        },
+        { 
+          targets: -1,  // Actions column
+          orderable: false 
+        }
+      ],
+      order: [[0, "desc"]]  // Sort by patients_id descending (newest first)
+    };
+
+    // Initialize DataTable for Patients
+    const $patientTable = $('#patientTable');
+    if ($patientTable.length) {
+      const tbody = $patientTable.find('tbody');
+      // Only initialize if table has rows or is empty (DataTables can handle empty tables)
+      if (tbody.length) {
+        try {
+          // Destroy existing DataTable if it exists
+          if ($.fn.DataTable.isDataTable($patientTable)) {
+            $patientTable.DataTable().destroy();
+          }
+          // Re-initialize
+          $patientTable.DataTable(tableConfig);
+        } catch (error) {
+          console.error('Error initializing patientTable DataTable:', error);
+        }
       }
-    });
+    }
 
-    // View button logic (delegated to table to survive DataTables redraws)
-    $('#patientTable').on('click', '.view-button', function () {
-      const button = $(this);
-      $('#viewPatientName').val(button.data('vpatient'));
-      $('#viewPatientBday').val(button.data('vbdate'));
-      $('#viewAddress').val(button.data('vaddress'));
-      $('#viewSex').val(button.data('vsex'));
-      $('#viewSitio').val(button.data('vsitio') || 'Not specified');
-      $('#viewBarangay').val(button.data('vbarangay') || 'Not specified');
-      $('#viewCivilStatus').val(button.data('vcivilstatus') || 'Not specified');
-      $('#viewPhicStatus').val(button.data('vphicstatus') || 'Not specified');
-      $('#viewCctBeneficiary').val(button.data('vcctbeneficiary') || 'No');
-      $('#viewIsPwd').val(button.data('vispwd') || 'No');
-      $('#viewReferralCount').val(button.data('vreferralcount'));
-      $('#viewLastReferred').val(button.data('vlastreferred') || 'Not yet referred');
-      $('#referral-id-input').val(button.data('id'));
 
-      // Load referral history into the view modal (reusing patient_history logic)
-      const patientId = button.data('id');
+    // View button logic - get data from the row (like doctor's page)
+    // Use document-level delegation to ensure it works after DataTables redraws
+    $(document).on('click', '#patientTable .view-button', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      // Close dropdown if it's open
+      const dropdown = $(this).closest('.btn-group');
+      if (dropdown.length) {
+        const dropdownToggle = dropdown.find('.dropdown-toggle');
+        if (dropdownToggle.length) {
+          const bsDropdown = bootstrap.Dropdown.getInstance(dropdownToggle[0]);
+          if (bsDropdown) {
+            bsDropdown.hide();
+          }
+        }
+      }
+      
+      console.log('View button clicked'); // Debug
+      
+      // Get the row that contains this button
+      let row = $(this).closest('tr.patient-row');
+      
+      if (!row.length) {
+        // Try alternative selector - just get the closest tr
+        row = $(this).closest('tr');
+        if (!row.length) {
+          console.error('Could not find patient row');
+          return;
+        }
+        // Check if it has data attributes
+        if (!row.attr('data-patient-id') && !row.attr('data-id')) {
+          console.error('Row found but missing data attributes');
+          return;
+        }
+      }
+      
+      // Get data from row using attr() to ensure we get actual values
+      const firstName = row.attr('data-first-name') || '';
+      const middleName = row.attr('data-middle-name') || '';
+      const lastName = row.attr('data-last-name') || '';
+      const fullName = `${firstName} ${middleName} ${lastName}`.trim();
+      
+      const patientId = row.attr('data-patient-id') || row.attr('data-id') || '';
+      const birthDate = row.attr('data-date-of-birth') || '';
+      const sex = row.attr('data-sex') || '';
+      const address = row.attr('data-address') || '';
+      const sitio = row.attr('data-sitio') || 'Not specified';
+      const barangay = row.attr('data-barangay') || 'Not specified';
+      const civilStatus = row.attr('data-civil-status') || 'Not specified';
+      const phicStatus = row.attr('data-phic-status') || 'Not specified';
+      const cctBeneficiary = row.attr('data-cct-beneficiary') || 'No';
+      const isPwd = row.attr('data-is-pwd') || 'No';
+      const referralCount = row.attr('data-referral-count') || '0';
+      const lastReferred = row.attr('data-last-referred') || 'Not yet referred';
+      
+      // Format birth date for display (convert Y-m-d to m/d/Y)
+      let formattedBirthDate = '';
+      if (birthDate) {
+        const dateParts = birthDate.split('-');
+        if (dateParts.length === 3) {
+          formattedBirthDate = `${dateParts[1]}/${dateParts[2]}/${dateParts[0]}`;
+        } else {
+          formattedBirthDate = birthDate;
+        }
+      }
+      
+      // Populate modal fields
+      $('#viewPatientName').val(fullName);
+      $('#viewPatientBday').val(formattedBirthDate || birthDate);
+      $('#viewAddress').val(address);
+      $('#viewSex').val(sex);
+      $('#viewSitio').val(sitio);
+      $('#viewBarangay').val(barangay);
+      $('#viewCivilStatus').val(civilStatus);
+      $('#viewPhicStatus').val(phicStatus);
+      $('#viewCctBeneficiary').val(cctBeneficiary);
+      $('#viewIsPwd').val(isPwd);
+      $('#viewReferralCount').val(referralCount);
+      $('#viewLastReferred').val(lastReferred);
+      
+      // Load referral history
       const historyContainer = $('#viewReferralHistory');
-      if (historyContainer.length) {
+      if (historyContainer.length && patientId) {
         historyContainer.html('<div class="text-muted">Loading history...</div>');
         $.ajax({
           url: `/referral/patient/${patientId}/history/`,
           method: 'GET',
           headers: { 'X-Requested-With': 'XMLHttpRequest' },
           success: function(data) {
-            const items = (data.referrals || []).map(r => {
+            const items = (data.referrals || []);
+            
+            // Filter to only show completed referrals (exclude follow-ups and non-completed referrals)
+            const completedReferrals = items.filter(r => {
+              // Only show referrals (not follow-ups) with status 'completed'
+              return (!r.type || r.type !== 'followup_visit') && r.status === 'completed';
+            });
+            
+            // Sort by date (most recent first)
+            completedReferrals.sort((a, b) => {
+              return new Date(b.created_at) - new Date(a.created_at);
+            });
+            
+            // Store all completed referrals globally for filtering
+            window.currentPatientCompletedReferrals = completedReferrals;
+            
+            // Function to render referrals with optional date filter and pagination
+            function renderReferrals(dateFilter = null) {
+              let filteredReferrals = completedReferrals;
+              
+              // Apply date filter if provided
+              if (dateFilter && (dateFilter.from || dateFilter.to)) {
+                filteredReferrals = completedReferrals.filter(r => {
+                  const referralDate = new Date(r.created_at);
+                  referralDate.setHours(0, 0, 0, 0); // Reset time to compare dates only
+                  
+                  if (dateFilter.from && dateFilter.to) {
+                    const fromDate = new Date(dateFilter.from);
+                    const toDate = new Date(dateFilter.to);
+                    toDate.setHours(23, 59, 59, 999); // End of day
+                    return referralDate >= fromDate && referralDate <= toDate;
+                  } else if (dateFilter.from) {
+                    const fromDate = new Date(dateFilter.from);
+                    return referralDate >= fromDate;
+                  } else if (dateFilter.to) {
+                    const toDate = new Date(dateFilter.to);
+                    toDate.setHours(23, 59, 59, 999); // End of day
+                    return referralDate <= toDate;
+                  }
+                  return true;
+                });
+              }
+              
+              // Limit initial display to 10 most recent items
+              const initialLimit = 10;
+              const displayItems = filteredReferrals.slice(0, initialLimit);
+              const remainingCount = filteredReferrals.length - initialLimit;
+              
+              const referralItems = displayItems.map(r => {
               const date = new Date(r.created_at).toLocaleString();
+              // Store full referral data as JSON for modal population
+              const referralDataJson = JSON.stringify(r).replace(/"/g, '&quot;');
               return `
-                <div class="mb-2 p-2 bg-white rounded border">
+                <div class="mb-2 p-2 bg-white rounded border clickable-referral-item" 
+                     style="cursor: pointer; transition: background-color 0.2s;"
+                     data-referral-data='${JSON.stringify(r)}'
+                     data-referral-id="${r.referral_id}">
                   <div class="d-flex justify-content-between">
                     <div><strong>#${r.referral_id}</strong> - ${r.status}</div>
                     <small class="text-muted">${date}</small>
                   </div>
                   <div class="small text-muted">CC: ${r.chief_complaint || 'N/A'}</div>
-                  <div class="small">Diagnosis: <strong>${r.illness_name || r.initial_diagnosis || 'N/A'}</strong></div>
+                  <div class="small">Diagnosis: <strong>${r.illness_name || r.initial_diagnosis || r.final_diagnosis || 'N/A'}</strong></div>
                 </div>`;
+              }).join('');
+              
+              let html = '';
+              
+              // Show filter status and count badge
+              if (dateFilter && (dateFilter.from || dateFilter.to)) {
+                const fromStr = dateFilter.from ? new Date(dateFilter.from).toLocaleDateString() : 'Any';
+                const toStr = dateFilter.to ? new Date(dateFilter.to).toLocaleDateString() : 'Any';
+                html += `<div class="small text-info mb-2">
+                  <i class="bi bi-funnel-fill me-1"></i>Filtered: ${fromStr} to ${toStr} 
+                  <span class="badge bg-info ms-1">${filteredReferrals.length} found</span>
+                </div>`;
+              } else {
+                html += `<div class="small text-muted mb-2">
+                  Total: <span class="badge bg-primary">${completedReferrals.length}</span> completed referrals
+                </div>`;
+              }
+              
+              if (filteredReferrals.length > 0) {
+                html += referralItems;
+                
+                // Add "Show More" button if there are more items
+                if (remainingCount > 0) {
+                  html += `
+                    <div class="text-center mt-3">
+                      <button type="button" class="btn btn-sm btn-outline-primary show-more-referrals" 
+                              data-total="${filteredReferrals.length}" 
+                              data-shown="${initialLimit}"
+                              data-all-items='${JSON.stringify(filteredReferrals)}'>
+                        <i class="bi bi-chevron-down me-1"></i>Show More (${remainingCount} more)
+                      </button>
+                    </div>`;
+                }
+              } else {
+                html += '<div class="text-muted">No completed referrals found for the selected date range.</div>';
+              }
+              
+              historyContainer.html(html);
+              
+              // Handle "Show More" button click
+              historyContainer.find('.show-more-referrals').off('click').on('click', function() {
+                const $btn = $(this);
+                const allItems = JSON.parse($btn.attr('data-all-items'));
+                const currentlyShown = parseInt($btn.attr('data-shown'));
+                const loadMore = 10; // Load 10 more at a time
+                const nextBatch = allItems.slice(currentlyShown, currentlyShown + loadMore);
+                const newShown = currentlyShown + nextBatch.length;
+                const remaining = allItems.length - newShown;
+                
+                // Render new items
+                const newItems = nextBatch.map(r => {
+                  const date = new Date(r.created_at).toLocaleString();
+                  return `
+                    <div class="mb-2 p-2 bg-white rounded border clickable-referral-item" 
+                         style="cursor: pointer; transition: background-color 0.2s;"
+                         data-referral-data='${JSON.stringify(r)}'
+                         data-referral-id="${r.referral_id}">
+                      <div class="d-flex justify-content-between">
+                        <div><strong>#${r.referral_id}</strong> - ${r.status}</div>
+                        <small class="text-muted">${date}</small>
+                      </div>
+                      <div class="small text-muted">CC: ${r.chief_complaint || 'N/A'}</div>
+                      <div class="small">Diagnosis: <strong>${r.illness_name || r.initial_diagnosis || r.final_diagnosis || 'N/A'}</strong></div>
+                    </div>`;
             }).join('');
-            historyContainer.html(items || '<div class="text-muted">No referral history found.</div>');
+                
+                // Insert new items before the button
+                $btn.before(newItems);
+                
+                // Update button or remove if all items shown
+                if (remaining > 0) {
+                  $btn.attr('data-shown', newShown);
+                  $btn.html(`<i class="bi bi-chevron-down me-1"></i>Show More (${remaining} more)`);
+                } else {
+                  $btn.remove();
+                  // Update count display
+                  const countBadge = historyContainer.find('.badge');
+                  if (countBadge.length) {
+                    historyContainer.find('.small.text-info, .small.text-muted').html(
+                      `Showing all <span class="badge bg-success">${allItems.length}</span> completed referrals`
+                    );
+                  }
+                }
+              });
+            }
+            
+            // Initial render without filter
+            renderReferrals();
+            
+            // Store render function globally for filter buttons
+            window.renderPatientReferrals = renderReferrals;
+            
+            // Attach filter button handlers
+            $('#applyReferralFilter').off('click').on('click', function() {
+              const fromDate = $('#referralFilterFrom').val();
+              const toDate = $('#referralFilterTo').val();
+              
+              // Validate date range
+              if (fromDate && toDate && new Date(fromDate) > new Date(toDate)) {
+                alert('From date cannot be later than To date. Please correct the date range.');
+                return;
+              }
+              
+              renderReferrals({ from: fromDate || null, to: toDate || null });
+            });
+            
+            // Clear filter button
+            $('#clearReferralFilter').off('click').on('click', function() {
+              $('#referralFilterFrom').val('');
+              $('#referralFilterTo').val('');
+              renderReferrals();
+            });
+            
+            // Handle click on referral items to open modal
+            historyContainer.off('click', '.clickable-referral-item').on('click', '.clickable-referral-item', function() {
+              const $item = $(this);
+              const referralDataJson = $item.attr('data-referral-data');
+              
+              if (!referralDataJson) {
+                console.error('No referral data found');
+                return;
+              }
+              
+              try {
+                const referralData = JSON.parse(referralDataJson);
+                populateReferralModalFromData(referralData);
+                
+                // Open the modal
+                const modalEl = document.getElementById('viewReferralModal');
+                if (modalEl) {
+                  if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                    modal.show();
+                  } else if (typeof $ !== 'undefined' && $.fn.modal) {
+                    $('#viewReferralModal').modal('show');
+                  }
+                }
+              } catch (e) {
+                console.error('Error parsing referral data:', e);
+              }
+            });
           },
           error: function() {
             historyContainer.html('<div class="text-danger">Failed to load referral history.</div>');
           }
         });
+      } else if (!patientId) {
+        historyContainer.html('<div class="text-muted">No patient ID available.</div>');
+      }
+      
+      // Manually open the modal
+      const modalEl = document.getElementById('viewPatients');
+      if (modalEl) {
+        try {
+          // Check if bootstrap is available
+          if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.show();
+          } else if (typeof $ !== 'undefined' && $.fn.modal) {
+            // Fallback to jQuery Bootstrap modal
+            $('#viewPatients').modal('show');
+          } else {
+            console.error('Bootstrap Modal not available');
+            // Try direct show
+            $(modalEl).addClass('show').css('display', 'block');
+            $('body').append('<div class="modal-backdrop fade show"></div>');
+          }
+        } catch (error) {
+          console.error('Error opening modal:', error);
+        }
+      } else {
+        console.error('Modal element #viewPatients not found');
       }
     });
 
-    // Edit button logic (delegated)
-    $('#patientTable').on('click', '.edit-button', function () {
-      const button = $(this);
+    // Edit button logic - get data from the row (like doctor's page)
+    // Use document-level delegation to ensure it works after DataTables redraws
+    $(document).on('click', '#patientTable .edit-button', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      // Close dropdown if it's open
+      const dropdown = $(this).closest('.btn-group');
+      if (dropdown.length) {
+        const dropdownToggle = dropdown.find('.dropdown-toggle');
+        if (dropdownToggle.length) {
+          const bsDropdown = bootstrap.Dropdown.getInstance(dropdownToggle[0]);
+          if (bsDropdown) {
+            bsDropdown.hide();
+          }
+        }
+      }
+      
+      console.log('Edit button clicked'); // Debug
+      
+      // Get the row that contains this button
+      let row = $(this).closest('tr.patient-row');
+        
+      if (!row.length) {
+        // Try alternative selector - just get the closest tr
+        row = $(this).closest('tr');
+        if (!row.length) {
+          console.error('Could not find patient row');
+          return;
+        }
+        // Check if it has data attributes
+        if (!row.attr('data-patient-id') && !row.attr('data-id')) {
+          console.error('Row found but missing data attributes');
+          return;
+        }
+      }
+      
+      // Get data from row using attr() to ensure we get actual values
+      const patientId = row.attr('data-patient-id') || row.attr('data-id') || '';
+      const firstName = row.attr('data-first-name') || '';
+      const middleName = row.attr('data-middle-name') || '';
+      const lastName = row.attr('data-last-name') || '';
+      const address = row.attr('data-address') || '';
+      const birthDate = row.attr('data-date-of-birth') || '';
+      const phone = row.attr('data-phone') || '';
+      const sex = row.attr('data-sex') || '';
+      const civilStatus = row.attr('data-civil-status') || '';
+      const phicStatus = row.attr('data-phic-status') || '';
+      const cctBeneficiary = row.attr('data-cct-beneficiary') === 'Yes';
+      const isPwd = row.attr('data-is-pwd') === 'Yes';
+      
+      // Get PhilHealth data from row
+      const philhealthNumber = row.attr('data-philhealth-number') || '';
+      const philhealthCategory = row.attr('data-philhealth-category') || '';
+      
+      // Family History
+      const familyHistoryHypertension = row.attr('data-family-history-hypertension') === 'Yes';
+      const familyHistoryDiabetes = row.attr('data-family-history-diabetes') === 'Yes';
+      const familyHistoryCancer = row.attr('data-family-history-cancer') === 'Yes';
+      const familyHistoryAsthma = row.attr('data-family-history-asthma') === 'Yes';
+      const familyHistoryEpilepsy = row.attr('data-family-history-epilepsy') === 'Yes';
+      const familyHistoryTuberculosis = row.attr('data-family-history-tuberculosis') === 'Yes';
+      const familyHistoryOthers = row.attr('data-family-history-others') || '';
       
       // Basic Information
-      $('#edit-patient-id').val(button.data('id'));
-      $('#editFname').val(button.data('firstname'));
-      $('#editMname').val(button.data('middlename') || '');
-      $('#editLname').val(button.data('lastname'));
-      $('#editAddress').val(button.data('eaddress'));
-      $('#editBday').val(button.data('ebday'));
-      $('#ePhone').val(button.data('enum'));
-      $('#eSex').val(button.data('esex'));
+      $('#edit-patient-id').val(patientId);
+      $('#editFname').val(firstName);
+      $('#editMname').val(middleName);
+      $('#editLname').val(lastName);
+      $('#editBday').val(birthDate);
+      $('#ePhone').val(phone);
+      $('#eSex').val(sex);
       
       // Additional Information
-      $('#editCivilStatus').val(button.data('civilstatus') || '');
-      $('#editPhicStatus').val(button.data('phicstatus') || '');
-      $('#editCctBeneficiary').prop('checked', button.data('cctbeneficiary') === 'true');
-      $('#editIsPwd').prop('checked', button.data('ispwd') === 'true');
+      $('#editCivilStatus').val(civilStatus);
+      $('#editPhicStatus').val(phicStatus);
+      $('#editCctBeneficiary').prop('checked', cctBeneficiary);
+      $('#editIsPwd').prop('checked', isPwd);
       
       // PhilHealth Information
-      const philhealthNumber = button.data('philhealthnumber') || '';
-      const philhealthCategory = button.data('philhealthcategory') || '';
       if (philhealthNumber || philhealthCategory) {
         $('#editIsPhilhealthMember').prop('checked', true);
-        toggleEditPhilHealthFields();
+        if (typeof toggleEditPhilHealthFields === 'function') {
+          toggleEditPhilHealthFields();
+        }
         $('#editPhilhealthNumber').val(philhealthNumber);
         $('#editPhilhealthCategory').val(philhealthCategory);
       } else {
         $('#editIsPhilhealthMember').prop('checked', false);
-        toggleEditPhilHealthFields();
+        if (typeof toggleEditPhilHealthFields === 'function') {
+          toggleEditPhilHealthFields();
+        }
       }
       
       // Family History
-      $('#editFamilyHistoryHypertension').prop('checked', button.data('familyhistoryhypertension') === 'true');
-      $('#editFamilyHistoryDiabetes').prop('checked', button.data('familyhistorydiabetes') === 'true');
-      $('#editFamilyHistoryCancer').prop('checked', button.data('familyhistorycancer') === 'true');
-      $('#editFamilyHistoryAsthma').prop('checked', button.data('familyhistoryasthma') === 'true');
-      $('#editFamilyHistoryEpilepsy').prop('checked', button.data('familyhistoryepilepsy') === 'true');
-      $('#editFamilyHistoryTuberculosis').prop('checked', button.data('familyhistorytuberculosis') === 'true');
-      $('#editFamilyHistoryOthers').val(button.data('familyhistoryothers') || '');
+      $('#editFamilyHistoryHypertension').prop('checked', familyHistoryHypertension);
+      $('#editFamilyHistoryDiabetes').prop('checked', familyHistoryDiabetes);
+      $('#editFamilyHistoryCancer').prop('checked', familyHistoryCancer);
+      $('#editFamilyHistoryAsthma').prop('checked', familyHistoryAsthma);
+      $('#editFamilyHistoryEpilepsy').prop('checked', familyHistoryEpilepsy);
+      $('#editFamilyHistoryTuberculosis').prop('checked', familyHistoryTuberculosis);
+      $('#editFamilyHistoryOthers').val(familyHistoryOthers);
       
-      // Handle address dropdown - check if address is in dropdown or needs manual entry
-      const address = button.data('eaddress');
+      // Store address in a global variable that can be accessed after modal opens
+      // The modal's shown.bs.modal event handler in editpatients.html will handle population
       if (address) {
-        const addressSelect = $('#editAddress');
-        const addressOptions = addressSelect.find('option');
-        let found = false;
-        addressOptions.each(function() {
-          if ($(this).val() === address) {
-            found = true;
-            return false;
-          }
-        });
-        if (!found && address !== '__manual__') {
-          // Address not in dropdown, use manual entry
-          addressSelect.val('__manual__').trigger('change');
-          $('#editAddressManual').val(address);
+        window.editPatientAddress = address;
         } else {
-          addressSelect.val(address);
+        window.editPatientAddress = null; // Clear any previous address
+      }
+      
+      // Manually open the modal
+      const modalEl = document.getElementById('editPatients');
+      if (modalEl) {
+        try {
+          // Check if bootstrap is available
+          if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.show();
+          } else if (typeof $ !== 'undefined' && $.fn.modal) {
+            // Fallback to jQuery Bootstrap modal
+            $('#editPatients').modal('show');
+          } else {
+            console.error('Bootstrap Modal not available');
+            // Try direct show
+            $(modalEl).addClass('show').css('display', 'block');
+            $('body').append('<div class="modal-backdrop fade show"></div>');
+          }
+        } catch (error) {
+          console.error('Error opening modal:', error);
         }
+      } else {
+        console.error('Modal element #editPatients not found');
       }
     });
 
 
-     // Delete button logic (delegated)
-     $('#patientTable').on('click', '.delete-button', function () {
+     // Delete button logic (delegated) - use document-level delegation
+    $(document).on('click', '#patientTable .delete-button', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Close dropdown if it's open
+        const dropdown = $(this).closest('.btn-group');
+        if (dropdown.length) {
+          const dropdownToggle = dropdown.find('.dropdown-toggle');
+          if (dropdownToggle.length) {
+            const bsDropdown = bootstrap.Dropdown.getInstance(dropdownToggle[0]);
+            if (bsDropdown) {
+              bsDropdown.hide();
+            }
+          }
+        }
+        
         const button = $(this);
-        const patientName = button.data('patient');
-        $('#deletePatientId').val(button.data('id'));
-        $('#delete-confirmation').text(`Are you sure you want to delete ${patientName} record?`)
+        const patientName = button.attr('data-patient') || '';
+        const patientId = button.attr('data-id') || '';
+        $('#deletePatientId').val(patientId);
+        $('#delete-confirmation').text(`Are you sure you want to delete ${patientName} record?`);
+        
+        // Manually open the delete modal
+        const modalEl = document.getElementById('deletePatient');
+        if (modalEl) {
+          try {
+            if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+              const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+              modal.show();
+            } else if (typeof $ !== 'undefined' && $.fn.modal) {
+              $('#deletePatient').modal('show');
+            }
+          } catch (error) {
+            console.error('Error opening delete modal:', error);
+          }
+        }
       });
+      }); // End of $(document).ready
+    } // End of initPatientList function
+    
+    // Initialize when jQuery is ready
+    // Since jQuery is loaded in base.html before this script, it should be available
+    // But we'll check and wait if needed
+    if (typeof jQuery !== 'undefined' && typeof jQuery.fn.DataTable !== 'undefined') {
+      // jQuery is ready, initialize immediately
+      initPatientList();
+    } else {
+      // Wait for jQuery to load (shouldn't happen, but safety check)
+      var checkJQuery = setInterval(function() {
+        if (typeof jQuery !== 'undefined' && typeof jQuery.fn.DataTable !== 'undefined') {
+          clearInterval(checkJQuery);
+          initPatientList();
+        }
+      }, 50);
+      
+      // Timeout after 5 seconds
+      setTimeout(function() {
+        clearInterval(checkJQuery);
+        if (typeof jQuery === 'undefined') {
+          console.error('jQuery failed to load after 5 seconds');
+        } else if (typeof jQuery.fn.DataTable === 'undefined') {
+          console.error('DataTables failed to load after 5 seconds');
+        }
+      }, 5000);
+    }
+  })();
+  
+  // Function to populate referral modal from referral data object
+  function populateReferralModalFromData(referralData) {
+    const $modal = $('#viewReferralModal');
+    if (!$modal.length) {
+      console.error('viewReferralModal not found');
+      return;
+    }
+    
+    const setFieldValue = (selector, value, fallback = 'N/A') => {
+      const $field = $modal.find(selector);
+      if (!$field.length) {
+        return;
+      }
+      const finalValue = value !== undefined && value !== null && value !== '' ? value : fallback;
+      $field.val(finalValue);
+    };
+    
+    const setTextareaValue = (selector, value, fallback = '') => {
+      const $field = $modal.find(selector);
+      if (!$field.length) {
+        return;
+      }
+      const finalValue = value !== undefined && value !== null && value !== '' ? value : fallback;
+      $field.val(finalValue);
+    };
+    
+    // Format date
+    const formatDate = (dateString) => {
+      if (!dateString) return '';
+      try {
+        const date = new Date(dateString);
+        return date.toLocaleString('en-US', { 
+          year: 'numeric', 
+          month: '2-digit', 
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true
+        });
+      } catch (e) {
+        return dateString;
+      }
+    };
+    
+    // Patient Information - get from viewPatients modal (which should be open)
+    const patientName = $('#viewPatientName').val() || 'N/A';
+    const patientSex = $('#viewSex').val() || 'N/A';
+    const patientAddress = $('#viewAddress').val() || 'N/A';
+    
+    setFieldValue('#viewReferralPatientName', patientName);
+    setFieldValue('#viewReferralDateField', formatDate(referralData.created_at));
+    setFieldValue('#viewReferralFrom', patientAddress);
+    setFieldValue('#viewReferralSex', patientSex);
+    setFieldValue('#viewReferralHeight', referralData.height || '');
+    setFieldValue('#viewReferralWeight', referralData.weight || '');
+    
+    // Vital Signs
+    const bpValue = referralData.bp_systolic && referralData.bp_diastolic ? 
+      `${referralData.bp_systolic}/${referralData.bp_diastolic}` : 
+      (referralData.bp_systolic || '');
+    setFieldValue('#viewBpSystolic', bpValue);
+    setFieldValue('#viewPulseRate', referralData.pulse_rate || '');
+    setFieldValue('#viewRespiratory', referralData.respiratory_rate || '');
+    setFieldValue('#viewTemperature', referralData.temperature || '');
+    setFieldValue('#viewOxygen', referralData.oxygen_saturation || '');
+    
+    // Chief Complaint & History
+    setTextareaValue('#viewNotes', referralData.chief_complaint || '');
+    setTextareaValue('#viewSymptoms', referralData.symptoms || '');
+    setTextareaValue('#viewWorkUp', referralData.work_up_details || '');
+    
+    // Diagnosis
+    const diagnosis = referralData.illness_name || referralData.initial_diagnosis || referralData.final_diagnosis || 'N/A';
+    setFieldValue('#viewdisease', diagnosis);
+    
+    // MHO Actions Section
+    setTextareaValue('#viewMhoFindings', referralData.final_diagnosis || '');
+    setTextareaValue('#viewMhoNote', referralData.notes || '');
+    setTextareaValue('#viewMhoAdvice', referralData.advice || '');
+    setFieldValue('#viewIcdCode', referralData.ICD_code || '');
+    
+    // Store referral ID and status
+    setFieldValue('#viewReferralId', referralData.referral_id || '');
+    setFieldValue('#viewReferralStatus', referralData.status || '');
+    
+    // Hide "Doctor Notes & Actions" section if status is pending or in-progress
+    // Only show it when referral is completed
+    const status = referralData.status || '';
+    if (status === 'pending' || status === 'in-progress') {
+      $('#viewDoctorNotesSection').hide();
+    } else if (status === 'completed') {
+      $('#viewDoctorNotesSection').show();
+    } else {
+      // Default: show for other statuses
+      $('#viewDoctorNotesSection').show();
+    }
+    
+    // Ensure default layout is visible
+    const defaultLayout = $modal.find('#viewReferralDefaultLayout');
+    const specialLayout = $modal.find('#viewReferralSpecialLayout');
+    if (defaultLayout.length) {
+      defaultLayout.removeClass('d-none');
+      defaultLayout.find('.referral-section-card').removeClass('d-none');
+    }
+    if (specialLayout.length) {
+      specialLayout.addClass('d-none');
+    }
+  }
+
+  // ============================================
+  // CONSULTATION MODAL FUNCTIONALITY
+  // ============================================
+  
+  // Handle table row clicks to open consultation modal (excluding action buttons)
+  $(document).on('click', '#patientTable tbody tr.patient-row td:not(:last-child)', function(e) {
+    // Don't open if clicking on a link or button
+    if ($(e.target).is('a, button, .dropdown-toggle, .dropdown-menu, .dropdown-item') || 
+        $(e.target).closest('a, button, .dropdown').length) {
+      return;
+    }
+    
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const row = $(this).closest('tr.patient-row');
+    const patientId = row.attr('data-patient-id') || row.attr('data-id') || '';
+    const firstName = row.attr('data-first-name') || '';
+    const middleName = row.attr('data-middle-name') || '';
+    const lastName = row.attr('data-last-name') || '';
+    const fullName = `${firstName} ${middleName} ${lastName}`.trim();
+    const sex = row.attr('data-sex') || '';
+    
+    if (!patientId) {
+      console.error('No patient ID found');
+      return;
+    }
+    
+      // Open consultation modal
+      const consultationModalEl = document.getElementById('consultationModal');
+      if (consultationModalEl) {
+        const consultationModal = bootstrap.Modal.getOrCreateInstance(consultationModalEl);
+        
+        // Initialize form when modal is shown
+        consultationModalEl.addEventListener('shown.bs.modal', function onModalShown() {
+          // Remove listener after first use
+          consultationModalEl.removeEventListener('shown.bs.modal', onModalShown);
+          
+          // Initialize consultation form
+          initConsultationForm(patientId, fullName, sex);
+        }, { once: true });
+        
+        // Cleanup when modal is hidden
+        consultationModalEl.addEventListener('hidden.bs.modal', function onModalHidden() {
+          // Clean up Select2 if it exists
+          if (typeof $ !== 'undefined' && $('#modalPatientSelect').length && $('#modalPatientSelect').data('select2')) {
+            $('#modalPatientSelect').select2('destroy');
+          }
+          
+          // Reset form
+          const form = document.getElementById('modalReferralForm');
+          if (form) {
+            form.reset();
+          }
+          
+          // Clear all fields
+          clearModalReferralFields();
+        }, { once: false });
+        
+        consultationModal.show();
+      }
   });
+
+  // Consultation button handler (from dropdown)
+$(document).on('click', '#patientTable .consultation-button', function (e) {
+  e.preventDefault();
+  e.stopPropagation();
+  
+  // Close dropdown if it's open
+  const dropdown = $(this).closest('.btn-group');
+  if (dropdown.length) {
+    const dropdownToggle = dropdown.find('.dropdown-toggle');
+    if (dropdownToggle.length) {
+      const bsDropdown = bootstrap.Dropdown.getInstance(dropdownToggle[0]);
+      if (bsDropdown) {
+        bsDropdown.hide();
+      }
+    }
+  }
+  
+  console.log('Consultation button clicked'); // Debug
+  
+  // Get data from button attributes
+  const patientId = $(this).attr('data-patient-id') || '';
+  const firstName = $(this).attr('data-first-name') || '';
+  const middleName = $(this).attr('data-middle-name') || '';
+  const lastName = $(this).attr('data-last-name') || '';
+  const fullName = `${firstName} ${middleName} ${lastName}`.trim();
+  const sex = $(this).attr('data-sex') || '';
+  
+  if (!patientId) {
+    console.error('No patient ID found');
+    return;
+  }
+  
+  // Open consultation modal
+  const consultationModalEl = document.getElementById('consultationModal');
+  if (consultationModalEl) {
+    const consultationModal = bootstrap.Modal.getOrCreateInstance(consultationModalEl);
+    
+    // Initialize form when modal is shown
+    consultationModalEl.addEventListener('shown.bs.modal', function onModalShown() {
+      // Remove listener after first use
+      consultationModalEl.removeEventListener('shown.bs.modal', onModalShown);
+      
+      // Initialize consultation form
+      initConsultationForm(patientId, fullName, sex);
+    }, { once: true });
+    
+    // Cleanup when modal is hidden
+    consultationModalEl.addEventListener('hidden.bs.modal', function onModalHidden() {
+      // Clean up Select2 if it exists
+      if (typeof $ !== 'undefined' && $('#modalPatientSelect').length && $('#modalPatientSelect').data('select2')) {
+        $('#modalPatientSelect').select2('destroy');
+      }
+      
+      // Reset form
+      const form = document.getElementById('modalReferralForm');
+      if (form) {
+        form.reset();
+      }
+      
+      // Clear all fields
+      clearModalReferralFields();
+    }, { once: false });
+    
+    consultationModal.show();
+  }
+});
+
+  // Initialize consultation form in modal
+  function initConsultationForm(patientId, patientName, patientSex) {
+    const $ = jQuery;
+    
+    // Reset form to first tab
+    const modalTabs = document.querySelectorAll('#consultationModal #assessmentTabContent .tab-pane');
+    modalTabs.forEach((tab, i) => {
+      tab.classList.remove('show', 'active');
+      if (i === 0) {
+        tab.classList.add('show', 'active');
+      }
+    });
+    
+    // Reset form
+    const form = document.getElementById('modalReferralForm');
+    if (form) {
+      form.reset();
+    }
+    
+    // Initialize Select2 for patient selection
+    if (typeof $.fn.select2 !== 'undefined') {
+      // Destroy existing Select2 if it exists
+      if ($('#modalPatientSelect').data('select2')) {
+        $('#modalPatientSelect').select2('destroy');
+      }
+      
+      // Initialize Select2 with pre-selected patient
+      const preselectedPatient = {
+        id: patientId,
+        text: patientName,
+        name: patientName
+      };
+      
+      $('#modalPatientSelect').select2({
+        placeholder: "Search patient by name",
+        allowClear: true,
+        theme: "bootstrap4",
+        width: '100%',
+        minimumInputLength: 0,
+        data: [preselectedPatient],
+        ajax: {
+          url: "{% url 'patients:search_patients' %}",
+          dataType: 'json',
+          delay: 250,
+          data: function (params) {
+            return { q: params.term || '', page: params.page || 1 };
+          },
+          processResults: function (data, params) {
+            params.page = params.page || 1;
+            var term = (params.term || '').trim();
+            var results = data.results || [];
+            
+            if (preselectedPatient && !term && params.page === 1) {
+              var patientExists = results.some(function(item) {
+                return item.id === preselectedPatient.id;
+              });
+              if (!patientExists) {
+                results.unshift(preselectedPatient);
+              }
+            }
+            
+            if (!term && params.page === 1 && results.length > 5) {
+              results = results.slice(0, 5);
+            }
+            return {
+              results: results,
+              pagination: { more: Boolean(data.has_more && !!term) }
+            };
+          },
+          cache: true
+        },
+        templateResult: function (item) {
+          if (!item.id) return item.text;
+          var name = item.name || item.text || '';
+          var el = document.createElement('div');
+          el.innerHTML = '<div><strong>' + name + '</strong></div>';
+          return el;
+        },
+        templateSelection: function (item) {
+          return item.name || item.text || '';
+        }
+      });
+      
+      // Set the preselected value
+      $('#modalPatientSelect').val(patientId).trigger('change');
+      
+      // Check patient sex and show/hide sections
+      if (patientSex && patientSex.toLowerCase() === 'female') {
+        $('#modal_menstrualHistoryCard, #modal_pregnancyHistoryCard').show();
+        $('#modal_family_planning_type').show();
+        $('#modal_family_planning_type_male').hide();
+      } else {
+        $('#modal_menstrualHistoryCard, #modal_pregnancyHistoryCard').hide();
+        $('#modal_family_planning_type').hide();
+        $('#modal_family_planning_type_male').show();
+      }
+      
+      // Fetch latest referral data
+      setTimeout(function() {
+        fetchModalReferralData(patientId);
+      }, 500);
+    }
+    
+    // Initialize tab navigation
+    initModalTabNavigation();
+    
+    // Initialize form handlers
+    initModalFormHandlers();
+  }
+
+  // Initialize modal tab navigation
+  function initModalTabNavigation() {
+    const modalTabs = document.querySelectorAll('#consultationModal #assessmentTabContent .tab-pane');
+    const modalNextBtn = document.getElementById('modalNextBtn');
+    const modalPrevBtn = document.getElementById('modalPrevBtn');
+    const modalForm = document.getElementById('modalReferralForm');
+    const incompleteModalEl = document.getElementById('modalIncompleteFormModal');
+    const pendingReferralModalEl = document.getElementById('modalPendingReferralModal');
+    
+    const incompleteModal = incompleteModalEl ? new bootstrap.Modal(incompleteModalEl) : null;
+    const pendingReferralModal = pendingReferralModalEl ? new bootstrap.Modal(pendingReferralModalEl) : null;
+    
+    let currentModalTab = 0;
+    let isSubmitting = false;
+    
+    function showModalTab(index) {
+      modalTabs.forEach((tab, i) => {
+        tab.classList.remove("show", "active");
+        if (i === index) {
+          tab.classList.add("show", "active");
+        }
+      });
+      
+      modalPrevBtn.style.display = index === 0 ? "none" : "inline-block";
+      modalNextBtn.innerHTML = index === modalTabs.length - 1 ? 
+        'Submit <i class="bi bi-check-lg"></i>' : 
+        'Next <i class="bi bi-arrow-right"></i>';
+    }
+    
+    function isModalTabValid(index) {
+      const fields = modalTabs[index].querySelectorAll("input, select, textarea");
+      let valid = true;
+      
+      // Tab 2 (Additional Info) validation - same as assessment.html
+      if (index === 1) {
+        const isSmokerChecked = document.getElementById('modal_is_smoker').checked;
+        const smokingSticksField = document.getElementById('modal_smoking_sticks_per_day');
+        if (isSmokerChecked) {
+          if (!smokingSticksField.value || smokingSticksField.value.trim() === "") {
+            smokingSticksField.classList.add('is-invalid');
+            valid = false;
+          } else {
+            smokingSticksField.classList.remove('is-invalid');
+          }
+        } else {
+          smokingSticksField.classList.remove('is-invalid');
+        }
+        
+        const isAlcoholicChecked = document.getElementById('modal_is_alcoholic').checked;
+        const alcoholBottlesField = document.getElementById('modal_alcohol_bottles_per_year');
+        if (isAlcoholicChecked) {
+          if (!alcoholBottlesField.value || alcoholBottlesField.value.trim() === "") {
+            alcoholBottlesField.classList.add('is-invalid');
+            valid = false;
+          } else {
+            alcoholBottlesField.classList.remove('is-invalid');
+          }
+        } else {
+          alcoholBottlesField.classList.remove('is-invalid');
+        }
+        
+        const familyPlanningChecked = document.getElementById('modal_family_planning').checked;
+        if (familyPlanningChecked) {
+          const familyPlanningTypeField = $('#modal_family_planning_type');
+          const familyPlanningTypeFieldMale = $('#modal_family_planning_type_male');
+          
+          let activeField = null;
+          let fieldValue = '';
+          
+          if (familyPlanningTypeField.is(':visible')) {
+            activeField = familyPlanningTypeField[0];
+            fieldValue = familyPlanningTypeField.val() || '';
+          } else if (familyPlanningTypeFieldMale.is(':visible')) {
+            activeField = familyPlanningTypeFieldMale[0];
+            fieldValue = familyPlanningTypeFieldMale.val() || '';
+          }
+          
+          if (activeField) {
+            fieldValue = fieldValue.trim();
+            if (!fieldValue || fieldValue === "") {
+              activeField.classList.add('is-invalid');
+              valid = false;
+            } else {
+              activeField.classList.remove('is-invalid');
+            }
+          }
+        } else {
+          $('#modal_family_planning_type, #modal_family_planning_type_male').removeClass('is-invalid');
+        }
+        
+        return valid;
+      }
+      
+      // Standard validation for required fields
+      for (let field of fields) {
+        if (field.required) {
+          if (!field.value || field.value.trim() === "") {
+            field.classList.add('is-invalid');
+            valid = false;
+          } else {
+            field.classList.remove('is-invalid');
+          }
+        }
+      }
+      return valid;
+    }
+    
+    // Next button handler
+    modalNextBtn.addEventListener("click", async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      if (!isModalTabValid(currentModalTab)) {
+        if (incompleteModal) incompleteModal.show();
+        return;
+      }
+      
+      // Check for pending referral when on tab 1
+      if (currentModalTab === 0) {
+        let patientId = null;
+        if (typeof $ !== 'undefined' && $('#modalPatientSelect').length && $('#modalPatientSelect').data('select2')) {
+          patientId = $('#modalPatientSelect').val();
+        } else {
+          const patientSelect = document.getElementById('modalPatientSelect');
+          patientId = patientSelect ? patientSelect.value : null;
+        }
+        
+        if (patientId) {
+          try {
+            const response = await fetch(`{% url 'referrals:check_pending_referral' '0' %}`.replace('0', patientId));
+            const data = await response.json();
+            
+            if (data.success && data.has_pending) {
+              if (pendingReferralModal) pendingReferralModal.show();
+              return;
+            }
+          } catch (error) {
+            console.error('Error checking pending referral:', error);
+          }
+        }
+      }
+      
+      if (currentModalTab < modalTabs.length - 1) {
+        currentModalTab++;
+        showModalTab(currentModalTab);
+      } else {
+        if (isSubmitting) {
+          console.log('❌ Already submitting, ignoring click');
+          return false;
+        }
+        
+        if (modalForm.checkValidity()) {
+          submitModalForm();
+        } else {
+          if (incompleteModal) incompleteModal.show();
+        }
+      }
+    });
+    
+    // Previous button handler
+    modalPrevBtn.addEventListener("click", () => {
+      if (currentModalTab > 0) {
+        currentModalTab--;
+        showModalTab(currentModalTab);
+      }
+    });
+    
+    // Submit modal form
+    function submitModalForm() {
+      if (isSubmitting) {
+        console.log('❌ Submission already in progress');
+        return false;
+      }
+      
+      isSubmitting = true;
+      window._modalReferralSubmitting = true;
+      
+      modalNextBtn.disabled = true;
+      modalNextBtn.style.pointerEvents = 'none';
+      modalNextBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Submitting...';
+      
+      // Sync symptoms field
+      const chiefComplaintValue = document.getElementById('modal_chief_complaint').value;
+      document.getElementById('modal_symptoms').value = chiefComplaintValue;
+      
+      const submissionId = Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+      const formData = new FormData(modalForm);
+      formData.append('submission_id', submissionId);
+      
+      fetch(modalForm.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        cache: 'no-cache'
+      })
+      .then(response => {
+        return response.json().then(data => ({ status: response.status, data }));
+      })
+      .then(({ status, data }) => {
+        if (status === 200 && data.success) {
+          // Success - close modal and reload page or show success message
+          isSubmitting = false;
+          window._modalReferralSubmitting = false;
+          
+          const consultationModalEl = document.getElementById('consultationModal');
+          if (consultationModalEl) {
+            const consultationModal = bootstrap.Modal.getInstance(consultationModalEl);
+            if (consultationModal) {
+              consultationModal.hide();
+            }
+          }
+          
+          // Show success message or reload
+          alert('Consultation/Referral created successfully!');
+          location.reload(); // Reload to refresh the patient list
+        } else {
+          isSubmitting = false;
+          window._modalReferralSubmitting = false;
+          modalNextBtn.disabled = false;
+          modalNextBtn.style.pointerEvents = 'auto';
+          modalNextBtn.innerHTML = 'Submit <i class="bi bi-check-lg"></i>';
+          alert('Error creating referral. Please try again.');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        isSubmitting = false;
+        window._modalReferralSubmitting = false;
+        modalNextBtn.disabled = false;
+        modalNextBtn.style.pointerEvents = 'auto';
+        modalNextBtn.innerHTML = 'Submit <i class="bi bi-check-lg"></i>';
+        alert('Error creating referral. Please try again.');
+      });
+    }
+    
+    // Prevent form default submission
+    modalForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    });
+    
+    // Initialize first tab
+    showModalTab(currentModalTab);
+  }
+
+  // Initialize modal form handlers (checkboxes, conditional fields, etc.)
+  function initModalFormHandlers() {
+    const $ = jQuery;
+    
+    // Lifestyle fields
+    $('#modal_is_smoker').on('change', function() {
+      const isChecked = $(this).is(':checked');
+      const field = $('#modal_smoking_sticks_per_day');
+      field.prop('disabled', !isChecked);
+      if (!isChecked) {
+        field.val('').removeClass('is-invalid');
+      }
+    });
+
+    $('#modal_is_alcoholic').on('change', function() {
+      const isChecked = $(this).is(':checked');
+      const field = $('#modal_alcohol_bottles_per_year');
+      field.prop('disabled', !isChecked);
+      if (!isChecked) {
+        field.val('').removeClass('is-invalid');
+      }
+    });
+
+    $('#modal_family_planning').on('change', function() {
+      const isChecked = $(this).is(':checked');
+      const field = $('#modal_family_planning_type');
+      const fieldMale = $('#modal_family_planning_type_male');
+      
+      if (field.is(':visible')) {
+        field.prop('disabled', !isChecked);
+        if (!isChecked) {
+          field.val('').removeClass('is-invalid');
+        }
+      } else if (fieldMale.is(':visible')) {
+        fieldMale.prop('disabled', !isChecked);
+        if (!isChecked) {
+          fieldMale.val('').removeClass('is-invalid');
+        }
+      }
+    });
+
+    // Menstrual history handlers
+    $('#modal_have_period').on('change', function() {
+      const isChecked = $(this).is(':checked');
+      if (isChecked) {
+        $('#modal_currentPeriodDetails').slideDown(300);
+      } else {
+        $('#modal_currentPeriodDetails').slideUp(300);
+        $('#modal_menarche, #modal_last_menstrual_period, #modal_period_duration, #modal_period_interval, #modal_pads_per_day').val('').removeClass('is-invalid');
+      }
+    });
+
+    $('#modal_sexually_active').on('change', function() {
+      const isChecked = $(this).is(':checked');
+      if (isChecked) {
+        $('#modal_numberOfPartnersField').slideDown(300);
+      } else {
+        $('#modal_numberOfPartnersField').slideUp(300);
+        $('#modal_number_of_partners').val('').removeClass('is-invalid');
+      }
+    });
+
+    $('#modal_is_menopause').on('change', function() {
+      const isChecked = $(this).is(':checked');
+      if (isChecked) {
+        $('#modal_menopauseAgeField').slideDown(300);
+      } else {
+        $('#modal_menopauseAgeField').slideUp(300);
+        $('#modal_menopause_age').val('').removeClass('is-invalid');
+      }
+    });
+
+    // Pregnancy history handlers
+    $('#modal_has_given_birth').on('change', function() {
+      const isChecked = $(this).is(':checked');
+      if (isChecked) {
+        $('#modal_birthHistoryDetails').slideDown(300);
+      } else {
+        $('#modal_birthHistoryDetails').slideUp(300);
+        $('#modal_delivery_type, #modal_full_term_births, #modal_premature_births, #modal_living_children').val('').removeClass('is-invalid');
+      }
+    });
+
+    // Patient selection change handler
+    $('#modalPatientSelect').on('select2:select', function (e) {
+      const patientId = e.params.data.id;
+      fetchModalPatientSex(patientId);
+      setTimeout(function() {
+        fetchModalReferralData(patientId);
+      }, 300);
+    });
+
+    $('#modalPatientSelect').on('select2:clear', function (e) {
+      $('#modal_menstrualHistoryCard, #modal_pregnancyHistoryCard').hide();
+      clearModalReferralFields();
+    });
+  }
+
+  // Fetch patient sex
+  function fetchModalPatientSex(patientId) {
+    if (!patientId) {
+      $('#modal_menstrualHistoryCard, #modal_pregnancyHistoryCard').hide();
+      return;
+    }
+    
+    fetch(`/patients/get-patient-sex/${patientId}/`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.sex) {
+          if (data.sex.toLowerCase() === 'female') {
+            $('#modal_menstrualHistoryCard, #modal_pregnancyHistoryCard').show();
+            $('#modal_family_planning_type').show();
+            $('#modal_family_planning_type_male').hide();
+          } else {
+            $('#modal_menstrualHistoryCard, #modal_pregnancyHistoryCard').hide();
+            $('#modal_family_planning_type').hide();
+            $('#modal_family_planning_type_male').show();
+          }
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching patient sex:', error);
+      });
+  }
+
+  // Fetch referral data (for auto-population if needed)
+  function fetchModalReferralData(patientId) {
+    if (!patientId) {
+      clearModalReferralFields();
+      return;
+    }
+    
+    const url = `{% url 'referrals:get_latest_referral' 'PATIENT_ID' %}`.replace('PATIENT_ID', patientId);
+    fetch(url)
+      .then(response => response.json())
+      .then(data => {
+        if (data.success && data.referral) {
+          populateAdditionalInfoFields(data.referral);
+        } else {
+          clearModalReferralFields();
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching referral data:', error);
+        clearModalReferralFields();
+      });
+  }
+
+  // Populate Additional Info tab fields from last referral data
+  function populateAdditionalInfoFields(referralData) {
+    const $ = jQuery;
+    
+    // Clear fields first
+    clearModalReferralFields();
+    
+    // Lifestyle & Social History
+    if (referralData.is_smoker) {
+      $('#modal_is_smoker').prop('checked', true).trigger('change');
+      if (referralData.smoking_sticks_per_day !== null && referralData.smoking_sticks_per_day !== undefined) {
+        $('#modal_smoking_sticks_per_day').val(referralData.smoking_sticks_per_day);
+      }
+    }
+    
+    if (referralData.is_alcoholic) {
+      $('#modal_is_alcoholic').prop('checked', true).trigger('change');
+      if (referralData.alcohol_bottles_per_year !== null && referralData.alcohol_bottles_per_year !== undefined) {
+        $('#modal_alcohol_bottles_per_year').val(referralData.alcohol_bottles_per_year);
+      }
+    }
+    
+    if (referralData.family_planning) {
+      $('#modal_family_planning').prop('checked', true).trigger('change');
+      if (referralData.family_planning_type) {
+        // Check which family planning dropdown is visible (male or female)
+        if ($('#modal_family_planning_type').is(':visible')) {
+          $('#modal_family_planning_type').val(referralData.family_planning_type);
+        } else if ($('#modal_family_planning_type_male').is(':visible')) {
+          $('#modal_family_planning_type_male').val(referralData.family_planning_type);
+        }
+      }
+    }
+    
+    // Menstrual History (only populate if patient is female and fields are visible)
+    if ($('#modal_menstrualHistoryCard').is(':visible')) {
+      // Check if patient has period data (infer from any period-related field)
+      const hasPeriodData = referralData.last_menstrual_period || 
+                           referralData.menarche !== null || 
+                           referralData.period_duration !== null ||
+                           referralData.period_interval !== null ||
+                           referralData.pads_per_day !== null;
+      
+      if (hasPeriodData) {
+        $('#modal_have_period').prop('checked', true).trigger('change');
+        
+        if (referralData.menarche !== null && referralData.menarche !== undefined) {
+          $('#modal_menarche').val(referralData.menarche);
+        }
+        if (referralData.last_menstrual_period) {
+          $('#modal_last_menstrual_period').val(referralData.last_menstrual_period);
+        }
+        if (referralData.period_duration !== null && referralData.period_duration !== undefined) {
+          $('#modal_period_duration').val(referralData.period_duration);
+        }
+        if (referralData.period_interval !== null && referralData.period_interval !== undefined) {
+          $('#modal_period_interval').val(referralData.period_interval);
+        }
+        if (referralData.pads_per_day !== null && referralData.pads_per_day !== undefined) {
+          $('#modal_pads_per_day').val(referralData.pads_per_day);
+        }
+      }
+      
+      if (referralData.sexually_active) {
+        $('#modal_sexually_active').prop('checked', true).trigger('change');
+        if (referralData.number_of_partners !== null && referralData.number_of_partners !== undefined) {
+          $('#modal_number_of_partners').val(referralData.number_of_partners);
+        }
+      }
+      
+      if (referralData.is_menopause) {
+        $('#modal_is_menopause').prop('checked', true).trigger('change');
+        if (referralData.menopause_age !== null && referralData.menopause_age !== undefined) {
+          $('#modal_menopause_age').val(referralData.menopause_age);
+        }
+      }
+    }
+    
+    // Pregnancy History (only populate if patient is female and fields are visible)
+    if ($('#modal_pregnancyHistoryCard').is(':visible')) {
+      if (referralData.is_pregnant) {
+        $('#modal_is_pregnant').prop('checked', true);
+      }
+      
+      if (referralData.gravidity !== null && referralData.gravidity !== undefined) {
+        $('#modal_gravidity').val(referralData.gravidity);
+      }
+      if (referralData.parity !== null && referralData.parity !== undefined) {
+        $('#modal_parity').val(referralData.parity);
+      }
+      
+      // Check if patient has given birth (infer from parity > 0 or delivery_type or birth-related fields)
+      const hasGivenBirth = (referralData.parity !== null && referralData.parity > 0) ||
+                           referralData.delivery_type ||
+                           (referralData.full_term_births !== null && referralData.full_term_births > 0) ||
+                           (referralData.premature_births !== null && referralData.premature_births > 0) ||
+                           (referralData.living_children !== null && referralData.living_children > 0);
+      
+      if (hasGivenBirth) {
+        $('#modal_has_given_birth').prop('checked', true).trigger('change');
+        
+        if (referralData.delivery_type) {
+          $('#modal_delivery_type').val(referralData.delivery_type);
+        }
+        if (referralData.living_children !== null && referralData.living_children !== undefined) {
+          $('#modal_living_children').val(referralData.living_children);
+        }
+        if (referralData.full_term_births !== null && referralData.full_term_births !== undefined) {
+          $('#modal_full_term_births').val(referralData.full_term_births);
+        }
+        if (referralData.premature_births !== null && referralData.premature_births !== undefined) {
+          $('#modal_premature_births').val(referralData.premature_births);
+        }
+      }
+      
+      if (referralData.abortions !== null && referralData.abortions !== undefined) {
+        $('#modal_abortions').val(referralData.abortions);
+      }
+    }
+  }
+
+  // Clear referral fields
+  function clearModalReferralFields() {
+    const $ = jQuery;
+    $('#modal_is_smoker, #modal_is_alcoholic, #modal_family_planning').prop('checked', false);
+    $('#modal_smoking_sticks_per_day, #modal_alcohol_bottles_per_year').val('').prop('disabled', true);
+    $('#modal_family_planning_type, #modal_family_planning_type_male').val('').prop('disabled', true);
+    
+    $('#modal_menarche').val('');
+    $('#modal_have_period, #modal_sexually_active, #modal_is_menopause').prop('checked', false);
+    $('#modal_last_menstrual_period, #modal_period_duration, #modal_period_interval, #modal_pads_per_day').val('');
+    $('#modal_number_of_partners, #modal_menopause_age').val('');
+    $('#modal_currentPeriodDetails, #modal_numberOfPartnersField, #modal_menopauseAgeField').hide();
+    
+    $('#modal_is_pregnant, #modal_has_given_birth').prop('checked', false);
+    $('#modal_gravidity, #modal_parity, #modal_delivery_type, #modal_full_term_births, #modal_premature_births, #modal_abortions, #modal_living_children').val('');
+    $('#modal_birthHistoryDetails').hide();
+  }
 </script>
 {% endblock %}
 

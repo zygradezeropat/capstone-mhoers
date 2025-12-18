@@ -4,118 +4,85 @@
 {% block content %}
 
 <link rel="stylesheet" href="{% static 'css/admin_dashboard.css' %}" />
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
 
 <!-- Navbar Include -->
 {% include 'components/navbar.html' %}
 
 <div class="container-fluid">
+  <!-- ✅ UTILITIES STATISTICS CARDS -->
   <div class="row mt-4 g-3"> 
-    <div class="col-md-4">
+    <div class="col-md-3">
       <div class="card-counter primary">
-        <i class="fa fa-code-fork"></i>
-        <span class="count-numbers">{{ total_patients }}</span>
-        <span class="count-name">Total Patients</span>
-      </div>
-    </div>
-
-    <div class="col-md-4">
-      <div class="card-counter success">
-        <i class="fa fa-database"></i>
-        <span class="count-numbers">{{ active_referrals }}</span>
-        <span class="count-name">Ongoing Referral</span>
-      </div>
-    </div>
-
-    <div class="col-md-4">
-      <div class="card-counter info">
         <i class="fa fa-users"></i>
-        <span class="count-numbers">{{ completed_referrals }}</span>
-        <span class="count-name">Total Referred</span>
+        <span class="count-numbers">{{ total_users|default:0 }}</span>
+        <span class="count-name">Total Users</span>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card-counter success">
+        <i class="fa fa-hospital"></i>
+        <span class="count-numbers">{{ total_facilities|default:0 }}</span>
+        <span class="count-name">Total Facilities</span>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card-counter warning">
+        <i class="fa fa-hourglass"></i>
+        <span class="count-numbers">{{ total_pending_users|default:0 }}</span>
+        <span class="count-name">Pending Approvals</span>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card-counter info">
+        <i class="fa fa-check-circle"></i>
+        <span class="count-numbers">{{ total_active_users|default:0 }}</span>
+        <span class="count-name">Active Users</span>
       </div>
     </div>
   </div>
 
-
-  <!-- Schedule today content -->
+  <!-- ✅ PENDING USER APPROVALS DETAILS -->
   <div class="row mt-4">
     <div class="col-12">
       <div class="card border-0 shadow-sm">
         <div class="card-body p-4">
-          <div class="reminder-main">
-            <div class="reminder-header text-muted ">
-              <h4 class="fw-bold">Today Schedules</h4>
-            </div>
-            <div id="scheduleContent"></div>
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="fw-bold mb-0">Pending User Approvals</h4>
+            <a href="{% url 'user_management' %}?active_tab=tab1" class="btn btn-primary btn-sm">
+              <i class="bi bi-arrow-right"></i> Manage Users
+            </a>
           </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-
-  <!-- Calendar Section -->
-  <div class="row mt-4">
-    <div class="col-12">
-      <div class="card border-0 shadow-sm">
-        <div class="card-body p-4">
-          <div class="calendar-main">
-            <div class="calendar-header">
-              <h2 id="currentMonth"></h2>
-              <div class="calendar-nav">
-                <button class="btn btn-secondary" onclick="previousMonth()">Previous</button>
-                <button class="btn btn-primary" onclick="goToToday()">Today</button>
-                <button class="btn btn-secondary" onclick="nextMonth()">Next</button>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <div class="card bg-light">
+                <div class="card-body text-center">
+                  <h5 class="text-primary">{{ pending_bhw|default:0 }}</h5>
+                  <p class="mb-0 text-muted">BHW Pending</p>
+                </div>
               </div>
             </div>
-            <div class="calendar-grid" id="calendarGrid">
-              <!-- Calendar generated in this portion -->
+            <div class="col-md-6">
+              <div class="card bg-light">
+                <div class="card-body text-center">
+                  <h5 class="text-primary">{{ pending_doctors|default:0 }}</h5>
+                  <p class="mb-0 text-muted">Doctors Pending</p>
+                </div>
+              </div>
             </div>
+            
+            
           </div>
         </div>
       </div>
     </div>
   </div>
 </div>
-<form id="goToAssessmentForm" action="{% url 'assessment' %}" method="post" style="display:none;">
-  {% csrf_token %}
-  <input type="hidden" name="patient_id" id="hiddenPatientId">
-</form>
 {% block script %}
-<script src="{% static 'js/line_chart.js' %}"></script>
-<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
-<script src="{% static 'js/heatdisease_map.js' %}"></script>
-<script src="{% static 'js/calendar.js' %}"></script>
-
-<!-- Pass current user context to JavaScript -->
-<script>
-  // Make current user ID and admin status available to calendar.js
-  window.currentUserId = {{ request.user.id }};
-  window.isAdmin = {{ request.user.is_staff|yesno:"true,false" }};
-</script>
-
-
-
-<script>
-  // Notification check function
-  function checkNotifications() {
-    fetch('/notifications/check/')
-      .then(response => response.json())
-      .then(data => {
-        const notifBadge = document.getElementById('notif-count');
-        if (data.unseen_count > 0) {
-          notifBadge.innerText = data.unseen_count;
-          notifBadge.style.display = 'inline';
-        } else {
-          notifBadge.style.display = 'none';
-        }
-      });
-  }
-
-  setInterval(checkNotifications, 5000); // Check every 5 seconds
-  window.onload = checkNotifications;
-</script>
+<!-- ✅ Removed medical-related scripts (heatmap, calendar) -->
+<!-- Notifications are now handled automatically by notification_poller.js in base.html -->
 {% endblock script %}
 
 {% endblock %}

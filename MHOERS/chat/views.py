@@ -10,6 +10,7 @@ from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from .models import Conversation, Message, MessageNotification
 from .forms import MessageForm
+from accounts.models import BHWRegistration
 import json
 
 
@@ -128,11 +129,42 @@ def conversation_detail(request, conversation_id):
     else:
         form = MessageForm()
     
+    # Get the other participant
+    other_user = conversation.get_other_participant(request.user)
+    
+    # If no other user found, redirect to chat home with error
+    if not other_user:
+        messages.error(request, 'Invalid conversation: No other participant found.')
+        return redirect('chat:chat_home')
+    
+    # Get facility information for BHW users
+    other_user_facility = None
+    if not other_user.is_staff:
+        try:
+            bhw_registration = BHWRegistration.objects.get(user=other_user)
+            if bhw_registration.facility:
+                other_user_facility = bhw_registration.facility.name
+        except BHWRegistration.DoesNotExist:
+            pass
+    
+    # Get all conversations for sidebar
+    all_conversations = Conversation.objects.filter(
+        participants=request.user,
+        is_active=True
+    ).order_by('-updated_at')[:10]
+    
+    # Add other user name for each conversation
+    for conv in all_conversations:
+        other_participant = conv.get_other_participant(request.user)
+        conv.other_user_name = other_participant.get_full_name() or other_participant.username if other_participant else "Unknown User"
+    
     context = {
         'conversation': conversation,
         'messages': messages_page,
         'form': form,
-        'other_user': conversation.get_other_participant(request.user),
+        'other_user': other_user,
+        'other_user_facility': other_user_facility,
+        'all_conversations': all_conversations,
         'active_page': 'chat',
     }
     return render(request, 'chat/conversation_detail.html', context)
@@ -170,30 +202,6 @@ def send_message(request, conversation_id):
                 )
                 notification.unread_count += 1
                 notification.save()
-            
-            # Broadcast message to WebSocket clients
-            try:
-                channel_layer = get_channel_layer()
-                room_group_name = f'chat_{conversation_id}'
-                message_data = {
-                    'id': message.id,
-                    'content': message.content,
-                    'sender': message.sender.get_full_name() or message.sender.username,
-                    'sender_id': message.sender.id,
-                    'created_at': message.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-                    'is_read': message.is_read
-                }
-                async_to_sync(channel_layer.group_send)(
-                    room_group_name,
-                    {
-                        'type': 'chat_message',
-                        'message': message_data
-                    }
-                )
-            except Exception as e:
-                # If channel layer is not available, continue without broadcasting
-                # This allows the HTTP endpoint to work even if Channels is not fully configured
-                print(f"Warning: Could not broadcast message via Channels: {e}")
             
             return JsonResponse({
                 'success': True,
@@ -282,7 +290,7 @@ def user_list(request):
             Q(email__icontains=search_query)
         )
     
-    users = users.order_by('first_name', 'last_name', 'username')[:20]
+    users = users.order_by('first_name', 'last_name', 'username')[:3]
     
     users_data = []
     for user in users:

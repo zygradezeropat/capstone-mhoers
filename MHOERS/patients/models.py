@@ -15,6 +15,7 @@ class Patient(models.Model):
     PHIC_STATUS_CHOICES = [
         ('M', 'Member'),
         ('D', 'Dependent'),
+        ('N', 'N/A'),
     ]
     
     patients_id = models.AutoField(primary_key=True)
@@ -83,3 +84,29 @@ class Medical_History(models.Model):
     def __str__(self):
         return f"{self.illness_name} - {self.patient.first_name} {self.patient.last_name}"
 
+
+class SMSReminderLog(models.Model):
+    """Track SMS reminders sent to prevent duplicates"""
+    reminder_id = models.AutoField(primary_key=True)
+    patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='sms_reminders')
+    medical_history = models.ForeignKey(Medical_History, on_delete=models.CASCADE, related_name='sms_reminders', null=True, blank=True)
+    followup_date = models.DateField()
+    reminder_type = models.CharField(max_length=20, choices=[
+        ('today', 'Today'),
+        ('tomorrow', 'Tomorrow'),
+    ])
+    sent_at = models.DateTimeField(auto_now_add=True)
+    message = models.TextField(blank=True)
+    status = models.CharField(max_length=20, default='sent', choices=[
+        ('sent', 'Sent'),
+        ('failed', 'Failed'),
+    ])
+    
+    class Meta:
+        unique_together = [['patient', 'followup_date', 'reminder_type']]
+        indexes = [
+            models.Index(fields=['patient', 'followup_date', 'reminder_type']),
+        ]
+    
+    def __str__(self):
+        return f"SMS Reminder for {self.patient} on {self.followup_date}"

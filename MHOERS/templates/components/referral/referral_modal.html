@@ -18,10 +18,10 @@
           <p id="delete-confirm-text" class="text-muted mb-4"></p>
           <div class="d-flex justify-content-between">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-dismiss="modal">
-              <i class="bi bi-x-circle mr-2"></i>Cancel
+              Cancel
             </button>
             <button type="submit" class="btn btn-danger">
-              <i class="bi bi-trash mr-2"></i>Delete
+              Delete
             </button>
           </div>
         </form>
@@ -47,196 +47,150 @@
         {% load static %}
         <link rel="stylesheet" href="{% static 'css/referral_modal_modern.css' %}">
         
-        <!-- Patient Information Section -->
-        <div class="referral-section-card patient-info-section">
-          <div class="referral-section-header">
-            <i class="bi bi-person-fill"></i>
-            <h6 class="referral-section-title">Patient Information</h6>
-          </div>
-          <div class="row">
-          <div class="col-md-4">
-              <div class="modern-form-group">
-                <label class="modern-form-label" for="viewPatientName">Patient Name</label>
-                <div class="modern-input-wrapper">
-            <input type="text" class="form-control bg-light" id="viewPatientName" disabled value="{{ patients.patient_id }}">
+        <div id="viewReferralDefaultLayout">
+      
+          <!-- Patient Information Section -->
+          <div class="referral-section-card patient-info-section">
+            <div class="referral-section-header">
+              <h6 class="referral-section-title">Patient Information</h6>
+            </div>
+            <div class="row">
+              <!-- Row 1: Patient Name, Referral Date, Refer From -->
+              <div class="col-md-4">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="viewReferralPatientName">Patient Name</label>
+                  <div class="modern-input-wrapper">
+                    <input type="text" class="form-control bg-light" id="viewReferralPatientName" disabled>
+                  </div>
                 </div>
-            </div>
-          </div>
-          <div class="col-md-4">
-              <div class="modern-form-group">
-                <label class="modern-form-label" for="viewReferralDate">Referral Date</label>
-                <div class="modern-input-wrapper">
-            <input type="text" class="form-control bg-light" id="viewReferralDate" disabled>
-          </div>
               </div>
-            </div>
-          <div class="col-md-4">
-              <div class="modern-form-group">
-                <label class="modern-form-label" for="viewStatus">Referral Status</label>
-                <div class="modern-input-wrapper">
-            <input type="text" class="form-control bg-light" id="viewStatus" disabled>
-          </div>
-              </div>
-        </div>
-          <div class="col-md-4">
-              <div class="modern-form-group">
-                <label class="modern-form-label" for="viewReferFrom">Refer From</label>
-                <div class="modern-input-wrapper">
-            <input type="text" class="form-control bg-light" id="viewReferFrom" disabled>
+              <div class="col-md-4">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="viewReferralDateField">Referral Date</label>
+                  <div class="modern-input-wrapper">
+                    <input type="text" class="form-control bg-light" id="viewReferralDateField" disabled>
+                  </div>
                 </div>
-            </div>
-          </div>
-          <div class="col-md-4">
-              <div class="modern-form-group">
-                <label class="modern-form-label" for="viewReferTo">Refer To</label>
-                <div class="modern-input-wrapper">
-            <input type="text" class="form-control bg-light" id="viewReferTo" disabled>
-          </div>
+              </div>
+              <div class="col-md-4">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="viewReferralFrom">Refer From</label>
+                  <div class="modern-input-wrapper">
+                    <input type="text" class="form-control bg-light" id="viewReferralFrom" disabled>
+                  </div>
+                </div>
+              </div>
+              <!-- Row 2: Sex, Height, Weight -->
+              <div class="col-md-4">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="viewReferralSex">Sex</label>
+                  <div class="modern-input-wrapper">
+                    <input type="text" class="form-control bg-light" id="viewReferralSex" disabled>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="viewReferralHeight">Height (CM)</label>
+                  <div class="modern-input-wrapper">
+                    <input type="text" class="form-control bg-light" id="viewReferralHeight" disabled>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="viewReferralWeight">Weight (KG)</label>
+                  <div class="modern-input-wrapper">
+                    <input type="text" class="form-control bg-light" id="viewReferralWeight" disabled>
+                  </div>
+                </div>
               </div>
             </div>
-          <div class="col-md-4">
-              <div class="modern-form-group">
-                <label class="modern-form-label" for="viewSex">Sex</label>
-                <div class="modern-input-wrapper">
-            <input type="text" class="form-control bg-light" id="viewSex" disabled>
           </div>
-              </div>
-        </div>
-          <div class="col-md-4">
-              <div class="modern-form-group">
-                <label class="modern-form-label" for="viewheight">Height (CM)</label>
-                <div class="modern-input-wrapper">
-            <input type="text" class="form-control bg-light" id="viewheight" disabled>
-          </div>
-              </div>
-            </div>
-          <div class="col-md-4">
-              <div class="modern-form-group">
-                <label class="modern-form-label" for="viewWeight">Weight (KG)</label>
-                <div class="modern-input-wrapper">
-            <input type="text" class="form-control bg-light" id="viewWeight" disabled>
-          </div>
-              </div>
-            </div>
-          </div>
-        </div>
 
-        <!-- Vital Signs Section -->
-        <div class="referral-section-card vitals-section">
-          <div class="referral-section-header">
-            <i class="bi bi-heart-pulse-fill"></i>
-            <h6 class="referral-section-title">Vital Signs</h6>
-          </div>
-          <div class="row">
-          <div class="col-md-4">
-              <div class="modern-form-group">
-                <label class="modern-form-label" for="viewtemperature">Temperature (°C)</label>
-                <div class="modern-input-wrapper">
-            <div class="input-group">
-              <div class="input-group-prepend">
-                      <span class="input-group-text"><i class="bi bi-thermometer-half"></i></span>
+
+          <!-- Vital Signs Section -->
+          <div class="referral-section-card vitals-section">
+            <div class="referral-section-header">
+              <h6 class="referral-section-title">Vital Signs</h6>
+            </div>
+            <div class="row">
+              <div class="col-md-3">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="viewTemperature">
+                    Temperature (°C)
+                  </label>
+                  <div class="modern-input-wrapper">
+                    <div class="input-group vital-sign-wrapper">
+                      <input type="text" class="form-control bg-light" id="viewTemperature" disabled>
+                      <span class="vital-indicator"></span>
                     </div>
-                    <input type="text" class="form-control bg-light" id="viewtemperature" disabled>
                   </div>
                 </div>
               </div>
-            </div>
-            <div class="col-md-4">
-              <div class="modern-form-group">
-                <label class="modern-form-label" for="viewbpsystolic">BP Systolic</label>
-                <div class="modern-input-wrapper">
-                  <div class="input-group">
-                    <div class="input-group-prepend">
-                      <span class="input-group-text"><i class="bi bi-heart-pulse"></i></span>
+              <div class="col-md-3">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="viewBpSystolic">
+                    Blood Pressure (mmHg)
+                  </label>
+                  <div class="modern-input-wrapper">
+                    <div class="input-group vital-sign-wrapper">
+                      <input type="text" class="form-control bg-light" id="viewBpSystolic" disabled>
+                      <span class="vital-indicator"></span>
                     </div>
-              <input type="text" class="form-control bg-light" id="viewbpsystolic" disabled>
-                  </div>
-                </div>
-            </div>
-          </div>
-          <div class="col-md-4">
-              <div class="modern-form-group">
-                <label class="modern-form-label" for="viewbpdiastolic">BP Diastolic</label>
-                <div class="modern-input-wrapper">
-            <div class="input-group">
-              <div class="input-group-prepend">
-                      <span class="input-group-text"><i class="bi bi-heart-pulse"></i></span>
-                    </div>
-                    <input type="text" class="form-control bg-light" id="viewbpdiastolic" disabled>
                   </div>
                 </div>
               </div>
-            </div>
-            <div class="col-md-4">
-              <div class="modern-form-group">
-                <label class="modern-form-label" for="viewrespiratory">Respiratory Rate (/min)</label>
-                <div class="modern-input-wrapper">
-                  <div class="input-group">
-                    <div class="input-group-prepend">
-                      <span class="input-group-text"><i class="bi bi-wind"></i></span>
+              <div class="col-md-3">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="viewRespiratory">
+                    Respiratory Rate (/min)
+                  </label>
+                  <div class="modern-input-wrapper">
+                    <div class="input-group vital-sign-wrapper">
+                      <input type="text" class="form-control bg-light" id="viewRespiratory" disabled>
+                      <span class="vital-indicator"></span>
                     </div>
-                    <input type="text" class="form-control bg-light" id="viewrespiratory" disabled>
                   </div>
                 </div>
-            </div>
-          </div>
-          <div class="col-md-4">
-              <div class="modern-form-group">
-                <label class="modern-form-label" for="viewdisease">Possible Disease</label>
-                <div class="modern-input-wrapper">
-            <div class="input-group">
-              <div class="input-group-prepend">
-                <span class="input-group-text"><i class="bi bi-info-circle"></i></span>
+              </div>
+              <div class="col-md-3">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="viewPulseRate">
+                    Pulse Rate (bpm)
+                  </label>
+                  <div class="modern-input-wrapper">
+                    <div class="input-group vital-sign-wrapper">
+                      <input type="text" class="form-control bg-light" id="viewPulseRate" disabled>
+                      <span class="vital-indicator"></span>
                     </div>
-                    <input type="text" class="form-control bg-light" id="viewdisease" disabled>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
         <!-- Clinical Notes Section -->
         <div class="referral-section-card clinical-notes-section">
           <div class="referral-section-header">
-            <i class="bi bi-clipboard-pulse-fill"></i>
             <h6 class="referral-section-title">Clinical Notes</h6>
           </div>
           <div class="row">
-          <div class="col-md-4">
+          <div class="col-md-6">
               <div class="modern-form-group">
                 <label class="modern-form-label" for="viewNotes">Complaint</label>
                 <div class="modern-input-wrapper">
             <div class="input-group">
-              <div class="input-group-prepend">
-                <span class="input-group-text"><i class="bi bi-clipboard-pulse"></i></span>
-              </div>
               <textarea class="form-control bg-light" id="viewNotes" rows="3" disabled></textarea>
                   </div>
                 </div>
             </div>
           </div>
-          <div class="col-md-4">
-              <div class="modern-form-group">
-                <label class="modern-form-label" for="viewSymptoms">Symptoms</label>
-                <div class="modern-input-wrapper">
-            <div class="input-group">
-              <div class="input-group-prepend">
-                <span class="input-group-text"><i class="bi bi-clipboard-check"></i></span>
-              </div>
-              <textarea class="form-control bg-light" id="viewSymptoms" rows="3" disabled></textarea>
-                  </div>
-                </div>
-            </div>
-          </div>
-          <div class="col-md-4">
+          <div class="col-md-6">
               <div class="modern-form-group">
                 <label class="modern-form-label" for="viewWorkUp">Work Up</label>
                 <div class="modern-input-wrapper">
             <div class="input-group">
-              <div class="input-group-prepend">
-                <span class="input-group-text"><i class="bi bi-clipboard-pulse"></i></span>
-              </div>
               <textarea class="form-control bg-light" id="viewWorkUp" rows="3" disabled></textarea>
             </div>
           </div>
@@ -245,18 +199,355 @@
           </div>
         </div>
 
+          <!-- Doctor Notes & Actions Section (Read-only for View Modal) -->
+          <div class="referral-section-card actions-section" id="viewDoctorNotesSection">
+            <div class="referral-section-header">
+              <h6 class="referral-section-title">Doctor Notes & Actions</h6>
+            </div>
+            <div class="row">
+              <div class="col-md-4">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="viewMhoFindings">
+                    Findings
+                  </label>
+                  <div class="modern-input-wrapper">
+                    <div class="input-group">
+                      <textarea class="form-control bg-light" id="viewMhoFindings" rows="3" disabled></textarea>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="viewMhoNote">
+                    Doctors Note / Actions
+                  </label>
+                  <div class="modern-input-wrapper">
+                    <div class="input-group">
+                      <textarea class="form-control bg-light" id="viewMhoNote" rows="3" disabled></textarea>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="viewMhoAdvice">
+                    Advice
+                  </label>
+                  <div class="modern-input-wrapper">
+                    <div class="input-group">
+                      <textarea class="form-control bg-light" id="viewMhoAdvice" rows="3" disabled></textarea>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="viewExaminedBy">
+                    Examined By
+                  </label>
+                  <div class="modern-input-wrapper">
+                    <div class="input-group">
+                      <input type="text" class="form-control bg-light" id="viewExaminedBy" disabled>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="viewFollowup">
+                    Follow Up Date
+                  </label>
+                  <div class="modern-input-wrapper">
+                    <div class="input-group">
+                      <input type="text" class="form-control bg-light" id="viewFollowup" disabled>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Lifestyle & Social History Section -->
+          <div class="referral-section-card" style="border-left: 4px solid #6f42c1;">
+            <div class="referral-section-header">
+              <h6 class="referral-section-title">Lifestyle & Social History</h6>
+            </div>
+            <div class="row text-muted">
+              <div class="col-md-6">
+                <div class="modern-form-group">
+                  <label class="modern-form-label text-muted" for="viewIsSmoker">
+                    Smoker
+                  </label>
+                  <div class="form-check mt-2">
+                    <input class="form-check-input" type="checkbox" id="viewIsSmoker" disabled>
+                    <label class="form-check-label text-muted" for="viewIsSmoker">Yes</label>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="modern-form-group">
+                  <label class="modern-form-label text-muted" for="viewSmokingSticks">Sticks/Packs per Day</label>
+                  <div class="modern-input-wrapper">
+                    <div class="input-group">
+                      <input type="text" class="form-control bg-light text-muted" id="viewSmokingSticks" disabled>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="modern-form-group">
+                  <label class="modern-form-label text-muted" for="viewIsAlcoholic">
+                    Alcoholic
+                  </label>
+                  <div class="form-check mt-2">
+                    <input class="form-check-input" type="checkbox" id="viewIsAlcoholic" disabled>
+                    <label class="form-check-label text-muted" for="viewIsAlcoholic">Yes</label>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="modern-form-group">
+                  <label class="modern-form-label text-muted" for="viewAlcoholBottles">Bottles per Year</label>
+                  <div class="modern-input-wrapper">
+                    <div class="input-group">
+                      <input type="text" class="form-control bg-light text-muted" id="viewAlcoholBottles" disabled>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="modern-form-group">
+                  <label class="modern-form-label text-muted" for="viewFamilyPlanning">
+                    Family Planning
+                  </label>
+                  <div class="form-check mt-2">
+                    <input class="form-check-input" type="checkbox" id="viewFamilyPlanning" disabled>
+                    <label class="form-check-label text-muted" for="viewFamilyPlanning">Yes</label>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="modern-form-group">
+                  <label class="modern-form-label text-muted" for="viewFamilyPlanningType">Family Planning Type</label>
+                  <div class="modern-input-wrapper">
+              <div class="input-group">
+                      <input type="text" class="form-control bg-light text-muted" id="viewFamilyPlanningType" disabled>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              </div>
+            </div>
+
+          <!-- Menstrual History Section (for Female patients) -->
+          <div class="referral-section-card" id="viewMenstrualHistorySection" style="border-left: 4px solid #e91e63; display: none;">
+            <div class="referral-section-header">
+              <h6 class="referral-section-title">Menstrual History</h6>
+            </div>
+            <div class="row">
+              <div class="col-md-4">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="viewMenarche">Menarche (Age)</label>
+                  <div class="modern-input-wrapper">
+                    <div class="input-group">
+                      <input type="text" class="form-control bg-light" id="viewMenarche" disabled>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="viewSexuallyActive">
+                    Sexually Active
+                  </label>
+                  <div class="form-check mt-2">
+                    <input class="form-check-input" type="checkbox" id="viewSexuallyActive" disabled>
+                    <label class="form-check-label" for="viewSexuallyActive">Yes</label>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="viewNumberOfPartners">Number of Partners</label>
+                  <div class="modern-input-wrapper">
+                    <div class="input-group">
+                      <input type="text" class="form-control bg-light" id="viewNumberOfPartners" disabled>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="viewIsMenopause">
+                    Menopause
+                  </label>
+                  <div class="form-check mt-2">
+                    <input class="form-check-input" type="checkbox" id="viewIsMenopause" disabled>
+                    <label class="form-check-label" for="viewIsMenopause">Yes</label>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="viewMenopauseAge">Menopause Age</label>
+                  <div class="modern-input-wrapper">
+                    <div class="input-group">
+                      <input type="text" class="form-control bg-light" id="viewMenopauseAge" disabled>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="viewLastMenstrualPeriod">Last Menstrual Period (LMP)</label>
+                  <div class="modern-input-wrapper">
+                    <div class="input-group">
+                      <input type="text" class="form-control bg-light" id="viewLastMenstrualPeriod" disabled>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="viewPeriodDuration">Period Duration (Days)</label>
+                  <div class="modern-input-wrapper">
+                    <div class="input-group">
+                      <input type="text" class="form-control bg-light" id="viewPeriodDuration" disabled>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="viewPeriodInterval">Period Interval (Days)</label>
+                  <div class="modern-input-wrapper">
+                    <div class="input-group">
+                      <input type="text" class="form-control bg-light" id="viewPeriodInterval" disabled>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            <div class="col-md-4">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="viewPadsPerDay">Pads per Day</label>
+                  <div class="modern-input-wrapper">
+              <div class="input-group">
+                      <input type="text" class="form-control bg-light" id="viewPadsPerDay" disabled>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pregnancy History Section (for Female patients) -->
+          <div class="referral-section-card" id="viewPregnancyHistorySection" style="border-left: 4px solid #ff6b9d; display: none;">
+            <div class="referral-section-header">
+              <h6 class="referral-section-title">Pregnancy History</h6>
+            </div>
+            <div class="row">
+              <div class="col-md-4">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="viewIsPregnant">
+                    Currently Pregnant
+                  </label>
+                  <div class="form-check mt-2">
+                    <input class="form-check-input" type="checkbox" id="viewIsPregnant" disabled>
+                    <label class="form-check-label" for="viewIsPregnant">Yes</label>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="viewGravidity">Gravidity</label>
+                  <div class="modern-input-wrapper">
+                    <div class="input-group">
+                      <input type="text" class="form-control bg-light" id="viewGravidity" disabled>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="viewParity">Parity</label>
+                  <div class="modern-input-wrapper">
+                    <div class="input-group">
+                      <input type="text" class="form-control bg-light" id="viewParity" disabled>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="viewDeliveryType">Type of Delivery</label>
+                  <div class="modern-input-wrapper">
+                    <div class="input-group">
+                      <input type="text" class="form-control bg-light" id="viewDeliveryType" disabled>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="viewFullTermBirths">Full Term Births</label>
+                  <div class="modern-input-wrapper">
+                    <div class="input-group">
+                      <input type="text" class="form-control bg-light" id="viewFullTermBirths" disabled>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="viewPrematureBirths">Premature Births</label>
+                  <div class="modern-input-wrapper">
+                    <div class="input-group">
+                      <input type="text" class="form-control bg-light" id="viewPrematureBirths" disabled>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="viewAbortions">Abortions</label>
+                  <div class="modern-input-wrapper">
+                    <div class="input-group">
+                      <input type="text" class="form-control bg-light" id="viewAbortions" disabled>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="viewLivingChildren">Living Children</label>
+                  <div class="modern-input-wrapper">
+              <div class="input-group">
+                      <input type="text" class="form-control bg-light" id="viewLivingChildren" disabled>
+                    </div>
+                  </div>
+                </div>
+              </div>
+          </div>
+        </div>
+
+        </div> <!-- /#viewReferralDefaultLayout -->
+        <div id="viewReferralSpecialLayout" class="d-none"></div>
+        
+        <!-- Hidden field to store referral status for Accept button logic -->
+        <input type="hidden" id="viewReferralStatus" value="">
+        <input type="hidden" id="viewReferralId" value="">
+
       </div>
       <!-- Modal Footer -->
       <div class="modal-footer bg-light py-3">
-        <form method="POST" action="{% url 'referrals:update_referral_status' %}">
-          {% csrf_token %}
-          <input type="hidden" name="referral_id" id="view-referral-id-input">
-          <button type="submit" class="btn btn-success">
-            <i class="bi bi-check-circle mr-2"></i>Referred
+        {% if is_doctor or request.user.is_staff or request.user.is_superuser %}
+          <button type="button" class="btn btn-success" id="acceptReferralBtn" style="display: none;" data-referral-id="">
+            Accept
           </button>
-        </form>
+        {% endif %}
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-dismiss="modal">
-          <i class="bi bi-arrow-left mr-2"></i>Close
+          Close
         </button>
       </div>
     </div>
@@ -293,7 +584,6 @@
           <!-- Patient Information Section -->
           <div class="referral-section-card patient-info-section">
             <div class="referral-section-header">
-              <i class="bi bi-person-fill"></i>
               <h6 class="referral-section-title">Patient Information</h6>
             </div>
             <div class="row">
@@ -351,56 +641,56 @@
           <!-- Vital Signs Section -->
           <div class="referral-section-card vitals-section">
             <div class="referral-section-header">
-              <i class="bi bi-heart-pulse-fill"></i>
               <h6 class="referral-section-title">Vital Signs</h6>
             </div>
             <div class="row">
-            <div class="col-md-4">
+              <div class="col-md-3">
                 <div class="modern-form-group">
                   <label class="modern-form-label" for="editTemperature">
                     Temperature (°C)
-                    <i class="bi bi-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Normal: 36.1-37.2°C"></i>
                   </label>
                   <div class="modern-input-wrapper">
                     <div class="input-group vital-sign-wrapper">
-                <div class="input-group-prepend">
-                        <span class="input-group-text"><i class="bi bi-thermometer-half"></i></span>
-                </div>
-                <input type="text" class="form-control bg-light" id="editTemperature" disabled>
+                      <input type="text" class="form-control bg-light" id="editTemperature" disabled>
                       <span class="vital-indicator"></span>
                     </div>
                   </div>
+                </div>
               </div>
-            </div>
-            <div class="col-md-4">
+              <div class="col-md-3">
                 <div class="modern-form-group">
                   <label class="modern-form-label" for="editBpSystolic">
                     Blood Pressure (mmHg)
-                    <i class="bi bi-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Normal: 90-120/60-80 mmHg"></i>
                   </label>
                   <div class="modern-input-wrapper">
                     <div class="input-group vital-sign-wrapper">
-                <div class="input-group-prepend">
-                        <span class="input-group-text"><i class="bi bi-heart-pulse"></i></span>
-                </div>
-                <input type="text" class="form-control bg-light" id="editBpSystolic" disabled>
+                      <input type="text" class="form-control bg-light" id="editBpSystolic" disabled>
                       <span class="vital-indicator"></span>
                     </div>
                   </div>
+                </div>
               </div>
-            </div>
-            <div class="col-md-4">
+              <div class="col-md-3">
                 <div class="modern-form-group">
                   <label class="modern-form-label" for="editRespiratory">
                     Respiratory Rate (/min)
-                    <i class="bi bi-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Normal: 12-20/min"></i>
                   </label>
                   <div class="modern-input-wrapper">
                     <div class="input-group vital-sign-wrapper">
-                <div class="input-group-prepend">
-                        <span class="input-group-text"><i class="bi bi-wind"></i></span>
-                      </div>
                       <input type="text" class="form-control bg-light" id="editRespiratory" disabled>
+                      <span class="vital-indicator"></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="editPulseRate">
+                    Pulse Rate (bpm)
+                  </label>
+                  <div class="modern-input-wrapper">
+                    <div class="input-group vital-sign-wrapper">
+                      <input type="text" class="form-control bg-light" id="editPulseRate" disabled>
                       <span class="vital-indicator"></span>
                     </div>
                   </div>
@@ -412,44 +702,24 @@
           <!-- Clinical Notes Section -->
           <div class="referral-section-card clinical-notes-section">
             <div class="referral-section-header">
-              <i class="bi bi-clipboard-pulse-fill"></i>
               <h6 class="referral-section-title">Clinical Notes</h6>
             </div>
             <div class="row">
-            <div class="col-md-4">
+            <div class="col-md-6">
                 <div class="modern-form-group">
                   <label class="modern-form-label" for="editComplaint">Complaint</label>
                   <div class="modern-input-wrapper">
               <div class="input-group">
-                <div class="input-group-prepend">
-                  <span class="input-group-text"><i class="bi bi-clipboard-pulse"></i></span>
-                </div>
                       <textarea class="form-control bg-light" id="editNotes" rows="3" disabled></textarea>
                     </div>
                   </div>
               </div>
             </div>
-            <div class="col-md-4">
-                <div class="modern-form-group">
-                  <label class="modern-form-label" for="editSymptoms">Symptoms</label>
-                  <div class="modern-input-wrapper">
-              <div class="input-group">
-                <div class="input-group-prepend">
-                  <span class="input-group-text"><i class="bi bi-clipboard-check"></i></span>
-                </div>
-                <textarea class="form-control bg-light" id="editSymptoms" rows="3" disabled></textarea>
-                    </div>
-                  </div>
-              </div>
-            </div>
-            <div class="col-md-4">
+            <div class="col-md-6">
                 <div class="modern-form-group">
                   <label class="modern-form-label" for="editworkUp">Work Up</label>
                   <div class="modern-input-wrapper">
               <div class="input-group">
-                <div class="input-group-prepend">
-                  <span class="input-group-text"><i class="bi bi-clipboard-pulse"></i></span>
-                </div>
                 <textarea class="form-control bg-light" id="editworkUp" rows="3" disabled></textarea>
                     </div>
                   </div>
@@ -459,40 +729,51 @@
           </div>
 
           <!-- MHO Actions Section -->
-          <div class="referral-section-card actions-section">
-            <div class="referral-section-header">
-              <i class="bi bi-journal-text"></i>
-              <h6 class="referral-section-title">MHO Notes & Actions</h6>
+          <div class="referral-section-card actions-section" style="border-left: 4px solid #007bff; background-color: #f8f9ff;">
+            <div class="referral-section-header" style="background-color: #e7f1ff; padding: 12px; border-radius: 4px; margin-bottom: 15px;">
+              <h6 class="referral-section-title" style="color: #0056b3; font-weight: 600; margin: 0;">
+                <i class="bi bi-exclamation-circle-fill text-primary me-2"></i>Doctor Notes & Actions <span class="badge bg-primary ms-2">Required</span>
+              </h6>
             </div>
             <div class="row">
               <div class="col-md-4">
                 <div class="modern-form-group">
-                  <label class="modern-form-label" for="editMhoFindings">
+                  <label class="modern-form-label" for="editFindingsField">
                     Findings
-                    <i class="bi bi-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Enter clinical findings and observations"></i>
                   </label>
                   <div class="modern-input-wrapper">
                     <div class="input-group">
-                      <div class="input-group-prepend">
-                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                      <!-- Container that will hold either select or input -->
+                      <div id="editFindingsContainer">
+                        <select class="form-control" id="editFindingsSelect" name="findings_select" required>
+                          <option value="">Select Findings</option>
+                          {% if diseases %}
+                            {% for disease in diseases %}
+                              <option value="{{ disease.id }}" data-icd="{{ disease.icd_code }}" 
+                                      data-symptoms="{{ disease.common_symptoms|default:'' }}"
+                                      data-treatment="{{ disease.treatment_protocol|default:'' }}"
+                                      data-guidelines="{{ disease.treatment_guidelines|default:'' }}">
+                                {{ disease.name }} ({{ disease.icd_code }})
+                              </option>
+                            {% endfor %}
+                          {% endif %}
+                          <option value="other">Other</option>
+                        </select>
                       </div>
-                      <textarea class="form-control" id="editMhoFindings" name="editMhoFindings" rows="3" placeholder="Type findings here..."></textarea>
                     </div>
+                    <!-- Hidden field to store the actual findings value -->
+                    <input type="hidden" id="editMhoFindings" name="editMhoFindings">
                   </div>
                 </div>
               </div>
             <div class="col-md-4">
                 <div class="modern-form-group">
                   <label class="modern-form-label" for="editMhoNote">
-                    MHO Note / Actions
-                    <i class="bi bi-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Document actions taken and notes"></i>
+                    Doctors Note / Actions
                   </label>
                   <div class="modern-input-wrapper">
               <div class="input-group">
-                <div class="input-group-prepend">
-                  <span class="input-group-text"><i class="bi bi-journal-text"></i></span>
-                      </div>
-                      <textarea class="form-control" id="editMhoNote" name="editMhoNote" rows="3" placeholder="Type notes here..."></textarea>
+                      <textarea class="form-control" id="editMhoNote" name="editMhoNote" rows="3" placeholder="Type notes here..." required></textarea>
                     </div>
                   </div>
                 </div>
@@ -501,70 +782,10 @@
                 <div class="modern-form-group">
                   <label class="modern-form-label" for="editMhoAdvice">
                     Advice
-                    <i class="bi bi-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Provide recommendations and advice"></i>
                   </label>
                   <div class="modern-input-wrapper">
                     <div class="input-group">
-                      <div class="input-group-prepend">
-                        <span class="input-group-text"><i class="bi bi-lightbulb"></i></span>
-                      </div>
                       <textarea class="form-control" id="editMhoAdvice" name="editMhoAdvice" rows="3" placeholder="Type advice here..."></textarea>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="modern-form-group">
-                  <label class="modern-form-label" for="editIcdCode">
-                    ICD Code
-                    <i class="bi bi-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Enter or select ICD-10 code"></i>
-                  </label>
-                  <div class="modern-input-wrapper">
-                    <div class="input-group">
-                      <div class="input-group-prepend">
-                        <span class="input-group-text"><i class="bi bi-code-square"></i></span>
-                      </div>
-                      <input type="text" class="form-control" id="editIcdCode" name="editIcdCode" list="icdCodeOptions" placeholder="Select or type ICD code" autocomplete="off">
-                      <datalist id="icdCodeOptions">
-                        <option value="A00-B99">A00-B99 - Certain infectious and parasitic diseases</option>
-                        <option value="C00-D49">C00-D49 - Neoplasms</option>
-                        <option value="D50-D89">D50-D89 - Diseases of the blood and immune system</option>
-                        <option value="E00-E89">E00-E89 - Endocrine, nutritional and metabolic diseases</option>
-                        <option value="F01-F99">F01-F99 - Mental, behavioral and neurodevelopmental disorders</option>
-                        <option value="G00-G99">G00-G99 - Diseases of the nervous system</option>
-                        <option value="H00-H59">H00-H59 - Diseases of the eye and adnexa</option>
-                        <option value="H60-H95">H60-H95 - Diseases of the ear and mastoid process</option>
-                        <option value="I00-I99">I00-I99 - Diseases of the circulatory system</option>
-                        <option value="J00-J99">J00-J99 - Diseases of the respiratory system</option>
-                        <option value="K00-K95">K00-K95 - Diseases of the digestive system</option>
-                        <option value="L00-L99">L00-L99 - Diseases of the skin and subcutaneous tissue</option>
-                        <option value="M00-M99">M00-M99 - Diseases of the musculoskeletal system and connective tissue</option>
-                        <option value="N00-N99">N00-N99 - Diseases of the genitourinary system</option>
-                        <option value="O00-O9A">O00-O9A - Pregnancy, childbirth and the puerperium</option>
-                        <option value="P00-P96">P00-P96 - Certain conditions originating in the perinatal period</option>
-                        <option value="Q00-Q99">Q00-Q99 - Congenital malformations, deformations and chromosomal abnormalities</option>
-                        <option value="R00-R94">R00-R94 - Symptoms, signs and abnormal clinical and laboratory findings</option>
-                        <option value="S00-T88">S00-T88 - Injury, poisoning and certain other consequences of external causes</option>
-                        <option value="U00-U85">U00-U85 - Codes for special purposes</option>
-                        <option value="V00-Y99">V00-Y99 - External causes of morbidity</option>
-                        <option value="Z00-Z99">Z00-Z99 - Factors influencing health status and contact with health services</option>
-                        <option value="T14.1">T14.1 - Open Wounds</option>
-                        <option value="W54.99">W54.99 - Dog Bites</option>
-                        <option value="J06.9">J06.9 - Acute respiratory infections</option>
-                        <option value="J15">J15 - Pneumonia</option>
-                        <option value="I10.1">I10.1 - Hypertension Level 2</option>
-                        <option value="J18.9">J18.9 - Pneumonia, unspecified organism</option>
-                        <option value="K59.00">K59.00 - Constipation, unspecified</option>
-                        <option value="M79.3">M79.3 - Panniculitis, unspecified</option>
-                        <option value="R50.9">R50.9 - Fever, unspecified</option>
-                        <option value="R06.02">R06.02 - Shortness of breath</option>
-                        <option value="R51">R51 - Headache</option>
-                        <option value="K92.2">K92.2 - Gastrointestinal hemorrhage, unspecified</option>
-                        <option value="N39.0">N39.0 - Urinary tract infection, site not specified</option>
-                        <option value="E11.9">E11.9 - Type 2 diabetes mellitus without complications</option>
-                        <option value="I20.9">I20.9 - Angina pectoris, unspecified</option>
-                        <option value="Z00.00">Z00.00 - Encounter for general adult medical examination without abnormal findings</option>
-                      </datalist>
                     </div>
                   </div>
                 </div>
@@ -573,14 +794,33 @@
                 <div class="modern-form-group">
                   <label class="modern-form-label" for="editFollowup">
                     Follow Up Date (if applicable)
-                    <i class="bi bi-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Schedule a follow-up appointment"></i>
                   </label>
                   <div class="modern-input-wrapper">
                     <div class="input-group">
-                      <div class="input-group-prepend">
-                        <span class="input-group-text"><i class="bi bi-calendar-check"></i></span>
-                      </div>
                       <input type="date" class="form-control" id="editFollowup" name="editFollowup" placeholder="Select follow-up date">
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Doctor Selection Dropdown -->
+              <div class="col-md-6">
+                <div class="modern-form-group">
+                  <label class="modern-form-label" for="editExaminedBy">
+                    Examined By (Doctor)
+                  </label>
+                  <div class="modern-input-wrapper">
+                    <div class="input-group">
+                      <select class="form-control" id="editExaminedBy" name="examined_by">
+                        <option value="">Select Doctor</option>
+                        {% for doctor in doctors %}
+                          {% if doctor.status == "ACTIVE" %}
+                            <option value="{{ doctor.user.id }}">
+                              Dr. {{ doctor.first_name }} {% if doctor.middle_name %}{{ doctor.middle_name }} {% endif %}{{ doctor.last_name }}
+                            </option>
+                          {% endif %}
+                        {% endfor %}
+                      </select>
                     </div>
                   </div>
                 </div>
@@ -591,81 +831,68 @@
           <!-- Lifestyle & Social History Section -->
           <div class="referral-section-card" style="border-left: 4px solid #6f42c1;">
             <div class="referral-section-header">
-              <i class="bi bi-heart-pulse-fill" style="color: #6f42c1;"></i>
               <h6 class="referral-section-title">Lifestyle & Social History</h6>
             </div>
-            <div class="row">
+            <div class="row text-muted">
               <div class="col-md-6">
                 <div class="modern-form-group">
-                  <label class="modern-form-label" for="editIsSmoker">
+                  <label class="modern-form-label text-muted" for="editIsSmoker">
                     Smoker
-                    <i class="bi bi-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Is the patient a smoker?"></i>
                   </label>
                   <div class="form-check mt-2">
-                    <input class="form-check-input" type="checkbox" id="editIsSmoker" name="editIsSmoker">
-                    <label class="form-check-label" for="editIsSmoker">Yes</label>
+                    <input class="form-check-input" type="checkbox" id="editIsSmoker" name="editIsSmoker" disabled>
+                    <label class="form-check-label text-muted" for="editIsSmoker">Yes</label>
                   </div>
                 </div>
               </div>
               <div class="col-md-6">
                 <div class="modern-form-group">
-                  <label class="modern-form-label" for="editSmokingSticks">Sticks/Packs per Day</label>
+                  <label class="modern-form-label text-muted" for="editSmokingSticks">Sticks/Packs per Day</label>
                   <div class="modern-input-wrapper">
                     <div class="input-group">
-                      <div class="input-group-prepend">
-                        <span class="input-group-text"><i class="bi bi-cigar"></i></span>
-                      </div>
-                      <input type="number" class="form-control" id="editSmokingSticks" name="editSmokingSticks" min="0" placeholder="Enter number" disabled>
+                      <input type="number" class="form-control text-muted" id="editSmokingSticks" name="editSmokingSticks" min="0" placeholder="Enter number" readonly>
                     </div>
                   </div>
                 </div>
               </div>
               <div class="col-md-6">
                 <div class="modern-form-group">
-                  <label class="modern-form-label" for="editIsAlcoholic">
+                  <label class="modern-form-label text-muted" for="editIsAlcoholic">
                     Alcoholic
-                    <i class="bi bi-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Does the patient consume alcohol?"></i>
                   </label>
                   <div class="form-check mt-2">
-                    <input class="form-check-input" type="checkbox" id="editIsAlcoholic" name="editIsAlcoholic">
-                    <label class="form-check-label" for="editIsAlcoholic">Yes</label>
+                    <input class="form-check-input" type="checkbox" id="editIsAlcoholic" name="editIsAlcoholic" disabled>
+                    <label class="form-check-label text-muted" for="editIsAlcoholic">Yes</label>
                   </div>
                 </div>
               </div>
               <div class="col-md-6">
                 <div class="modern-form-group">
-                  <label class="modern-form-label" for="editAlcoholBottles">Bottles per Year</label>
+                  <label class="modern-form-label text-muted" for="editAlcoholBottles">Bottles per Year</label>
                   <div class="modern-input-wrapper">
                     <div class="input-group">
-                      <div class="input-group-prepend">
-                        <span class="input-group-text"><i class="bi bi-cup-straw"></i></span>
-                      </div>
-                      <input type="number" class="form-control" id="editAlcoholBottles" name="editAlcoholBottles" min="0" placeholder="Enter number" disabled>
+                      <input type="number" class="form-control text-muted" id="editAlcoholBottles" name="editAlcoholBottles" min="0" placeholder="Enter number" readonly>
                     </div>
                   </div>
                 </div>
               </div>
               <div class="col-md-6">
                 <div class="modern-form-group">
-                  <label class="modern-form-label" for="editFamilyPlanning">
+                  <label class="modern-form-label text-muted" for="editFamilyPlanning">
                     Family Planning
-                    <i class="bi bi-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Is the patient using family planning?"></i>
                   </label>
                   <div class="form-check mt-2">
-                    <input class="form-check-input" type="checkbox" id="editFamilyPlanning" name="editFamilyPlanning">
-                    <label class="form-check-label" for="editFamilyPlanning">Yes</label>
+                    <input class="form-check-input" type="checkbox" id="editFamilyPlanning" name="editFamilyPlanning" disabled>
+                    <label class="form-check-label text-muted" for="editFamilyPlanning">Yes</label>
                   </div>
                 </div>
               </div>
               <div class="col-md-6">
                 <div class="modern-form-group">
-                  <label class="modern-form-label" for="editFamilyPlanningType">Family Planning Type</label>
+                  <label class="modern-form-label text-muted" for="editFamilyPlanningType">Family Planning Type</label>
                   <div class="modern-input-wrapper">
               <div class="input-group">
-                <div class="input-group-prepend">
-                        <span class="input-group-text"><i class="bi bi-heart"></i></span>
-                      </div>
-                      <select class="form-control" id="editFamilyPlanningType" name="editFamilyPlanningType" disabled>
+                      <select class="form-control text-muted" id="editFamilyPlanningType" name="editFamilyPlanningType" disabled>
                         <option value="">Select Type</option>
                         <option value="DMPA">DMPA</option>
                         <option value="IMPLANT">IMPLANT</option>
@@ -682,7 +909,6 @@
           <!-- Menstrual History Section (for Female patients) -->
           <div class="referral-section-card" id="menstrualHistorySection" style="border-left: 4px solid #e91e63; display: none;">
             <div class="referral-section-header">
-              <i class="bi bi-calendar-heart-fill" style="color: #e91e63;"></i>
               <h6 class="referral-section-title">Menstrual History</h6>
             </div>
             <div class="row">
@@ -691,9 +917,6 @@
                   <label class="modern-form-label" for="editMenarche">Menarche (Age)</label>
                   <div class="modern-input-wrapper">
                     <div class="input-group">
-                      <div class="input-group-prepend">
-                        <span class="input-group-text"><i class="bi bi-calendar"></i></span>
-                      </div>
                       <input type="number" class="form-control" id="editMenarche" name="editMenarche" min="0" max="20" placeholder="Age">
                     </div>
                   </div>
@@ -715,9 +938,6 @@
                   <label class="modern-form-label" for="editNumberOfPartners">Number of Partners</label>
                   <div class="modern-input-wrapper">
                     <div class="input-group">
-                      <div class="input-group-prepend">
-                        <span class="input-group-text"><i class="bi bi-people"></i></span>
-                      </div>
                       <input type="number" class="form-control" id="editNumberOfPartners" name="editNumberOfPartners" min="0" placeholder="Enter number">
                     </div>
                   </div>
@@ -739,9 +959,6 @@
                   <label class="modern-form-label" for="editMenopauseAge">Menopause Age</label>
                   <div class="modern-input-wrapper">
                     <div class="input-group">
-                      <div class="input-group-prepend">
-                        <span class="input-group-text"><i class="bi bi-calendar"></i></span>
-                      </div>
                       <input type="number" class="form-control" id="editMenopauseAge" name="editMenopauseAge" min="0" max="100" placeholder="Age">
                     </div>
                   </div>
@@ -752,9 +969,6 @@
                   <label class="modern-form-label" for="editLastMenstrualPeriod">Last Menstrual Period (LMP)</label>
                   <div class="modern-input-wrapper">
                     <div class="input-group">
-                      <div class="input-group-prepend">
-                        <span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
-                      </div>
                       <input type="date" class="form-control" id="editLastMenstrualPeriod" name="editLastMenstrualPeriod">
                     </div>
                   </div>
@@ -765,9 +979,6 @@
                   <label class="modern-form-label" for="editPeriodDuration">Period Duration (Days)</label>
                   <div class="modern-input-wrapper">
                     <div class="input-group">
-                      <div class="input-group-prepend">
-                        <span class="input-group-text"><i class="bi bi-clock"></i></span>
-                      </div>
                       <input type="number" class="form-control" id="editPeriodDuration" name="editPeriodDuration" min="0" placeholder="Days">
                     </div>
                   </div>
@@ -778,9 +989,6 @@
                   <label class="modern-form-label" for="editPeriodInterval">Period Interval (Days)</label>
                   <div class="modern-input-wrapper">
                     <div class="input-group">
-                      <div class="input-group-prepend">
-                        <span class="input-group-text"><i class="bi bi-calendar-range"></i></span>
-                      </div>
                       <input type="number" class="form-control" id="editPeriodInterval" name="editPeriodInterval" min="0" placeholder="Days between">
                     </div>
                   </div>
@@ -791,9 +999,6 @@
                   <label class="modern-form-label" for="editPadsPerDay">Pads per Day</label>
                   <div class="modern-input-wrapper">
               <div class="input-group">
-                <div class="input-group-prepend">
-                        <span class="input-group-text"><i class="bi bi-123"></i></span>
-                      </div>
                       <input type="number" class="form-control" id="editPadsPerDay" name="editPadsPerDay" min="0" placeholder="Number">
                     </div>
                   </div>
@@ -805,7 +1010,6 @@
           <!-- Pregnancy History Section (for Female patients) -->
           <div class="referral-section-card" id="pregnancyHistorySection" style="border-left: 4px solid #ff6b9d; display: none;">
             <div class="referral-section-header">
-              <i class="bi bi-heart-fill" style="color: #ff6b9d;"></i>
               <h6 class="referral-section-title">Pregnancy History</h6>
             </div>
             <div class="row">
@@ -825,9 +1029,6 @@
                   <label class="modern-form-label" for="editGravidity">Gravidity</label>
                   <div class="modern-input-wrapper">
                     <div class="input-group">
-                      <div class="input-group-prepend">
-                        <span class="input-group-text"><i class="bi bi-123"></i></span>
-                      </div>
                       <input type="number" class="form-control" id="editGravidity" name="editGravidity" min="0" placeholder="Number of pregnancies">
                     </div>
                   </div>
@@ -838,9 +1039,6 @@
                   <label class="modern-form-label" for="editParity">Parity</label>
                   <div class="modern-input-wrapper">
                     <div class="input-group">
-                      <div class="input-group-prepend">
-                        <span class="input-group-text"><i class="bi bi-123"></i></span>
-                      </div>
                       <input type="number" class="form-control" id="editParity" name="editParity" min="0" placeholder="Number of births">
                     </div>
                   </div>
@@ -851,9 +1049,6 @@
                   <label class="modern-form-label" for="editDeliveryType">Type of Delivery</label>
                   <div class="modern-input-wrapper">
                     <div class="input-group">
-                      <div class="input-group-prepend">
-                        <span class="input-group-text"><i class="bi bi-hospital"></i></span>
-                      </div>
                       <input type="text" class="form-control" id="editDeliveryType" name="editDeliveryType" placeholder="e.g., Normal, CS">
                     </div>
                   </div>
@@ -864,9 +1059,6 @@
                   <label class="modern-form-label" for="editFullTermBirths">Full Term Births</label>
                   <div class="modern-input-wrapper">
                     <div class="input-group">
-                      <div class="input-group-prepend">
-                        <span class="input-group-text"><i class="bi bi-check-circle"></i></span>
-                      </div>
                       <input type="number" class="form-control" id="editFullTermBirths" name="editFullTermBirths" min="0" placeholder="Number">
                     </div>
                   </div>
@@ -877,9 +1069,6 @@
                   <label class="modern-form-label" for="editPrematureBirths">Premature Births</label>
                   <div class="modern-input-wrapper">
                     <div class="input-group">
-                      <div class="input-group-prepend">
-                        <span class="input-group-text"><i class="bi bi-exclamation-circle"></i></span>
-                      </div>
                       <input type="number" class="form-control" id="editPrematureBirths" name="editPrematureBirths" min="0" placeholder="Number">
                     </div>
                   </div>
@@ -890,9 +1079,6 @@
                   <label class="modern-form-label" for="editAbortions">Abortions</label>
                   <div class="modern-input-wrapper">
                     <div class="input-group">
-                      <div class="input-group-prepend">
-                        <span class="input-group-text"><i class="bi bi-x-circle"></i></span>
-                      </div>
                       <input type="number" class="form-control" id="editAbortions" name="editAbortions" min="0" placeholder="Number">
                     </div>
                   </div>
@@ -903,9 +1089,6 @@
                   <label class="modern-form-label" for="editLivingChildren">Living Children</label>
                   <div class="modern-input-wrapper">
               <div class="input-group">
-                <div class="input-group-prepend">
-                        <span class="input-group-text"><i class="bi bi-heart-fill"></i></span>
-                      </div>
                       <input type="number" class="form-control" id="editLivingChildren" name="editLivingChildren" min="0" placeholder="Number">
                     </div>
                   </div>
@@ -920,15 +1103,15 @@
       <!-- Modal Footer -->
       <div class="modal-footer bg-light py-3 d-flex justify-content-between align-items-center">
         <div class="text-muted small">
-          <i class="bi bi-keyboard"></i> Shortcuts: <kbd>Ctrl+S</kbd> Save Draft | <kbd>Ctrl+Enter</kbd> Submit
+         
         </div>
         <div>
         <input type="hidden" name="referral_id_r" id="referral-id-edit-input">
           <button type="button" class="btn btn-secondary modern-btn" data-bs-dismiss="modal" data-dismiss="modal">
-          <i class="bi bi-x-circle mr-2"></i>Cancel
+          Cancel
         </button>
           <button type="submit" class="btn btn-success modern-btn">
-          <i class="bi bi-check-circle mr-2"></i>Done Referred
+          Done Referred
         </button>
         </div>
       </div>
@@ -940,10 +1123,611 @@
 <!-- Include Modern JavaScript -->
 <script src="{% static 'js/referral_modal_modern.js' %}"></script>
 <script>
-  // Initialize tooltips
-  $(document).ready(function() {
-    $('[data-bs-toggle="tooltip"]').tooltip();
-  });
+  // Wait for jQuery to be available before running scripts
+  (function() {
+    function initReferralModalScripts() {
+      // Top-level test - should always execute
+      console.log('=== referral_modal.html script loaded ===');
+      console.log('jQuery available:', typeof jQuery !== 'undefined', typeof $ !== 'undefined');
+      
+      // Initialize tooltips
+      $(document).ready(function() {
+        console.log('Tooltip initialization ready');
+        $('[data-bs-toggle="tooltip"]').tooltip();
+      });
+
+      // Handle Accept button visibility and functionality for doctors and admins
+      {% if is_doctor or request.user.is_staff or request.user.is_superuser %}
+      console.log('=== Accept button script STARTING (user is doctor/admin) ===');
+      console.log('jQuery available:', typeof jQuery !== 'undefined');
+      console.log('$ available:', typeof $ !== 'undefined');
+      
+      $(document).ready(function() {
+    console.log('=== Accept button script initialized (document ready) ===');
+    console.log('User is doctor:', '{% if is_doctor %}true{% else %}false{% endif %}');
+    console.log('User is staff:', '{{ request.user.is_staff|yesno:"true,false" }}');
+    console.log('User is superuser:', '{{ request.user.is_superuser|yesno:"true,false" }}');
+    
+    // Check if button exists immediately
+    const acceptBtnCheck = $('#acceptReferralBtn');
+    console.log('Accept button found in DOM (initial check):', acceptBtnCheck.length > 0);
+    if (acceptBtnCheck.length) {
+      console.log('Accept button current display:', acceptBtnCheck.css('display'));
+      console.log('Accept button data-referral-id:', acceptBtnCheck.attr('data-referral-id'));
+      console.log('Accept button HTML:', acceptBtnCheck[0].outerHTML);
+    } else {
+      console.error('❌ Accept button NOT FOUND in DOM!');
+      console.log('Searching for button with different selectors...');
+      console.log('Button by ID:', document.getElementById('acceptReferralBtn'));
+      console.log('All buttons in modal footer:', $('#viewReferralModal .modal-footer button').length);
+      console.log('Modal footer HTML:', $('#viewReferralModal .modal-footer').html());
+    }
+    
+    let currentReferralId = null;
+    let currentReferralStatus = null;
+
+    // Function to update Accept button visibility (make it globally accessible)
+    window.updateAcceptButton = function() {
+      console.log('=== updateAcceptButton called ===');
+      const acceptBtn = $('#acceptReferralBtn');
+      console.log('Accept button found:', acceptBtn.length > 0);
+      
+      if (!acceptBtn.length) {
+        console.warn('Accept button not found in DOM - user may not be doctor/admin');
+        return; // Button doesn't exist (user is not doctor/admin)
+      }
+      
+      // Try to get status from multiple sources
+      let referralStatus = currentReferralStatus || $('#viewReferralStatus').val() || '';
+      let referralId = currentReferralId || $('#viewReferralId').val() || '';
+      
+      console.log('Initial values - Status:', referralStatus, 'ID:', referralId);
+      console.log('currentReferralStatus:', currentReferralStatus);
+      console.log('currentReferralId:', currentReferralId);
+      console.log('Hidden field viewReferralStatus:', $('#viewReferralStatus').val());
+      console.log('Hidden field viewReferralId:', $('#viewReferralId').val());
+      
+      // If we don't have status yet, try to get it from the button that opened the modal
+      if (!referralStatus) {
+        console.log('Status not found, checking active button...');
+        // Check if there's a button with the view-button class that was recently clicked
+        const viewButton = $('.view-button.active-view-button');
+        console.log('Active view button found:', viewButton.length);
+        if (viewButton.length) {
+          referralStatus = viewButton.data('status') || viewButton.attr('data-status') || '';
+          referralId = viewButton.data('id') || viewButton.attr('data-id') || '';
+          console.log('From active button - Status:', referralStatus, 'ID:', referralId);
+        }
+      }
+      
+      // Also try modal data attributes
+      if (!referralStatus) {
+        console.log('Status still not found, checking modal data attributes...');
+        referralStatus = $('#viewReferralModal').data('referral-status') || '';
+        referralId = $('#viewReferralModal').data('referral-id') || '';
+        console.log('From modal data - Status:', referralStatus, 'ID:', referralId);
+      }
+      
+      console.log('Final values - Status:', referralStatus, 'ID:', referralId);
+      console.log('Status === "pending":', referralStatus === 'pending');
+      console.log('Has referralId:', !!referralId);
+      
+      // Show Accept button only if status is 'pending'
+      if (referralStatus === 'pending' && referralId) {
+        // Remove the inline style attribute completely to avoid conflicts
+        acceptBtn.removeAttr('style');
+        // Set all necessary properties
+        acceptBtn.attr('data-referral-id', referralId);
+        acceptBtn.prop('disabled', false);
+        acceptBtn.css({
+          'display': 'inline-block',
+          'pointer-events': 'auto',
+          'z-index': '9999',
+          'position': 'relative',
+          'opacity': '1',
+          'visibility': 'visible'
+        });
+        acceptBtn.show(); // jQuery show() as backup
+        
+        console.log('✅ Accept button SHOWN with ID:', referralId);
+        console.log('Button display style:', acceptBtn.css('display'));
+        console.log('Button disabled:', acceptBtn.prop('disabled'));
+        console.log('Button pointer-events:', acceptBtn.css('pointer-events'));
+        console.log('Button computed style:', window.getComputedStyle(acceptBtn[0]).display);
+        console.log('Button is visible:', acceptBtn.is(':visible'));
+        console.log('Button offset:', acceptBtn.offset());
+        console.log('Button element:', acceptBtn[0]);
+        
+        // Force a reflow to ensure styles are applied
+        acceptBtn[0].offsetHeight;
+      } else {
+        acceptBtn.hide();
+        console.log('❌ Accept button HIDDEN - Status:', referralStatus, 'ID:', referralId);
+      }
+      console.log('=== updateAcceptButton end ===');
+    }
+
+    // Mark the button when clicked (before modal opens) and store data
+    $(document).on('click', '.view-button', function(e) {
+      console.log('=== View button clicked ===');
+      $('.view-button').removeClass('active-view-button');
+      $(this).addClass('active-view-button');
+      
+      // Get data using both .data() and .attr() methods
+      const button = $(this);
+      const dataId = button.data('id');
+      const attrId = button.attr('data-id');
+      const dataStatus = button.data('status');
+      const attrStatus = button.attr('data-status');
+      
+      console.log('Button data.id:', dataId);
+      console.log('Button attr data-id:', attrId);
+      console.log('Button data.status:', dataStatus);
+      console.log('Button attr data-status:', attrStatus);
+      
+      currentReferralId = dataId || attrId || '';
+      currentReferralStatus = dataStatus || attrStatus || '';
+      
+      console.log('Stored - ID:', currentReferralId, 'Status:', currentReferralStatus);
+      
+      // Store in hidden fields immediately
+      const idField = $('#viewReferralId');
+      const statusField = $('#viewReferralStatus');
+      console.log('Hidden fields found - ID field:', idField.length, 'Status field:', statusField.length);
+      
+      if (idField.length) {
+        idField.val(currentReferralId);
+        console.log('ID field set to:', idField.val());
+      } else {
+        console.error('viewReferralId field not found!');
+      }
+      
+      if (statusField.length) {
+        statusField.val(currentReferralStatus);
+        console.log('Status field set to:', statusField.val());
+      } else {
+        console.error('viewReferralStatus field not found!');
+      }
+      
+      // Also store as data attributes on the modal for easy access
+      $('#viewReferralModal').data('referral-id', currentReferralId);
+      $('#viewReferralModal').data('referral-status', currentReferralStatus);
+      console.log('Modal data attributes set');
+      console.log('=== View button click end ===');
+    });
+
+    // Listen for when view modal is shown
+    $('#viewReferralModal').on('show.bs.modal', function(event) {
+      console.log('=== View modal show event ===');
+      const button = $(event.relatedTarget); // Button that triggered the modal
+      console.log('Event relatedTarget:', button.length > 0);
+      console.log('Button has view-button class:', button.hasClass('view-button'));
+      
+      // Try to get data from the button
+      if (button && button.length && button.hasClass('view-button')) {
+        currentReferralId = button.data('id') || button.attr('data-id') || '';
+        currentReferralStatus = button.data('status') || button.attr('data-status') || '';
+        
+        console.log('From event.relatedTarget - ID:', currentReferralId, 'Status:', currentReferralStatus);
+        
+        // Store in hidden fields
+        $('#viewReferralId').val(currentReferralId);
+        $('#viewReferralStatus').val(currentReferralStatus);
+        console.log('Hidden fields updated from event.relatedTarget');
+        
+        // Also store as data attributes on the modal
+        $('#viewReferralModal').data('referral-id', currentReferralId);
+        $('#viewReferralModal').data('referral-status', currentReferralStatus);
+      } else {
+        console.log('Event.relatedTarget not available, trying fallback...');
+        // Fallback: try to get from active button or modal data
+        const activeButton = $('.view-button.active-view-button');
+        console.log('Active button found:', activeButton.length);
+        if (activeButton.length) {
+          currentReferralId = activeButton.data('id') || activeButton.attr('data-id') || '';
+          currentReferralStatus = activeButton.data('status') || activeButton.attr('data-status') || '';
+          $('#viewReferralId').val(currentReferralId);
+          $('#viewReferralStatus').val(currentReferralStatus);
+          console.log('From active button - ID:', currentReferralId, 'Status:', currentReferralStatus);
+        } else {
+          // Try modal data attributes
+          currentReferralId = $('#viewReferralModal').data('referral-id') || $('#viewReferralId').val() || '';
+          currentReferralStatus = $('#viewReferralModal').data('referral-status') || $('#viewReferralStatus').val() || '';
+          console.log('From modal data/fields - ID:', currentReferralId, 'Status:', currentReferralStatus);
+        }
+      }
+      
+      console.log('Calling updateAcceptButton...');
+      updateAcceptButton();
+      console.log('=== View modal show event end ===');
+    });
+
+    // Also check after modal is fully shown (in case data is populated after show event)
+    $('#viewReferralModal').on('shown.bs.modal', function(event) {
+      // Small delay to ensure all data is populated
+      setTimeout(function() {
+        // Try to get status from the active button if not already set
+        const activeButton = $('.view-button.active-view-button');
+        if (activeButton.length && !currentReferralStatus) {
+          currentReferralStatus = activeButton.data('status') || activeButton.attr('data-status');
+          currentReferralId = activeButton.data('id') || activeButton.attr('data-id');
+          $('#viewReferralStatus').val(currentReferralStatus || '');
+          $('#viewReferralId').val(currentReferralId || '');
+        }
+        updateAcceptButton();
+      }, 200);
+    });
+    
+    // Also listen for any changes to the hidden status field (in case populateViewModal sets it)
+    $('#viewReferralStatus').on('change', function() {
+      currentReferralStatus = $(this).val();
+      updateAcceptButton();
+    });
+    
+    // Monitor for when modal content is updated (MutationObserver as fallback)
+    if (typeof MutationObserver !== 'undefined') {
+      const modalBody = document.querySelector('#viewReferralModal .modal-body');
+      if (modalBody) {
+        const observer = new MutationObserver(function(mutations) {
+          // Check if status field was updated
+          const statusField = document.getElementById('viewReferralStatus');
+          if (statusField && statusField.value) {
+            currentReferralStatus = statusField.value;
+            currentReferralId = document.getElementById('viewReferralId')?.value || currentReferralId;
+            updateAcceptButton();
+          }
+        });
+        observer.observe(modalBody, { childList: true, subtree: true });
+      }
+    }
+
+    // Handle Accept button click - directly call update_referral_status
+    // Use event delegation in case button is added dynamically
+    let isAccepting = false; // Flag to prevent double submission
+    
+    // Function to handle accept click
+    function handleAcceptClick(e, acceptBtn) {
+      console.log('=== handleAcceptClick called ===');
+      console.log('Event:', e);
+      console.log('Button:', acceptBtn);
+      
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      
+      if (isAccepting) {
+        console.log('Already accepting, ignoring click');
+        return false; // Prevent double submission
+      }
+      
+      let referralId = acceptBtn.attr('data-referral-id');
+      console.log('Accept button data-referral-id:', referralId);
+      console.log('Accept button element:', acceptBtn[0]);
+      
+      if (!referralId) {
+        console.error('❌ Referral ID not found on Accept button');
+        console.log('Button attributes:', acceptBtn[0]?.attributes);
+        console.log('Button data attributes:', acceptBtn.data());
+        // Try to get from hidden field as fallback
+        referralId = $('#viewReferralId').val();
+        console.log('Trying fallback - referralId from hidden field:', referralId);
+        if (!referralId) {
+          alert('Error: Referral ID not found.');
+          return false;
+        }
+      }
+
+      console.log('✅ Referral ID found:', referralId);
+
+      // Get patient name for confirmation modal
+      let patientName = '';
+      const patientNameField = $('#viewReferralPatientName');
+      if (patientNameField.length && patientNameField.val()) {
+        patientName = patientNameField.val();
+      }
+      if (!patientName) {
+        const activeButton = $('.view-button.active-view-button');
+        if (activeButton.length) {
+          patientName = activeButton.data('patient') || activeButton.attr('data-patient') || '';
+        }
+      }
+      if (!patientName) {
+        patientName = 'this patient';
+      }
+
+      // Show confirmation modal instead of browser confirm
+      $('#acceptReferralConfirmId').val(referralId);
+      $('#acceptReferralConfirmPatientName').html(
+        `Are you sure you want to accept the referral for <strong>${patientName}</strong>?`
+      );
+      
+      const confirmModalEl = document.getElementById('acceptReferralConfirmModal');
+      if (confirmModalEl) {
+        // Ensure z-index is set before showing modal
+        confirmModalEl.style.zIndex = '1070';
+        const confirmModal = bootstrap.Modal.getOrCreateInstance(confirmModalEl);
+        confirmModal.show();
+        
+        // Ensure z-index is maintained after modal is shown
+        confirmModalEl.addEventListener('shown.bs.modal', function() {
+          confirmModalEl.style.zIndex = '1070';
+          // Ensure backdrop is also properly layered
+          const backdrops = document.querySelectorAll('.modal-backdrop');
+          if (backdrops.length > 1) {
+            // The last backdrop (for accept confirmation) should be above the previous one
+            backdrops[backdrops.length - 1].style.zIndex = '1065';
+          }
+        }, { once: true });
+        
+        console.log('Confirmation modal shown');
+      } else {
+        console.error('Confirmation modal not found');
+        // Fallback to browser confirm
+        if (!confirm('Are you sure you want to accept this referral?')) {
+          console.log('User cancelled acceptance');
+          return false;
+        }
+        // If confirmed, proceed with acceptance
+        proceedWithAcceptance(referralId, acceptBtn);
+      }
+      
+      return false;
+    }
+    
+    // Function to actually submit the acceptance
+    function proceedWithAcceptance(referralId, acceptBtn) {
+      console.log('=== proceedWithAcceptance called ===');
+      
+      // Set flag and disable button
+      isAccepting = true;
+      const originalHtml = acceptBtn ? acceptBtn.html() : '';
+      if (acceptBtn) {
+        acceptBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Accepting...');
+      }
+      
+      // Also disable the confirm button in the modal
+      const confirmBtn = $('#confirmAcceptReferralBtn');
+      const confirmBtnOriginalHtml = confirmBtn.html();
+      confirmBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Accepting...');
+      
+      // Get CSRF token
+      const csrfToken = $('[name=csrfmiddlewaretoken]').val() || $('input[name="csrfmiddlewaretoken"]').val() || '';
+      if (!csrfToken) {
+        console.error('❌ CSRF token not found');
+        alert('Error: CSRF token not found. Please refresh the page.');
+        isAccepting = false;
+        if (acceptBtn) {
+          acceptBtn.prop('disabled', false).html(originalHtml);
+        }
+        confirmBtn.prop('disabled', false).html(confirmBtnOriginalHtml);
+        return;
+      }
+
+      // Prepare form data
+      const formData = new FormData();
+      formData.append('referral_id', referralId);
+      formData.append('csrfmiddlewaretoken', csrfToken);
+
+      console.log('Submitting AJAX request to update_referral_status...');
+
+      // Submit via AJAX to update_referral_status
+      $.ajax({
+        url: '{% url "referrals:update_referral_status" %}',
+        method: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        dataType: 'json',
+        success: function(response) {
+          console.log('AJAX success response:', response);
+          
+          // Check if response is actually JSON
+          if (typeof response === 'string') {
+            try {
+              response = JSON.parse(response);
+            } catch (e) {
+              console.error('Failed to parse response:', response);
+              alert('There was an error processing the response. Please try again.');
+              isAccepting = false;
+              if (acceptBtn) {
+                acceptBtn.prop('disabled', false).html(originalHtml);
+              }
+              confirmBtn.prop('disabled', false).html(confirmBtnOriginalHtml);
+              return;
+            }
+          }
+          
+          // Validate response
+          if (!response.success) {
+            alert(response.error || 'Failed to accept referral. Please try again.');
+            isAccepting = false;
+            if (acceptBtn) {
+              acceptBtn.prop('disabled', false).html(originalHtml);
+            }
+            confirmBtn.prop('disabled', false).html(confirmBtnOriginalHtml);
+            return;
+          }
+          
+          console.log('✅ Referral accepted successfully!');
+          
+          // Close the confirmation modal
+          const confirmModalEl = document.getElementById('acceptReferralConfirmModal');
+          if (confirmModalEl) {
+            const confirmModal = bootstrap.Modal.getInstance(confirmModalEl);
+            if (confirmModal) {
+              confirmModal.hide();
+              console.log('Confirmation modal closed');
+            }
+          }
+          
+          // Close the view modal
+          const viewModalEl = document.getElementById('viewReferralModal');
+          if (viewModalEl) {
+            const viewModal = bootstrap.Modal.getInstance(viewModalEl);
+            if (viewModal) {
+              viewModal.hide();
+              console.log('View modal closed');
+            }
+          }
+          
+          // Show success message
+          alert(response.message || 'Referral accepted successfully!');
+          
+          // Redirect to active referral tab (tab2)
+          console.log('Redirecting to active referral tab...');
+          const currentUrl = new URL(window.location.href);
+          currentUrl.searchParams.set('tab', 'tab2');
+          // Remove any other tab-related parameters
+          currentUrl.searchParams.delete('pending_page');
+          currentUrl.searchParams.delete('referred_page');
+          currentUrl.searchParams.set('active_page', '1');
+          window.location.href = currentUrl.toString();
+        },
+        error: function(xhr, status, error) {
+          console.error('❌ AJAX error:', status, error);
+          console.error('Response:', xhr.responseText);
+          
+          let errorMessage = 'Failed to accept referral. Please try again.';
+          if (xhr.responseJSON && xhr.responseJSON.error) {
+            errorMessage = xhr.responseJSON.error;
+          } else if (xhr.status === 400) {
+            errorMessage = 'Bad request. Please check the referral ID.';
+          } else if (xhr.status === 403) {
+            errorMessage = 'Permission denied.';
+          } else if (xhr.status === 404) {
+            errorMessage = 'Referral not found.';
+          }
+          
+          alert(errorMessage);
+          isAccepting = false;
+          if (acceptBtn) {
+            acceptBtn.prop('disabled', false).html(originalHtml);
+          }
+          confirmBtn.prop('disabled', false).html(confirmBtnOriginalHtml);
+        }
+      });
+      
+      console.log('=== handleAcceptClick end ===');
+    }
+    
+    // Attach handler immediately if button exists
+    if ($('#acceptReferralBtn').length) {
+      console.log('Attaching direct click handler to Accept button');
+      $('#acceptReferralBtn').off('click').on('click', function(e) {
+        console.log('=== Accept button clicked (direct handler) ===');
+        e.preventDefault();
+        e.stopPropagation();
+        handleAcceptClick(e, $(this));
+        return false;
+      });
+    } else {
+      console.warn('Accept button not found when attaching direct handler');
+    }
+    
+    // Also use delegation as backup (works even if button is added later)
+    console.log('Setting up delegated click handler for Accept button');
+    $(document).off('click', '#acceptReferralBtn').on('click', '#acceptReferralBtn', function(e) {
+      console.log('=== Accept button clicked (delegated handler) ===');
+      e.preventDefault();
+      e.stopPropagation();
+      handleAcceptClick(e, $(this));
+      return false;
+    });
+    
+    // Also add a direct click listener as backup
+    setTimeout(function() {
+      const acceptBtnDirect = document.getElementById('acceptReferralBtn');
+      if (acceptBtnDirect) {
+        console.log('Adding native event listener to Accept button');
+        acceptBtnDirect.addEventListener('click', function(e) {
+          console.log('=== Native event listener triggered ===');
+          e.preventDefault();
+          e.stopPropagation();
+          e.stopImmediatePropagation();
+          // Call the handler function directly
+          handleAcceptClick(e, $(this));
+          return false;
+        }, true); // Use capture phase
+      } else {
+        console.warn('Accept button not found for native listener');
+      }
+    }, 1000);
+    
+    // Handle confirm button in the confirmation modal
+    $('#confirmAcceptReferralBtn').on('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      if (isAccepting) {
+        console.log('Already accepting, ignoring click');
+        return false;
+      }
+      
+      const referralId = $('#acceptReferralConfirmId').val();
+      if (!referralId) {
+        alert('Error: Referral ID not found.');
+        return false;
+      }
+      
+      console.log('Confirm button clicked, proceeding with acceptance for referral:', referralId);
+      proceedWithAcceptance(referralId, null);
+      return false;
+    });
+    
+    // Test button clickability when modal is shown
+    $('#viewReferralModal').on('shown.bs.modal', function() {
+      setTimeout(function() {
+        const acceptBtn = $('#acceptReferralBtn');
+        if (acceptBtn.length && acceptBtn.is(':visible')) {
+          console.log('Testing Accept button clickability...');
+          console.log('Button visible:', acceptBtn.is(':visible'));
+          console.log('Button display:', acceptBtn.css('display'));
+          console.log('Button disabled:', acceptBtn.prop('disabled'));
+          console.log('Button pointer-events:', acceptBtn.css('pointer-events'));
+          console.log('Button z-index:', acceptBtn.css('z-index'));
+          
+          // Try to trigger a test click
+          acceptBtn.on('mouseenter', function() {
+            console.log('Mouse entered Accept button - button is interactive');
+          });
+        }
+      }, 500);
+    });
+    
+    console.log('=== Accept button script setup complete ===');
+      });
+      {% else %}
+      console.log('Accept button script NOT loaded - user is not doctor/admin');
+      {% endif %}
+    }
+    
+    // Check if jQuery is already loaded
+    if (typeof jQuery !== 'undefined' && typeof $ !== 'undefined') {
+      initReferralModalScripts();
+    } else {
+      // Wait for jQuery to load
+      var checkJQuery = setInterval(function() {
+        if (typeof jQuery !== 'undefined' && typeof $ !== 'undefined') {
+          clearInterval(checkJQuery);
+          initReferralModalScripts();
+        }
+      }, 50);
+      
+      // Timeout after 5 seconds
+      setTimeout(function() {
+        clearInterval(checkJQuery);
+        if (typeof jQuery === 'undefined') {
+          console.error('jQuery failed to load after 5 seconds - Accept button functionality may not work');
+        } else {
+          initReferralModalScripts();
+        }
+      }, 5000);
+    }
+  })();
 </script>
 
 <!-- End of Edit Referral Modal -->
@@ -970,10 +1754,10 @@
           </div>
           <div class="d-flex justify-content-between">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-dismiss="modal">
-              <i class="bi bi-x-circle mr-2"></i>Cancel
+              Cancel
             </button>
             <button type="submit" class="btn btn-warning">
-              <i class="bi bi-x-circle mr-2"></i>Reject Referral
+              Reject Referral
             </button>
           </div>
         </form>
@@ -982,4 +1766,36 @@
   </div>
 </div>
 <!-- End of Reject Referral Modal -->
+
+<!-- Accept Referral Confirmation Modal -->
+<div class="modal fade" id="acceptReferralConfirmModal" tabindex="-1" aria-labelledby="acceptReferralConfirmModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title" id="acceptReferralConfirmModalLabel">
+          <i class="bi bi-question-circle me-2"></i>Confirm Accept Referral
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="text-center mb-3">
+          <i class="bi bi-question-circle text-success" style="font-size: 3rem;"></i>
+        </div>
+        <p class="text-muted text-center mb-0" id="acceptReferralConfirmPatientName">
+          Are you sure you want to accept this referral?
+        </p>
+        <input type="hidden" id="acceptReferralConfirmId" value="">
+      </div>
+      <div class="modal-footer justify-content-center">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="bi bi-x-circle me-1"></i> Cancel
+        </button>
+        <button type="button" class="btn btn-success" id="confirmAcceptReferralBtn">
+          <i class="bi bi-check-circle me-1"></i> Accept Referral
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- End of Accept Referral Confirmation Modal -->
 

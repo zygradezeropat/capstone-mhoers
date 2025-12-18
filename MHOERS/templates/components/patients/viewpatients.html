@@ -3,7 +3,7 @@
     <div class="modal-content shadow-lg border-0">
       <div class="modal-header bg-primary text-white">
         <h5 class="modal-title" id="viewPatientsLabel">
-          <i class="bi bi-person-lines-fill me-2"></i>Patient Informations
+          <i class="bi bi-person-lines-fill me-2"></i>Patient Information
         </h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
@@ -15,15 +15,15 @@
           <div class="col-12">
             <h6 class="text-primary border-bottom pb-2 mb-3"><i class="bi bi-person me-2"></i>Basic Information</h6>
           </div>
-          <div class="col-md-6 mb-3">
+          <div class="col-md-4 mb-3">
             <label class="font-weight-bold text-muted small">Patient Name</label>
             <input type="text" class="form-control bg-light" id="viewPatientName" readonly>
           </div>
-          <div class="col-md-6 mb-3">
+          <div class="col-md-4 mb-3">
             <label class="font-weight-bold text-muted small">Birth Date</label>
             <input type="text" class="form-control bg-light" id="viewPatientBday" readonly>
           </div>
-          <div class="col-md-6 mb-3">
+          <div class="col-md-4 mb-3">
             <label class="font-weight-bold text-muted small">Sex</label>
             <input type="text" class="form-control bg-light" id="viewSex" readonly>
           </div>
@@ -34,17 +34,9 @@
           <div class="col-12">
             <h6 class="text-primary border-bottom pb-2 mb-3"><i class="bi bi-telephone me-2"></i>Contact Information</h6>
           </div>
-          <div class="col-md-6 mb-3">
+          <div class="col-md-12 mb-3">
             <label class="font-weight-bold text-muted small">Address</label>
             <input type="text" class="form-control bg-light" id="viewAddress" readonly>
-          </div>
-          <div class="col-md-3 mb-3">
-            <label class="font-weight-bold text-muted small">Sitio</label>
-            <input type="text" class="form-control bg-light" id="viewSitio" readonly>
-          </div>
-          <div class="col-md-3 mb-3">
-            <label class="font-weight-bold text-muted small">Barangay</label>
-            <input type="text" class="form-control bg-light" id="viewBarangay" readonly>
           </div>
         </div>
 
@@ -90,6 +82,27 @@
         <div class="row mb-4">
           <div class="col-12">
             <h6 class="text-primary border-bottom pb-2 mb-3"><i class="bi bi-clock-history me-2"></i>Referral History</h6>
+            
+            <!-- Date Range Filter -->
+            <div class="row mb-3">
+              <div class="col-md-4">
+                <label class="small text-muted mb-1">From Date</label>
+                <input type="date" class="form-control form-control-sm" id="referralFilterFrom" placeholder="Start date">
+              </div>
+              <div class="col-md-4">
+                <label class="small text-muted mb-1">To Date</label>
+                <input type="date" class="form-control form-control-sm" id="referralFilterTo" placeholder="End date">
+              </div>
+              <div class="col-md-4 d-flex align-items-end">
+                <button type="button" class="btn btn-sm btn-primary me-2" id="applyReferralFilter">
+                  <i class="bi bi-funnel me-1"></i>Filter
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="clearReferralFilter">
+                  <i class="bi bi-x-circle me-1"></i>Clear
+                </button>
+              </div>
+            </div>
+            
             <div id="viewReferralHistory" class="border rounded p-3 bg-light" style="max-height: 260px; overflow: auto;">
               <div class="text-muted">No history loaded.</div>
             </div>

@@ -234,6 +234,8 @@ def train_random_forest_model_classification():
         missing = ', '.join(sorted(missing_columns))
         return {"error": f"Dataset missing required columns: {missing}"}
 
+    # Replace "N" values with "Unspecified" before filtering
+    df['ICD10 CODE'] = df['ICD10 CODE'].replace(['N', 'n', ''], 'Unspecified')
     df = df.dropna(subset=['ICD10 CODE'])
     df = df[df['ICD10 CODE'].isin(ALLOWED_ICD_CODES)].copy()
     if df.empty:
@@ -332,7 +334,7 @@ def train_random_forest_model_classification():
 
 
 def predict_disease_for_referral(referral_id):
-    """Predict the most likely ICD-10 code for the referral."""
+    """Predict the most likely ICD-10 code for the referral with confidence threshold."""
     models_dir = get_ml_models_path()
     model_path = os.path.join(models_dir, 'disease_rf_model.pkl')
     metadata_path = os.path.join(models_dir, 'disease_vectorizer.pkl')
@@ -357,9 +359,46 @@ def predict_disease_for_referral(referral_id):
     if feature_df.empty:
         return "Insufficient data for prediction"
 
+    # Get prediction and confidence scores
     prediction_code = model.predict(feature_df)[0]
+    prediction_proba = model.predict_proba(feature_df)[0]
+    max_confidence = max(prediction_proba)
+    
+    # Convert to string and strip whitespace - handle numpy types
+    prediction_code = str(prediction_code).strip()
+    
+    # CRITICAL: Normalize "N" predictions FIRST, before any other checks
+    # This handles cases where model was trained with "N" as a class
+    if prediction_code.upper() == 'N' or prediction_code == 'n' or prediction_code == '':
+        return "Unspecified"
+    
+    # Get complaint text for relevance checking
+    complaint_text = (referral.chief_complaint or referral.symptoms or '').lower()
+    
+    # Special handling for T14.1 (Open Wounds) - it's often the default prediction
+    # Require BOTH high confidence (50%) AND wound-related keywords in complaint
+    if prediction_code == 'T14.1':
+        wound_keywords = ['wound', 'cut', 'laceration', 'injury', 'trauma', 'bleeding', 
+                         'sugat', 'tusok', 'galos', 'hiwa', 'open wound', 'puncture']
+        has_wound_keyword = any(keyword in complaint_text for keyword in wound_keywords)
+        
+        # If confidence is below 50% OR no wound keywords, return "Unspecified"
+        # This ensures T14.1 is only returned when we're confident AND it's actually wound-related
+        if max_confidence < 0.5 or not has_wound_keyword:
+            return "Unspecified"
+    
+    # Confidence threshold: if model is less than 30% confident, return "Unspecified"
+    # This prevents defaulting to the most common class (T14.1) when complaint is unknown
+    CONFIDENCE_THRESHOLD = 0.3  # 30% minimum confidence required
+    if max_confidence < CONFIDENCE_THRESHOLD:
+        return "Unspecified"
+    
     allowed_codes = metadata.get('allowed_icd', ALLOWED_ICD_CODES)
     if allowed_codes and prediction_code not in allowed_codes:
+        return "Unspecified"
+    
+    # Final safety check: if prediction_code is "N" (even if somehow in allowed codes), normalize it
+    if prediction_code.upper() == 'N':
         return "Unspecified"
 
     return prediction_code
@@ -1308,48 +1347,34 @@ def train_disease_peak_prediction_model(csv_2023_path=None, csv_2024_path=None, 
     }
 
 
-def predict_disease_peak_for_month(month_name=None, samples_per_month=100, use_db=False, csv_2023_path=None, csv_2024_path=None):
+# ======================================================
+# 📘 Disease Peak Analytics — Time-Series Forecasting with Best Model Selection
+# Uses Gradient Boosting, Random Forest, or LinearSVR (whichever performs best)
+# ======================================================
+
+def train_disease_forecast_best_model(csv_2023_path=None, csv_2024_path=None, use_db=False, allowed_icd=None):
     """
-    Predict disease peak for a specific month using saved model.
+    Train disease forecasting model for 2025 monthly predictions using time-series features.
+    Compares Gradient Boosting, Random Forest, and LinearSVR - uses the best performing model.
+    More effective than the old classification-based approach.
     
     Args:
-        month_name: Month name (e.g., "January", "February") or None for all months
-        samples_per_month: Number of samples to simulate per month
-        use_db: Use Django database for simulation data
-        csv_2023_path: Path to 2023 CSV file
-        csv_2024_path: Path to 2024 CSV file
+        csv_2023_path: Path to 2023 CSV file (if None, uses default)
+        csv_2024_path: Path to 2024 CSV file (if None, uses default)
+        use_db: If True, load from Django database instead of CSV
+        allowed_icd: List of allowed ICD10 codes (default: top 5)
     
     Returns:
-        dict: Prediction results with month and predicted disease
+        dict: Training metrics and saved model paths
     """
-    import joblib
-    from scipy.sparse import hstack
-    import random
+    from sklearn.svm import LinearSVR
+    from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
     
-    # Load saved model
-    models_dir = get_ml_models_path()
-    model_path = os.path.join(models_dir, 'disease_peak_model.pkl')
-    tfidf_path = os.path.join(models_dir, 'disease_peak_tfidf.pkl')
-    scaler_path = os.path.join(models_dir, 'disease_peak_scaler.pkl')
-    encoder_path = os.path.join(models_dir, 'disease_peak_encoder.pkl')
-    metadata_path = os.path.join(models_dir, 'disease_peak_metadata.pkl')
+    # Default allowed ICD codes
+    if allowed_icd is None:
+        allowed_icd = ['T14.1', 'W54.99', 'J06.9', 'Z00', 'I10.1']
     
-    if not all(os.path.exists(p) for p in [model_path, tfidf_path, scaler_path, encoder_path, metadata_path]):
-        return {"error": "Disease peak model not found. Please train the model first."}
-    
-    try:
-        model = joblib.load(model_path)
-        tfidf = joblib.load(tfidf_path)
-        scaler = joblib.load(scaler_path)
-        target_encoder = joblib.load(encoder_path)
-        metadata = joblib.load(metadata_path)
-    except Exception as e:
-        return {"error": f"Error loading model: {e}"}
-    
-    numeric_features = metadata['numeric_features']
-    text_features = metadata['text_features']
-    
-    # Load historical data for simulation
+    # Step 1: Load and combine 2023–2024 datasets
     if use_db:
         referrals_2023_2024 = Referral.objects.filter(
             created_at__year__in=[2023, 2024]
@@ -1362,165 +1387,367 @@ def predict_disease_peak_for_month(month_name=None, samples_per_month=100, use_d
         if not referrals_2023_2024.exists():
             return {"error": "No referral data found for 2023-2024"}
         
-        original_df = queryset_to_disease_peak_dataframe(referrals_2023_2024)
+        df = queryset_to_disease_peak_dataframe(referrals_2023_2024)
     else:
         try:
-            original_df = load_disease_peak_csv_data(csv_2023_path, csv_2024_path)
+            df = load_disease_peak_csv_data(csv_2023_path, csv_2024_path)
         except FileNotFoundError as e:
             return {"error": str(e)}
     
-    # Simulate data for the requested month(s)
-    months = [
-        "January", "February", "March", "April", "May", "June",
-        "July", "August", "September", "October", "November", "December"
-    ]
+    if df.empty:
+        return {"error": "No data loaded"}
     
-    target_months = [month_name] if month_name and month_name in months else months
+    # Filter out "poblacion" barangays (case-insensitive) - not part of forecasting facility
+    # This ensures poblacion data is excluded from training and won't appear in predictions
+    # Consistent with barangay model filtering
+    if 'SITIO/BARANGAY' in df.columns:
+        df = df[~df['SITIO/BARANGAY'].str.lower().str.contains('poblacion', na=False)].copy()
     
-    sample_columns = ['AGE', 'SEX', 'COMPLAINTS']
-    available_columns = [col for col in sample_columns if col in original_df.columns]
-    sampling_df = original_df[available_columns].dropna(subset=available_columns)
+    if df.empty:
+        return {"error": "No data remaining after filtering out poblacion"}
     
-    if len(sampling_df) == 0:
-        return {"error": "No valid data for sampling"}
+    # Step 2: Filter top diseases
+    df = df[df['ICD10 CODE'].isin(allowed_icd)]
     
-    # Calculate average patients per month from historical data
-    monthly_averages = {}
-    month_names = ["January", "February", "March", "April", "May", "June",
-                   "July", "August", "September", "October", "November", "December"]
+    if df.empty:
+        return {"error": "No data remaining after filtering by ICD codes"}
     
-    if use_db:
-        from django.db.models import Count
-        from django.db.models.functions import ExtractMonth
-        
-        # Get monthly counts from historical referrals
-        monthly_counts = Referral.objects.filter(
-            created_at__year__in=[2023, 2024]
-        ).exclude(
-            Q(patient__isnull=True) | 
-            Q(initial_diagnosis__isnull=True) | 
-            Q(initial_diagnosis='')
-        ).extra(
-            select={'month': "EXTRACT(MONTH FROM created_at)"}
-        ).values('month').annotate(count=Count('id'))
-        
-        # Calculate average per month (across 2 years)
-        for month_num in range(1, 13):
-            month_data = [mc['count'] for mc in monthly_counts if mc['month'] == month_num]
-            if month_data:
-                # Average across 2 years
-                monthly_averages[month_names[month_num - 1]] = int(sum(month_data) / len(month_data))
-            else:
-                # Fallback to default if no data for this month
-                monthly_averages[month_names[month_num - 1]] = samples_per_month
-    else:
-        # For CSV data, try to calculate from dataframe if date column exists
-        date_cols = [col for col in original_df.columns if 'date' in col.lower() or 'created' in col.lower()]
-        if date_cols:
-            try:
-                date_col = date_cols[0]
-                original_df['month'] = pd.to_datetime(original_df[date_col], errors='coerce').dt.month
-                for month_num in range(1, 13):
-                    month_data = original_df[original_df['month'] == month_num]
-                    if len(month_data) > 0:
-                        monthly_averages[month_names[month_num - 1]] = int(len(month_data) / 2)  # Average over 2 years
-                    else:
-                        monthly_averages[month_names[month_num - 1]] = samples_per_month
-            except:
-                # If date parsing fails, use default for all months
-                for month in month_names:
-                    monthly_averages[month] = samples_per_month
+    # Step 3: Ensure DATE column is datetime type
+    if 'DATE' not in df.columns:
+        if 'CREATED_AT' in df.columns:
+            df['DATE'] = pd.to_datetime(df['CREATED_AT'], errors='coerce')
         else:
-            # No date column, use default
-            for month in month_names:
-                monthly_averages[month] = samples_per_month
+            return {"error": "No date column found in data"}
     
-    # Import hashlib for month-specific random seeds
-    import hashlib
+    df['DATE'] = pd.to_datetime(df['DATE'], errors='coerce')
+    df = df.dropna(subset=['DATE'])
     
+    if df.empty:
+        return {"error": "No valid dates found"}
+    
+    # Step 4: Aggregate daily cases per disease
+    df_grouped = df.groupby(['DATE', 'ICD10 CODE']).size().reset_index(name='cases')
+    df_grouped = df_grouped.sort_values(['ICD10 CODE', 'DATE'])
+    
+    if df_grouped.empty:
+        return {"error": "No grouped data available"}
+    
+    # Step 5: Create lag features and rolling averages
+    df_grouped['Cases_lag1'] = df_grouped.groupby('ICD10 CODE')['cases'].shift(1)
+    df_grouped['Cases_lag7'] = df_grouped.groupby('ICD10 CODE')['cases'].shift(7)
+    df_grouped['Cases_lag30'] = df_grouped.groupby('ICD10 CODE')['cases'].shift(30)
+    df_grouped['Cases_MA7'] = df_grouped.groupby('ICD10 CODE')['cases'].transform(lambda x: x.rolling(7).mean())
+    df_grouped['Cases_MA30'] = df_grouped.groupby('ICD10 CODE')['cases'].transform(lambda x: x.rolling(30).mean())
+    df_grouped = df_grouped.dropna()
+    
+    if df_grouped.empty:
+        return {"error": "No data remaining after feature engineering (need at least 30 days of data)"}
+    
+    # Step 6: Encode ICD10 CODE
+    le = LabelEncoder()
+    df_grouped['ICD10_CODE_ENC'] = le.fit_transform(df_grouped['ICD10 CODE'])
+    
+    # Step 7: Prepare features and target
+    features = ['ICD10_CODE_ENC', 'Cases_lag1', 'Cases_lag7', 'Cases_lag30', 'Cases_MA7', 'Cases_MA30']
+    target = 'cases'
+    X = df_grouped[features]
+    y = df_grouped[target]
+    
+    # Step 8: Train-test split (everything before 2025)
+    train_mask = df_grouped['DATE'] < '2025-01-01'
+    X_train, y_train = X[train_mask], y[train_mask]
+    X_test, y_test = X[~train_mask], y[~train_mask]
+    
+    if len(X_train) == 0:
+        return {"error": "No training data available (need data before 2025)"}
+    
+    # Step 9: Scale features for LinearSVR
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X)
+    X_train_scaled, X_test_scaled = X_scaled[train_mask], X_scaled[~train_mask]
+    
+    # Step 10: Define models
+    SEED = 42
+    models = {
+        "Random Forest": RandomForestRegressor(n_estimators=200, random_state=SEED, n_jobs=-1),
+        "Gradient Boosting": GradientBoostingRegressor(n_estimators=150, learning_rate=0.1, random_state=SEED),
+        "Linear SVR": LinearSVR(C=1.0, max_iter=10000, random_state=SEED)
+    }
+    
+    # Step 11: Train models & evaluate on train set
+    train_results = []
+    best_model_name = None
+    best_model = None
+    best_rmse = float('inf')
+    
+    for name, model in models.items():
+        if name == "Linear SVR":
+            model.fit(X_train_scaled, y_train)
+            y_train_pred = model.predict(X_train_scaled)
+        else:
+            model.fit(X_train, y_train)
+            y_train_pred = model.predict(X_train)
+        
+        # Train evaluation metrics
+        rmse_train = np.sqrt(mean_squared_error(y_train, y_train_pred))
+        mae_train = mean_absolute_error(y_train, y_train_pred)
+        r2_train = r2_score(y_train, y_train_pred)
+        
+        train_results.append({
+            "Model": name,
+            "RMSE": round(rmse_train, 4),
+            "MAE": round(mae_train, 4),
+            "R2": round(r2_train, 4)
+        })
+        
+        # Select best model by train RMSE
+        if rmse_train < best_rmse:
+            best_rmse = rmse_train
+            best_model_name = name
+            best_model = model
+    
+    # Save models and preprocessing components
+    models_dir = get_ml_models_path()
+    os.makedirs(models_dir, exist_ok=True)
+    
+    model_path = os.path.join(models_dir, 'disease_forecast_best_model.pkl')
+    scaler_path = os.path.join(models_dir, 'disease_forecast_best_scaler.pkl')
+    encoder_path = os.path.join(models_dir, 'disease_forecast_best_encoder.pkl')
+    metadata_path = os.path.join(models_dir, 'disease_forecast_best_metadata.pkl')
+    
+    joblib.dump(best_model, model_path)
+    joblib.dump(scaler, scaler_path)
+    joblib.dump(le, encoder_path)
+    
+    # Save history for iterative forecasting
+    metadata = {
+        'best_model_name': best_model_name,
+        'features': features,
+        'allowed_icd': allowed_icd,
+        'results': train_results,
+        'history_df': df_grouped[['DATE', 'ICD10 CODE', 'cases', 'ICD10_CODE_ENC']].copy()
+    }
+    joblib.dump(metadata, metadata_path)
+    
+    return {
+        "status": "Training completed",
+        "best_model": best_model_name,
+        "train_rmse": round(best_rmse, 4),
+        "train_mae": round(mae_train, 4),
+        "train_r2": round(r2_train, 4),
+        "results": train_results,
+        "models_saved_to": models_dir
+    }
+
+
+def predict_disease_forecast_2025_monthly():
+    """
+    Predict monthly disease cases for 2025 using trained time-series model (best model selected).
+    Returns monthly aggregated forecasts.
+    OPTIMIZED: Results are cached for 24 hours since predictions don't change unless model is retrained.
+    """
+    from django.core.cache import cache
+    
+    # Check cache first - predictions don't change unless model is retrained
+    cache_key = 'disease_forecast_2025_monthly_results_v1'
+    cached_result = cache.get(cache_key)
+    if cached_result is not None:
+        return cached_result
+    
+    models_dir = get_ml_models_path()
+    model_path = os.path.join(models_dir, 'disease_forecast_best_model.pkl')
+    scaler_path = os.path.join(models_dir, 'disease_forecast_best_scaler.pkl')
+    encoder_path = os.path.join(models_dir, 'disease_forecast_best_encoder.pkl')
+    metadata_path = os.path.join(models_dir, 'disease_forecast_best_metadata.pkl')
+    
+    if not all(os.path.exists(p) for p in [model_path, scaler_path, encoder_path, metadata_path]):
+        return {"error": "Disease forecast model not found. Please train the model first using train_disease_forecast_best_model()"}
+    
+    try:
+        model = joblib.load(model_path)
+        scaler = joblib.load(scaler_path)
+        le = joblib.load(encoder_path)
+        metadata = joblib.load(metadata_path)
+    except Exception as e:
+        return {"error": f"Error loading model: {e}"}
+    
+    features = metadata['features']
+    history_df = metadata['history_df'].copy()
+    
+    # Forecasting daily cases for 2025
+    diseases = history_df['ICD10 CODE'].unique()
+    future_dates = pd.date_range(start='2025-01-01', end='2025-12-31')
+    future_df = pd.DataFrame(
+        [(d, date) for d in diseases for date in future_dates],
+        columns=['ICD10 CODE', 'DATE']
+    )
+    future_df['ICD10_CODE_ENC'] = le.transform(future_df['ICD10 CODE'])
+    
+    # OPTIMIZED: Use list append instead of DataFrame concat in loop
+    predictions = []
+    history = history_df.copy()
+    new_rows_list = []  # Collect new rows in list (much faster)
+    
+    # Iteratively forecast day-by-day
+    for idx, row in future_df.iterrows():
+        disease = row['ICD10_CODE_ENC']
+        date = row['DATE']
+        disease_history = history[history['ICD10_CODE_ENC'] == disease].sort_values('DATE')
+        
+        lag1 = disease_history['cases'].iloc[-1] if len(disease_history) >= 1 else 0
+        lag7 = disease_history['cases'].iloc[-7] if len(disease_history) >= 7 else 0
+        lag30 = disease_history['cases'].iloc[-30] if len(disease_history) >= 30 else 0
+        ma7 = disease_history['cases'].iloc[-7:].mean() if len(disease_history) >= 7 else lag1
+        ma30 = disease_history['cases'].iloc[-30:].mean() if len(disease_history) >= 30 else lag1
+        
+        x_pred = pd.DataFrame([[disease, lag1, lag7, lag30, ma7, ma30]], columns=features)
+        
+        # Use appropriate scaling based on best model
+        if metadata['best_model_name'] == "Linear SVR":
+            x_pred_scaled = scaler.transform(x_pred)
+            pred = model.predict(x_pred_scaled)[0]
+        else:
+            pred = model.predict(x_pred)[0]
+        
+        predictions.append(max(0, pred))  # Ensure non-negative
+        
+        # OPTIMIZED: Append to list instead of concatenating DataFrame
+        new_rows_list.append({
+            'DATE': date,
+            'ICD10_CODE_ENC': disease,
+            'cases': pred,
+            'ICD10 CODE': row['ICD10 CODE']
+        })
+        
+        # OPTIMIZED: Concatenate in batches (every 100 rows) instead of every row
+        if len(new_rows_list) >= 100:
+            new_df = pd.DataFrame(new_rows_list)
+            history = pd.concat([history, new_df], ignore_index=True)
+            new_rows_list = []  # Clear list
+    
+    # Final concatenation for remaining rows
+    if new_rows_list:
+        new_df = pd.DataFrame(new_rows_list)
+        history = pd.concat([history, new_df], ignore_index=True)
+    
+    future_df['predicted_cases'] = predictions
+    
+    # Aggregate monthly forecasts
+    monthly_forecast = (
+        future_df.groupby(['ICD10 CODE', future_df['DATE'].dt.to_period('M')])
+        ['predicted_cases'].sum().reset_index()
+    )
+    monthly_forecast.rename(columns={'DATE': 'Month'}, inplace=True)
+    monthly_forecast['Month'] = monthly_forecast['Month'].astype(str)
+        
+    # Format results
+    results = {}
+    for _, row in monthly_forecast.iterrows():
+        disease = str(row['ICD10 CODE'])
+        month = str(row['Month'])
+        cases = int(round(row['predicted_cases']))
+        
+        if disease not in results:
+            results[disease] = {}
+        results[disease][month] = cases
+    
+    # Cache results for 24 hours (predictions don't change unless model is retrained)
+    cache.set(cache_key, results, 86400)  # 24 hours
+    
+    return results
+
+
+def predict_disease_peak_for_month(month_name=None, samples_per_month=100, use_db=False, csv_2023_path=None, csv_2024_path=None):
+    """
+    Predict disease peak for a specific month using NEW time-series forecasting model (best model selected).
+    This provides more effective forecasting for the heatmap.
+    Uses Gradient Boosting, Random Forest, or LinearSVR - whichever performed best during training.
+    
+    Args:
+        month_name: Month name (e.g., "January", "February") or None for all months
+        samples_per_month: (DEPRECATED - kept for compatibility, not used in new approach)
+        use_db: Use Django database instead of CSV
+        csv_2023_path: Path to 2023 CSV file (if None, uses default)
+        csv_2024_path: Path to 2024 CSV file (if None, uses default)
+    
+    Returns:
+        dict: Prediction results with month and predicted disease counts
+        Format: {"January": {"disease": "T14.1", "count": 45, "all_diseases": {...}}, ...}
+    """
+    # Month name mapping
+    month_names = {
+        "January": 1, "February": 2, "March": 3, "April": 4,
+        "May": 5, "June": 6, "July": 7, "August": 8,
+        "September": 9, "October": 10, "November": 11, "December": 12
+    }
+    
+    # Load or train the forecasting model
+    models_dir = get_ml_models_path()
+    model_path = os.path.join(models_dir, 'disease_forecast_best_model.pkl')
+    scaler_path = os.path.join(models_dir, 'disease_forecast_best_scaler.pkl')
+    encoder_path = os.path.join(models_dir, 'disease_forecast_best_encoder.pkl')
+    metadata_path = os.path.join(models_dir, 'disease_forecast_best_metadata.pkl')
+    
+    # Check if model exists, if not, train it
+    if not all(os.path.exists(p) for p in [model_path, scaler_path, encoder_path, metadata_path]):
+        # Train the model first
+        train_result = train_disease_forecast_best_model(
+            csv_2023_path=csv_2023_path,
+            csv_2024_path=csv_2024_path,
+            use_db=use_db
+        )
+        if "error" in train_result:
+            return {"error": f"Failed to train model: {train_result['error']}"}
+    
+    # Get monthly forecasts using the new time-series model
+    monthly_forecasts = predict_disease_forecast_2025_monthly()
+    
+    if "error" in monthly_forecasts:
+        return monthly_forecasts
+    
+    # Convert forecasts to heatmap format
     results = {}
     
-    for month in target_months:
-        # Use historical average for this month, or fallback to default
-        month_samples = monthly_averages.get(month, samples_per_month)
+    # Determine which months to return
+    if month_name and month_name in month_names:
+        target_months = [month_name]
+    else:
+        target_months = list(month_names.keys())
+    
+    for month_name_key in target_months:
+        month_num = month_names[month_name_key]
+        month_period = f"2025-{month_num:02d}"  # Format: "2025-01", "2025-02", etc.
         
-        # Generate month-specific random seed for variation
-        month_seed = int(hashlib.md5(month.encode()).hexdigest()[:8], 16) % (2**31)
-        
-        # Generate simulated data for this month with month-specific sample size
-        sampled_data = sampling_df.sample(
-            n=min(month_samples, len(sampling_df)), 
-            replace=True if month_samples > len(sampling_df) else False,
-            random_state=month_seed  # Different seed per month
-        )
-        
-        sim_df = sampled_data.head(month_samples).copy()
-        
-        # Ensure all required columns exist
-        for col in sample_columns:
-            if col not in sim_df.columns:
-                if col == 'AGE':
-                    sim_df[col] = random.randint(1, 90)
-                elif col == 'SEX':
-                    sim_df[col] = random.choice(["Male", "Female"])
-                else:
-                    sim_df[col] = ''
-        
-        # Apply feature engineering
-        sim_df['COMPLAINTS'] = sim_df['COMPLAINTS'].fillna('').astype(str).str.strip()
-        sim_df['COMPLAINTS_CLEAN'] = sim_df['COMPLAINTS'].str.lower()
-        sim_df['COMPLAINTS_LENGTH'] = sim_df['COMPLAINTS'].str.len()
-        sim_df['COMPLAINTS_WORD_COUNT'] = sim_df['COMPLAINTS'].str.split().str.len()
-        sim_df['COMPLAINTS_AVG_WORD_LENGTH'] = sim_df['COMPLAINTS_LENGTH'] / (sim_df['COMPLAINTS_WORD_COUNT'] + 1)
-        
-        sim_df['AGE'] = pd.to_numeric(sim_df['AGE'], errors='coerce')
-        sim_df['AGE'] = sim_df['AGE'].fillna(original_df['AGE'].median() if 'AGE' in original_df.columns else 30)
-        sim_df['AGE_GROUP'] = pd.cut(sim_df['AGE'], bins=[0, 18, 35, 50, 65, 100], 
-                                     labels=[0, 1, 2, 3, 4], include_lowest=True).astype(int)
-        age_mean = original_df['AGE'].mean() if 'AGE' in original_df.columns else 30
-        age_std = original_df['AGE'].std() if 'AGE' in original_df.columns else 15
-        sim_df['AGE_NORMALIZED'] = (sim_df['AGE'] - age_mean) / (age_std + 1e-8)
-        
-        sim_df['SEX'] = sim_df['SEX'].astype(str).str.strip().str.upper()
-        sim_df['SEX_ENCODED'] = sim_df['SEX'].map({'M': 0, 'MALE': 0, 'F': 1, 'FEMALE': 1}).fillna(0)
-        
-        # Fill NaN
-        sim_df['COMPLAINTS_LENGTH'] = sim_df['COMPLAINTS_LENGTH'].fillna(0)
-        sim_df['COMPLAINTS_WORD_COUNT'] = sim_df['COMPLAINTS_WORD_COUNT'].fillna(0)
-        sim_df['COMPLAINTS_AVG_WORD_LENGTH'] = sim_df['COMPLAINTS_AVG_WORD_LENGTH'].fillna(0)
-        
-        # Prepare features for prediction
-        sim_numeric = sim_df[numeric_features].values
-        sim_numeric_scaled = scaler.transform(sim_numeric)
-        sim_text = tfidf.transform(sim_df[text_features[0]])
-        
-        # Combine features
-        sim_combined = hstack([sim_numeric_scaled, sim_text])
-        
-        # Predict diseases
-        sim_df["Predicted_Disease_Encoded"] = model.predict(sim_combined)
-        
-        # Map back to disease labels
-        reverse_encoder = {i: label for i, label in enumerate(target_encoder.classes_)}
-        sim_df["Predicted_Disease_Label"] = sim_df["Predicted_Disease_Encoded"].map(reverse_encoder)
-        
-        # Count disease occurrences
-        disease_counts = sim_df["Predicted_Disease_Label"].value_counts()
-        
-        # Get all disease predictions (not just peak)
+        # Collect all diseases for this month
         all_diseases = {}
-        for disease_code, count in disease_counts.items():
-            all_diseases[disease_code] = int(count)
+        peak_disease = None
+        peak_count = 0
         
-        # Still include peak for backward compatibility
-        peak_disease = disease_counts.index[0] if len(disease_counts) > 0 else "Unknown"
-        peak_count = int(disease_counts.iloc[0]) if len(disease_counts) > 0 else 0
+        for disease_code, monthly_data in monthly_forecasts.items():
+            if month_period in monthly_data:
+                count = monthly_data[month_period]
+                all_diseases[disease_code] = count
+                
+                # Track peak disease
+                if count > peak_count:
+                    peak_count = count
+                    peak_disease = disease_code
         
-        results[month] = {
-            'disease': peak_disease,  # Peak disease for backward compatibility
-            'count': peak_count,  # Peak count for backward compatibility
-            'total_samples': month_samples,  # Use historical average
-            'all_diseases': all_diseases  # All diseases with their counts
+        # Format result for heatmap
+        if all_diseases:
+            results[month_name_key] = {
+                'disease': peak_disease if peak_disease else "Unknown",
+                'count': int(peak_count),
+                'total_samples': sum(all_diseases.values()),  # Total cases for the month
+                'all_diseases': all_diseases
+            }
+        else:
+            # No data for this month
+            results[month_name_key] = {
+                'disease': "Unknown",
+                'count': 0,
+                'total_samples': 0,
+                'all_diseases': {}
         }
     
     return results
@@ -1583,6 +1810,10 @@ def train_barangay_disease_peak_model(csv_2023_path=None, csv_2024_path=None, us
     
     # Filter by allowed ICD codes
     df = df[df['ICD10 CODE'].isin(allowed_icd)].copy()
+    
+    # Filter out "poblacion" barangays (case-insensitive) - not part of forecasting facility
+    # This ensures poblacion data is excluded from training and won't appear in predictions
+    df = df[~df['SITIO/BARANGAY'].str.lower().str.contains('poblacion', na=False)].copy()
     
     if df.empty:
         return {"error": "No data remaining after filtering"}
@@ -1683,8 +1914,8 @@ def predict_barangay_disease_peak_2025(target_barangays=None, csv_2023_path=None
     except Exception as e:
         return {"error": f"Error loading models: {e}"}
     
-    # Get all barangays from models and filter out "poblacion" (case-insensitive)
-    all_barangays = [b for b in models_dict.keys() if 'poblacion' not in b.lower()]
+    # Get all barangays from models (poblacion already excluded during training)
+    all_barangays = list(models_dict.keys())
     
     # Filter target barangays if specified
     if target_barangays:

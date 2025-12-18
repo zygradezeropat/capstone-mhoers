@@ -20,14 +20,6 @@
         </div>
 
         <div class="modal-body modern-body">
-          {% if messages %}
-            <div class="alert alert-danger modern-alert">
-              <i class="bi bi-exclamation-triangle-fill me-2"></i>
-              {% for message in messages %}
-                <p class="mb-0">{{ message }}</p>
-              {% endfor %}
-            </div>
-          {% endif %}
 
           <!-- Personal Information Section -->
           <div class="form-section">
@@ -64,7 +56,7 @@
               <h6>Professional Information</h6>
             </div>
             <div class="row g-3">
-              <div class="col-md-6">
+              <div class="col-md-12">
                 <div class="form-floating">
                   <select name="specialization" id="doctor_specialization" class="form-select modern-select" required>
                     <option value="" disabled selected>Select specialization</option>
@@ -83,12 +75,7 @@
                   <label for="doctor_specialization"><i class="bi bi-clipboard2-pulse me-2"></i>Specialization</label>
                 </div>
               </div>
-              <div class="col-md-6">
-                <div class="form-floating">
-                  <input type="text" name="license_number" id="doctor_license_number" class="form-control modern-input" placeholder="Medical License Number" required>
-                  <label for="doctor_license_number"><i class="bi bi-shield-check me-2"></i>Medical License Number</label>
-                </div>
-              </div>
+              
              
             </div>
           </div>

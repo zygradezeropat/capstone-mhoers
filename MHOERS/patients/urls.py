@@ -12,6 +12,7 @@ from .views import (
     get_medical_history_followups,
     send_today_checkup_sms,
     get_patient_sex,
+    record_followup_visit,
 )
 
 urlpatterns = [
@@ -27,4 +28,5 @@ urlpatterns = [
     path('api/medical-history-followups/', get_medical_history_followups, name='medical_history_followups'),
     path('api/send-today-checkup-sms/<int:patient_id>/', send_today_checkup_sms, name='send_today_checkup_sms'),
     path('get-patient-sex/<int:patient_id>/', get_patient_sex, name='get_patient_sex'),
+    path('api/record-followup-visit/', record_followup_visit, name='record_followup_visit'),
 ]
