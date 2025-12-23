@@ -108,3 +108,23 @@ def icd_to_severity(icd_code):
         return "Unspecified"
     except Exception:
         return "Unspecified"
+
+
+@register.filter
+def get_bhw_name(user):
+    """Get BHW name from user. Returns BHW's first_name and last_name if user has BHWRegistration, otherwise returns user's name."""
+    if not user:
+        return ""
+    
+    try:
+        from accounts.models import BHWRegistration
+        bhw = BHWRegistration.objects.get(user=user)
+        return f"{bhw.first_name} {bhw.last_name}".strip()
+    except BHWRegistration.DoesNotExist:
+        # Fallback to user's first_name and last_name
+        if user.first_name or user.last_name:
+            return f"{user.first_name} {user.last_name}".strip()
+        return user.username
+    except Exception:
+        # If any error occurs, return username as fallback
+        return user.username if user else ""

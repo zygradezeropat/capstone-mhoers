@@ -699,20 +699,25 @@ def user_management(request):
             'date_created': timezone.localtime(user.date_joined).strftime('%B %d, %Y %I:%M %p'),
         }
         
-        # Check what type of user they are
+        # Check what type of user they are and get facility
+        facility_name = None
         try:
-            bhw = BHWRegistration.objects.get(user=user)
+            bhw = BHWRegistration.objects.select_related('facility').get(user=user)
             if bhw.status == 'ACTIVE':
                 user_info['role'] = 'BHW'
                 user_info['profile_id'] = bhw.bhw_id
+                if bhw.facility:
+                    facility_name = bhw.facility.name
         except BHWRegistration.DoesNotExist:
             pass
         
         try:
-            doctor = Doctors.objects.get(user=user)
+            doctor = Doctors.objects.select_related('facility').get(user=user)
             if doctor.status in ['APPROVED', 'ACTIVE']:
                 user_info['role'] = 'Doctor'
                 user_info['profile_id'] = doctor.doctor_id
+                if doctor.facility:
+                    facility_name = doctor.facility.name
         except Doctors.DoesNotExist:
             pass
         
@@ -731,6 +736,19 @@ def user_management(request):
                 user_info['profile_id'] = midwife.midwife_id
         except Midwives.DoesNotExist:
             pass
+        
+        # Get facility from shared_facilities if not already found
+        if not facility_name:
+            facility = user.shared_facilities.first()
+            if facility:
+                facility_name = facility.name
+            else:
+                # Fallback: check Facility.users relationship
+                facility = Facility.objects.filter(users=user).first()
+                if facility:
+                    facility_name = facility.name
+        
+        user_info['facility'] = facility_name or 'N/A'
         
         # Only include users with a role (exclude superusers without profiles)
         if user_info['role'] != 'Unknown' or user.is_superuser:
@@ -752,18 +770,23 @@ def user_management(request):
             'profile_id': None,
         }
         
-        # Check what type of user they are
+        # Check what type of user they are and get facility
+        facility_name = None
         try:
-            bhw = BHWRegistration.objects.get(user=user)
+            bhw = BHWRegistration.objects.select_related('facility').get(user=user)
             user_info['role'] = 'BHW'
             user_info['profile_id'] = bhw.bhw_id
+            if bhw.facility:
+                facility_name = bhw.facility.name
         except BHWRegistration.DoesNotExist:
             pass
         
         try:
-            doctor = Doctors.objects.get(user=user)
+            doctor = Doctors.objects.select_related('facility').get(user=user)
             user_info['role'] = 'Doctor'
             user_info['profile_id'] = doctor.doctor_id
+            if doctor.facility:
+                facility_name = doctor.facility.name
         except Doctors.DoesNotExist:
             pass
         
@@ -780,6 +803,19 @@ def user_management(request):
             user_info['profile_id'] = midwife.midwife_id
         except Midwives.DoesNotExist:
             pass
+        
+        # Get facility from shared_facilities if not already found
+        if not facility_name:
+            facility = user.shared_facilities.first()
+            if facility:
+                facility_name = facility.name
+            else:
+                # Fallback: check Facility.users relationship
+                facility = Facility.objects.filter(users=user).first()
+                if facility:
+                    facility_name = facility.name
+        
+        user_info['facility'] = facility_name or 'N/A'
         
         # Only include users with a role (exclude superusers without profiles)
         if user_info['role'] != 'Unknown' or user.is_superuser:

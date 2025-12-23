@@ -574,6 +574,93 @@
         }
       }
 
+      /* Username Validation Indicators */
+      .username-validation-indicators {
+        margin-top: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .username-error-indicator,
+      .username-success-indicator,
+      .username-checking-indicator {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 500;
+        animation: slideDown 0.2s ease-out;
+      }
+
+      .username-error-indicator {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        color: #dc2626;
+      }
+
+      .username-success-indicator {
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        color: #16a34a;
+      }
+
+      .username-checking-indicator {
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        color: #3b82f6;
+      }
+
+      .username-error-indicator i,
+      .username-success-indicator i,
+      .username-checking-indicator i {
+        font-size: 14px;
+        flex-shrink: 0;
+      }
+
+      .username-error-indicator span,
+      .username-success-indicator span,
+      .username-checking-indicator span {
+        line-height: 1.4;
+      }
+
+      @media (max-width: 768px) {
+        .username-error-indicator,
+        .username-success-indicator,
+        .username-checking-indicator {
+          font-size: 12px;
+          padding: 6px 10px;
+        }
+
+        .username-error-indicator i,
+        .username-success-indicator i,
+        .username-checking-indicator i {
+          font-size: 13px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .username-validation-indicators {
+          margin-top: 6px;
+          gap: 4px;
+        }
+
+        .username-error-indicator,
+        .username-success-indicator,
+        .username-checking-indicator {
+          font-size: 11px;
+          padding: 5px 8px;
+        }
+
+        .username-error-indicator i,
+        .username-success-indicator i,
+        .username-checking-indicator i {
+          font-size: 12px;
+        }
+      }
+
     </style>
   </head>
 
@@ -643,6 +730,25 @@
               <div class="form-group">
                 <div class="input-wrapper">
                   <input type="text" name="username" id="username" class="form-input" placeholder="Username" required>
+                </div>
+                <!-- Username validation indicators -->
+                <div id="username-validation-indicators" class="username-validation-indicators" style="display: none;">
+                  <div id="username-error" class="username-error-indicator" style="display: none;">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span>This username is already taken. Please choose a different username.</span>
+                  </div>
+                  <div id="username-success" class="username-success-indicator" style="display: none;">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Username is available!</span>
+                  </div>
+                  <div id="username-checking" class="username-checking-indicator" style="display: none;">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <span>Checking username availability...</span>
+                  </div>
+                  <div id="username-length-error" class="username-error-indicator" style="display: none;">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span>Username must be at least 3 characters long.</span>
+                  </div>
                 </div>
               </div>
               <div class="form-group">
@@ -727,62 +833,87 @@
               <h6>ADDRESS INFORMATION</h6>
             </div>
 
-            <!-- Province Field -->
-            <div class="form-row">
-              <div class="form-group">
-                <div class="input-wrapper">
-                  <select name="province" id="province" class="form-select" required>
-                    <option value="" disabled selected>Select Province</option>
-                  </select>
-                </div>
-              </div>
-            </div>
+            <!-- Row 1: Region, Province, City -->
+<div class="row g-3">
+  <!-- Region -->
+  <div class="col-12 col-md-4">
+    <div class="form-group">
+      <div class="input-wrapper">
+        <select name="region" id="region" class="form-select" required>
+          <option value="" disabled selected>Select Region</option>
+        </select>
+      </div>
+    </div>
+  </div>
 
-            <!-- City/Municipality Field -->
-            <div class="form-row">
-              <div class="form-group">
-                <div class="input-wrapper">
-                  <select name="municipality" id="municipality" class="form-select" required disabled>
-                    <option value="" disabled selected>Select City/Municipality</option>
-                  </select>
-                </div>
-              </div>
-            </div>
+  <!-- Province -->
+  <div class="col-12 col-md-4">
+    <div class="form-group">
+      <div class="input-wrapper">
+        <select name="province" id="province" class="form-select" required disabled>
+          <option value="" disabled selected>Select Province</option>
+        </select>
+      </div>
+    </div>
+  </div>
 
-            <!-- Barangay and Purok Row (6-6 columns) -->
-            <div class="row g-3">
-              <div class="col-12 col-md-6">
-                <div class="form-group">
-                  <div class="input-wrapper">
-                    <select name="barangay" id="barangay" class="form-select" required disabled>
-                      <option value="" disabled selected>Select Barangay</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-              <div class="col-12 col-md-6">
-                <div class="form-group">
-                  <div class="input-wrapper">
-                    <input type="text" name="purok" id="purok" class="form-input" placeholder="Purok" required disabled>
-                  </div>
-                </div>
-              </div>
-            </div>
+  <!-- City / Municipality -->
+  <div class="col-12 col-md-4">
+    <div class="form-group">
+      <div class="input-wrapper">
+        <select name="municipality" id="municipality" class="form-select" required disabled>
+          <option value="" disabled selected>Select City/Municipality</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
 
-            <!-- Assigned Facility (shown only when BHW is selected) -->
-            <div class="form-row">
-              <div class="form-group" id="assigned-facility-group" style="display: none;">
-                <div class="input-wrapper">
-                  
-                  <select name="assigned_facility" id="assigned_facility" class="form-select">
-                    <option value="" disabled selected>Assigned Facility</option>
-                    {% for facility in facilities %}
-                    <option value="{{ facility.facility_id }}">{{ facility.name }}</option>
-                    {% endfor %}
-                  </select>
-                </div>
-              </div>
-            </div>
+            <!-- Row 2: Barangay, Purok, Assigned Facility -->
+<div class="row g-3 mt-1">
+  <!-- Barangay -->
+  <div class="col-12 col-md-4">
+    <div class="form-group">
+      <div class="input-wrapper">
+        <select name="barangay" id="barangay" class="form-select" required disabled>
+          <option value="" disabled selected>Select Barangay</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Purok -->
+  <div class="col-12 col-md-4">
+    <div class="form-group">
+      <div class="input-wrapper">
+        <input
+          type="text"
+          name="purok"
+          id="purok"
+          class="form-input"
+          placeholder="Purok"
+          required
+          disabled
+        />
+      </div>
+    </div>
+  </div>
+
+  <!-- Assigned Facility (BHW only) -->
+  <div class="col-12 col-md-4" id="assigned-facility-group" style="display: none;">
+    <div class="form-group">
+      <div class="input-wrapper">
+        <select name="assigned_facility" id="assigned_facility" class="form-select">
+          <option value="" disabled selected>Assigned Facility</option>
+          {% for facility in facilities %}
+            <option value="{{ facility.facility_id }}">{{ facility.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
++
 
             <!-- Doctor Professional Information Section (appears when Doctor role is selected) -->
             <div id="doctor-info-section" class="doctor-info-section" style="display: none;">

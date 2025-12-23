@@ -10,6 +10,7 @@ urlpatterns = [
     path('create_purok/', create_purok, name='create_purok'),
     path('api/facilities/', facility_list, name='facility_list'),
     path('api/barangays/', get_barangays, name='get_barangays'),
+    path('api/psgc-regions/', psgc_regions, name='psgc_regions'),
     path('api/psgc-provinces/', psgc_provinces, name='psgc_provinces'),
     path('api/psgc-cities/', psgc_cities, name='psgc_cities'),
     path('api/psgc-barangays/', psgc_barangays, name='psgc_barangays'),

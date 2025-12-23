@@ -311,7 +311,7 @@
                         </div>
                       </td>
                       
-                      <td>{{ r.patient.facility.name }}</td>
+                      <td>{{ r.patient.facility.name }} - {{ r.user|get_bhw_name }}</td>
                       <td>{{ r.patient.p_address }}</td>
                       <td>{{ r.chief_complaint|default:'N/A'|truncatewords:10 }}</td>
                       <td>
@@ -434,7 +434,7 @@
                         </div>
                       </td>
                       
-                      <td>{{ r.patient.facility.name }}</td>
+                      <td>{{ r.patient.facility.name }} - {{ r.user|get_bhw_name }}</td>
                       <td>{{ r.patient.p_address }}</td>
                       <td>{{ r.chief_complaint|default:'N/A'|truncatewords:10 }}</td>
                       <td>
@@ -602,7 +602,7 @@
                           </div>
                         </div>
                       </td>
-                      <td>{{ r.patient.facility.name }}</td>
+                      <td>{{ r.patient.facility.name }} - {{ r.user|get_bhw_name }}</td>
                       <td>{{ r.patient.p_address }}</td>
                       <td><span class="badge rounded-pill bg-info text-dark">Completed</span>
                         {% if r.status == 'completed' %}

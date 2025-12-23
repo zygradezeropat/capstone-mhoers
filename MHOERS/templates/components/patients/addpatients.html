@@ -453,7 +453,6 @@
     </div>
   </div>
 </div>
-
 <script>
   // Function to toggle PhilHealth fields
   function togglePhilHealthFields() {
@@ -477,8 +476,6 @@
     }
   }
 
-  // Show/hide dependent fields based on checkbox
-  // Wait for jQuery to be available
   (function() {
     function initPatientForm() {
       if (typeof jQuery === 'undefined') {
@@ -490,394 +487,221 @@
       var $ = jQuery;
       
       $(document).ready(function() {
-    // Use event delegation for modal content that may load dynamically
-    $(document).on('change', '#is_philhealth_member', function() {
-      togglePhilHealthFields();
-    });
-    
-    // Initialize location dropdowns
-    function initializeLocationDropdowns() {
-      const provinceSelect = $('#patient_province');
-      const municipalitySelect = $('#patient_municipality');
-      const barangaySelect = $('#patient_barangay');
-      const purokInput = $('#patient_purok');
-      
-      if (provinceSelect.length && municipalitySelect.length && barangaySelect.length) {
-        // Load provinces on modal open
-        loadProvinces();
-        
-        // Province change handler
-        provinceSelect.on('change', function() {
-          const selectedProvince = $(this).val();
-          if (selectedProvince) {
-            loadCities(selectedProvince);
-            // Clear city and barangay when province changes
-            municipalitySelect.html('<option value="" disabled selected>Select City/Municipality</option>');
-            municipalitySelect.prop('disabled', false);
-            barangaySelect.html('<option value="" disabled selected>Select Barangay</option>');
-            barangaySelect.prop('disabled', true);
-            if (purokInput.length) {
-              purokInput.val('');
-              purokInput.prop('disabled', true);
-            }
+        // PhilHealth checkbox toggle
+        $(document).on('change', '#is_philhealth_member', function() {
+          togglePhilHealthFields();
+        });
+
+        // Disable PhilHealth member if Dependent is selected
+        $(document).on('change', '#phic_status', function() {
+          const status = $(this).val();
+          const philMemberCheckbox = $('#is_philhealth_member');
+
+          if (status === 'D') { // Dependent
+            philMemberCheckbox.prop('checked', false).prop('disabled', true);
+            togglePhilHealthFields(); // hide PhilHealth fields
           } else {
-            municipalitySelect.html('<option value="" disabled selected>Select City/Municipality</option>');
-            municipalitySelect.prop('disabled', true);
-            barangaySelect.html('<option value="" disabled selected>Select Barangay</option>');
-            barangaySelect.prop('disabled', true);
-            if (purokInput.length) purokInput.prop('disabled', true);
+            philMemberCheckbox.prop('disabled', false);
           }
         });
-        
-        // City change handler
-        municipalitySelect.on('change', function() {
-          const selectedCity = $(this).val();
-          const selectedProvince = provinceSelect.val();
-          if (selectedCity && selectedProvince) {
-            loadBarangays(selectedCity, selectedProvince);
-            // Clear barangay when city changes
-            barangaySelect.html('<option value="" disabled selected>Select Barangay</option>');
-            barangaySelect.prop('disabled', false);
-            if (purokInput.length) {
-              purokInput.val('');
-              purokInput.prop('disabled', true);
-          }
-        } else {
-            barangaySelect.html('<option value="" disabled selected>Select Barangay</option>');
-            barangaySelect.prop('disabled', true);
-            if (purokInput.length) purokInput.prop('disabled', true);
-          }
-        });
-        
-        // Barangay change handler
-        barangaySelect.on('change', function() {
-          const selectedBarangay = $(this).val();
-          if (selectedBarangay && purokInput.length) {
-            purokInput.prop('disabled', false);
-          } else if (purokInput.length) {
-            purokInput.val('');
-            purokInput.prop('disabled', true);
-          }
-        });
-      }
-    }
-    
-    // Load provinces from API
-    function loadProvinces() {
-      const provinceSelect = $('#patient_province');
-      if (!provinceSelect.length) return;
-      
-      provinceSelect.html('<option value="" disabled selected>Loading provinces...</option>');
-      provinceSelect.prop('disabled', true);
-      
-      fetch('/facilities/api/psgc-provinces/')
-        .then(response => response.json())
-        .then(data => {
-          provinceSelect.html('<option value="" disabled selected>Select Province</option>');
-          if (Array.isArray(data) && data.length > 0) {
-            data.forEach(province => {
-              const option = $('<option></option>')
-                .attr('value', province.name)
-                .text(province.name);
-              provinceSelect.append(option);
-            });
-          }
-          provinceSelect.prop('disabled', false);
-        })
-        .catch(error => {
-          console.error('Error loading provinces:', error);
-          provinceSelect.html('<option value="" disabled selected>Error loading provinces</option>');
-          provinceSelect.prop('disabled', false);
-        });
-    }
-    
-    // Load cities based on selected province
-    function loadCities(province) {
-      const municipalitySelect = $('#patient_municipality');
-      if (!municipalitySelect.length) return;
-      
-      municipalitySelect.html('<option value="" disabled selected>Loading cities...</option>');
-      municipalitySelect.prop('disabled', true);
-      
-      const provinceQuery = encodeURIComponent(province);
-      fetch(`/facilities/api/psgc-cities/?province=${provinceQuery}`)
-        .then(response => response.json())
-          .then(data => {
-          municipalitySelect.html('<option value="" disabled selected>Select City/Municipality</option>');
-          if (Array.isArray(data) && data.length > 0) {
-            data.forEach(city => {
-                const option = $('<option></option>')
-                .attr('value', city.name)
-                .text(city.name);
-              municipalitySelect.append(option);
-              });
-            } else {
-              const option = $('<option></option>')
-                .attr('value', '')
-              .text('No cities found')
-                .prop('disabled', true);
-            municipalitySelect.append(option);
-            }
-          municipalitySelect.prop('disabled', false);
-          })
-          .catch(error => {
-          console.error('Error loading cities:', error);
-          municipalitySelect.html('<option value="" disabled selected>Error loading cities</option>');
-          municipalitySelect.prop('disabled', false);
-          });
-    }
-    
-    // Load barangays based on selected city and province
-    function loadBarangays(city, province) {
-      const barangaySelect = $('#patient_barangay');
-      if (!barangaySelect.length) return;
-      
-      barangaySelect.html('<option value="" disabled selected>Loading barangays...</option>');
-      barangaySelect.prop('disabled', true);
-      
-      const cityQuery = encodeURIComponent(city);
-      const provinceQuery = encodeURIComponent(province);
-      fetch(`/facilities/api/psgc-barangays/?city=${cityQuery}&province=${provinceQuery}`)
-              .then(response => response.json())
-              .then(data => {
-          barangaySelect.html('<option value="" disabled selected>Select Barangay</option>');
-          if (Array.isArray(data) && data.length > 0) {
-            data.forEach(barangay => {
-              const option = $('<option></option>')
-                .attr('value', barangay.name)
-                .text(barangay.name);
-              barangaySelect.append(option);
-            });
-          } else {
-            const option = $('<option></option>')
-              .attr('value', '')
-              .text('No barangays found')
-              .prop('disabled', true);
-            barangaySelect.append(option);
-          }
-          barangaySelect.prop('disabled', false);
-              })
-        .catch(error => {
-          console.error('Error loading barangays:', error);
-          barangaySelect.html('<option value="" disabled selected>Error loading barangays</option>');
-          barangaySelect.prop('disabled', false);
-        });
-    }
-    
-    // Initialize when modal is shown (Bootstrap 5)
-    const registerModal = document.getElementById('registerModal');
-    if (registerModal) {
-      registerModal.addEventListener('shown.bs.modal', function() {
-        console.log('Modal shown event triggered');
-        togglePhilHealthFields();
+
         // Initialize location dropdowns
-        setTimeout(initializeLocationDropdowns, 100);
-      });
-      
-      // Reset form when modal is hidden
-      registerModal.addEventListener('hidden.bs.modal', function() {
-        // Reset all location dropdowns
-        $('#patient_province').val('').trigger('change');
-        $('#patient_municipality').html('<option value="" disabled selected>Select City/Municipality</option>').prop('disabled', true);
-        $('#patient_barangay').html('<option value="" disabled selected>Select Barangay</option>').prop('disabled', true);
-        $('#patient_purok').val('').prop('disabled', true);
-      });
-    }
-    
-    // Also use jQuery modal event as fallback
-    $('#registerModal').on('shown.bs.modal', function() {
-      console.log('jQuery modal shown event triggered');
-      togglePhilHealthFields();
-      // Initialize location dropdowns
-      setTimeout(initializeLocationDropdowns, 100);
-    });
-    
-    // Reset form when modal is hidden
-    $('#registerModal').on('hidden.bs.modal', function() {
-      // Reset all location dropdowns
-      $('#patient_province').val('').trigger('change');
-      $('#patient_municipality').html('<option value="" disabled selected>Select City/Municipality</option>').prop('disabled', true);
-      $('#patient_barangay').html('<option value="" disabled selected>Select Barangay</option>').prop('disabled', true);
-      $('#patient_purok').val('').prop('disabled', true);
-    });
-    
-    // Initialize on page load if elements exist
-    if (document.getElementById('is_philhealth_member')) {
-      togglePhilHealthFields();
-    }
-    
-    // Handle form submission - combine province, municipality, barangay and purok into p_address
-    $('#addPatientForm').on('submit', function(e) {
-      // Get address values for validation
-      const province = $('#patient_province').val();
-      const municipality = $('#patient_municipality').val();
-      const barangay = $('#patient_barangay').val();
-      const purok = $('#patient_purok').val();
-      
-      // Validate all address fields
-      if (!province || !municipality || !barangay || !purok) {
-        e.preventDefault();
-        alert('Please complete all address fields (Province, City/Municipality, Barangay, and Purok).');
-        return false;
-      }
-      
-      // Get address names (text values, not IDs)
-      const provinceName = $('#patient_province option:selected').text();
-      const municipalityName = $('#patient_municipality option:selected').text();
-      const barangayName = $('#patient_barangay option:selected').text();
-      const purokName = $('#patient_purok').val().trim(); // Purok is a text input, trim whitespace
-      
-      // Create address string in format: Purok, Barangay, Municipality, Province
-      // Example: "Prk 3, Kauswagan, New Cortez, New Corella, Davao del Norte"
-      const fullAddress = `${purokName}, ${barangayName}, ${municipalityName}, ${provinceName}`;
-      
-      // Remove any existing hidden p_address field to avoid duplicates
-      $('#hidden_p_address').remove();
-      
-      // Create hidden input for p_address that will be submitted to backend
-        $('<input>').attr({
-          type: 'hidden',
-          id: 'hidden_p_address',
-          name: 'p_address',
-          value: fullAddress
-        }).appendTo(this);
-      
-      // Optional: Log for debugging (remove in production if needed)
-      console.log('Address being saved to p_address:', fullAddress);
-    });
-    
-    // Phone number validation - enforce 09 start and numbers only
-    $(document).on('input', '#p_number', function() {
-      let value = $(this).val();
-      
-      // Remove any non-numeric characters
-      value = value.replace(/[^0-9]/g, '');
-      
-      // Limit to 11 digits
-      if (value.length > 11) {
-        value = value.substring(0, 11);
-      }
-      
-      // If user starts typing and first digit is not 0, prepend 0
-      if (value.length > 0 && value[0] !== '0') {
-        value = '0' + value;
-        if (value.length > 11) {
-          value = value.substring(0, 11);
+        function initializeLocationDropdowns() {
+          const provinceSelect = $('#patient_province');
+          const municipalitySelect = $('#patient_municipality');
+          const barangaySelect = $('#patient_barangay');
+          const purokInput = $('#patient_purok');
+
+          if (provinceSelect.length && municipalitySelect.length && barangaySelect.length) {
+            loadProvinces();
+
+            provinceSelect.on('change', function() {
+              const selectedProvince = $(this).val();
+              if (selectedProvince) {
+                loadCities(selectedProvince);
+                municipalitySelect.html('<option value="" disabled selected>Select City/Municipality</option>');
+                municipalitySelect.prop('disabled', false);
+                barangaySelect.html('<option value="" disabled selected>Select Barangay</option>');
+                barangaySelect.prop('disabled', true);
+                if (purokInput.length) { purokInput.val(''); purokInput.prop('disabled', true); }
+              } else {
+                municipalitySelect.html('<option value="" disabled selected>Select City/Municipality</option>').prop('disabled', true);
+                barangaySelect.html('<option value="" disabled selected>Select Barangay</option>').prop('disabled', true);
+                if (purokInput.length) purokInput.prop('disabled', true);
+              }
+            });
+
+            municipalitySelect.on('change', function() {
+              const selectedCity = $(this).val();
+              const selectedProvince = provinceSelect.val();
+              if (selectedCity && selectedProvince) {
+                loadBarangays(selectedCity, selectedProvince);
+                barangaySelect.html('<option value="" disabled selected>Select Barangay</option>').prop('disabled', false);
+                if (purokInput.length) { purokInput.val(''); purokInput.prop('disabled', true); }
+              } else {
+                barangaySelect.html('<option value="" disabled selected>Select Barangay</option>').prop('disabled', true);
+                if (purokInput.length) purokInput.prop('disabled', true);
+              }
+            });
+
+            barangaySelect.on('change', function() {
+              const selectedBarangay = $(this).val();
+              if (selectedBarangay && purokInput.length) {
+                purokInput.prop('disabled', false);
+              } else if (purokInput.length) {
+                purokInput.val('');
+                purokInput.prop('disabled', true);
+              }
+            });
+          }
         }
-      }
-      
-      // If user has typed 0 but second digit is not 9, enforce 09
-      if (value.length === 1 && value === '0') {
-        // Wait for next character
-      } else if (value.length >= 2 && value[0] === '0' && value[1] !== '9') {
-        // If second digit is not 9, replace with 09
-        value = '09' + value.substring(2);
-      }
-      
-      // Update the field value
-      $(this).val(value);
-      
-      // Validate format
-      if (value.length === 11) {
-        if (value.startsWith('09')) {
-          $(this).removeClass('is-invalid').addClass('is-valid');
-        } else {
-          $(this).removeClass('is-valid').addClass('is-invalid');
+
+        // Fetch functions
+        function loadProvinces() {
+          const provinceSelect = $('#patient_province');
+          if (!provinceSelect.length) return;
+
+          provinceSelect.html('<option value="" disabled selected>Loading provinces...</option>').prop('disabled', true);
+
+          fetch('/facilities/api/psgc-provinces/')
+            .then(res => res.json())
+            .then(data => {
+              provinceSelect.html('<option value="" disabled selected>Select Province</option>');
+              if (Array.isArray(data) && data.length > 0) {
+                data.forEach(province => {
+                  provinceSelect.append($('<option></option>').attr('value', province.name).text(province.name));
+                });
+              }
+              provinceSelect.prop('disabled', false);
+            })
+            .catch(err => {
+              console.error('Error loading provinces:', err);
+              provinceSelect.html('<option value="" disabled selected>Error loading provinces</option>').prop('disabled', false);
+            });
         }
-      } else if (value.length > 0) {
-        $(this).removeClass('is-valid is-invalid');
-      } else {
-        $(this).removeClass('is-valid is-invalid');
-      }
-    });
-    
-    // Prevent paste of invalid characters
-    $(document).on('paste', '#p_number', function(e) {
-      e.preventDefault();
-      const paste = (e.originalEvent || e).clipboardData.getData('text/plain');
-      let value = paste.replace(/[^0-9]/g, '');
-      
-      // Enforce 09 start
-      if (value.length > 0 && !value.startsWith('09')) {
-        if (value.startsWith('0') && value.length > 1 && value[1] !== '9') {
-          value = '09' + value.substring(2);
-        } else if (!value.startsWith('0')) {
-          value = '09' + value;
-        } else if (value.startsWith('9')) {
-          value = '0' + value;
+
+        function loadCities(province) {
+          const municipalitySelect = $('#patient_municipality');
+          if (!municipalitySelect.length) return;
+
+          municipalitySelect.html('<option value="" disabled selected>Loading cities...</option>').prop('disabled', true);
+          fetch(`/facilities/api/psgc-cities/?province=${encodeURIComponent(province)}`)
+            .then(res => res.json())
+            .then(data => {
+              municipalitySelect.html('<option value="" disabled selected>Select City/Municipality</option>');
+              if (Array.isArray(data) && data.length > 0) {
+                data.forEach(city => {
+                  municipalitySelect.append($('<option></option>').attr('value', city.name).text(city.name));
+                });
+              } else {
+                municipalitySelect.append($('<option disabled>No cities found</option>'));
+              }
+              municipalitySelect.prop('disabled', false);
+            })
+            .catch(err => {
+              console.error('Error loading cities:', err);
+              municipalitySelect.html('<option value="" disabled selected>Error loading cities</option>').prop('disabled', false);
+            });
         }
-      }
-      
-      // Limit to 11 digits
-      if (value.length > 11) {
-        value = value.substring(0, 11);
-      }
-      
-      $(this).val(value);
-      $(this).trigger('input'); // Trigger validation
-    });
-    
-    // Validate on blur
-    $(document).on('blur', '#p_number', function() {
-      const value = $(this).val();
-      if (value.length > 0 && (value.length !== 11 || !value.startsWith('09'))) {
-        $(this).removeClass('is-valid').addClass('is-invalid');
-      } else if (value.length === 11 && value.startsWith('09')) {
-        $(this).removeClass('is-invalid').addClass('is-valid');
-      }
-    });
-    
-    // Calculate age from date of birth
-    function calculateAge(dateOfBirth) {
-      if (!dateOfBirth) {
-        return '';
-      }
-      
-      const today = new Date();
-      const birthDate = new Date(dateOfBirth);
-      
-      let age = today.getFullYear() - birthDate.getFullYear();
-      const monthDiff = today.getMonth() - birthDate.getMonth();
-      
-      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-        age--;
-      }
-      
-      return age >= 0 ? age  : 'Invalid date';
-    }
-    
-    // Update age when date of birth changes
-    $(document).on('change', '#date_of_birth', function() {
-      const dob = $(this).val();
-      const ageField = $('#patient_age');
-      
-      if (dob) {
-        const age = calculateAge(dob);
-        ageField.val(age);
-        
-        // Validate if date is not in the future
-        const today = new Date();
-        const selectedDate = new Date(dob);
-        if (selectedDate > today) {
-          ageField.val('Invalid date (future date)');
-          ageField.css('color', '#dc3545'); // Red for error
-        } else {
-          ageField.css('color', '#198754'); // Green for valid
+
+        function loadBarangays(city, province) {
+          const barangaySelect = $('#patient_barangay');
+          if (!barangaySelect.length) return;
+
+          barangaySelect.html('<option value="" disabled selected>Loading barangays...</option>').prop('disabled', true);
+          fetch(`/facilities/api/psgc-barangays/?city=${encodeURIComponent(city)}&province=${encodeURIComponent(province)}`)
+            .then(res => res.json())
+            .then(data => {
+              barangaySelect.html('<option value="" disabled selected>Select Barangay</option>');
+              if (Array.isArray(data) && data.length > 0) {
+                data.forEach(barangay => {
+                  barangaySelect.append($('<option></option>').attr('value', barangay.name).text(barangay.name));
+                });
+              } else {
+                barangaySelect.append($('<option disabled>No barangays found</option>'));
+              }
+              barangaySelect.prop('disabled', false);
+            })
+            .catch(err => {
+              console.error('Error loading barangays:', err);
+              barangaySelect.html('<option value="" disabled selected>Error loading barangays</option>').prop('disabled', false);
+            });
         }
-      } else {
-        ageField.val('');
-        ageField.css('color', '#6c757d'); // Muted gray
-      }
-    });
-    
-    // Also calculate on input for real-time update
-    $(document).on('input', '#date_of_birth', function() {
-      $(this).trigger('change');
-    });
-      }); // End of $(document).ready
-    } // End of initPatientForm
-    
-    // Start initialization
+
+        // Initialize on modal shown
+        const registerModal = document.getElementById('registerModal');
+        if (registerModal) {
+          registerModal.addEventListener('shown.bs.modal', function() {
+            togglePhilHealthFields();
+            setTimeout(initializeLocationDropdowns, 100);
+          });
+
+          registerModal.addEventListener('hidden.bs.modal', function() {
+            $('#patient_province').val('').trigger('change');
+            $('#patient_municipality').html('<option value="" disabled selected>Select City/Municipality</option>').prop('disabled', true);
+            $('#patient_barangay').html('<option value="" disabled selected>Select Barangay</option>').prop('disabled', true);
+            $('#patient_purok').val('').prop('disabled', true);
+          });
+        }
+
+        // Form submission to combine address
+        $('#addPatientForm').on('submit', function(e) {
+          const provinceName = $('#patient_province option:selected').text();
+          const municipalityName = $('#patient_municipality option:selected').text();
+          const barangayName = $('#patient_barangay option:selected').text();
+          const purokName = $('#patient_purok').val().trim();
+
+          if (!provinceName || !municipalityName || !barangayName || !purokName) {
+            e.preventDefault();
+            alert('Please complete all address fields (Province, City/Municipality, Barangay, and Purok).');
+            return false;
+          }
+
+          const fullAddress = `${purokName}, ${barangayName}, ${municipalityName}, ${provinceName}`;
+          $('#hidden_p_address').remove();
+          $('<input>').attr({ type: 'hidden', id: 'hidden_p_address', name: 'p_address', value: fullAddress }).appendTo(this);
+        });
+
+        // Phone number validation
+        $(document).on('input', '#p_number', function() {
+          let value = $(this).val().replace(/[^0-9]/g, '');
+          if (value.length > 11) value = value.substring(0, 11);
+          if (value.length > 0 && value[0] !== '0') value = '0' + value;
+          if (value.length >= 2 && value[0] === '0' && value[1] !== '9') value = '09' + value.substring(2);
+          $(this).val(value);
+          if (value.length === 11) $(this).val(value.startsWith('09') ? value : value).toggleClass('is-invalid', !value.startsWith('09'));
+        });
+
+        // Calculate age
+        function calculateAge(dateOfBirth) {
+          if (!dateOfBirth) return '';
+          const today = new Date();
+          const birthDate = new Date(dateOfBirth);
+          let age = today.getFullYear() - birthDate.getFullYear();
+          const monthDiff = today.getMonth() - birthDate.getMonth();
+          if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) age--;
+          return age >= 0 ? age : 'Invalid date';
+        }
+
+        $(document).on('change input', '#date_of_birth', function() {
+          const dob = $(this).val();
+          const ageField = $('#patient_age');
+          if (dob) {
+            const age = calculateAge(dob);
+            ageField.val(age);
+            const selectedDate = new Date(dob);
+            ageField.css('color', selectedDate > new Date() ? '#dc3545' : '#198754');
+          } else {
+            ageField.val('').css('color', '#6c757d');
+          }
+        });
+
+        // Initialize PhilHealth fields on load
+        if (document.getElementById('is_philhealth_member')) togglePhilHealthFields();
+
+      }); // end document ready
+    } // end initPatientForm
+
     initPatientForm();
-  })(); // End of IIFE
+  })();
 </script>

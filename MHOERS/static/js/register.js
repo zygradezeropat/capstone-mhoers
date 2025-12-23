@@ -134,12 +134,51 @@
 
     // Username validation - check if username already exists
     const usernameInput = document.getElementById('username');
+    const usernameIndicators = document.getElementById('username-validation-indicators');
+    const usernameError = document.getElementById('username-error');
+    const usernameSuccess = document.getElementById('username-success');
+    const usernameChecking = document.getElementById('username-checking');
+    const usernameLengthError = document.getElementById('username-length-error');
     let usernameCheckTimeout = null;
     
     if (usernameInput) {
         function checkUsernameAvailability(username) {
-            if (!username || username.length < 3) {
+            const trimmedUsername = username ? username.trim() : '';
+            
+            // Hide all indicators initially
+            if (usernameIndicators) {
+                usernameIndicators.style.display = 'none';
+            }
+            if (usernameError) usernameError.style.display = 'none';
+            if (usernameSuccess) usernameSuccess.style.display = 'none';
+            if (usernameChecking) usernameChecking.style.display = 'none';
+            if (usernameLengthError) usernameLengthError.style.display = 'none';
+            
+            // Check length first
+            if (!trimmedUsername) {
+                usernameInput.classList.remove('error');
+                const formGroup = usernameInput.closest('.form-group');
+                if (formGroup) {
+                    formGroup.classList.remove('has-error');
+                }
                 usernameInput.setCustomValidity('');
+                return;
+            }
+            
+            if (trimmedUsername.length < 3) {
+                // Show length error
+                if (usernameIndicators) {
+                    usernameIndicators.style.display = 'flex';
+                }
+                if (usernameLengthError) {
+                    usernameLengthError.style.display = 'flex';
+                }
+                usernameInput.classList.add('error');
+                const formGroup = usernameInput.closest('.form-group');
+                if (formGroup) {
+                    formGroup.classList.add('has-error');
+                }
+                usernameInput.setCustomValidity('Username must be at least 3 characters.');
                 return;
             }
             
@@ -148,12 +187,32 @@
                 clearTimeout(usernameCheckTimeout);
             }
             
+            // Show checking indicator
+            if (usernameIndicators) {
+                usernameIndicators.style.display = 'flex';
+            }
+            if (usernameChecking) {
+                usernameChecking.style.display = 'flex';
+            }
+            
             // Debounce: wait 500ms after user stops typing
             usernameCheckTimeout = setTimeout(function() {
-                fetch(`/accounts/api/check-username/?username=${encodeURIComponent(username)}`)
+                fetch(`/accounts/api/check-username/?username=${encodeURIComponent(trimmedUsername)}`)
                     .then(response => response.json())
                     .then(data => {
+                        // Hide checking indicator
+                        if (usernameChecking) {
+                            usernameChecking.style.display = 'none';
+                        }
+                        
                         if (data.exists) {
+                            // Show error
+                            if (usernameError) {
+                                usernameError.style.display = 'flex';
+                            }
+                            if (usernameSuccess) {
+                                usernameSuccess.style.display = 'none';
+                            }
                             usernameInput.classList.add('error');
                             const formGroup = usernameInput.closest('.form-group');
                             if (formGroup) {
@@ -161,6 +220,13 @@
                             }
                             usernameInput.setCustomValidity('This username is already taken. Please choose a different username.');
                         } else {
+                            // Show success
+                            if (usernameError) {
+                                usernameError.style.display = 'none';
+                            }
+                            if (usernameSuccess) {
+                                usernameSuccess.style.display = 'flex';
+                            }
                             usernameInput.classList.remove('error');
                             const formGroup = usernameInput.closest('.form-group');
                             if (formGroup) {
@@ -171,6 +237,13 @@
                     })
                     .catch(error => {
                         console.error('Error checking username:', error);
+                        // Hide indicators on error
+                        if (usernameIndicators) {
+                            usernameIndicators.style.display = 'none';
+                        }
+                        if (usernameChecking) {
+                            usernameChecking.style.display = 'none';
+                        }
                         // Don't block form submission on API error
                         usernameInput.setCustomValidity('');
                     });
@@ -186,16 +259,42 @@
         // Check on blur (immediate check)
         usernameInput.addEventListener('blur', function() {
             const username = this.value.trim();
+            
+            // Hide checking indicator if visible
+            if (usernameChecking) {
+                usernameChecking.style.display = 'none';
+            }
+            
             if (username && username.length >= 3) {
                 // Clear timeout and check immediately
                 if (usernameCheckTimeout) {
                     clearTimeout(usernameCheckTimeout);
                 }
                 
+                // Show checking indicator
+                if (usernameIndicators) {
+                    usernameIndicators.style.display = 'flex';
+                }
+                if (usernameChecking) {
+                    usernameChecking.style.display = 'flex';
+                }
+                
                 fetch(`/accounts/api/check-username/?username=${encodeURIComponent(username)}`)
                     .then(response => response.json())
                     .then(data => {
+                        // Hide checking indicator
+                        if (usernameChecking) {
+                            usernameChecking.style.display = 'none';
+                        }
+                        
                         if (data.exists) {
+                            // Show error
+                            if (usernameError) {
+                                usernameError.style.display = 'flex';
+                            }
+                            if (usernameSuccess) {
+                                usernameSuccess.style.display = 'none';
+                            }
                             usernameInput.classList.add('error');
                             const formGroup = usernameInput.closest('.form-group');
                             if (formGroup) {
@@ -203,6 +302,13 @@
                             }
                             usernameInput.setCustomValidity('This username is already taken. Please choose a different username.');
                         } else {
+                            // Show success
+                            if (usernameError) {
+                                usernameError.style.display = 'none';
+                            }
+                            if (usernameSuccess) {
+                                usernameSuccess.style.display = 'flex';
+                            }
                             usernameInput.classList.remove('error');
                             const formGroup = usernameInput.closest('.form-group');
                             if (formGroup) {
@@ -213,9 +319,22 @@
                     })
                     .catch(error => {
                         console.error('Error checking username:', error);
+                        if (usernameIndicators) {
+                            usernameIndicators.style.display = 'none';
+                        }
+                        if (usernameChecking) {
+                            usernameChecking.style.display = 'none';
+                        }
                         usernameInput.setCustomValidity('');
                     });
             } else if (username && username.length < 3) {
+                // Show length error
+                if (usernameIndicators) {
+                    usernameIndicators.style.display = 'flex';
+                }
+                if (usernameLengthError) {
+                    usernameLengthError.style.display = 'flex';
+                }
                 usernameInput.classList.add('error');
                 const formGroup = usernameInput.closest('.form-group');
                 if (formGroup) {
@@ -223,6 +342,10 @@
                 }
                 usernameInput.setCustomValidity('Username must be at least 3 characters.');
             } else {
+                // Hide all indicators if empty
+                if (usernameIndicators) {
+                    usernameIndicators.style.display = 'none';
+                }
                 usernameInput.setCustomValidity('');
             }
         });
@@ -865,13 +988,16 @@
                 // Also check if field is disabled (for cascading dropdowns)
                 if (field.disabled && field.hasAttribute('required')) {
                     // Check if it should be enabled based on parent selections
+                    const regionSelect = document.getElementById('region');
                     const provinceSelect = document.getElementById('province');
                     const municipalitySelect = document.getElementById('municipality');
                     const barangaySelect = document.getElementById('barangay');
                     const purokInput = document.getElementById('purok');
                     
                     // If it's a cascading dropdown that should be enabled, mark as empty
-                    if (field === municipalitySelect && provinceSelect && !provinceSelect.value) {
+                    if (field === provinceSelect && regionSelect && !regionSelect.value) {
+                        isEmpty = true;
+                    } else if (field === municipalitySelect && provinceSelect && !provinceSelect.value) {
                         isEmpty = true;
                     } else if (field === barangaySelect && municipalitySelect && !municipalitySelect.value) {
                         isEmpty = true;
@@ -1253,7 +1379,8 @@
         });
     }
 
-    // Cascading Location Dropdowns (Province -> City -> Barangay)
+    // Cascading Location Dropdowns (Region -> Province -> City -> Barangay)
+    const regionSelect = document.getElementById('region');
     const provinceSelect = document.getElementById('province');
     const municipalitySelect = document.getElementById('municipality');
     const barangaySelect = document.getElementById('barangay');
@@ -1261,9 +1388,41 @@
     let userRole = null; // Will be set based on role selection
 
     // Initialize location dropdowns
-    if (provinceSelect && municipalitySelect && barangaySelect) {
-        // Load provinces on page load
-        loadProvinces();
+    if (regionSelect && provinceSelect && municipalitySelect && barangaySelect) {
+        // Load regions on page load
+        loadRegions();
+        
+        // Region change handler - enable province selection when region is selected
+        regionSelect.addEventListener('change', function() {
+            const selectedRegion = this.value;
+            if (selectedRegion) {
+                // Enable province dropdown and load provinces for selected region
+                provinceSelect.disabled = false;
+                loadProvinces(selectedRegion);
+                // Clear dependent fields
+                provinceSelect.innerHTML = '<option value="" disabled selected>Select Province</option>';
+                municipalitySelect.innerHTML = '<option value="" disabled selected>Select City/Municipality</option>';
+                municipalitySelect.disabled = true;
+                barangaySelect.innerHTML = '<option value="" disabled selected>Select Barangay</option>';
+                barangaySelect.disabled = true;
+                if (purokInput) {
+                    purokInput.value = '';
+                    purokInput.disabled = true;
+                }
+            } else {
+                // Disable province and all dependent fields if no region selected
+                provinceSelect.innerHTML = '<option value="" disabled selected>Select Province</option>';
+                provinceSelect.disabled = true;
+                municipalitySelect.innerHTML = '<option value="" disabled selected>Select City/Municipality</option>';
+                municipalitySelect.disabled = true;
+                barangaySelect.innerHTML = '<option value="" disabled selected>Select Barangay</option>';
+                barangaySelect.disabled = true;
+                if (purokInput) {
+                    purokInput.value = '';
+                    purokInput.disabled = true;
+                }
+            }
+        });
 
         // Province change handler
         provinceSelect.addEventListener('change', function() {
@@ -1349,14 +1508,95 @@
                 }
             }
         }
+        
+        // Initialize: Disable province and dependent fields until region is selected
+        provinceSelect.disabled = true;
+        municipalitySelect.disabled = true;
+        barangaySelect.disabled = true;
+        if (purokInput) {
+            purokInput.disabled = true;
+        }
     }
 
-    // Load provinces from API
-    function loadProvinces() {
+    // Load regions from API
+    function loadRegions() {
+        if (!regionSelect) {
+            console.error('Region select element not found');
+            return;
+        }
+        
+        regionSelect.innerHTML = '<option value="" disabled selected>Loading regions...</option>';
+        regionSelect.disabled = true;
+        
+        fetch('/facilities/api/psgc-regions/')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Regions data received:', data);
+                regionSelect.innerHTML = '<option value="" disabled selected>Select Region</option>';
+                
+                // Handle both array and object responses
+                let regionsList = [];
+                if (Array.isArray(data)) {
+                    regionsList = data;
+                } else if (data && typeof data === 'object') {
+                    // Check if it's an error response
+                    if (data.error) {
+                        console.error('API returned error:', data.error);
+                        regionSelect.innerHTML = '<option value="" disabled selected>Error: ' + data.error + '</option>';
+                        regionSelect.disabled = false;
+                        return;
+                    }
+                    // Try to extract array from object
+                    if (Array.isArray(data.data)) {
+                        regionsList = data.data;
+                    } else if (Array.isArray(data.results)) {
+                        regionsList = data.results;
+                    }
+                }
+                
+                if (regionsList.length > 0) {
+                    regionsList.forEach(region => {
+                        const option = document.createElement('option');
+                        // Handle both object and string formats
+                        const regionName = typeof region === 'string' ? region : (region.name || region.region_name || '');
+                        const regionValue = typeof region === 'string' ? region : (region.name || region.code || '');
+                        option.value = regionValue;
+                        option.textContent = regionName;
+                        regionSelect.appendChild(option);
+                    });
+                    console.log(`Loaded ${regionsList.length} regions`);
+                } else {
+                    console.warn('No regions found in response');
+                    regionSelect.innerHTML = '<option value="" disabled selected>No regions available</option>';
+                }
+                regionSelect.disabled = false;
+            })
+            .catch(error => {
+                console.error('Error loading regions:', error);
+                regionSelect.innerHTML = '<option value="" disabled selected>Error loading regions. Please refresh the page.</option>';
+                regionSelect.disabled = false;
+            });
+    }
+    
+    // Load provinces from API (filtered by region if provided)
+    function loadProvinces(region = null) {
+        if (!provinceSelect) return;
+        
         provinceSelect.innerHTML = '<option value="" disabled selected>Loading provinces...</option>';
         provinceSelect.disabled = true;
         
-        fetch('/facilities/api/psgc-provinces/')
+        // Build API URL with optional region parameter
+        let apiUrl = '/facilities/api/psgc-provinces/';
+        if (region) {
+            apiUrl += `?region=${encodeURIComponent(region)}`;
+        }
+        
+        fetch(apiUrl)
             .then(response => response.json())
             .then(data => {
                 provinceSelect.innerHTML = '<option value="" disabled selected>Select Province</option>';
@@ -1852,13 +2092,16 @@
                 // Also check if field is disabled (for cascading dropdowns)
                 if (field.disabled && field.hasAttribute('required')) {
                     // Check if it should be enabled based on parent selections
+                    const regionSelect = document.getElementById('region');
                     const provinceSelect = document.getElementById('province');
                     const municipalitySelect = document.getElementById('municipality');
                     const barangaySelect = document.getElementById('barangay');
                     const purokInput = document.getElementById('purok');
                     
                     // If it's a cascading dropdown that should be enabled, mark as empty
-                    if (field === municipalitySelect && provinceSelect && !provinceSelect.value) {
+                    if (field === provinceSelect && regionSelect && !regionSelect.value) {
+                        isEmpty = true;
+                    } else if (field === municipalitySelect && provinceSelect && !provinceSelect.value) {
                         isEmpty = true;
                     } else if (field === barangaySelect && municipalitySelect && !municipalitySelect.value) {
                         isEmpty = true;

@@ -1595,10 +1595,21 @@ $(document).on('click', '#patientTable .consultation-button', function (e) {
         $('#modal_family_planning_type_male').show();
       }
       
-      // Fetch latest referral data
-      setTimeout(function() {
-        fetchModalReferralData(patientId);
-      }, 500);
+      // Fetch latest referral data after ensuring patient sex is known
+      // First ensure patient sex is set, then fetch referral data
+      if (patientSex) {
+        // Patient sex is already known, fetch referral data immediately
+        setTimeout(function() {
+          fetchModalReferralData(patientId);
+        }, 300);
+      } else {
+        // Patient sex not provided, fetch it first, then fetch referral data
+        fetchModalPatientSex(patientId).then(function() {
+          setTimeout(function() {
+            fetchModalReferralData(patientId);
+          }, 300);
+        });
+      }
     }
     
     // Initialize tab navigation
@@ -1943,10 +1954,13 @@ $(document).on('click', '#patientTable .consultation-button', function (e) {
     // Patient selection change handler
     $('#modalPatientSelect').on('select2:select', function (e) {
       const patientId = e.params.data.id;
-      fetchModalPatientSex(patientId);
-      setTimeout(function() {
-        fetchModalReferralData(patientId);
-      }, 300);
+      // Fetch patient sex first, then fetch referral data
+      fetchModalPatientSex(patientId).then(function() {
+        // After sex is fetched and cards are shown/hidden, fetch referral data
+        setTimeout(function() {
+          fetchModalReferralData(patientId);
+        }, 300);
+      });
     });
 
     $('#modalPatientSelect').on('select2:clear', function (e) {
@@ -1955,31 +1969,36 @@ $(document).on('click', '#patientTable .consultation-button', function (e) {
     });
   }
 
-  // Fetch patient sex
+  // Fetch patient sex - returns a promise
   function fetchModalPatientSex(patientId) {
-    if (!patientId) {
-      $('#modal_menstrualHistoryCard, #modal_pregnancyHistoryCard').hide();
-      return;
-    }
-    
-    fetch(`/patients/get-patient-sex/${patientId}/`)
-      .then(response => response.json())
-      .then(data => {
-        if (data.sex) {
-          if (data.sex.toLowerCase() === 'female') {
-            $('#modal_menstrualHistoryCard, #modal_pregnancyHistoryCard').show();
-            $('#modal_family_planning_type').show();
-            $('#modal_family_planning_type_male').hide();
-          } else {
-            $('#modal_menstrualHistoryCard, #modal_pregnancyHistoryCard').hide();
-            $('#modal_family_planning_type').hide();
-            $('#modal_family_planning_type_male').show();
+    return new Promise(function(resolve, reject) {
+      if (!patientId) {
+        $('#modal_menstrualHistoryCard, #modal_pregnancyHistoryCard').hide();
+        resolve();
+        return;
+      }
+      
+      fetch(`/patients/get-patient-sex/${patientId}/`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.sex) {
+            if (data.sex.toLowerCase() === 'female') {
+              $('#modal_menstrualHistoryCard, #modal_pregnancyHistoryCard').show();
+              $('#modal_family_planning_type').show();
+              $('#modal_family_planning_type_male').hide();
+            } else {
+              $('#modal_menstrualHistoryCard, #modal_pregnancyHistoryCard').hide();
+              $('#modal_family_planning_type').hide();
+              $('#modal_family_planning_type_male').show();
+            }
           }
-        }
-      })
-      .catch(error => {
-        console.error('Error fetching patient sex:', error);
-      });
+          resolve(data);
+        })
+        .catch(error => {
+          console.error('Error fetching patient sex:', error);
+          reject(error);
+        });
+    });
   }
 
   // Fetch referral data (for auto-population if needed)
@@ -1989,13 +2008,31 @@ $(document).on('click', '#patientTable .consultation-button', function (e) {
       return;
     }
     
-    const url = `{% url 'referrals:get_latest_referral' 'PATIENT_ID' %}`.replace('PATIENT_ID', patientId);
-    fetch(url)
-      .then(response => response.json())
+    console.log('Fetching latest referral data for patient:', patientId);
+    
+    // Add cache-busting parameter to ensure we get the latest data
+    const url = `{% url 'referrals:get_latest_referral' 'PATIENT_ID' %}`.replace('PATIENT_ID', patientId) + '?t=' + Date.now();
+    fetch(url, {
+      method: 'GET',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'Cache-Control': 'no-cache'
+      },
+      cache: 'no-cache'
+    })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
       .then(data => {
+        console.log('Received referral data:', data);
         if (data.success && data.referral) {
+          console.log('Populating Additional Info fields with latest referral data');
           populateAdditionalInfoFields(data.referral);
         } else {
+          console.log('No referral data found, clearing fields');
           clearModalReferralFields();
         }
       })
@@ -2009,33 +2046,38 @@ $(document).on('click', '#patientTable .consultation-button', function (e) {
   function populateAdditionalInfoFields(referralData) {
     const $ = jQuery;
     
+    console.log('Populating Additional Info fields with data:', referralData);
+    
     // Clear fields first
     clearModalReferralFields();
     
     // Lifestyle & Social History
-    if (referralData.is_smoker) {
+    if (referralData.is_smoker === true || referralData.is_smoker === 'True' || referralData.is_smoker === 'true') {
       $('#modal_is_smoker').prop('checked', true).trigger('change');
-      if (referralData.smoking_sticks_per_day !== null && referralData.smoking_sticks_per_day !== undefined) {
+      if (referralData.smoking_sticks_per_day !== null && referralData.smoking_sticks_per_day !== undefined && referralData.smoking_sticks_per_day !== '') {
         $('#modal_smoking_sticks_per_day').val(referralData.smoking_sticks_per_day);
       }
     }
     
-    if (referralData.is_alcoholic) {
+    if (referralData.is_alcoholic === true || referralData.is_alcoholic === 'True' || referralData.is_alcoholic === 'true') {
       $('#modal_is_alcoholic').prop('checked', true).trigger('change');
-      if (referralData.alcohol_bottles_per_year !== null && referralData.alcohol_bottles_per_year !== undefined) {
+      if (referralData.alcohol_bottles_per_year !== null && referralData.alcohol_bottles_per_year !== undefined && referralData.alcohol_bottles_per_year !== '') {
         $('#modal_alcohol_bottles_per_year').val(referralData.alcohol_bottles_per_year);
       }
     }
     
-    if (referralData.family_planning) {
+    if (referralData.family_planning === true || referralData.family_planning === 'True' || referralData.family_planning === 'true') {
       $('#modal_family_planning').prop('checked', true).trigger('change');
       if (referralData.family_planning_type) {
-        // Check which family planning dropdown is visible (male or female)
-        if ($('#modal_family_planning_type').is(':visible')) {
-          $('#modal_family_planning_type').val(referralData.family_planning_type);
-        } else if ($('#modal_family_planning_type_male').is(':visible')) {
-          $('#modal_family_planning_type_male').val(referralData.family_planning_type);
-        }
+        // Wait a bit for the change event to show/hide the correct dropdown
+        setTimeout(function() {
+          // Check which family planning dropdown is visible (male or female)
+          if ($('#modal_family_planning_type').is(':visible')) {
+            $('#modal_family_planning_type').val(referralData.family_planning_type);
+          } else if ($('#modal_family_planning_type_male').is(':visible')) {
+            $('#modal_family_planning_type_male').val(referralData.family_planning_type);
+          }
+        }, 100);
       }
     }
     
@@ -2043,87 +2085,99 @@ $(document).on('click', '#patientTable .consultation-button', function (e) {
     if ($('#modal_menstrualHistoryCard').is(':visible')) {
       // Check if patient has period data (infer from any period-related field)
       const hasPeriodData = referralData.last_menstrual_period || 
-                           referralData.menarche !== null || 
-                           referralData.period_duration !== null ||
-                           referralData.period_interval !== null ||
-                           referralData.pads_per_day !== null;
+                           (referralData.menarche !== null && referralData.menarche !== undefined && referralData.menarche !== '') || 
+                           (referralData.period_duration !== null && referralData.period_duration !== undefined && referralData.period_duration !== '') ||
+                           (referralData.period_interval !== null && referralData.period_interval !== undefined && referralData.period_interval !== '') ||
+                           (referralData.pads_per_day !== null && referralData.pads_per_day !== undefined && referralData.pads_per_day !== '');
       
       if (hasPeriodData) {
         $('#modal_have_period').prop('checked', true).trigger('change');
         
-        if (referralData.menarche !== null && referralData.menarche !== undefined) {
-          $('#modal_menarche').val(referralData.menarche);
-        }
-        if (referralData.last_menstrual_period) {
-          $('#modal_last_menstrual_period').val(referralData.last_menstrual_period);
-        }
-        if (referralData.period_duration !== null && referralData.period_duration !== undefined) {
-          $('#modal_period_duration').val(referralData.period_duration);
-        }
-        if (referralData.period_interval !== null && referralData.period_interval !== undefined) {
-          $('#modal_period_interval').val(referralData.period_interval);
-        }
-        if (referralData.pads_per_day !== null && referralData.pads_per_day !== undefined) {
-          $('#modal_pads_per_day').val(referralData.pads_per_day);
-        }
+        // Wait for the change event to show the period details section
+        setTimeout(function() {
+          if (referralData.menarche !== null && referralData.menarche !== undefined && referralData.menarche !== '') {
+            $('#modal_menarche').val(referralData.menarche);
+          }
+          if (referralData.last_menstrual_period) {
+            $('#modal_last_menstrual_period').val(referralData.last_menstrual_period);
+          }
+          if (referralData.period_duration !== null && referralData.period_duration !== undefined && referralData.period_duration !== '') {
+            $('#modal_period_duration').val(referralData.period_duration);
+          }
+          if (referralData.period_interval !== null && referralData.period_interval !== undefined && referralData.period_interval !== '') {
+            $('#modal_period_interval').val(referralData.period_interval);
+          }
+          if (referralData.pads_per_day !== null && referralData.pads_per_day !== undefined && referralData.pads_per_day !== '') {
+            $('#modal_pads_per_day').val(referralData.pads_per_day);
+          }
+        }, 200);
       }
       
-      if (referralData.sexually_active) {
+      if (referralData.sexually_active === true || referralData.sexually_active === 'True' || referralData.sexually_active === 'true') {
         $('#modal_sexually_active').prop('checked', true).trigger('change');
-        if (referralData.number_of_partners !== null && referralData.number_of_partners !== undefined) {
-          $('#modal_number_of_partners').val(referralData.number_of_partners);
-        }
+        setTimeout(function() {
+          if (referralData.number_of_partners !== null && referralData.number_of_partners !== undefined && referralData.number_of_partners !== '') {
+            $('#modal_number_of_partners').val(referralData.number_of_partners);
+          }
+        }, 200);
       }
       
-      if (referralData.is_menopause) {
+      if (referralData.is_menopause === true || referralData.is_menopause === 'True' || referralData.is_menopause === 'true') {
         $('#modal_is_menopause').prop('checked', true).trigger('change');
-        if (referralData.menopause_age !== null && referralData.menopause_age !== undefined) {
-          $('#modal_menopause_age').val(referralData.menopause_age);
-        }
+        setTimeout(function() {
+          if (referralData.menopause_age !== null && referralData.menopause_age !== undefined && referralData.menopause_age !== '') {
+            $('#modal_menopause_age').val(referralData.menopause_age);
+          }
+        }, 200);
       }
     }
     
     // Pregnancy History (only populate if patient is female and fields are visible)
     if ($('#modal_pregnancyHistoryCard').is(':visible')) {
-      if (referralData.is_pregnant) {
+      if (referralData.is_pregnant === true || referralData.is_pregnant === 'True' || referralData.is_pregnant === 'true') {
         $('#modal_is_pregnant').prop('checked', true);
       }
       
-      if (referralData.gravidity !== null && referralData.gravidity !== undefined) {
+      if (referralData.gravidity !== null && referralData.gravidity !== undefined && referralData.gravidity !== '') {
         $('#modal_gravidity').val(referralData.gravidity);
       }
-      if (referralData.parity !== null && referralData.parity !== undefined) {
+      if (referralData.parity !== null && referralData.parity !== undefined && referralData.parity !== '') {
         $('#modal_parity').val(referralData.parity);
       }
       
       // Check if patient has given birth (infer from parity > 0 or delivery_type or birth-related fields)
-      const hasGivenBirth = (referralData.parity !== null && referralData.parity > 0) ||
-                           referralData.delivery_type ||
-                           (referralData.full_term_births !== null && referralData.full_term_births > 0) ||
-                           (referralData.premature_births !== null && referralData.premature_births > 0) ||
-                           (referralData.living_children !== null && referralData.living_children > 0);
+      const hasGivenBirth = (referralData.parity !== null && referralData.parity !== undefined && referralData.parity !== '' && parseInt(referralData.parity) > 0) ||
+                           (referralData.delivery_type && referralData.delivery_type.trim() !== '') ||
+                           (referralData.full_term_births !== null && referralData.full_term_births !== undefined && referralData.full_term_births !== '' && parseInt(referralData.full_term_births) > 0) ||
+                           (referralData.premature_births !== null && referralData.premature_births !== undefined && referralData.premature_births !== '' && parseInt(referralData.premature_births) > 0) ||
+                           (referralData.living_children !== null && referralData.living_children !== undefined && referralData.living_children !== '' && parseInt(referralData.living_children) > 0);
       
       if (hasGivenBirth) {
         $('#modal_has_given_birth').prop('checked', true).trigger('change');
         
-        if (referralData.delivery_type) {
-          $('#modal_delivery_type').val(referralData.delivery_type);
-        }
-        if (referralData.living_children !== null && referralData.living_children !== undefined) {
-          $('#modal_living_children').val(referralData.living_children);
-        }
-        if (referralData.full_term_births !== null && referralData.full_term_births !== undefined) {
-          $('#modal_full_term_births').val(referralData.full_term_births);
-        }
-        if (referralData.premature_births !== null && referralData.premature_births !== undefined) {
-          $('#modal_premature_births').val(referralData.premature_births);
-        }
+        // Wait for the change event to show the birth history details section
+        setTimeout(function() {
+          if (referralData.delivery_type && referralData.delivery_type.trim() !== '') {
+            $('#modal_delivery_type').val(referralData.delivery_type);
+          }
+          if (referralData.living_children !== null && referralData.living_children !== undefined && referralData.living_children !== '') {
+            $('#modal_living_children').val(referralData.living_children);
+          }
+          if (referralData.full_term_births !== null && referralData.full_term_births !== undefined && referralData.full_term_births !== '') {
+            $('#modal_full_term_births').val(referralData.full_term_births);
+          }
+          if (referralData.premature_births !== null && referralData.premature_births !== undefined && referralData.premature_births !== '') {
+            $('#modal_premature_births').val(referralData.premature_births);
+          }
+        }, 200);
       }
       
-      if (referralData.abortions !== null && referralData.abortions !== undefined) {
+      if (referralData.abortions !== null && referralData.abortions !== undefined && referralData.abortions !== '') {
         $('#modal_abortions').val(referralData.abortions);
       }
     }
+    
+    console.log('Finished populating Additional Info fields');
   }
 
   // Clear referral fields

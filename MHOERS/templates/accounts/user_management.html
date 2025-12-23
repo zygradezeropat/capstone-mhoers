@@ -301,6 +301,36 @@
                 <span class="badge bg-warning text-dark">{{ pending_bhw|length|add:pending_doctors|length|add:pending_nurses|length|add:pending_midwives|length }}</span>
               </div>
               
+              <!-- Filter Controls for Pending Users -->
+              <div class="row mb-3">
+                <div class="col-md-4">
+                  <label for="pendingUserTypeFilter" class="form-label">
+                    <i class="bi bi-funnel me-1"></i>Filter by User Type
+                  </label>
+                  <select id="pendingUserTypeFilter" class="form-select">
+                    <option value="">All Types</option>
+                    <option value="BHW">BHW</option>
+                    <option value="Doctor">Doctor</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label for="pendingFacilityFilter" class="form-label">
+                    <i class="bi bi-funnel me-1"></i>Filter by Facility
+                  </label>
+                  <select id="pendingFacilityFilter" class="form-select">
+                    <option value="">All Facilities</option>
+                    {% for facility in facilities %}
+                    <option value="{{ facility.name }}">{{ facility.name }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                  <button type="button" class="btn btn-outline-secondary" id="clearPendingFilter">
+                    <i class="bi bi-x-circle me-1"></i>Clear Filter
+                  </button>
+                </div>
+              </div>
+              
               <div class="table-responsive">
                 <table id="pendingRegistrationTable" class="table table-hover mb-0 datatable">
                   <thead class="bg-light">
@@ -308,77 +338,34 @@
                       <th>Type</th>
                       <th>Name</th>                    
                       <th>Assign Facility</th>
+                      <th>Facility</th>
                       <th>Date</th>
                     </tr>
                   </thead>
                   <tbody>
                     {% for bhw in pending_bhw %}
-                    <tr class="pending-user-row pending-user-clickable" style="cursor: pointer;" data-modal-target="#pendingUserModal{{ bhw.bhw_id }}">
+                    <tr class="pending-user-row pending-user-clickable" style="cursor: pointer;" data-modal-target="#pendingUserModal{{ bhw.bhw_id }}" data-user-type="BHW" data-facility="{{ bhw.facility.name|default:'N/A' }}">
                       <td><span class="badge bg-info text-dark">BHW</span></td>
                       <td>{{ bhw.first_name }} {{ bhw.last_name }}</td>                 
                       <td>{{ bhw.assigned_barangay }}</td>
-                      <td>{{ user_info.date_created }}</td>
+                      <td>{{ bhw.facility.name|default:"N/A" }}</td>
+                      <td>{% if bhw.created_at %}{{ bhw.created_at|date:"F d, Y" }}{% else %}N/A{% endif %}</td>
                     </tr>
                     {% endfor %}
 
                     {% for doctor in pending_doctors %}
-                    <tr class="pending-user-row pending-user-clickable" style="cursor: pointer;" data-modal-target="#pendingUserModalDoc{{ doctor.doctor_id }}">
+                    <tr class="pending-user-row pending-user-clickable" style="cursor: pointer;" data-modal-target="#pendingUserModalDoc{{ doctor.doctor_id }}" data-user-type="Doctor" data-facility="{{ doctor.facility.name|default:'N/A' }}">
                       <td><span class="badge bg-primary text-white">Doctor</span></td>
                       <td>{{ doctor.first_name }} {{ doctor.last_name }}</td>
                       <td>{{ doctor.specialization }}</td>
-                      <td>{{ user_info.date_created }}</td>
+                      <td>{{ doctor.facility.name|default:"N/A" }}</td>
+                      <td>{% if doctor.created_at %}{{ doctor.created_at|date:"F d, Y" }}{% else %}N/A{% endif %}</td>
                     </tr>
                     {% endfor %}
 
-                    {% for nurse in pending_nurses %}
-                    <tr class="pending-user-row pending-user-clickable" style="cursor: pointer;" data-modal-target="#pendingUserModalNur{{ nurse.nurse_id }}">
-                      <td><span class="badge bg-danger text-white"><i class="bi bi-heart-pulse me-1"></i> Nurse</span></td>
-                      <td>{{ nurse.first_name }} {{ nurse.last_name }}</td>
-                      <td>{{ nurse.barangay|default:"N/A" }}</td>
-                      <td><span class="badge rounded-pill bg-warning">Pending</span></td>
-                      <td>{{ nurse.nursing_assigned_area }}</td>
-                      <td>
-                        <div class="d-flex gap-2" onclick="event.stopPropagation();">
-                          <form method="POST" action="{% url 'approve_user' %}" style="display: inline-block; margin-right: 0.5rem;">
-                            {% csrf_token %}
-                            <input type="hidden" name="user_type" value="nurse">
-                            <input type="hidden" name="user_id" value="{{ nurse.nurse_id }}">
-                            <button type="submit" class="btn btn-outline-success btn-sm rounded-pill" title="Approve">
-                              <i class="bi bi-check-circle me-1"></i>Approve
-                            </button>
-                          </form>
-                          <button class="btn btn-outline-danger btn-sm rounded-pill" data-bs-toggle="modal" data-bs-target="#rejectModal{{ nurse.nurse_id }}" title="Reject">
-                            <i class="bi bi-x-circle me-1"></i>Reject
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                    {% endfor %}
+                    
 
-                    {% for midwife in pending_midwives %}
-                    <tr class="pending-user-row pending-user-clickable" style="cursor: pointer;" data-modal-target="#pendingUserModalMid{{ midwife.midwife_id }}">
-                      <td><span class="badge" style="background-color: #9c27b0; color: white;"><i class="bi bi-gender-female me-1"></i> Midwife</span></td>
-                      <td>{{ midwife.first_name }} {{ midwife.last_name }}</td>
-                      <td>{{ midwife.barangay|default:"N/A" }}</td>
-                      <td><span class="badge rounded-pill bg-warning">Pending</span></td>
-                      <td>{{ midwife.midwifery_assigned_area }}</td>
-                      <td>
-                        <div class="d-flex gap-2" onclick="event.stopPropagation();">
-                          <form method="POST" action="{% url 'approve_user' %}" style="display: inline-block; margin-right: 0.5rem;">
-                            {% csrf_token %}
-                            <input type="hidden" name="user_type" value="midwife">
-                            <input type="hidden" name="user_id" value="{{ midwife.midwife_id }}">
-                            <button type="submit" class="btn btn-outline-success btn-sm rounded-pill" title="Approve">
-                              <i class="bi bi-check-circle me-1"></i>Approve
-                            </button>
-                          </form>
-                          <button class="btn btn-outline-danger btn-sm rounded-pill" data-bs-toggle="modal" data-bs-target="#rejectModal{{ midwife.midwife_id }}" title="Reject">
-                            <i class="bi bi-x-circle me-1"></i>Reject
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                    {% endfor %}
+                    
                   </tbody>
                 </table>
                 {% if not pending_bhw and not pending_doctors and not pending_nurses and not pending_midwives %}
@@ -404,7 +391,37 @@
                 </h5>
               </div>
 
-              
+              <!-- Filter Controls for Active Users -->
+              <div class="row mb-3">
+                <div class="col-md-4">
+                  <label for="activeUserRoleFilter" class="form-label">
+                    <i class="bi bi-funnel me-1"></i>Filter by Role
+                  </label>
+                  <select id="activeUserRoleFilter" class="form-select">
+                    <option value="">All Roles</option>
+                    <option value="Administrator">Administrator</option>
+                    <option value="Doctor">Doctor</option>
+                    <option value="BHW">BHW</option>
+      
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label for="activeFacilityFilter" class="form-label">
+                    <i class="bi bi-funnel me-1"></i>Filter by Facility
+                  </label>
+                  <select id="activeFacilityFilter" class="form-select">
+                    <option value="">All Facilities</option>
+                    {% for facility in facilities %}
+                    <option value="{{ facility.name }}">{{ facility.name }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                  <button type="button" class="btn btn-outline-secondary" id="clearActiveFilter">
+                    <i class="bi bi-x-circle me-1"></i>Clear Filter
+                  </button>
+                </div>
+              </div>
 
               <div class="table-responsive">
                 <table id="activeUsersTable" class="table table-hover mb-0 datatable">
@@ -414,6 +431,7 @@
                       <th>Full Name</th>
                       <th>Email</th>
                       <th>Role</th>
+                      <th>Facility</th>
                       <th>Date Created</th>
                       <th>Actions</th>
                     </tr>
@@ -424,7 +442,8 @@
                         data-username="{{ user_info.username }}"
                         data-full-name="{{ user_info.first_name }} {{ user_info.last_name }}"
                         data-email="{{ user_info.email|default:'N/A' }}"
-                        data-role="{{ user_info.role }}">
+                        data-role="{{ user_info.role }}"
+                        data-facility="{{ user_info.facility }}">
                       <td><strong>{{ user_info.username }}</strong></td>
                       <td>{{ user_info.first_name }} {{ user_info.last_name }}</td>
                       <td>{{ user_info.email|default:"N/A" }}</td>
@@ -440,6 +459,7 @@
                           <span class="badge bg-secondary">{{ user_info.role }}</span>
                         {% endif %}
                       </td>
+                      <td>{{ user_info.facility }}</td>
                       <td>{{ user_info.date_created }}</td>
                       
                       <td>
@@ -747,229 +767,7 @@
       </div>
       {% endfor %}
 
-      {% for nurse in pending_nurses %}
-      <!-- Modern Pending Nurse Modal -->
-      <div class="modal fade" id="pendingUserModalNur{{ nurse.nurse_id }}" tabindex="-1" aria-labelledby="pendingUserModalLabelNur{{ nurse.nurse_id }}" aria-hidden="true">
-        <div class="modal-dialog modal-xl">
-          <div class="modal-content modern-modal">
-            <div class="modal-header modern-header" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
-              <div class="header-content">
-                <div class="icon-wrapper">
-                  <i class="bi bi-heart-pulse"></i>
-                </div>
-                <div class="title-content">
-                  <h5 class="modal-title" id="pendingUserModalLabelNur{{ nurse.nurse_id }}">Pending Nurse Registration</h5>
-                  <p class="modal-subtitle">Review registration details</p>
-                </div>
-              </div>
-              <button type="button" class="btn-close modern-close" data-bs-dismiss="modal" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-              </button>
-            </div>
-            <div class="modal-body modern-body">
-              <div class="form-section">
-                <div class="section-header">
-                  <i class="bi bi-person-circle"></i>
-                  <h6>Personal Information</h6>
-                </div>
-                <div class="info-item mb-3">
-                  <p class="info-label">Full Name</p>
-                  <p class="info-value">{{ nurse.first_name }} {{ nurse.middle_name }} {{ nurse.last_name }}</p>
-                </div>
-                <div class="info-item mb-3">
-                  <p class="info-label">Email</p>
-                  <p class="info-value">{{ nurse.email|default:"N/A" }}</p>
-                </div>
-                <div class="info-item mb-3">
-                  <p class="info-label">Phone</p>
-                  <p class="info-value">{{ nurse.phone }}</p>
-                </div>
-                <div class="info-item mb-3">
-                  <p class="info-label">Address</p>
-                  <p class="info-value">{{ nurse.street_address }}, {{ nurse.city }}, {{ nurse.province }}</p>
-                </div>
-              </div>
-              
-              <div class="form-section">
-                <div class="section-header">
-                  <i class="bi bi-award"></i>
-                  <h6>Professional Information</h6>
-                </div>
-                <div class="info-item mb-3">
-                  <p class="info-label">Nurse License Number</p>
-                  <p class="info-value">{{ nurse.nurse_license_number }}</p>
-                </div>
-                <div class="info-item mb-3">
-                  <p class="info-label">PRC License Number</p>
-                  <p class="info-value">{{ nurse.prc_license_number }}</p>
-                </div>
-                <div class="info-item mb-3">
-                  <p class="info-label">Nursing School</p>
-                  <p class="info-value">{{ nurse.nursing_school }}</p>
-                </div>
-                <div class="info-item mb-3">
-                  <p class="info-label">Specialization</p>
-                  <p class="info-value">{{ nurse.nursing_specialization }}</p>
-                </div>
-              </div>
-            </div>
-            <div class="modal-footer modern-footer">
-              <form method="POST" action="{% url 'approve_user' %}" style="display: inline-block; margin-right: 0.5rem;">
-                {% csrf_token %}
-                <input type="hidden" name="user_type" value="nurse">
-                <input type="hidden" name="user_id" value="{{ nurse.nurse_id }}">
-                <button type="submit" class="btn modern-btn-approve">
-                  <i class="bi bi-check-circle me-2"></i>Approve
-                </button>
-              </form>
-              <button class="btn modern-btn-reject" data-bs-toggle="modal" data-bs-target="#rejectModal{{ nurse.nurse_id }}">
-                <i class="bi bi-x-circle me-2"></i>Reject
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Reject Modal for Nurse -->
-      <div class="modal fade" id="rejectModal{{ nurse.nurse_id }}" tabindex="-1" aria-labelledby="rejectModalLabel{{ nurse.nurse_id }}" aria-hidden="true">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-              <h5 class="modal-title" id="rejectModalLabel{{ nurse.nurse_id }}">Reject Nurse Registration</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form method="POST" action="{% url 'reject_user' %}">
-              {% csrf_token %}
-              <div class="modal-body">
-                <p>Are you sure you want to reject <strong>{{ nurse.first_name }} {{ nurse.last_name }}</strong>?</p>
-                <div class="mb-3">
-                  <label for="reason{{ nurse.nurse_id }}" class="form-label">Rejection Reason:</label>
-                  <textarea class="form-control" id="reason{{ nurse.nurse_id }}" name="reason" rows="3" placeholder="Enter reason for rejection" required></textarea>
-                </div>
-                <input type="hidden" name="user_type" value="nurse">
-                <input type="hidden" name="user_id" value="{{ nurse.nurse_id }}">
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="submit" class="btn btn-danger">Reject Registration</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-      {% endfor %}
-
-      {% for midwife in pending_midwives %}
-      <!-- Modern Pending Midwife Modal -->
-      <div class="modal fade" id="pendingUserModalMid{{ midwife.midwife_id }}" tabindex="-1" aria-labelledby="pendingUserModalLabelMid{{ midwife.midwife_id }}" aria-hidden="true">
-        <div class="modal-dialog modal-xl">
-          <div class="modal-content modern-modal">
-            <div class="modal-header modern-header" style="background: linear-gradient(135deg, #9c27b0 0%, #e91e63 100%);">
-              <div class="header-content">
-                <div class="icon-wrapper">
-                  <i class="bi bi-gender-female"></i>
-                </div>
-                <div class="title-content">
-                  <h5 class="modal-title" id="pendingUserModalLabelMid{{ midwife.midwife_id }}">Pending Midwife Registration</h5>
-                  <p class="modal-subtitle">Review registration details</p>
-                </div>
-              </div>
-              <button type="button" class="btn-close modern-close" data-bs-dismiss="modal" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-              </button>
-            </div>
-            <div class="modal-body modern-body">
-              <div class="form-section">
-                <div class="section-header">
-                  <i class="bi bi-person-circle"></i>
-                  <h6>Personal Information</h6>
-                </div>
-                <div class="info-item mb-3">
-                  <p class="info-label">Full Name</p>
-                  <p class="info-value">{{ midwife.first_name }} {{ midwife.middle_name }} {{ midwife.last_name }}</p>
-                </div>
-                <div class="info-item mb-3">
-                  <p class="info-label">Email</p>
-                  <p class="info-value">{{ midwife.email|default:"N/A" }}</p>
-                </div>
-                <div class="info-item mb-3">
-                  <p class="info-label">Phone</p>
-                  <p class="info-value">{{ midwife.phone }}</p>
-                </div>
-                <div class="info-item mb-3">
-                  <p class="info-label">Address</p>
-                  <p class="info-value">{{ midwife.street_address }}, {{ midwife.city }}, {{ midwife.province }} - {{ midwife.barangay }}</p>
-                </div>
-              </div>
-              
-              <div class="form-section">
-                <div class="section-header">
-                  <i class="bi bi-award"></i>
-                  <h6>Professional Information</h6>
-                </div>
-                <div class="info-item mb-3">
-                  <p class="info-label">Midwifery License Number</p>
-                  <p class="info-value">{{ midwife.midwife_license_number|default:"N/A" }}</p>
-                </div>
-                <div class="info-item mb-3">
-                  <p class="info-label">PRC License Number</p>
-                  <p class="info-value">{{ midwife.prc_license_number|default:"N/A" }}</p>
-                </div>
-                <div class="info-item mb-3">
-                  <p class="info-label">Specialization</p>
-                  <p class="info-value">{{ midwife.midwifery_specialization|default:"N/A" }}</p>
-                </div>
-                <div class="info-item mb-3">
-                  <p class="info-label">Assigned Area</p>
-                  <p class="info-value">{{ midwife.midwifery_assigned_area|default:"N/A" }}</p>
-                </div>
-              </div>
-            </div>
-            <div class="modal-footer modern-footer">
-              <form method="POST" action="{% url 'approve_user' %}" style="display: inline-block; margin-right: 0.5rem;">
-                {% csrf_token %}
-                <input type="hidden" name="user_type" value="midwife">
-                <input type="hidden" name="user_id" value="{{ midwife.midwife_id }}">
-                <button type="submit" class="btn modern-btn-approve">
-                  <i class="bi bi-check-circle me-2"></i>Approve
-                </button>
-              </form>
-              <button class="btn modern-btn-reject" data-bs-toggle="modal" data-bs-target="#rejectModal{{ midwife.midwife_id }}">
-                <i class="bi bi-x-circle me-2"></i>Reject
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Reject Modal for Midwife -->
-      <div class="modal fade" id="rejectModal{{ midwife.midwife_id }}" tabindex="-1" aria-labelledby="rejectModalLabel{{ midwife.midwife_id }}" aria-hidden="true">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-              <h5 class="modal-title" id="rejectModalLabel{{ midwife.midwife_id }}">Reject Midwife Registration</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form method="POST" action="{% url 'reject_user' %}">
-              {% csrf_token %}
-              <div class="modal-body">
-                <p>Are you sure you want to reject <strong>{{ midwife.first_name }} {{ midwife.last_name }}</strong>?</p>
-                <div class="mb-3">
-                  <label for="reason{{ midwife.midwife_id }}" class="form-label">Rejection Reason:</label>
-                  <textarea class="form-control" id="reason{{ midwife.midwife_id }}" name="reason" rows="3" placeholder="Enter reason for rejection" required></textarea>
-                </div>
-                <input type="hidden" name="user_type" value="midwife">
-                <input type="hidden" name="user_id" value="{{ midwife.midwife_id }}">
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="submit" class="btn btn-danger">Reject Registration</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-      {% endfor %}
+      
     </div>
 
     <!-- TAB 3 for FACILITIES -->
@@ -1085,7 +883,37 @@
                 </h5>
               </div>
 
-              
+              <!-- Filter Controls for Inactive Users -->
+              <div class="row mb-3">
+                <div class="col-md-4">
+                  <label for="inactiveUserRoleFilter" class="form-label">
+                    <i class="bi bi-funnel me-1"></i>Filter by Role
+                  </label>
+                  <select id="inactiveUserRoleFilter" class="form-select">
+                    <option value="">All Roles</option>
+                    <option value="Administrator">Administrator</option>
+                    <option value="Doctor">Doctor</option>
+                    <option value="BHW">BHW</option>
+        
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label for="inactiveFacilityFilter" class="form-label">
+                    <i class="bi bi-funnel me-1"></i>Filter by Facility
+                  </label>
+                  <select id="inactiveFacilityFilter" class="form-select">
+                    <option value="">All Facilities</option>
+                    {% for facility in facilities %}
+                    <option value="{{ facility.name }}">{{ facility.name }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                  <button type="button" class="btn btn-outline-secondary" id="clearInactiveFilter">
+                    <i class="bi bi-x-circle me-1"></i>Clear Filter
+                  </button>
+                </div>
+              </div>
 
               <div class="table-responsive">
                 <table id="inactiveUsersTable" class="table table-hover mb-0 datatable">
@@ -1095,6 +923,7 @@
                       <th>Full Name</th>
                       <th>Email</th>
                       <th>Role</th>
+                      <th>Facility</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
@@ -1103,7 +932,8 @@
                     <tr data-username="{{ user_info.username }}"
                         data-full-name="{{ user_info.first_name }} {{ user_info.last_name }}"
                         data-email="{{ user_info.email|default:'N/A' }}"
-                        data-role="{{ user_info.role }}">
+                        data-role="{{ user_info.role }}"
+                        data-facility="{{ user_info.facility }}">
                       <td><strong>{{ user_info.username }}</strong></td>
                       <td>{{ user_info.first_name }} {{ user_info.last_name }}</td>
                       <td>{{ user_info.email|default:"N/A" }}</td>
@@ -1119,6 +949,7 @@
                           <span class="badge bg-secondary">{{ user_info.role }}</span>
                         {% endif %}
                       </td>
+                      <td>{{ user_info.facility }}</td>
                       <td>
                         <div class="btn-group">
                           <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle archive-actions-btn" data-bs-toggle="dropdown" data-bs-boundary="viewport" data-bs-offset="0,2" aria-expanded="false" title="Actions">
@@ -1154,7 +985,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                      <td colspan="5" class="text-center text-muted py-4">
+                      <td colspan="6" class="text-center text-muted py-4">
                         <i class="bi bi-inbox"></i> No inactive users found
                       </td>
                     </tr>
@@ -1184,6 +1015,28 @@
                 <i class="bi bi-clock-history me-2"></i>
                 List of Doctors
               </h5>
+            </div>
+
+            <!-- Filter Controls for Doctors -->
+            <div class="row mb-3">
+              <div class="col-md-4">
+                <label for="doctorStatusFilter" class="form-label">
+                  <i class="bi bi-funnel me-1"></i>Filter by Status
+                </label>
+                <select id="doctorStatusFilter" class="form-select">
+                  <option value="">All Statuses</option>
+                  <option value="APPROVED">Approved</option>
+                  <option value="PENDING_APPROVAL">Pending Approval</option>
+                  <option value="REJECTED">Rejected</option>
+                  <option value="RETIRED">Retired</option>
+                  <option value="INACTIVE">Inactive</option>
+                </select>
+              </div>
+              <div class="col-md-4 d-flex align-items-end">
+                <button type="button" class="btn btn-outline-secondary" id="clearDoctorFilter">
+                  <i class="bi bi-x-circle me-1"></i>Clear Filter
+                </button>
+              </div>
             </div>
 
             <!-- Table -->
@@ -1446,8 +1299,157 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   }
 
-  // Initialize DataTables for tables except activeUsersTable and inactiveUsersTable (needs custom filtering)
-  ['#pendingRegistrationTable', '#facilitiesTable', '#doctorTable'].forEach(initDataTable);
+  // Initialize Pending Users Table with custom filtering
+  function initPendingUsersTable() {
+    if (typeof $ === 'undefined' || !$.fn.DataTable) {
+      console.warn('jQuery DataTables not loaded, skipping initialization for pendingRegistrationTable');
+      return;
+    }
+    const $table = $('#pendingRegistrationTable');
+    if (!$table.length) {
+      return;
+    }
+    if ($.fn.DataTable.isDataTable($table)) {
+      $table.DataTable().destroy();
+    }
+    
+    const pendingUsersTable = $table.DataTable({
+      order: [],
+      responsive: true,
+      pageLength: 10,
+      lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+      language: {
+        emptyTable: "No records found",
+        search: "Search:",
+        lengthMenu: "Show _MENU_ entries",
+        info: "Showing _START_ to _END_ of _TOTAL_ entries",
+        infoEmpty: "Showing 0 to 0 of 0 entries",
+        infoFiltered: "(filtered from _MAX_ total entries)",
+        paginate: {
+          first: "First",
+          last: "Last",
+          next: "Next",
+          previous: "Previous"
+        }
+      },
+      columnDefs: [
+        {
+          targets: [0], // Type column
+          searchable: true
+        }
+      ]
+    });
+    
+    // Custom filter function for pending users
+    const pendingUserFilter = function(settings, data, dataIndex) {
+      if (settings.nTable.id !== 'pendingRegistrationTable') {
+        return true;
+      }
+      const row = pendingUsersTable.row(dataIndex).node();
+      const userType = $(row).attr('data-user-type');
+      const facility = $(row).attr('data-facility') || '';
+      
+      const typeFilter = $('#pendingUserTypeFilter').val();
+      const facilityFilter = $('#pendingFacilityFilter').val();
+      
+      let typeMatch = !typeFilter || userType === typeFilter;
+      let facilityMatch = !facilityFilter || facility === facilityFilter;
+      
+      return typeMatch && facilityMatch;
+    };
+    
+    // Add custom filter
+    $.fn.dataTable.ext.search.push(pendingUserFilter);
+    
+    // User type filter handler
+    $('#pendingUserTypeFilter').off('change.pending-filter').on('change.pending-filter', function() {
+      pendingUsersTable.draw();
+    });
+    
+    // Facility filter handler
+    $('#pendingFacilityFilter').off('change.pending-filter').on('change.pending-filter', function() {
+      pendingUsersTable.draw();
+    });
+    
+    // Clear filter button
+    $('#clearPendingFilter').off('click.clear-pending-filter').on('click.clear-pending-filter', function() {
+      $('#pendingUserTypeFilter').val('');
+      $('#pendingFacilityFilter').val('');
+      pendingUsersTable.draw();
+    });
+    
+    return pendingUsersTable;
+  }
+  
+  // Initialize Pending Users Table
+  initPendingUsersTable();
+  
+  // Initialize Facilities Table (no filtering needed)
+  initDataTable('#facilitiesTable');
+  
+  // Initialize Doctors Table with custom filtering
+  function initDoctorsTable() {
+    if (typeof $ === 'undefined' || !$.fn.DataTable) {
+      console.warn('jQuery DataTables not loaded, skipping initialization for doctorTable');
+      return;
+    }
+    const $table = $('#doctorTable');
+    if (!$table.length) {
+      return;
+    }
+    if ($.fn.DataTable.isDataTable($table)) {
+      $table.DataTable().destroy();
+    }
+    
+    const doctorsTable = $table.DataTable({
+      order: [],
+      responsive: true,
+      pageLength: 10,
+      lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+      language: {
+        emptyTable: "No records found",
+        search: "Search:",
+        lengthMenu: "Show _MENU_ entries",
+        info: "Showing _START_ to _END_ of _TOTAL_ entries",
+        infoEmpty: "Showing 0 to 0 of 0 entries",
+        infoFiltered: "(filtered from _MAX_ total entries)",
+        paginate: {
+          first: "First",
+          last: "Last",
+          next: "Next",
+          previous: "Previous"
+        }
+      },
+      columnDefs: [
+        {
+          targets: [1], // Status column
+          searchable: true
+        }
+      ]
+    });
+    
+    // Status filter handler
+    $('#doctorStatusFilter').off('change.doctor-filter').on('change.doctor-filter', function() {
+      const statusValue = this.value;
+      if (statusValue === '') {
+        doctorsTable.column(1).search('').draw();
+      } else {
+        // Search for the status value in the badge
+        doctorsTable.column(1).search(statusValue, true, false).draw();
+      }
+    });
+    
+    // Clear filter button
+    $('#clearDoctorFilter').off('click.clear-doctor-filter').on('click.clear-doctor-filter', function() {
+      $('#doctorStatusFilter').val('');
+      doctorsTable.columns().search('').draw();
+    });
+    
+    return doctorsTable;
+  }
+  
+  // Initialize Doctors Table
+  initDoctorsTable();
   
   // Initialize Active Users Table with custom filtering
   function initActiveUsersTable() {
@@ -1488,29 +1490,57 @@ document.addEventListener("DOMContentLoaded", function() {
           searchable: true
         },
         {
-          targets: [4], // Status column
+          targets: [4], // Facility column
           searchable: true
+        },
+        {
+          targets: [5], // Date Created column
+          searchable: true
+        },
+        {
+          targets: [6], // Actions column
+          orderable: false,
+          searchable: false
         }
       ]
     });
     
+    // Custom filter function for active users
+    const activeUserFilter = function(settings, data, dataIndex) {
+      if (settings.nTable.id !== 'activeUsersTable') {
+        return true;
+      }
+      const row = activeUsersTable.row(dataIndex).node();
+      const role = $(row).attr('data-role') || '';
+      const facility = $(row).attr('data-facility') || '';
+      
+      const roleFilter = $('#activeUserRoleFilter').val();
+      const facilityFilter = $('#activeFacilityFilter').val();
+      
+      let roleMatch = !roleFilter || role === roleFilter;
+      let facilityMatch = !facilityFilter || facility === facilityFilter;
+      
+      return roleMatch && facilityMatch;
+    };
+    
+    // Add custom filter
+    $.fn.dataTable.ext.search.push(activeUserFilter);
+    
     // Role filter handler
-    $('#roleFilter').off('change.active-filter').on('change.active-filter', function() {
-      const roleValue = this.value;
-      activeUsersTable.column(3).search(roleValue ? '^' + roleValue + '$' : '', true, false).draw();
+    $('#activeUserRoleFilter').off('change.active-filter').on('change.active-filter', function() {
+      activeUsersTable.draw();
     });
     
-    // Status filter handler
-    $('#statusFilter').off('change.status-filter').on('change.status-filter', function() {
-      const statusValue = this.value;
-      activeUsersTable.column(4).search(statusValue ? '^' + statusValue + '$' : '', true, false).draw();
+    // Facility filter handler
+    $('#activeFacilityFilter').off('change.active-filter').on('change.active-filter', function() {
+      activeUsersTable.draw();
     });
     
     // Clear filters button
-    $('#clearFiltersBtn').off('click.clear-filters').on('click.clear-filters', function() {
-      $('#roleFilter').val('');
-      $('#statusFilter').val('');
-      activeUsersTable.columns().search('').draw();
+    $('#clearActiveFilter').off('click.clear-active-filter').on('click.clear-active-filter', function() {
+      $('#activeUserRoleFilter').val('');
+      $('#activeFacilityFilter').val('');
+      activeUsersTable.draw();
     });
     
     return activeUsersTable;
@@ -1533,8 +1563,8 @@ document.addEventListener("DOMContentLoaded", function() {
     
     // Check if table has proper structure
     const theadCols = $table.find('thead th').length;
-    if (theadCols !== 5) {
-      console.error(`Expected 5 columns in thead, found ${theadCols}`);
+    if (theadCols !== 6) {
+      console.error(`Expected 6 columns in thead, found ${theadCols}`);
       return;
     }
     
@@ -1553,8 +1583,8 @@ document.addEventListener("DOMContentLoaded", function() {
     $dataRows.each(function() {
       const $row = $(this);
       const tbodyCols = $row.find('td').length;
-      if (tbodyCols !== 5) {
-        console.error(`Row has ${tbodyCols} columns, expected 5`);
+      if (tbodyCols !== 6) {
+        console.error(`Row has ${tbodyCols} columns, expected 6`);
         hasInvalidRows = true;
       }
     });
@@ -1593,23 +1623,53 @@ document.addEventListener("DOMContentLoaded", function() {
           searchable: true
         },
         {
-          targets: [4], // Actions column
+          targets: [4], // Facility column
+          searchable: true
+        },
+        {
+          targets: [5], // Actions column
           orderable: false,
           searchable: false
         }
       ]
     });
     
+    // Custom filter function for inactive users
+    const inactiveUserFilter = function(settings, data, dataIndex) {
+      if (settings.nTable.id !== 'inactiveUsersTable') {
+        return true;
+      }
+      const row = inactiveUsersTable.row(dataIndex).node();
+      const role = $(row).attr('data-role') || '';
+      const facility = $(row).attr('data-facility') || '';
+      
+      const roleFilter = $('#inactiveUserRoleFilter').val();
+      const facilityFilter = $('#inactiveFacilityFilter').val();
+      
+      let roleMatch = !roleFilter || role === roleFilter;
+      let facilityMatch = !facilityFilter || facility === facilityFilter;
+      
+      return roleMatch && facilityMatch;
+    };
+    
+    // Add custom filter
+    $.fn.dataTable.ext.search.push(inactiveUserFilter);
+    
     // Role filter handler
-    $('#archiveRoleFilter').off('change.archive-filter').on('change.archive-filter', function() {
-      const roleValue = this.value;
-      inactiveUsersTable.column(3).search(roleValue ? '^' + roleValue + '$' : '', true, false).draw();
+    $('#inactiveUserRoleFilter').off('change.inactive-filter').on('change.inactive-filter', function() {
+      inactiveUsersTable.draw();
+    });
+    
+    // Facility filter handler
+    $('#inactiveFacilityFilter').off('change.inactive-filter').on('change.inactive-filter', function() {
+      inactiveUsersTable.draw();
     });
     
     // Clear filters button
-    $('#clearArchiveFiltersBtn').off('click.clear-archive-filters').on('click.clear-archive-filters', function() {
-      $('#archiveRoleFilter').val('');
-      inactiveUsersTable.columns().search('').draw();
+    $('#clearInactiveFilter').off('click.clear-inactive-filter').on('click.clear-inactive-filter', function() {
+      $('#inactiveUserRoleFilter').val('');
+      $('#inactiveFacilityFilter').val('');
+      inactiveUsersTable.draw();
     });
     
     return inactiveUsersTable;
@@ -1984,6 +2044,16 @@ document.addEventListener("DOMContentLoaded", function() {
       if (table && $.fn.DataTable.isDataTable(table)) {
         $(table).DataTable().columns.adjust().responsive.recalc();
       }
+      // Reinitialize Pending Users table if tab1 is shown
+      if (targetSelector === '#tab1') {
+        setTimeout(function() {
+          if ($('#pendingRegistrationTable').length && !$.fn.DataTable.isDataTable('#pendingRegistrationTable')) {
+            initPendingUsersTable();
+          } else if ($.fn.DataTable.isDataTable('#pendingRegistrationTable')) {
+            $('#pendingRegistrationTable').DataTable().columns.adjust().responsive.recalc();
+          }
+        }, 100);
+      }
       // Reinitialize Active Users table if tab2 is shown
       if (targetSelector === '#tab2') {
         setTimeout(function() {
@@ -2002,6 +2072,16 @@ document.addEventListener("DOMContentLoaded", function() {
           console.log('Calling initializeFacilitiesMap from tab event');
           initializeFacilitiesMap();
         }, 400);
+      }
+      // Reinitialize Doctors table if tab5 is shown
+      if (targetSelector === '#tab5') {
+        setTimeout(function() {
+          if ($('#doctorTable').length && !$.fn.DataTable.isDataTable('#doctorTable')) {
+            initDoctorsTable();
+          } else if ($.fn.DataTable.isDataTable('#doctorTable')) {
+            $('#doctorTable').DataTable().columns.adjust().responsive.recalc();
+          }
+        }, 100);
       }
       // Initialize Inactive Users table if tab4 is shown
       if (targetSelector === '#tab4') {

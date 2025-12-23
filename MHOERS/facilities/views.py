@@ -227,6 +227,108 @@ def get_barangays(request):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
+def psgc_regions(request):
+    """Get all regions from PSGC API."""
+    try:
+        # Try multiple PSGC API endpoints
+        api_endpoints = [
+            'https://psgc.rootscratch.com/api/regions',
+            'https://psgc.cloud/api/regions',
+        ]
+        
+        regions = []
+        last_error = None
+        
+        for endpoint in api_endpoints:
+            try:
+                response = requests.get(endpoint, timeout=10)
+                response.raise_for_status()
+                data = response.json()
+                
+                # Handle different response formats
+                regions_list = []
+                if isinstance(data, list):
+                    regions_list = data
+                elif isinstance(data, dict):
+                    if 'data' in data:
+                        regions_list = data['data']
+                    elif 'results' in data:
+                        regions_list = data['results']
+                    elif 'regions' in data:
+                        regions_list = data['regions']
+                
+                # Extract region information
+                for region in regions_list:
+                    region_name = region.get('name', region.get('region_name', ''))
+                    if region_name:
+                        # Avoid duplicates
+                        if not any(r['name'] == region_name for r in regions):
+                            regions.append({
+                                'name': region_name,
+                                'code': region.get('code', region.get('psgc_code', ''))
+                            })
+                
+                if regions:
+                    break  # Success
+            except requests.exceptions.RequestException as e:
+                last_error = str(e)
+                continue
+            except Exception as e:
+                last_error = str(e)
+                continue
+        
+        # If no regions found from API, return hardcoded list of Philippine regions
+        if not regions:
+            # Philippine regions (17 regions + NCR)
+            regions = [
+                {'name': 'National Capital Region (NCR)', 'code': '13'},
+                {'name': 'Cordillera Administrative Region (CAR)', 'code': '14'},
+                {'name': 'Ilocos Region (Region I)', 'code': '01'},
+                {'name': 'Cagayan Valley (Region II)', 'code': '02'},
+                {'name': 'Central Luzon (Region III)', 'code': '03'},
+                {'name': 'CALABARZON (Region IV-A)', 'code': '04'},
+                {'name': 'MIMAROPA (Region IV-B)', 'code': '17'},
+                {'name': 'Bicol Region (Region V)', 'code': '05'},
+                {'name': 'Western Visayas (Region VI)', 'code': '06'},
+                {'name': 'Central Visayas (Region VII)', 'code': '07'},
+                {'name': 'Eastern Visayas (Region VIII)', 'code': '08'},
+                {'name': 'Zamboanga Peninsula (Region IX)', 'code': '09'},
+                {'name': 'Northern Mindanao (Region X)', 'code': '10'},
+                {'name': 'Davao Region (Region XI)', 'code': '11'},
+                {'name': 'SOCCSKSARGEN (Region XII)', 'code': '12'},
+                {'name': 'Caraga (Region XIII)', 'code': '16'},
+                {'name': 'Bangsamoro Autonomous Region in Muslim Mindanao (BARMM)', 'code': '15'},
+            ]
+        
+        # Sort regions alphabetically
+        regions.sort(key=lambda x: x['name'])
+        
+        return JsonResponse(regions, safe=False)
+        
+    except Exception as e:
+        # Return hardcoded regions as fallback
+        regions = [
+            {'name': 'National Capital Region (NCR)', 'code': '13'},
+            {'name': 'Cordillera Administrative Region (CAR)', 'code': '14'},
+            {'name': 'Ilocos Region (Region I)', 'code': '01'},
+            {'name': 'Cagayan Valley (Region II)', 'code': '02'},
+            {'name': 'Central Luzon (Region III)', 'code': '03'},
+            {'name': 'CALABARZON (Region IV-A)', 'code': '04'},
+            {'name': 'MIMAROPA (Region IV-B)', 'code': '17'},
+            {'name': 'Bicol Region (Region V)', 'code': '05'},
+            {'name': 'Western Visayas (Region VI)', 'code': '06'},
+            {'name': 'Central Visayas (Region VII)', 'code': '07'},
+            {'name': 'Eastern Visayas (Region VIII)', 'code': '08'},
+            {'name': 'Zamboanga Peninsula (Region IX)', 'code': '09'},
+            {'name': 'Northern Mindanao (Region X)', 'code': '10'},
+            {'name': 'Davao Region (Region XI)', 'code': '11'},
+            {'name': 'SOCCSKSARGEN (Region XII)', 'code': '12'},
+            {'name': 'Caraga (Region XIII)', 'code': '16'},
+            {'name': 'Bangsamoro Autonomous Region in Muslim Mindanao (BARMM)', 'code': '15'},
+        ]
+        regions.sort(key=lambda x: x['name'])
+        return JsonResponse(regions, safe=False)
+
 def psgc_provinces(request):
     """Get Mindanao provinces from PSGC API."""
     try:
