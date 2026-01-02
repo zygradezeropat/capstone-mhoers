@@ -442,7 +442,7 @@
         </div>
 
         <div class="modal-footer" style="flex-shrink: 0;">
-          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" onclick="clearDraft()">
             <i class="bi bi-x-circle me-2"></i>Cancel
           </button>
           <button type="submit" class="btn btn-success">
@@ -703,5 +703,252 @@
     } // end initPatientForm
 
     initPatientForm();
+  })();
+
+  // Auto-save functionality for patient registration form
+  (function() {
+    const DRAFT_STORAGE_KEY = 'patient_registration_draft';
+    const AUTO_SAVE_DELAY = 2000; // Save 2 seconds after user stops typing
+    let autoSaveTimer = null;
+
+    // Get all form field IDs that should be saved
+    const formFields = [
+      'first_name', 'middle_name', 'last_name',
+      'patient_province', 'patient_municipality', 'patient_barangay', 'patient_purok',
+      'p_number', 'sex', 'date_of_birth',
+      'civil_status', 'phic_status',
+      'cct_beneficiary', 'is_pwd',
+      'is_philhealth_member', 'philhealth_number', 'philhealth_category',
+      'family_history_hypertension', 'family_history_diabetes', 'family_history_cancer',
+      'family_history_asthma', 'family_history_epilepsy', 'family_history_tuberculosis',
+      'family_history_others'
+    ];
+
+    // Save draft to localStorage
+    function saveDraft() {
+      const draft = {};
+      
+      formFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+          if (field.type === 'checkbox') {
+            draft[fieldId] = field.checked;
+          } else {
+            draft[fieldId] = field.value || '';
+          }
+        }
+      });
+      
+      draft.timestamp = new Date().toISOString();
+      
+      try {
+        localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
+        showAutoSaveIndicator('Draft saved', 'success');
+      } catch (e) {
+        console.error('Error saving draft:', e);
+        showAutoSaveIndicator('Save failed', 'error');
+      }
+    }
+
+    // Load draft from localStorage
+    function loadDraft() {
+      try {
+        const draftData = localStorage.getItem(DRAFT_STORAGE_KEY);
+        if (!draftData) return false;
+        
+        const draft = JSON.parse(draftData);
+        let hasData = false;
+        
+        formFields.forEach(fieldId => {
+          const field = document.getElementById(fieldId);
+          if (field && draft[fieldId] !== undefined) {
+            if (field.type === 'checkbox') {
+              field.checked = draft[fieldId];
+              if (draft[fieldId]) hasData = true;
+            } else {
+              field.value = draft[fieldId] || '';
+              if (draft[fieldId]) hasData = true;
+            }
+          }
+        });
+        
+        if (hasData) {
+          showAutoSaveIndicator('Draft restored', 'success');
+          
+          // Re-trigger PhilHealth toggle if needed
+          if (draft.is_philhealth_member) {
+            setTimeout(() => togglePhilHealthFields(), 100);
+          }
+          
+          // Re-trigger location dropdowns if province is set
+          if (draft.patient_province && typeof jQuery !== 'undefined') {
+            const $ = jQuery;
+            setTimeout(() => {
+              const provinceSelect = $('#patient_province');
+              if (provinceSelect.length && provinceSelect.val()) {
+                // Wait for provinces to load, then set municipality
+                setTimeout(() => {
+                  if (draft.patient_municipality) {
+                    const municipalitySelect = $('#patient_municipality');
+                    municipalitySelect.val(draft.patient_municipality);
+                    municipalitySelect.trigger('change');
+                    // Wait for barangays to load, then set barangay
+                    setTimeout(() => {
+                      if (draft.patient_barangay) {
+                        const barangaySelect = $('#patient_barangay');
+                        barangaySelect.val(draft.patient_barangay);
+                        barangaySelect.trigger('change');
+                      }
+                    }, 500);
+                  }
+                }, 500);
+              }
+            }, 300);
+          }
+          
+          // Re-trigger age calculation if date of birth is set
+          if (draft.date_of_birth && typeof jQuery !== 'undefined') {
+            const $ = jQuery;
+            $('#date_of_birth').trigger('change');
+          }
+          
+          // Re-trigger PHIC status change if needed
+          if (draft.phic_status && typeof jQuery !== 'undefined') {
+            const $ = jQuery;
+            $('#phic_status').trigger('change');
+          }
+          
+          return true;
+        }
+      } catch (e) {
+        console.error('Error loading draft:', e);
+      }
+      return false;
+    }
+
+    // Clear draft from localStorage and reset all form fields
+    function clearDraft() {
+      try {
+        // Clear localStorage
+        localStorage.removeItem(DRAFT_STORAGE_KEY);
+        
+        // Clear all form fields
+        formFields.forEach(fieldId => {
+          const field = document.getElementById(fieldId);
+          if (field) {
+            if (field.type === 'checkbox') {
+              field.checked = false;
+            } else {
+              field.value = '';
+            }
+          }
+        });
+        
+        // Reset location dropdowns
+        if (typeof jQuery !== 'undefined') {
+          const $ = jQuery;
+          $('#patient_province').val('').trigger('change');
+          $('#patient_municipality').html('<option value="" disabled selected>Select City/Municipality</option>').prop('disabled', true);
+          $('#patient_barangay').html('<option value="" disabled selected>Select Barangay</option>').prop('disabled', true);
+          $('#patient_purok').val('').prop('disabled', true);
+        }
+        
+        // Reset PhilHealth fields
+        const philHealthCheckbox = document.getElementById('is_philhealth_member');
+        if (philHealthCheckbox) {
+          philHealthCheckbox.checked = false;
+          togglePhilHealthFields();
+        }
+        
+        // Reset age field
+        const ageField = document.getElementById('patient_age');
+        if (ageField) {
+          ageField.value = '';
+          ageField.style.color = '#6c757d';
+        }
+        
+        // Reset form validation classes
+        const form = document.getElementById('addPatientForm');
+        if (form) {
+          const invalidFields = form.querySelectorAll('.is-invalid');
+          invalidFields.forEach(field => field.classList.remove('is-invalid'));
+        }
+        
+        console.log('Draft cleared and form reset');
+      } catch (e) {
+        console.error('Error clearing draft:', e);
+      }
+    }
+
+    // Make clearDraft globally accessible
+    window.clearDraft = clearDraft;
+
+    // Show auto-save indicator
+    function showAutoSaveIndicator(message, type) {
+      let indicator = document.getElementById('patient-auto-save-indicator');
+      
+      if (type === 'success') {
+        setTimeout(() => {
+          indicator.style.display = 'none';
+        }, 2000);
+      }
+    }
+
+    // Setup auto-save listeners
+    function setupAutoSave() {
+      formFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+          // Clear existing timer and set new one
+          const saveHandler = function() {
+            clearTimeout(autoSaveTimer);
+            showAutoSaveIndicator('Saving...', 'saving');
+            autoSaveTimer = setTimeout(saveDraft, AUTO_SAVE_DELAY);
+          };
+          
+          // For checkboxes, use change event
+          if (field.type === 'checkbox') {
+            field.addEventListener('change', saveHandler);
+          } else if (field.tagName === 'SELECT') {
+            // For select elements, use change event
+            field.addEventListener('change', saveHandler);
+          } else {
+            // For text inputs and textareas, use input event
+            field.addEventListener('input', saveHandler);
+          }
+        }
+      });
+    }
+
+    // Initialize when modal is shown
+    const registerModal = document.getElementById('registerModal');
+    if (registerModal) {
+      registerModal.addEventListener('shown.bs.modal', function() {
+        // Wait a bit for form to be ready, then load draft
+        setTimeout(() => {
+          loadDraft();
+          setupAutoSave();
+        }, 300);
+      });
+
+      // Clear timer when modal is hidden
+      registerModal.addEventListener('hidden.bs.modal', function() {
+        clearTimeout(autoSaveTimer);
+      });
+    }
+
+    // Clear draft on successful form submission
+    if (typeof jQuery !== 'undefined') {
+      jQuery(document).ready(function($) {
+        $('#addPatientForm').on('submit', function(e) {
+          // Clear draft after a short delay to allow form to submit
+          // This ensures draft is cleared even if there's a validation error
+          setTimeout(() => {
+            // Only clear if form was actually submitted (you can refine this logic)
+            clearDraft();
+          }, 1000);
+        });
+      });
+    }
   })();
 </script>

@@ -383,6 +383,13 @@
                   <option value="{% url 'doctor_transactions_report' %}">
                     My Transactions
                   </option>
+                  
+                  {% endif %}
+                   {% if is_doctor %}
+                  <option value="{% url 'doctor_transactions_report' %}">
+                    Medical Certificate
+                  </option>
+
                   {% endif %}
                   {% if not is_doctor %}
                   <option value="{% url 'barangay_referral_performance_report' %}">
