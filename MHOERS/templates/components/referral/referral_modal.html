@@ -545,6 +545,11 @@
           <button type="button" class="btn btn-success" id="acceptReferralBtn" style="display: none;" data-referral-id="">
             Accept
           </button>
+           {% if view_mode == "patient" %}
+           <button type="button" class="btn btn-primary" id="issueMedicalCertBtn" title="Issue medical certificate">
+          Issue a Medical Certificate
+        </button>
+         {% endif %}
         {% endif %}
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-dismiss="modal">
           Close
@@ -556,6 +561,57 @@
 
 <!-- End of View Referral Modal -->
 
+<script>
+  // Redirect to medical certificate page with referral/patient info and auto-print
+  (function() {
+    document.addEventListener('click', function(e) {
+      if (!e.target) return;
+      const btn = e.target.closest && e.target.closest('#issueMedicalCertBtn');
+      if (!btn) return;
+      e.preventDefault();
+
+      // Prefer referral id, fallback to patient name
+      const referralId = (document.getElementById('viewReferralId') || {}).value || '';
+      const patientName = (document.getElementById('viewReferralPatientName') || {}).value || '';
+
+      // Construct URL using named Django route for medical certificate report
+      const url = '{% url "medical_certificate_report" %}' +
+        `?referral_id=${encodeURIComponent(referralId)}&patient_name=${encodeURIComponent(patientName)}`;
+
+      // Open certificate in a new window and trigger print when it's ready
+      const certWindow = window.open(url, '_blank');
+      if (certWindow) {
+        // Try attaching load listener to the new window
+        try {
+          certWindow.addEventListener('load', function() {
+            try { certWindow.focus(); } catch (e) {}
+            try { certWindow.print(); } catch (e) {}
+          });
+        } catch (err) {
+          // Some browsers may throw when adding listeners to a newly opened window; ignore
+        }
+
+        // Poll for readiness as a fallback (works for same-origin HTML content)
+        const _printPoll = setInterval(function() {
+          if (certWindow.closed) { clearInterval(_printPoll); return; }
+          try {
+            if (certWindow.document && certWindow.document.readyState === 'complete') {
+              clearInterval(_printPoll);
+              try { certWindow.focus(); certWindow.print(); } catch (e) {}
+            }
+          } catch (e) {
+            // Cross-origin or access denied — ignore and let user handle printing
+          }
+        }, 400);
+
+      } else {
+        // Popup blocked — navigate current window and print there
+        window.location.href = url;
+        window.addEventListener('load', function() { window.print(); });
+      }
+    });
+  })();
+</script>
 
 
 <!-- Edit Referral Modal -->
@@ -1179,7 +1235,7 @@
       
       // Try to get status from multiple sources
       let referralStatus = currentReferralStatus || $('#viewReferralStatus').val() || '';
-      let referralId = currentReferralId || $('#viewReferralId').val() || '';
+      let referralId = (currentReferralId && currentReferralId.trim()) || $('#viewReferralId').val() || '';
       
       console.log('Initial values - Status:', referralStatus, 'ID:', referralId);
       console.log('currentReferralStatus:', currentReferralStatus);
@@ -1188,20 +1244,16 @@
       console.log('Hidden field viewReferralId:', $('#viewReferralId').val());
       
       // If we don't have status yet, try to get it from the button that opened the modal
-      if (!referralStatus) {
-        console.log('Status not found, checking active button...');
-        // Check if there's a button with the view-button class that was recently clicked
-        const viewButton = $('.view-button.active-view-button');
-        console.log('Active view button found:', viewButton.length);
-        if (viewButton.length) {
-          referralStatus = viewButton.data('status') || viewButton.attr('data-status') || '';
-          referralId = viewButton.data('id') || viewButton.attr('data-id') || '';
-          console.log('From active button - Status:', referralStatus, 'ID:', referralId);
-        }
+      if (activeButton.length && (!currentReferralStatus || !currentReferralId)) {
+      currentReferralStatus = activeButton.data('status') || activeButton.attr('data-status') || '';
+      currentReferralId = activeButton.data('id') || activeButton.attr('data-id') || '';
+      $('#viewReferralStatus').val(currentReferralStatus);
+      $('#viewReferralId').val(currentReferralId);
+    }
       }
       
       // Also try modal data attributes
-      if (!referralStatus) {
+      if (!referralStatus) { 
         console.log('Status still not found, checking modal data attributes...');
         referralStatus = $('#viewReferralModal').data('referral-status') || '';
         referralId = $('#viewReferralModal').data('referral-id') || '';
@@ -1340,6 +1392,9 @@
       console.log('Calling updateAcceptButton...');
       updateAcceptButton();
       console.log('=== View modal show event end ===');
+
+      
+
     });
 
     // Also check after modal is fully shown (in case data is populated after show event)
@@ -1352,7 +1407,10 @@
           currentReferralStatus = activeButton.data('status') || activeButton.attr('data-status');
           currentReferralId = activeButton.data('id') || activeButton.attr('data-id');
           $('#viewReferralStatus').val(currentReferralStatus || '');
-          $('#viewReferralId').val(currentReferralId || '');
+          $('#viewReferralId').on('change', function() {
+            currentReferralId = $(this).val();
+            updateAcceptButton();
+          });
         }
         updateAcceptButton();
       }, 200);

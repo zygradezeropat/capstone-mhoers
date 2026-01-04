@@ -728,7 +728,7 @@
     // View button logic - get data from the row (like doctor's page)
     // Use document-level delegation to ensure it works after DataTables redraws
     $(document).on('click', '#patientTable .view-button', function (e) {
-      e.preventDefault();
+      e.preventDefault(); 
       e.stopPropagation();
       
       // Close dropdown if it's open

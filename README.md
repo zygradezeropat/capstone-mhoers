@@ -9,4 +9,5 @@
 - - python manage.py runserver - - # to run the server and see the content of code
 
 " recommended to install pgAdmin4 for GUI postgresql file "
-" ill give the database sql later "
+
+ 

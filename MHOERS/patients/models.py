@@ -22,7 +22,7 @@ class Patient(models.Model):
     first_name = models.CharField(max_length=50)
     middle_name = models.CharField(max_length=50, blank=True, null=True)
     last_name = models.CharField(max_length=50)
-    p_address = models.TextField()
+    p_address = models.TextField() 
     p_number = models.CharField(max_length=15)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     date_of_birth = models.DateField(default=date.today)

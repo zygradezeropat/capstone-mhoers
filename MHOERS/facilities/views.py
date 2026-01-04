@@ -8,6 +8,8 @@ from django.db import IntegrityError
 from django.conf import settings
 
 import requests
+import json
+import os
 
 from .forms import HealthcareProviderForm, FacilityForm
 from facilities.models import Facility, Barangay, Purok
@@ -228,85 +230,35 @@ def get_barangays(request):
         return JsonResponse({'error': str(e)}, status=500)
 
 def psgc_regions(request):
-    """Get all regions from PSGC API."""
+    """Get all regions from local JSON file."""
     try:
-        # Try multiple PSGC API endpoints
-        api_endpoints = [
-            'https://psgc.rootscratch.com/api/regions',
-            'https://psgc.cloud/api/regions',
-        ]
+        # Load regions from local JSON file
+        json_path = os.path.join(settings.BASE_DIR, 'static', 'json', 'address', 'region.json')
+        
+        with open(json_path, 'r', encoding='utf-8') as f:
+            regions_data = json.load(f)
         
         regions = []
-        last_error = None
+        seen_names = set()
         
-        for endpoint in api_endpoints:
-            try:
-                response = requests.get(endpoint, timeout=10)
-                response.raise_for_status()
-                data = response.json()
-                
-                # Handle different response formats
-                regions_list = []
-                if isinstance(data, list):
-                    regions_list = data
-                elif isinstance(data, dict):
-                    if 'data' in data:
-                        regions_list = data['data']
-                    elif 'results' in data:
-                        regions_list = data['results']
-                    elif 'regions' in data:
-                        regions_list = data['regions']
-                
-                # Extract region information
-                for region in regions_list:
-                    region_name = region.get('name', region.get('region_name', ''))
-                    if region_name:
-                        # Avoid duplicates
-                        if not any(r['name'] == region_name for r in regions):
-                            regions.append({
-                                'name': region_name,
-                                'code': region.get('code', region.get('psgc_code', ''))
-                            })
-                
-                if regions:
-                    break  # Success
-            except requests.exceptions.RequestException as e:
-                last_error = str(e)
-                continue
-            except Exception as e:
-                last_error = str(e)
-                continue
-        
-        # If no regions found from API, return hardcoded list of Philippine regions
-        if not regions:
-            # Philippine regions (17 regions + NCR)
-            regions = [
-                {'name': 'National Capital Region (NCR)', 'code': '13'},
-                {'name': 'Cordillera Administrative Region (CAR)', 'code': '14'},
-                {'name': 'Ilocos Region (Region I)', 'code': '01'},
-                {'name': 'Cagayan Valley (Region II)', 'code': '02'},
-                {'name': 'Central Luzon (Region III)', 'code': '03'},
-                {'name': 'CALABARZON (Region IV-A)', 'code': '04'},
-                {'name': 'MIMAROPA (Region IV-B)', 'code': '17'},
-                {'name': 'Bicol Region (Region V)', 'code': '05'},
-                {'name': 'Western Visayas (Region VI)', 'code': '06'},
-                {'name': 'Central Visayas (Region VII)', 'code': '07'},
-                {'name': 'Eastern Visayas (Region VIII)', 'code': '08'},
-                {'name': 'Zamboanga Peninsula (Region IX)', 'code': '09'},
-                {'name': 'Northern Mindanao (Region X)', 'code': '10'},
-                {'name': 'Davao Region (Region XI)', 'code': '11'},
-                {'name': 'SOCCSKSARGEN (Region XII)', 'code': '12'},
-                {'name': 'Caraga (Region XIII)', 'code': '16'},
-                {'name': 'Bangsamoro Autonomous Region in Muslim Mindanao (BARMM)', 'code': '15'},
-            ]
+        for region in regions_data:
+            region_name = region.get('region_name', '')
+            region_code = region.get('region_code', region.get('psgc_code', ''))
+            
+            if region_name and region_name not in seen_names:
+                regions.append({
+                    'name': region_name,
+                    'code': region_code
+                })
+                seen_names.add(region_name)
         
         # Sort regions alphabetically
         regions.sort(key=lambda x: x['name'])
         
         return JsonResponse(regions, safe=False)
         
-    except Exception as e:
-        # Return hardcoded regions as fallback
+    except FileNotFoundError:
+        # Fallback to hardcoded list if JSON file not found
         regions = [
             {'name': 'National Capital Region (NCR)', 'code': '13'},
             {'name': 'Cordillera Administrative Region (CAR)', 'code': '14'},
@@ -328,265 +280,558 @@ def psgc_regions(request):
         ]
         regions.sort(key=lambda x: x['name'])
         return JsonResponse(regions, safe=False)
+    except Exception as e:
+        return JsonResponse({'error': f'Failed to load regions: {str(e)}'}, status=500)
+    
+    # OLD PSGC API CODE (COMMENTED OUT - NOW USING LOCAL JSON)
+    # try:
+    #     # Try multiple PSGC API endpoints
+    #     api_endpoints = [
+    #         'https://psgc.rootscratch.com/api/regions',
+    #         'https://psgc.cloud/api/regions',
+    #     ]
+    #     
+    #     regions = []
+    #     last_error = None
+    #     
+    #     for endpoint in api_endpoints:
+    #         try:
+    #             response = requests.get(endpoint, timeout=10)
+    #             response.raise_for_status()
+    #             data = response.json()
+    #             
+    #             # Handle different response formats
+    #             regions_list = []
+    #             if isinstance(data, list):
+    #                 regions_list = data
+    #             elif isinstance(data, dict):
+    #                 if 'data' in data:
+    #                     regions_list = data['data']
+    #                 elif 'results' in data:
+    #                     regions_list = data['results']
+    #                 elif 'regions' in data:
+    #                     regions_list = data['regions']
+    #             
+    #             # Extract region information
+    #             for region in regions_list:
+    #                 region_name = region.get('name', region.get('region_name', ''))
+    #                 if region_name:
+    #                     # Avoid duplicates
+    #                     if not any(r['name'] == region_name for r in regions):
+    #                         regions.append({
+    #                             'name': region_name,
+    #                             'code': region.get('code', region.get('psgc_code', ''))
+    #                         })
+    #             
+    #             if regions:
+    #                 break  # Success
+    #         except requests.exceptions.RequestException as e:
+    #             last_error = str(e)
+    #             continue
+    #         except Exception as e:
+    #             last_error = str(e)
+    #             continue
+    #     
+    #     # If no regions found from API, return hardcoded list of Philippine regions
+    #     if not regions:
+    #         # Philippine regions (17 regions + NCR)
+    #         regions = [
+    #             {'name': 'National Capital Region (NCR)', 'code': '13'},
+    #             {'name': 'Cordillera Administrative Region (CAR)', 'code': '14'},
+    #             {'name': 'Ilocos Region (Region I)', 'code': '01'},
+    #             {'name': 'Cagayan Valley (Region II)', 'code': '02'},
+    #             {'name': 'Central Luzon (Region III)', 'code': '03'},
+    #             {'name': 'CALABARZON (Region IV-A)', 'code': '04'},
+    #             {'name': 'MIMAROPA (Region IV-B)', 'code': '17'},
+    #             {'name': 'Bicol Region (Region V)', 'code': '05'},
+    #             {'name': 'Western Visayas (Region VI)', 'code': '06'},
+    #             {'name': 'Central Visayas (Region VII)', 'code': '07'},
+    #             {'name': 'Eastern Visayas (Region VIII)', 'code': '08'},
+    #             {'name': 'Zamboanga Peninsula (Region IX)', 'code': '09'},
+    #             {'name': 'Northern Mindanao (Region X)', 'code': '10'},
+    #             {'name': 'Davao Region (Region XI)', 'code': '11'},
+    #             {'name': 'SOCCSKSARGEN (Region XII)', 'code': '12'},
+    #             {'name': 'Caraga (Region XIII)', 'code': '16'},
+    #             {'name': 'Bangsamoro Autonomous Region in Muslim Mindanao (BARMM)', 'code': '15'},
+    #         ]
+    #     
+    #     # Sort regions alphabetically
+    #     regions.sort(key=lambda x: x['name'])
+    #     
+    #     return JsonResponse(regions, safe=False)
+    #     
+    # except Exception as e:
+    #     # Return hardcoded regions as fallback
+    #     regions = [
+    #         {'name': 'National Capital Region (NCR)', 'code': '13'},
+    #         {'name': 'Cordillera Administrative Region (CAR)', 'code': '14'},
+    #         {'name': 'Ilocos Region (Region I)', 'code': '01'},
+    #         {'name': 'Cagayan Valley (Region II)', 'code': '02'},
+    #         {'name': 'Central Luzon (Region III)', 'code': '03'},
+    #         {'name': 'CALABARZON (Region IV-A)', 'code': '04'},
+    #         {'name': 'MIMAROPA (Region IV-B)', 'code': '17'},
+    #         {'name': 'Bicol Region (Region V)', 'code': '05'},
+    #         {'name': 'Western Visayas (Region VI)', 'code': '06'},
+    #         {'name': 'Central Visayas (Region VII)', 'code': '07'},
+    #         {'name': 'Eastern Visayas (Region VIII)', 'code': '08'},
+    #         {'name': 'Zamboanga Peninsula (Region IX)', 'code': '09'},
+    #         {'name': 'Northern Mindanao (Region X)', 'code': '10'},
+    #         {'name': 'Davao Region (Region XI)', 'code': '11'},
+    #         {'name': 'SOCCSKSARGEN (Region XII)', 'code': '12'},
+    #         {'name': 'Caraga (Region XIII)', 'code': '16'},
+    #         {'name': 'Bangsamoro Autonomous Region in Muslim Mindanao (BARMM)', 'code': '15'},
+    #     ]
+    #     regions.sort(key=lambda x: x['name'])
+    #     return JsonResponse(regions, safe=False)
 
 def psgc_provinces(request):
-    """Get Mindanao provinces from PSGC API."""
+    """Get provinces from local JSON file (optionally filtered by region)."""
     try:
-        # Try multiple PSGC API endpoints
-        api_endpoints = [
-            'https://psgc.rootscratch.com/api/provinces',
-            'https://psgc.cloud/api/provinces',
-        ]
+        # Load provinces from local JSON file
+        json_path = os.path.join(settings.BASE_DIR, 'static', 'json', 'address', 'province.json')
         
-        provinces = []
+        with open(json_path, 'r', encoding='utf-8') as f:
+            provinces_data = json.load(f)
+        
+        # Get optional region filter
+        region = request.GET.get('region', '').strip()
         mindanao_codes = ['09', '10', '11', '12', '13', '14', '15', '16', '18']
         
-        for endpoint in api_endpoints:
-            try:
-                response = requests.get(endpoint, timeout=10)
-                response.raise_for_status()
-                data = response.json()
-                
-                # Handle different response formats
-                provinces_list = []
-                if isinstance(data, list):
-                    provinces_list = data
-                elif isinstance(data, dict):
-                    if 'data' in data:
-                        provinces_list = data['data']
-                    elif 'results' in data:
-                        provinces_list = data['results']
-                    elif 'provinces' in data:
-                        provinces_list = data['provinces']
-                
-                # Filter for Mindanao provinces
-                for province in provinces_list:
-                    code = str(province.get('code', province.get('psgc_code', '')))[:2]
-                    if code in mindanao_codes:
-                        province_name = province.get('name', province.get('province_name', ''))
-                        if province_name:
-                            # Avoid duplicates
-                            if not any(p['name'] == province_name for p in provinces):
-                                provinces.append({
-                                    'name': province_name,
-                                    'id': province.get('code', province.get('psgc_code', '')).lower()
-                                })
-                
-                if provinces:
-                    break  # Success, stop trying other endpoints
-            except:
-                continue  # Try next endpoint
+        provinces = []
+        seen_names = set()
         
-        # If still no provinces, use hardcoded Mindanao list as fallback
-        if not provinces:
-            mindanao_provinces = [
-                'Agusan del Norte', 'Agusan del Sur', 'Basilan', 'Bukidnon', 'Camiguin',
-                'Davao de Oro', 'Davao del Norte', 'Davao del Sur', 'Davao Occidental', 
-                'Davao Oriental', 'Dinagat Islands', 'Lanao del Norte', 'Lanao del Sur', 
-                'Maguindanao', 'Misamis Occidental', 'Misamis Oriental', 'Sarangani', 
-                'South Cotabato', 'Sultan Kudarat', 'Sulu', 'Surigao del Norte', 
-                'Surigao del Sur', 'Tawi-Tawi', 'Zamboanga del Norte', 
-                'Zamboanga del Sur', 'Zamboanga Sibugay', 'Cotabato'
-            ]
-            provinces = [{'name': p, 'id': p.lower().replace(' ', '-')} for p in mindanao_provinces]
+        for province in provinces_data:
+            province_name = province.get('province_name', '')
+            province_code = province.get('province_code', '')
+            region_code = province.get('region_code', '')
+            
+            # Filter by region if provided, otherwise filter for Mindanao
+            if region:
+                # Match by region code - handle both code format (e.g., "11") and name format
+                # Normalize the region parameter to get the code
+                region_code_to_match = None
+                if region.isdigit() and len(region) <= 2:
+                    # It's already a region code (e.g., "11")
+                    region_code_to_match = region.zfill(2)  # Ensure 2 digits (e.g., "11" -> "11")
+                elif region_code:
+                    # If region parameter is a name, try to match by comparing with province's region_code
+                    # The region parameter should be a code, but handle edge cases
+                    region_code_to_match = region[:2] if len(region) >= 2 else region
+                
+                # Match provinces by region code
+                if region_code_to_match and region_code and region_code[:2] == region_code_to_match[:2]:
+                    if province_name and province_name not in seen_names:
+                        provinces.append({
+                            'name': province_name,
+                            'id': province_name.lower()
+                        })
+                        seen_names.add(province_name)
+            else:
+                # Default: filter for Mindanao provinces
+                if province_code and province_code[:2] in mindanao_codes:
+                    if province_name and province_name not in seen_names:
+                        provinces.append({
+                            'name': province_name,
+                            'id': province_name.lower()
+                        })
+                        seen_names.add(province_name)
+        
+        # Sort provinces alphabetically
+        provinces.sort(key=lambda x: x['name'])
         
         return JsonResponse(provinces, safe=False)
+    except FileNotFoundError:
+        # Fallback to hardcoded Mindanao list if JSON file not found
+        mindanao_provinces = [
+            'Agusan del Norte', 'Agusan del Sur', 'Basilan', 'Bukidnon', 'Camiguin',
+            'Davao de Oro', 'Davao del Norte', 'Davao del Sur', 'Davao Occidental', 
+            'Davao Oriental', 'Dinagat Islands', 'Lanao del Norte', 'Lanao del Sur', 
+            'Maguindanao', 'Misamis Occidental', 'Misamis Oriental', 'Sarangani', 
+            'South Cotabato', 'Sultan Kudarat', 'Sulu', 'Surigao del Norte', 
+            'Surigao del Sur', 'Tawi-Tawi', 'Zamboanga del Norte', 
+            'Zamboanga del Sur', 'Zamboanga Sibugay', 'Cotabato'
+        ]
+        provinces = [{'name': p, 'id': p.lower().replace(' ', '-')} for p in mindanao_provinces]
+        return JsonResponse(provinces, safe=False)
     except Exception as e:
-        return JsonResponse({'error': f'Failed to contact PSGC API: {str(e)}'}, status=502)
+        return JsonResponse({'error': f'Failed to load provinces: {str(e)}'}, status=500)
+    
+    # OLD PSGC API CODE (COMMENTED OUT - NOW USING LOCAL JSON)
+    # try:
+    #     # Try multiple PSGC API endpoints
+    #     api_endpoints = [
+    #         'https://psgc.rootscratch.com/api/provinces',
+    #         'https://psgc.cloud/api/provinces',
+    #     ]
+    #     
+    #     provinces = []
+    #     mindanao_codes = ['09', '10', '11', '12', '13', '14', '15', '16', '18']
+    #     
+    #     for endpoint in api_endpoints:
+    #         try:
+    #             response = requests.get(endpoint, timeout=10)
+    #             response.raise_for_status()
+    #             data = response.json()
+    #             
+    #             # Handle different response formats
+    #             provinces_list = []
+    #             if isinstance(data, list):
+    #                 provinces_list = data
+    #             elif isinstance(data, dict):
+    #                 if 'data' in data:
+    #                     provinces_list = data['data']
+    #                 elif 'results' in data:
+    #                     provinces_list = data['results']
+    #                 elif 'provinces' in data:
+    #                     provinces_list = data['provinces']
+    #             
+    #             # Filter for Mindanao provinces
+    #             for province in provinces_list:
+    #                 code = str(province.get('code', province.get('psgc_code', '')))[:2]
+    #                 if code in mindanao_codes:
+    #                     province_name = province.get('name', province.get('province_name', ''))
+    #                     if province_name:
+    #                         # Avoid duplicates
+    #                         if not any(p['name'] == province_name for p in provinces):
+    #                             provinces.append({
+    #                                 'name': province_name,
+    #                                 'id': province.get('code', province.get('psgc_code', '')).lower()
+    #                             })
+    #             
+    #             if provinces:
+    #                 break  # Success, stop trying other endpoints
+    #         except:
+    #             continue  # Try next endpoint
+    #     
+    #     # If still no provinces, use hardcoded Mindanao list as fallback
+    #     if not provinces:
+    #         mindanao_provinces = [
+    #             'Agusan del Norte', 'Agusan del Sur', 'Basilan', 'Bukidnon', 'Camiguin',
+    #             'Davao de Oro', 'Davao del Norte', 'Davao del Sur', 'Davao Occidental', 
+    #             'Davao Oriental', 'Dinagat Islands', 'Lanao del Norte', 'Lanao del Sur', 
+    #             'Maguindanao', 'Misamis Occidental', 'Misamis Oriental', 'Sarangani', 
+    #             'South Cotabato', 'Sultan Kudarat', 'Sulu', 'Surigao del Norte', 
+    #             'Surigao del Sur', 'Tawi-Tawi', 'Zamboanga del Norte', 
+    #             'Zamboanga del Sur', 'Zamboanga Sibugay', 'Cotabato'
+    #         ]
+    #         provinces = [{'name': p, 'id': p.lower().replace(' ', '-')} for p in mindanao_provinces]
+    #     
+    #     return JsonResponse(provinces, safe=False)
+    # except Exception as e:
+    #     return JsonResponse({'error': f'Failed to contact PSGC API: {str(e)}'}, status=502)
 
 def psgc_cities(request):
-    """Get cities/municipalities for a selected province from PSGC API."""
+    """Get cities/municipalities for a selected province from local JSON file."""
     province = request.GET.get('province', '').strip()
     if not province:
         return JsonResponse({'error': 'Province parameter is required.'}, status=400)
     
     try:
-        api_base_urls = [
-            'https://psgc.rootscratch.com/api',
-            'https://psgc.cloud/api',
-        ]
+        # Load cities from local JSON file
+        json_path = os.path.join(settings.BASE_DIR, 'static', 'json', 'address', 'city.json')
         
+        with open(json_path, 'r', encoding='utf-8') as f:
+            cities_data = json.load(f)
+        
+        # First, find the province code from province.json
+        province_json_path = os.path.join(settings.BASE_DIR, 'static', 'json', 'address', 'province.json')
         province_code = None
-        cities = []
         
-        # Find province code
-        for base_url in api_base_urls:
-            try:
-                province_response = requests.get(
-                    f'{base_url}/provinces',
-                    params={'q': province, 'name': province},
-                    timeout=10,
-                )
-                if province_response.status_code == 200:
-                    province_data = province_response.json()
-                    provinces_list = []
-                    if isinstance(province_data, list):
-                        provinces_list = province_data
-                    elif isinstance(province_data, dict):
-                        provinces_list = province_data.get('data', province_data.get('results', []))
-                    
-                    for prov in provinces_list:
-                        prov_name = prov.get('name', prov.get('province_name', ''))
-                        if prov_name.lower() == province.lower():
-                            province_code = prov.get('code', prov.get('psgc_code', ''))
-                            break
-                    
-                    if province_code:
-                        # Get cities for this province
-                        cities_response = requests.get(
-                            f'{base_url}/provinces/{province_code}/cities',
-                            timeout=10,
-                        )
-                        if cities_response.status_code == 200:
-                            cities_data = cities_response.json()
-                            cities_list = []
-                            if isinstance(cities_data, list):
-                                cities_list = cities_data
-                            elif isinstance(cities_data, dict):
-                                cities_list = cities_data.get('data', cities_data.get('results', []))
-                            
-                            for city in cities_list:
-                                city_name = city.get('name', city.get('city_name', ''))
-                                if city_name:
-                                    cities.append({
-                                        'name': city_name,
-                                        'id': city.get('code', city.get('psgc_code', '')),
-                                    })
-                        
-                        # Get municipalities
-                        municipalities_response = requests.get(
-                            f'{base_url}/provinces/{province_code}/municipalities',
-                            timeout=10,
-                        )
-                        if municipalities_response.status_code == 200:
-                            municipalities_data = municipalities_response.json()
-                            municipalities_list = []
-                            if isinstance(municipalities_data, list):
-                                municipalities_list = municipalities_data
-                            elif isinstance(municipalities_data, dict):
-                                municipalities_list = municipalities_data.get('data', municipalities_data.get('results', []))
-                            
-                            for municipality in municipalities_list:
-                                municipality_name = municipality.get('name', municipality.get('municipality_name', ''))
-                                if municipality_name and not any(c['name'] == municipality_name for c in cities):
-                                    cities.append({
-                                        'name': municipality_name,
-                                        'id': municipality.get('code', municipality.get('psgc_code', '')),
-                                    })
-                        
-                        if cities:
-                            break  # Success
-            except:
-                continue
+        try:
+            with open(province_json_path, 'r', encoding='utf-8') as f:
+                provinces_data = json.load(f)
+                for prov in provinces_data:
+                    prov_name = prov.get('province_name', '')
+                    if prov_name.lower() == province.lower():
+                        province_code = prov.get('province_code', '')
+                        break
+        except:
+            pass
+        
+        cities = []
+        seen_names = set()
+        
+        # Filter cities by province code
+        if not province_code:
+            return JsonResponse({'error': 'Province not found'}, status=404)
+        
+        for city in cities_data:
+            city_name = city.get('city_name', '')
+            city_province_code = city.get('province_code', '')
+            
+            # Match by province code
+            if city_province_code == province_code:
+                if city_name and city_name not in seen_names:
+                    cities.append({
+                        'name': city_name,
+                        'id': city.get('city_code', city.get('psgc_code', ''))
+                    })
+                    seen_names.add(city_name)
         
         if not cities:
             return JsonResponse({'error': 'No cities/municipalities found for this province'}, status=404)
         
+        # Sort cities alphabetically
+        cities.sort(key=lambda x: x['name'])
+        
         return JsonResponse(cities, safe=False)
+    except FileNotFoundError:
+        return JsonResponse({'error': 'Address data file not found'}, status=404)
     except Exception as e:
-        return JsonResponse({'error': f'Failed to contact PSGC API: {str(e)}'}, status=502)
+        return JsonResponse({'error': f'Failed to load cities: {str(e)}'}, status=500)
+    
+    # OLD PSGC API CODE (COMMENTED OUT - NOW USING LOCAL JSON)
+    # province = request.GET.get('province', '').strip()
+    # if not province:
+    #     return JsonResponse({'error': 'Province parameter is required.'}, status=400)
+    # 
+    # try:
+    #     api_base_urls = [
+    #         'https://psgc.rootscratch.com/api',
+    #         'https://psgc.cloud/api',
+    #     ]
+    #     
+    #     province_code = None
+    #     cities = []
+    #     
+    #     # Find province code
+    #     for base_url in api_base_urls:
+    #         try:
+    #             province_response = requests.get(
+    #                 f'{base_url}/provinces',
+    #                 params={'q': province, 'name': province},
+    #                 timeout=10,
+    #             )
+    #             if province_response.status_code == 200:
+    #                 province_data = province_response.json()
+    #                 provinces_list = []
+    #                 if isinstance(province_data, list):
+    #                     provinces_list = province_data
+    #                 elif isinstance(province_data, dict):
+    #                     provinces_list = province_data.get('data', province_data.get('results', []))
+    #                 
+    #                 for prov in provinces_list:
+    #                     prov_name = prov.get('name', prov.get('province_name', ''))
+    #                     if prov_name.lower() == province.lower():
+    #                         province_code = prov.get('code', prov.get('psgc_code', ''))
+    #                         break
+    #                 
+    #                 if province_code:
+    #                     # Get cities for this province
+    #                     cities_response = requests.get(
+    #                         f'{base_url}/provinces/{province_code}/cities',
+    #                         timeout=10,
+    #                     )
+    #                     if cities_response.status_code == 200:
+    #                         cities_data = cities_response.json()
+    #                         cities_list = []
+    #                         if isinstance(cities_data, list):
+    #                             cities_list = cities_data
+    #                         elif isinstance(cities_data, dict):
+    #                             cities_list = cities_data.get('data', cities_data.get('results', []))
+    #                         
+    #                         for city in cities_list:
+    #                             city_name = city.get('name', city.get('city_name', ''))
+    #                             if city_name:
+    #                                 cities.append({
+    #                                     'name': city_name,
+    #                                     'id': city.get('code', city.get('psgc_code', '')),
+    #                                 })
+    #                     
+    #                     # Get municipalities
+    #                     municipalities_response = requests.get(
+    #                         f'{base_url}/provinces/{province_code}/municipalities',
+    #                         timeout=10,
+    #                     )
+    #                     if municipalities_response.status_code == 200:
+    #                         municipalities_data = municipalities_response.json()
+    #                         municipalities_list = []
+    #                         if isinstance(municipalities_data, list):
+    #                             municipalities_list = municipalities_data
+    #                         elif isinstance(municipalities_data, dict):
+    #                             municipalities_list = municipalities_data.get('data', municipalities_data.get('results', []))
+    #                         
+    #                         for municipality in municipalities_list:
+    #                             municipality_name = municipality.get('name', municipality.get('municipality_name', ''))
+    #                             if municipality_name and not any(c['name'] == municipality_name for c in cities):
+    #                                 cities.append({
+    #                                     'name': municipality_name,
+    #                                     'id': municipality.get('code', municipality.get('psgc_code', '')),
+    #                                 })
+    #                     
+    #                     if cities:
+    #                         break  # Success
+    #         except:
+    #             continue
+    #     
+    #     if not cities:
+    #         return JsonResponse({'error': 'No cities/municipalities found for this province'}, status=404)
+    #     
+    #     return JsonResponse(cities, safe=False)
+    # except Exception as e:
+    #     return JsonResponse({'error': f'Failed to contact PSGC API: {str(e)}'}, status=502)
 
 def psgc_barangays(request):
-    """Get barangays for a selected city/municipality from PSGC API."""
+    """Get barangays for a selected city/municipality from local JSON file."""
     city = request.GET.get('city', '').strip()
     province = request.GET.get('province', '').strip()
     if not city:
         return JsonResponse({'error': 'City parameter is required.'}, status=400)
     
     try:
-        api_base_urls = [
-            'https://psgc.rootscratch.com/api',
-            'https://psgc.cloud/api',
-        ]
+        # Load barangays from local JSON file
+        json_path = os.path.join(settings.BASE_DIR, 'static', 'json', 'address', 'barangay.json')
         
+        with open(json_path, 'r', encoding='utf-8') as f:
+            barangays_data = json.load(f)
+        
+        # First, find the city code from city.json
+        city_json_path = os.path.join(settings.BASE_DIR, 'static', 'json', 'address', 'city.json')
         city_code = None
-        barangays = []
         
-        # Find city/municipality code
-        for base_url in api_base_urls:
-            try:
-                # Try cities first
-                city_response = requests.get(
-                    f'{base_url}/cities',
-                    params={'q': city, 'name': city},
-                    timeout=10,
-                )
-                
-                if city_response.status_code == 200:
-                    city_data = city_response.json()
-                    cities_list = []
-                    if isinstance(city_data, list):
-                        cities_list = city_data
-                    elif isinstance(city_data, dict):
-                        cities_list = city_data.get('data', city_data.get('results', []))
-                    
-                    for c in cities_list:
-                        city_name = c.get('name', c.get('city_name', ''))
-                        if city_name.lower() == city.lower():
-                            city_code = c.get('code', c.get('psgc_code', ''))
-                            break
-                
-                # If not found, try municipalities
-                if not city_code:
-                    municipality_response = requests.get(
-                        f'{base_url}/municipalities',
-                        params={'q': city, 'name': city},
-                        timeout=10,
-                    )
-                    if municipality_response.status_code == 200:
-                        municipality_data = municipality_response.json()
-                        municipalities_list = []
-                        if isinstance(municipality_data, list):
-                            municipalities_list = municipality_data
-                        elif isinstance(municipality_data, dict):
-                            municipalities_list = municipality_data.get('data', municipality_data.get('results', []))
-                        
-                        for m in municipalities_list:
-                            municipality_name = m.get('name', m.get('municipality_name', ''))
-                            if municipality_name.lower() == city.lower():
-                                city_code = m.get('code', m.get('psgc_code', ''))
-                                break
-                
-                if city_code:
-                    # Get barangays
-                    barangays_response = requests.get(
-                        f'{base_url}/cities/{city_code}/barangays',
-                        timeout=10,
-                    )
-                    
-                    if barangays_response.status_code != 200:
-                        barangays_response = requests.get(
-                            f'{base_url}/municipalities/{city_code}/barangays',
-                            timeout=10,
-                        )
-                    
-                    if barangays_response.status_code == 200:
-                        barangays_data = barangays_response.json()
-                        barangays_list = []
-                        if isinstance(barangays_data, list):
-                            barangays_list = barangays_data
-                        elif isinstance(barangays_data, dict):
-                            barangays_list = barangays_data.get('data', barangays_data.get('results', []))
-                        
-                        for barangay in barangays_list:
-                            barangay_name = barangay.get('name', barangay.get('barangay_name', ''))
-                            if barangay_name:
-                                barangays.append({
-                                    'name': barangay_name,
-                                    'id': barangay.get('code', barangay.get('psgc_code', '')),
-                                })
-                        
-                        if barangays:
-                            break  # Success
-            except:
-                continue
+        try:
+            with open(city_json_path, 'r', encoding='utf-8') as f:
+                cities_data = json.load(f)
+                for c in cities_data:
+                    city_name = c.get('city_name', '')
+                    if city_name.lower() == city.lower():
+                        city_code = c.get('city_code', '')
+                        break
+        except:
+            pass
+        
+        if not city_code:
+            return JsonResponse({'error': 'City not found'}, status=404)
+        
+        barangays = []
+        seen_names = set()
+        
+        # Filter barangays by city code
+        for barangay in barangays_data:
+            barangay_name = barangay.get('brgy_name', '')
+            barangay_city_code = barangay.get('city_code', '')
+            
+            # Match by city code
+            if barangay_city_code == city_code:
+                if barangay_name and barangay_name not in seen_names:
+                    barangays.append({
+                        'name': barangay_name,
+                        'id': barangay.get('brgy_code', '')
+                    })
+                    seen_names.add(barangay_name)
         
         if not barangays:
             return JsonResponse({'error': 'No barangays found for this city/municipality'}, status=404)
         
+        # Sort barangays alphabetically
+        barangays.sort(key=lambda x: x['name'])
+        
         return JsonResponse(barangays, safe=False)
+    except FileNotFoundError:
+        return JsonResponse({'error': 'Address data file not found'}, status=404)
     except Exception as e:
-        return JsonResponse({'error': f'Failed to contact PSGC API: {str(e)}'}, status=502)
+        return JsonResponse({'error': f'Failed to load barangays: {str(e)}'}, status=500)
+    
+    # OLD PSGC API CODE (COMMENTED OUT - NOW USING LOCAL JSON)
+    # city = request.GET.get('city', '').strip()
+    # province = request.GET.get('province', '').strip()
+    # if not city:
+    #     return JsonResponse({'error': 'City parameter is required.'}, status=400)
+    # 
+    # try:
+    #     api_base_urls = [
+    #         'https://psgc.rootscratch.com/api',
+    #         'https://psgc.cloud/api',
+    #     ]
+    #     
+    #     city_code = None
+    #     barangays = []
+    #     
+    #     # Find city/municipality code
+    #     for base_url in api_base_urls:
+    #         try:
+    #             # Try cities first
+    #             city_response = requests.get(
+    #                 f'{base_url}/cities',
+    #                 params={'q': city, 'name': city},
+    #                 timeout=10,
+    #             )
+    #             
+    #             if city_response.status_code == 200:
+    #                 city_data = city_response.json()
+    #                 cities_list = []
+    #                 if isinstance(city_data, list):
+    #                     cities_list = city_data
+    #                 elif isinstance(city_data, dict):
+    #                     cities_list = city_data.get('data', city_data.get('results', []))
+    #                 
+    #                 for c in cities_list:
+    #                     city_name = c.get('name', c.get('city_name', ''))
+    #                     if city_name.lower() == city.lower():
+    #                         city_code = c.get('code', c.get('psgc_code', ''))
+    #                         break
+    #             
+    #             # If not found, try municipalities
+    #             if not city_code:
+    #                 municipality_response = requests.get(
+    #                     f'{base_url}/municipalities',
+    #                     params={'q': city, 'name': city},
+    #                     timeout=10,
+    #                 )
+    #                 if municipality_response.status_code == 200:
+    #                     municipality_data = municipality_response.json()
+    #                     municipalities_list = []
+    #                     if isinstance(municipality_data, list):
+    #                         municipalities_list = municipality_data
+    #                     elif isinstance(municipality_data, dict):
+    #                         municipalities_list = municipality_data.get('data', municipality_data.get('results', []))
+    #                     
+    #                     for m in municipalities_list:
+    #                         municipality_name = m.get('name', m.get('municipality_name', ''))
+    #                         if municipality_name.lower() == city.lower():
+    #                             city_code = m.get('code', m.get('psgc_code', ''))
+    #                             break
+    #             
+    #             if city_code:
+    #                 # Get barangays
+    #                 barangays_response = requests.get(
+    #                     f'{base_url}/cities/{city_code}/barangays',
+    #                     timeout=10,
+    #                 )
+    #                 
+    #                 if barangays_response.status_code != 200:
+    #                     barangays_response = requests.get(
+    #                         f'{base_url}/municipalities/{city_code}/barangays',
+    #                         timeout=10,
+    #                     )
+    #                 
+    #                 if barangays_response.status_code == 200:
+    #                     barangays_data = barangays_response.json()
+    #                     barangays_list = []
+    #                     if isinstance(barangays_data, list):
+    #                         barangays_list = barangays_data
+    #                     elif isinstance(barangays_data, dict):
+    #                         barangays_list = barangays_data.get('data', barangays_data.get('results', []))
+    #                     
+    #                     for barangay in barangays_list:
+    #                         barangay_name = barangay.get('name', barangay.get('barangay_name', ''))
+    #                         if barangay_name:
+    #                             barangays.append({
+    #                                 'name': barangay_name,
+    #                                 'id': barangay.get('code', barangay.get('psgc_code', '')),
+    #                             })
+    #                     
+    #                     if barangays:
+    #                         break  # Success
+    #         except:
+    #             continue
+    #     
+    #     if not barangays:
+    #         return JsonResponse({'error': 'No barangays found for this city/municipality'}, status=404)
+    #     
+    #     return JsonResponse(barangays, safe=False)
+    # except Exception as e:
+    #     return JsonResponse({'error': f'Failed to contact PSGC API: {str(e)}'}, status=502)
 
 def get_puroks_by_barangay(request):
     """API endpoint to get puroks for a selected barangay - supports both barangay_id and barangay name"""

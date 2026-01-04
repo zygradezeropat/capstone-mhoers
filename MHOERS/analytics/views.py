@@ -4,7 +4,7 @@ from analytics.models import Disease
 from patients.models import Medical_History, Patient
 from referrals.models import Referral, FollowUpVisit
 from facilities.models import Facility
-from accounts.models import BHWRegistration, Doctors, Nurses, Midwives
+from accounts.models import BHWRegistration, Doctors
 from collections import Counter, defaultdict
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
@@ -260,6 +260,43 @@ def get_monthly_diagnosis_trends(request):
         'diseases': DISEASE_ORDER + ['Others'],
         'data': data
     })
+
+
+@login_required
+def medical_certificate_report(request):
+    """
+    Render the medical certificate template for printing/preview.
+    This view returns the standalone `medical_certificate.html` template.
+    It can be extended later to accept parameters (patient, date, diagnosis).
+    """
+    referral_id = request.GET.get('referral_id') or request.GET.get('referral')
+    context = {}
+    if referral_id:
+        try:
+            # referral_id in Referral is an AutoField primary key named referral_id
+            referral = Referral.objects.select_related('patient', 'examined_by', 'disease').get(referral_id=referral_id)
+            patient = referral.patient
+            doctors = Doctors.objects.filter(user=referral.examined_by).first()
+
+            patient_name = ' '.join(filter(None, [patient.first_name, patient.middle_name or '', patient.last_name]))
+            diagnosis = referral.final_diagnosis or referral.initial_diagnosis or (referral.disease.name if referral.disease else '')
+            certificate_date = referral.created_at.strftime('%B %d, %Y') if referral.created_at else ''
+
+            context.update({
+                'referral_id': referral.referral_id,
+                'patient_name': patient_name,
+                'patient_age': getattr(patient, 'age', ''),
+                'patient_address': patient.p_address or '',
+                'diagnosis': diagnosis or '',
+                'certificate_date': certificate_date,
+                'examined_by': referral.examined_by.get_full_name() if referral.examined_by else '',
+                'examined_title': 'M.D',
+                'remarks': referral.remarks or '',
+            })
+        except Referral.DoesNotExist:
+            context['error'] = f"Referral with id {referral_id} not found."
+
+    return render(request, 'analytics/medical_certificate.html', context)
 
 
 def get_disease_counts_per_user(request):

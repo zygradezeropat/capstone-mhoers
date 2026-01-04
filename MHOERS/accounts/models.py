@@ -68,7 +68,7 @@ class Doctors(models.Model):
         ('PENDING_APPROVAL', 'Pending Approval'),
         ('ACTIVE', 'Active'),
         ('REJECTED', 'Rejected'),
-        ('INACTIVE', 'Inactive'),
+        ('INACTIVE', 'Inactive'), 
         ('RETIRED', 'Retired'),
         ('SUSPENDED', 'Suspended'),
     ]

@@ -18,6 +18,7 @@ urlpatterns = [
   path('reports/facility-workforce/', views.facility_workforce_masterlist, name='facility_workforce_masterlist'),
   path('reports/referral-registry/', views.referral_registry_report, name='referral_registry_report'),
   path('reports/barangay-referral-performance/', views.barangay_referral_performance_report, name='barangay_referral_performance_report'),
+  path('reports/medical-certificate/', views.medical_certificate_report, name='medical_certificate_report'),
   path('new-heatmap/', views.new_heatmap_view, name='new_heatmap'),
   path('api/barangay-heatmap-data/', views.get_barangay_heatmap_data, name='barangay_heatmap_data'),
   path('api/barangay-breakdown/', views.get_barangay_breakdown, name='barangay_breakdown'),

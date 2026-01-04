@@ -9,7 +9,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div> 
 
-            <!-- Modal Body -->
+            <!-- Modal Body --> 
             <div class="modal-body p-4">
                 <form action="{% url 'patients:editPatient' %}" method="POST" id="editPatientForm" class="needs-validation" novalidate>
                     {% csrf_token %}
@@ -321,6 +321,38 @@
     return { purok: '', barangay: '', municipality: '', province: '' };
   }
 
+  // Helper: select an option by matching its text or value (case-insensitive)
+  function setSelectByTextOrValueInsensitive($select, text) {
+    if (!text || !$select || !$select.length) return false;
+    const want = ('' + text).trim().toLowerCase();
+    let matched = false;
+    $select.find('option').each(function() {
+      const $opt = jQuery(this);
+      const optVal = ('' + ($opt.attr('value') || '')).trim().toLowerCase();
+      const optText = ('' + ($opt.text() || '')).trim().toLowerCase();
+      if (optVal === want || optText === want) {
+        $select.val($opt.attr('value'));
+        matched = true;
+        return false; // break
+      }
+    });
+
+    // fallback: try contains match on text
+    if (!matched) {
+      $select.find('option').each(function() {
+        const $opt = jQuery(this);
+        const optText = ('' + ($opt.text() || '')).trim().toLowerCase();
+        if (optText.indexOf(want) !== -1 && want.length > 2) {
+          $select.val($opt.attr('value'));
+          matched = true;
+          return false;
+        }
+      });
+    }
+
+    return matched;
+  }
+
   // Initialize location dropdowns for edit modal
   function initializeEditLocationDropdowns() {
     if (typeof jQuery === 'undefined') {
@@ -560,51 +592,46 @@
           return;
         }
         
-        // Try to set province value
-        provinceSelect.val(parsed.province);
-        
-        // Verify it was set correctly
-        if (provinceSelect.val() === parsed.province) {
-          console.log('Province set:', parsed.province);
+        // Try to set province using case-insensitive matching (value or text)
+        const provMatched = setSelectByTextOrValueInsensitive(provinceSelect, parsed.province);
+
+        if (provMatched) {
+          console.log('Province matched and set:', parsed.province);
           provinceSelect.trigger('change.edit');
-          
-          // Wait for cities to load, then set municipality
+
+          // Wait for cities to load, then set municipality using helper
           setTimeout(function() {
             const municipalitySelect = $('#editMunicipality');
             let cityAttempts = 0;
             const checkCity = setInterval(function() {
               cityAttempts++;
-              const cityReady = municipalitySelect.prop('disabled') === false && 
-                               municipalitySelect.find('option').length > 1;
-              
+              const cityReady = municipalitySelect.prop('disabled') === false && municipalitySelect.find('option').length > 1;
+
               if (cityReady || cityAttempts >= 30) {
                 clearInterval(checkCity);
-                
+
                 if (cityReady) {
-                  municipalitySelect.val(parsed.municipality);
-                  
-                  if (municipalitySelect.val() === parsed.municipality) {
-                    console.log('Municipality set:', parsed.municipality);
+                  const muniMatched = setSelectByTextOrValueInsensitive(municipalitySelect, parsed.municipality);
+                  if (muniMatched) {
+                    console.log('Municipality matched and set:', parsed.municipality);
                     municipalitySelect.trigger('change.edit');
-                    
+
                     // Wait for barangays to load, then set barangay
                     setTimeout(function() {
                       const barangaySelect = $('#editBarangay');
                       let barangayAttempts = 0;
                       const checkBarangay = setInterval(function() {
                         barangayAttempts++;
-                        const barangayReady = barangaySelect.prop('disabled') === false && 
-                                            barangaySelect.find('option').length > 1;
-                        
+                        const barangayReady = barangaySelect.prop('disabled') === false && barangaySelect.find('option').length > 1;
+
                         if (barangayReady || barangayAttempts >= 30) {
                           clearInterval(checkBarangay);
-                          
+
                           if (barangayReady) {
-                            barangaySelect.val(parsed.barangay);
-                            
-                            if (barangaySelect.val() === parsed.barangay) {
-                              console.log('Barangay set:', parsed.barangay);
-                              
+                            const brgyMatched = setSelectByTextOrValueInsensitive(barangaySelect, parsed.barangay);
+                            if (brgyMatched) {
+                              console.log('Barangay matched and set:', parsed.barangay);
+
                               // Set purok (text input)
                               const purokInput = $('#editPurok');
                               if (parsed.purok) {
@@ -614,7 +641,7 @@
                                 console.log('Address population complete!');
                               }
                             } else {
-                              console.warn('Failed to set barangay. Expected:', parsed.barangay, 'Got:', barangaySelect.val());
+                              console.warn('Failed to match barangay. Expected:', parsed.barangay, 'Available:', barangaySelect.find('option').map(function(){ return jQuery(this).text(); }).get());
                             }
                           } else {
                             console.error('Timeout waiting for barangays to load');
@@ -623,7 +650,7 @@
                       }, 100);
                     }, 500);
                   } else {
-                    console.warn('Failed to set municipality. Expected:', parsed.municipality, 'Got:', municipalitySelect.val());
+                    console.warn('Failed to match municipality. Expected:', parsed.municipality, 'Available:', municipalitySelect.find('option').map(function(){ return jQuery(this).text(); }).get());
                   }
                 } else {
                   console.error('Timeout waiting for cities to load');
@@ -632,8 +659,7 @@
             }, 100);
           }, 500);
         } else {
-          console.error('Failed to set province. Expected:', parsed.province, 'Got:', provinceSelect.val());
-          console.log('Available provinces:', provinceSelect.find('option').map(function() { return $(this).val(); }).get());
+          console.error('Failed to match province. Expected:', parsed.province, 'Available:', provinceSelect.find('option').map(function(){ return jQuery(this).text(); }).get());
         }
       }
     }, 100);
@@ -654,6 +680,30 @@
       
       $(document).ready(function() {
         // Initialize when modal is shown
+        // Delegated handler: ensure edit button sets address and patient id before modal opens
+        $(document).on('click', '.btn-edit-patient, .btn-edit, [data-action="edit-patient"]', function(e) {
+          try {
+            const $btn = jQuery(this);
+            let addr = $btn.data('address') || $btn.attr('data-address') || '';
+            if (!addr) {
+              const $tr = $btn.closest('tr');
+              addr = $tr.data('address') || $tr.attr('data-address') || '';
+            }
+            if (addr) {
+              window.editPatientAddress = addr;
+            }
+
+            let pid = $btn.data('patient-id') || $btn.attr('data-patient-id') || '';
+            if (!pid) {
+              const $tr = $btn.closest('tr');
+              pid = $tr.data('patient-id') || $tr.attr('data-patient-id') || '';
+            }
+            if (pid) jQuery('#edit-patient-id').val(pid);
+          } catch (err) {
+            console.warn('Error in delegated edit-button handler', err);
+          }
+        });
+
         $('#editPatients').on('shown.bs.modal', function() {
           // Always initialize dropdowns
           initializeEditLocationDropdowns();

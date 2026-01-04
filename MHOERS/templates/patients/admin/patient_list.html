@@ -1063,6 +1063,12 @@ $(document).ready(function() {
   // Handle patient row click - open modal with patient details
   // Only target patient rows in the All Patients tab (#allTable), not medical history tab
   $(document).on('click', '#allTable .patient-row', function(e) {
+    // In patients view, disable row click (TD) opening the modal.
+    // The `.view-button` has its own handler and will still work.
+    if (viewMode === 'patients') {
+      return;
+    }
+
     // Don't trigger if clicking on the delete button
     if ($(e.target).closest('.delete-button').length) {
       return;

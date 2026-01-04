@@ -385,8 +385,8 @@
                   </option>
                   
                   {% endif %}
-                   {% if is_doctor %}
-                  <option value="{% url 'doctor_transactions_report' %}">
+                  {% if is_doctor %}
+                  <option value="{% url 'medical_certificate_report' %}">
                     Medical Certificate
                   </option>
 

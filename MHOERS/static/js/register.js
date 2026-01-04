@@ -1564,9 +1564,10 @@
                         const option = document.createElement('option');
                         // Handle both object and string formats
                         const regionName = typeof region === 'string' ? region : (region.name || region.region_name || '');
-                        const regionValue = typeof region === 'string' ? region : (region.name || region.code || '');
-                        option.value = regionValue;
-                        option.textContent = regionName;
+                        // FIX: Use region code as value (not name) so backend can match properly
+                        const regionValue = typeof region === 'string' ? region : (region.code || region.region_code || region.name || '');
+                        option.value = regionValue;  // This should be the code (e.g., "11" for Region XI)
+                        option.textContent = regionName;  // This is the display name (e.g., "Region XI (Davao Region)")
                         regionSelect.appendChild(option);
                     });
                     console.log(`Loaded ${regionsList.length} regions`);

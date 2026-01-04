@@ -1,0 +1,180 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Medical Certificate</title>
+
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            margin: 40px;
+            color: #000;
+        }
+
+        .container {
+            width: 800px;
+            margin: auto;
+        }
+
+        .header {
+            text-align: center;
+            line-height: 1.2;
+            position: relative;
+            min-height: 100px; /* smaller header */
+        }
+
+        .header img.logo,
+        .header img.seal {
+            height: 100%;
+            max-height: 100px; /* match new header height */
+            width: auto;
+            position: absolute;
+            top: 0;
+        }
+        .header img.logo {
+            left: 0;
+        }
+
+        .header img.seal {
+            right: 0;
+        }
+
+        .header p {
+            font-size: 15px; /* smaller text to match smaller header */
+            margin-top: 5px;
+        }
+
+
+        .title {
+            margin: 50px auto 30px;
+            text-align: center;
+            font-weight: bold;
+            border: 2px solid #000;
+            width: 90%; 
+            padding: 20px 30px;
+            font-size: 18px;
+            text-decoration: underline;
+        }
+
+        .content {
+            font-size: 16px;
+            text-align: justify;
+            
+        }
+
+        .content p {
+            margin-bottom: 18px;
+            
+        }
+        .content .greetings {
+            margin-bottom: 40px;
+            margin-top: 40px;
+        }
+        .label {
+            font-weight: bold;
+        }
+
+        .diagnosis {
+            margin-left: 100px;
+            font-style: italic;
+        }
+
+        .remarks {
+            font-weight: bold;
+            margin-top: 20px;
+        }
+
+        .footer {
+            margin-top: 80px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .qr img {
+            width: 120px;
+        }
+
+        .signature p {
+            margin: 2px 0;
+        }
+      
+    </style>
+</head>
+<body>
+
+<div class="container-fluid">
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <div class="container">
+
+    <!-- HEADER -->
+    <div class="header">
+        <img src="{% static 'images/LGU-NEWCORELLA.png' %}" class="logo" alt="Logo">
+        <img src="{% static 'images/MHO-LOGO.png' %}" class="seal" alt="Seal">
+
+        <p>
+            <strong>Republic of the Philippines</strong><br>
+            Province of Davao del Norte, Region XI<br>
+            <strong>Municipality of New Corella</strong><br>
+            <strong>Office of the Municipal Health Officer</strong><br>
+            Purok 5, Poblacion, New Corella, Davao del Norte<br>
+            rhunewcorella2020@gmail.com | Cel. No: 09700933480
+        </p>
+    </div>
+
+    <!-- TITLE -->
+    <div style="text-align:center;">
+        <div class="title">MEDICAL CERTIFICATE</div>
+    </div>
+
+    <!-- BODY -->
+    <div class="content">
+        <p class="greetings"><strong>TO WHOM IT MAY CONCERN:</strong></p>
+
+        <p style="text-indent: 40px;">
+            This certifies <strong>{{ patient_name|upper|default:"N/A" }}</strong>, <strong>{{ patient_age|upper|default:"" }} years old</strong>, a resident of
+            <strong>{{ patient_address|upper|default:"N/A" }}</strong>, has been examined and given
+            the following services in this facility on <strong>{{ certificate_date|upper|default:"" }}</strong>.
+        </p>
+
+        <p class="label">Diagnosis:</p>
+        <p class="diagnosis">{{ diagnosis|default:"N/A" }}</p>
+
+        <p class="remarks">Remarks:</p>
+        <p class="diagnosis">POSSIBLE HEALING PERIOD: 1–3 DAYS</p>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+        <div class="qr">
+           
+        </div>
+
+        <div class="signature">
+            <p><strong>{{ examined_by|upper }}, MD</strong></p>
+            <p><strong>General Physician</strong></p>
+            <p><strong>{{ certificate_date|default:"" }}</strong>.</p>
+        </div>
+    </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
+
+<!-- Confirmation div -->
+<div style="text-align:center; margin-top:12px; font-weight:600;">
+    {% if referral_id %}
+        Certificate generated for referral #: {{ referral_id }}
+    {% elif error %}
+        {{ error }}
+    {% else %}
+        Certificate preview
+    {% endif %}
+</div>
