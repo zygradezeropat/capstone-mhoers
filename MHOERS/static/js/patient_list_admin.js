@@ -664,6 +664,12 @@ $(document).ready(function() {
   
   // Function to populate view modal
   function populateViewModal(button) {
+    // CRITICAL: Skip if opening from referral history (will be populated via AJAX)
+    if (window.openingFromReferralHistory) {
+      console.log('⚠️ populateViewModal skipped - opening from referral history');
+      return;
+    }
+    
     console.log('populateViewModal called with button:', button);
     if (!button || !button.length) {
       console.log('No button provided or button is empty');
@@ -1144,7 +1150,7 @@ $(document).ready(function() {
 
       // Hide Referred button if status is completed
       const status = button.attr('data-status') || button.data('status') || '';
-      const referralId = button.attr('data-id') || button.data('id') || '';
+      let referralId = button.attr('data-id') || button.data('id') || '';
       
       // Hide "Doctor Notes & Actions" section if status is pending or in-progress
       // Only show it when referral is completed
@@ -1164,7 +1170,8 @@ $(document).ready(function() {
       console.log('Button attr data-id:', button.attr('data-id'));
       console.log('Button data id:', button.data('id'));
       console.log('Final status:', status);
-      console.log('Final referralId:', referralId);
+      console.log('Final referralId from button:', referralId);
+      console.log('openingFromReferralHistory flag:', window.openingFromReferralHistory);
       
       // Set hidden fields for Accept button logic
       const statusField = $('#viewReferralStatus');
@@ -1182,16 +1189,50 @@ $(document).ready(function() {
       }
       
       if (idField.length) {
-        idField.val(referralId);
-        console.log('✅ ID field set to:', idField.val());
+        // CRITICAL: Don't overwrite viewReferralId if:
+        // 1. We're opening from referral history (will be set by AJAX)
+        // 2. The field already has a value that looks like a referral_id (numeric and > 0)
+        // 3. The button's data-id is a patient_id (we can't reliably detect this, so check existing value)
+        const existingReferralId = idField.val();
+        const modalDataReferralId = $('#viewReferralModal').data('referral-id');
+        
+        console.log('Existing viewReferralId value:', existingReferralId);
+        console.log('Modal data referral-id:', modalDataReferralId);
+        
+        if (window.openingFromReferralHistory) {
+          console.log('⚠️ Skipping viewReferralId update - opening from referral history');
+        } else if (existingReferralId && existingReferralId.trim() !== '' && existingReferralId !== referralId) {
+          // If there's already a value and it's different, check if the new one looks like a patient_id
+          // Patient IDs are typically lower numbers, but we can't be sure
+          // Better approach: if existing value is set and different, preserve it unless button explicitly has data-referral-id
+          const buttonReferralId = button.attr('data-referral-id') || button.data('referral-id');
+          if (buttonReferralId) {
+            // Button has explicit referral-id attribute, use it
+            referralId = buttonReferralId;
+            idField.val(referralId);
+            console.log('✅ ID field updated from data-referral-id:', referralId);
+          } else {
+            // Preserve existing value if it's already set
+            console.log('⚠️ Preserving existing viewReferralId:', existingReferralId, '(button data-id might be patient_id)');
+            referralId = existingReferralId;
+          }
+        } else {
+          // Safe to set - either empty or matches
+          idField.val(referralId);
+          console.log('✅ ID field set to:', idField.val());
+        }
       } else {
         console.error('❌ viewReferralId field not found in DOM!');
       }
       
-      // Also store as data attributes on the modal
-      $('#viewReferralModal').data('referral-id', referralId);
-      $('#viewReferralModal').data('referral-status', status);
-      console.log('Modal data attributes set - ID:', $('#viewReferralModal').data('referral-id'), 'Status:', $('#viewReferralModal').data('referral-status'));
+      // Also store as data attributes on the modal (but preserve if already set from referral history)
+      if (!window.openingFromReferralHistory) {
+        $('#viewReferralModal').data('referral-id', referralId);
+        $('#viewReferralModal').data('referral-status', status);
+        console.log('Modal data attributes set - ID:', $('#viewReferralModal').data('referral-id'), 'Status:', $('#viewReferralModal').data('referral-status'));
+      } else {
+        console.log('⚠️ Skipping modal data attribute update - opening from referral history');
+      }
       console.log('=== populateViewModal status/ID setting end ===');
       
       const referredButton = $("#viewReferralModal .modal-footer form");

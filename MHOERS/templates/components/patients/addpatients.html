@@ -89,15 +89,26 @@
             </div>
           </div>
 
-          <!-- Province Field -->
-          <div class="row g-3 mt-1">
-            <div class="col-md-6">
+          <!-- Row 1: Region, Province, City -->
+          <div class="row g-3">
+            <!-- Region -->
+            <div class="col-12 col-md-4">
+              <label for="patient_region" class="fw-semibold">Region</label>
+              <select class="form-control rounded-pill" id="patient_region" name="patient_region" required>
+                <option value="" disabled selected>Select Region</option>
+              </select>
+            </div>
+
+            <!-- Province -->
+            <div class="col-12 col-md-4">
               <label for="patient_province" class="fw-semibold">Province</label>
-              <select class="form-control rounded-pill" id="patient_province" name="patient_province" required>
+              <select class="form-control rounded-pill" id="patient_province" name="patient_province" required disabled>
                 <option value="" disabled selected>Select Province</option>
               </select>
             </div>
-            <div class="col-md-6">
+
+            <!-- City / Municipality -->
+            <div class="col-12 col-md-4">
               <label for="patient_municipality" class="fw-semibold">City/Municipality</label>
               <select class="form-control rounded-pill" id="patient_municipality" name="patient_municipality" required disabled>
                 <option value="" disabled selected>Select City/Municipality</option>
@@ -105,12 +116,11 @@
             </div>
           </div>
 
-          <!-- Barangay and Purok Row -->
+          <!-- Row 2: Barangay, Purok -->
           <div class="row g-3 mt-1">
-            <div class="col-md-6">
-              <label for="patient_barangay" class="fw-semibold">
-                Barangay
-              </label>
+            <!-- Barangay -->
+            <div class="col-12 col-md-6">
+              <label for="patient_barangay" class="fw-semibold">Barangay</label>
               <select class="form-control rounded-pill" id="patient_barangay" name="patient_barangay" required disabled>
                 <option value="" disabled selected>Select Barangay</option>
               </select>
@@ -122,10 +132,10 @@
               </div>
               {% endif %}
             </div>
-            <div class="col-md-6">
-              <label for="patient_purok" class="fw-semibold">
-                Purok
-              </label>
+
+            <!-- Purok -->
+            <div class="col-12 col-md-6">
+              <label for="patient_purok" class="fw-semibold">Purok</label>
               <input type="text" class="form-control rounded-pill" id="patient_purok" name="patient_purok" required placeholder="Enter purok" disabled>
               {% if form.p_address.errors %}
               <div class="alert alert-danger mt-2 rounded-pill">
@@ -492,12 +502,12 @@
           togglePhilHealthFields();
         });
 
-        // Disable PhilHealth member if Dependent is selected
+        // Disable PhilHealth member if Dependent or N/A is selected
         $(document).on('change', '#phic_status', function() {
           const status = $(this).val();
           const philMemberCheckbox = $('#is_philhealth_member');
 
-          if (status === 'D') { // Dependent
+          if (status === 'D' || status === 'N') { // Dependent or N/A
             philMemberCheckbox.prop('checked', false).prop('disabled', true);
             togglePhilHealthFields(); // hide PhilHealth fields
           } else {
@@ -507,14 +517,43 @@
 
         // Initialize location dropdowns
         function initializeLocationDropdowns() {
+          const regionSelect = $('#patient_region');
           const provinceSelect = $('#patient_province');
           const municipalitySelect = $('#patient_municipality');
           const barangaySelect = $('#patient_barangay');
           const purokInput = $('#patient_purok');
 
-          if (provinceSelect.length && municipalitySelect.length && barangaySelect.length) {
-            loadProvinces();
+          if (regionSelect.length && provinceSelect.length && municipalitySelect.length && barangaySelect.length) {
+            // Load regions on modal open
+            loadRegions();
 
+            // Region change handler - enable province selection when region is selected
+            regionSelect.on('change', function() {
+              const selectedRegion = $(this).val();
+              if (selectedRegion) {
+                // Enable province dropdown and load provinces for selected region
+                provinceSelect.prop('disabled', false);
+                loadProvinces(selectedRegion);
+                // Clear dependent fields
+                provinceSelect.html('<option value="" disabled selected>Select Province</option>');
+                municipalitySelect.html('<option value="" disabled selected>Select City/Municipality</option>');
+                municipalitySelect.prop('disabled', true);
+                barangaySelect.html('<option value="" disabled selected>Select Barangay</option>');
+                barangaySelect.prop('disabled', true);
+                if (purokInput.length) { purokInput.val(''); purokInput.prop('disabled', true); }
+              } else {
+                // Disable province and all dependent fields if no region selected
+                provinceSelect.html('<option value="" disabled selected>Select Province</option>');
+                provinceSelect.prop('disabled', true);
+                municipalitySelect.html('<option value="" disabled selected>Select City/Municipality</option>');
+                municipalitySelect.prop('disabled', true);
+                barangaySelect.html('<option value="" disabled selected>Select Barangay</option>');
+                barangaySelect.prop('disabled', true);
+                if (purokInput.length) { purokInput.val(''); purokInput.prop('disabled', true); }
+              }
+            });
+
+            // Province change handler
             provinceSelect.on('change', function() {
               const selectedProvince = $(this).val();
               if (selectedProvince) {
@@ -531,12 +570,14 @@
               }
             });
 
+            // City change handler
             municipalitySelect.on('change', function() {
               const selectedCity = $(this).val();
               const selectedProvince = provinceSelect.val();
               if (selectedCity && selectedProvince) {
                 loadBarangays(selectedCity, selectedProvince);
-                barangaySelect.html('<option value="" disabled selected>Select Barangay</option>').prop('disabled', false);
+                barangaySelect.html('<option value="" disabled selected>Select Barangay</option>');
+                barangaySelect.prop('disabled', false);
                 if (purokInput.length) { purokInput.val(''); purokInput.prop('disabled', true); }
               } else {
                 barangaySelect.html('<option value="" disabled selected>Select Barangay</option>').prop('disabled', true);
@@ -544,6 +585,7 @@
               }
             });
 
+            // Barangay change handler
             barangaySelect.on('change', function() {
               const selectedBarangay = $(this).val();
               if (selectedBarangay && purokInput.length) {
@@ -557,13 +599,44 @@
         }
 
         // Fetch functions
-        function loadProvinces() {
+        function loadRegions() {
+          const regionSelect = $('#patient_region');
+          if (!regionSelect.length) return;
+
+          regionSelect.html('<option value="" disabled selected>Loading regions...</option>').prop('disabled', true);
+
+          fetch('/facilities/api/psgc-regions/')
+            .then(res => res.json())
+            .then(data => {
+              regionSelect.html('<option value="" disabled selected>Select Region</option>');
+              if (Array.isArray(data) && data.length > 0) {
+                data.forEach(region => {
+                  const regionName = typeof region === 'string' ? region : (region.name || region.region_name || '');
+                  const regionValue = typeof region === 'string' ? region : (region.code || region.region_code || region.name || '');
+                  regionSelect.append($('<option></option>').attr('value', regionValue).text(regionName));
+                });
+              }
+              regionSelect.prop('disabled', false);
+            })
+            .catch(err => {
+              console.error('Error loading regions:', err);
+              regionSelect.html('<option value="" disabled selected>Error loading regions</option>').prop('disabled', false);
+            });
+        }
+
+        function loadProvinces(region = null) {
           const provinceSelect = $('#patient_province');
           if (!provinceSelect.length) return;
 
           provinceSelect.html('<option value="" disabled selected>Loading provinces...</option>').prop('disabled', true);
 
-          fetch('/facilities/api/psgc-provinces/')
+          // Build API URL with optional region parameter
+          let apiUrl = '/facilities/api/psgc-provinces/';
+          if (region) {
+            apiUrl += `?region=${encodeURIComponent(region)}`;
+          }
+
+          fetch(apiUrl)
             .then(res => res.json())
             .then(data => {
               provinceSelect.html('<option value="" disabled selected>Select Province</option>');
@@ -637,7 +710,8 @@
           });
 
           registerModal.addEventListener('hidden.bs.modal', function() {
-            $('#patient_province').val('').trigger('change');
+            $('#patient_region').val('').trigger('change');
+            $('#patient_province').html('<option value="" disabled selected>Select Province</option>').prop('disabled', true);
             $('#patient_municipality').html('<option value="" disabled selected>Select City/Municipality</option>').prop('disabled', true);
             $('#patient_barangay').html('<option value="" disabled selected>Select Barangay</option>').prop('disabled', true);
             $('#patient_purok').val('').prop('disabled', true);
@@ -646,14 +720,15 @@
 
         // Form submission to combine address
         $('#addPatientForm').on('submit', function(e) {
+          const regionName = $('#patient_region option:selected').text();
           const provinceName = $('#patient_province option:selected').text();
           const municipalityName = $('#patient_municipality option:selected').text();
           const barangayName = $('#patient_barangay option:selected').text();
           const purokName = $('#patient_purok').val().trim();
 
-          if (!provinceName || !municipalityName || !barangayName || !purokName) {
+          if (!regionName || !provinceName || !municipalityName || !barangayName || !purokName) {
             e.preventDefault();
-            alert('Please complete all address fields (Province, City/Municipality, Barangay, and Purok).');
+            alert('Please complete all address fields (Region, Province, City/Municipality, Barangay, and Purok).');
             return false;
           }
 
@@ -714,7 +789,7 @@
     // Get all form field IDs that should be saved
     const formFields = [
       'first_name', 'middle_name', 'last_name',
-      'patient_province', 'patient_municipality', 'patient_barangay', 'patient_purok',
+      'patient_region', 'patient_province', 'patient_municipality', 'patient_barangay', 'patient_purok',
       'p_number', 'sex', 'date_of_birth',
       'civil_status', 'phic_status',
       'cct_beneficiary', 'is_pwd',
@@ -780,24 +855,33 @@
             setTimeout(() => togglePhilHealthFields(), 100);
           }
           
-          // Re-trigger location dropdowns if province is set
-          if (draft.patient_province && typeof jQuery !== 'undefined') {
+          // Re-trigger location dropdowns if region is set
+          if (draft.patient_region && typeof jQuery !== 'undefined') {
             const $ = jQuery;
             setTimeout(() => {
-              const provinceSelect = $('#patient_province');
-              if (provinceSelect.length && provinceSelect.val()) {
-                // Wait for provinces to load, then set municipality
+              const regionSelect = $('#patient_region');
+              if (regionSelect.length && regionSelect.val()) {
+                regionSelect.trigger('change');
+                // Wait for provinces to load, then set province
                 setTimeout(() => {
-                  if (draft.patient_municipality) {
-                    const municipalitySelect = $('#patient_municipality');
-                    municipalitySelect.val(draft.patient_municipality);
-                    municipalitySelect.trigger('change');
-                    // Wait for barangays to load, then set barangay
+                  if (draft.patient_province) {
+                    const provinceSelect = $('#patient_province');
+                    provinceSelect.val(draft.patient_province);
+                    provinceSelect.trigger('change');
+                    // Wait for cities to load, then set municipality
                     setTimeout(() => {
-                      if (draft.patient_barangay) {
-                        const barangaySelect = $('#patient_barangay');
-                        barangaySelect.val(draft.patient_barangay);
-                        barangaySelect.trigger('change');
+                      if (draft.patient_municipality) {
+                        const municipalitySelect = $('#patient_municipality');
+                        municipalitySelect.val(draft.patient_municipality);
+                        municipalitySelect.trigger('change');
+                        // Wait for barangays to load, then set barangay
+                        setTimeout(() => {
+                          if (draft.patient_barangay) {
+                            const barangaySelect = $('#patient_barangay');
+                            barangaySelect.val(draft.patient_barangay);
+                            barangaySelect.trigger('change');
+                          }
+                        }, 500);
                       }
                     }, 500);
                   }
@@ -844,14 +928,15 @@
           }
         });
         
-        // Reset location dropdowns
-        if (typeof jQuery !== 'undefined') {
-          const $ = jQuery;
-          $('#patient_province').val('').trigger('change');
-          $('#patient_municipality').html('<option value="" disabled selected>Select City/Municipality</option>').prop('disabled', true);
-          $('#patient_barangay').html('<option value="" disabled selected>Select Barangay</option>').prop('disabled', true);
-          $('#patient_purok').val('').prop('disabled', true);
-        }
+          // Reset location dropdowns
+          if (typeof jQuery !== 'undefined') {
+            const $ = jQuery;
+            $('#patient_region').val('').trigger('change');
+            $('#patient_province').html('<option value="" disabled selected>Select Province</option>').prop('disabled', true);
+            $('#patient_municipality').html('<option value="" disabled selected>Select City/Municipality</option>').prop('disabled', true);
+            $('#patient_barangay').html('<option value="" disabled selected>Select Barangay</option>').prop('disabled', true);
+            $('#patient_purok').val('').prop('disabled', true);
+          }
         
         // Reset PhilHealth fields
         const philHealthCheckbox = document.getElementById('is_philhealth_member');

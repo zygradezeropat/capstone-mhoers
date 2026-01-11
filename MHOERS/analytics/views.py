@@ -292,6 +292,9 @@ def medical_certificate_report(request):
                 'examined_by': referral.examined_by.get_full_name() if referral.examined_by else '',
                 'examined_title': 'M.D',
                 'remarks': referral.remarks or '',
+                'treatments': referral.treatments or '',
+                'followup_date': referral.followup_date,
+                'referral_type': referral.referral_type or '',
             })
         except Referral.DoesNotExist:
             context['error'] = f"Referral with id {referral_id} not found."

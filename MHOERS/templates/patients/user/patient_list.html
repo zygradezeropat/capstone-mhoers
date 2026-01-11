@@ -69,18 +69,26 @@
     background-color: #e0e0e0 !important;
   }
   
-  /* Make patient table rows clickable (except action column) */
-  #patientTable tbody tr.patient-row td:not(:last-child) {
-    cursor: pointer;
-  }
-  
-  #patientTable tbody tr.patient-row:hover td:not(:last-child) {
-    background-color: #f8f9fa;
-  }
-  
-  /* Ensure action column is not clickable */
-  #patientTable tbody tr.patient-row td:last-child {
+  /* Table rows are not clickable - only action buttons trigger actions */
+  #patientTable tbody tr.patient-row td {
     cursor: default;
+  }
+  
+  /* Remove hover effect on table cells */
+  #patientTable tbody tr.patient-row:hover td {
+    background-color: transparent;
+  }
+  
+  /* Ensure dropdown items are clickable */
+  #patientTable .dropdown-item {
+    cursor: pointer;
+    pointer-events: auto;
+    z-index: 1000;
+  }
+  
+  #patientTable .btn-group {
+    position: relative;
+    z-index: 1;
   }
 </style>
 
@@ -724,12 +732,130 @@
       }
     }
 
+    // Function to update referral status badge
+    function updateReferralStatusBadge(referralCount, patientId) {
+      const badgeEl = $('#referralStatusBadge');
+      const messageEl = $('#referralStatusMessage');
+      
+      if (!badgeEl.length) return;
+      
+      if (referralCount === 0) {
+        // Patient has not been referred yet
+        badgeEl.removeClass('bg-warning bg-info bg-success bg-secondary')
+                .addClass('bg-secondary')
+                .text('Not Yet Referred');
+        messageEl.text('This patient has not been referred yet.');
+      } else {
+        // Patient has referrals - fetch status
+        badgeEl.removeClass('bg-warning bg-info bg-success bg-secondary')
+                .addClass('bg-info')
+                .text('Loading...');
+        messageEl.text('Checking referral status...');
+        
+        // Fetch referral history to get current status
+        if (patientId) {
+          $.ajax({
+            url: `/referral/patient/${patientId}/history/`,
+            method: 'GET',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            success: function(data) {
+              updateReferralStatusFromHistory(data.referrals || [], referralCount);
+            },
+            error: function() {
+              // Fallback: check for pending referrals
+              $.ajax({
+                url: `/referral/check-pending-referral/${patientId}/`,
+                method: 'GET',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                success: function(checkData) {
+                  if (checkData.has_pending) {
+                    const status = checkData.status;
+                    if (status === 'pending') {
+                      badgeEl.removeClass('bg-warning bg-info bg-success bg-secondary')
+                              .addClass('bg-warning')
+                              .text('Pending Referral');
+                      messageEl.text('This patient has a pending referral waiting for approval.');
+                    } else if (status === 'in-progress') {
+                      badgeEl.removeClass('bg-warning bg-info bg-success bg-secondary')
+                              .addClass('bg-info')
+                              .text('In Progress');
+                      messageEl.text('This patient has an active referral being processed.');
+                    }
+                  } else {
+                    badgeEl.removeClass('bg-warning bg-info bg-success bg-secondary')
+                            .addClass('bg-success')
+                            .text('All Referrals Completed');
+                    messageEl.text(`This patient has ${referralCount} completed referral(s).`);
+                  }
+                },
+                error: function() {
+                  badgeEl.removeClass('bg-warning bg-info bg-success bg-secondary')
+                          .addClass('bg-info')
+                          .text('Has Referrals');
+                  messageEl.text(`This patient has ${referralCount} referral(s).`);
+                }
+              });
+            }
+          });
+        }
+      }
+    }
+    
+    // Function to update referral status from history data
+    function updateReferralStatusFromHistory(referrals, referralCount) {
+      const badgeEl = $('#referralStatusBadge');
+      const messageEl = $('#referralStatusMessage');
+      
+      if (!badgeEl.length) return;
+      
+      // Filter out follow-up visits
+      const actualReferrals = referrals.filter(r => !r.type || r.type !== 'followup_visit');
+      
+      if (actualReferrals.length === 0) {
+        badgeEl.removeClass('bg-warning bg-info bg-success bg-secondary')
+                .addClass('bg-secondary')
+                .text('Not Yet Referred');
+        messageEl.text('This patient has not been referred yet.');
+        return;
+      }
+      
+      // Find active referrals (pending or in-progress)
+      const activeReferrals = actualReferrals.filter(r => 
+        r.status === 'pending' || r.status === 'in-progress'
+      );
+      
+      if (activeReferrals.length > 0) {
+        // Sort by date to get most recent
+        activeReferrals.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        const latestActive = activeReferrals[0];
+        
+        if (latestActive.status === 'pending') {
+          badgeEl.removeClass('bg-warning bg-info bg-success bg-secondary')
+                  .addClass('bg-warning')
+                  .text('Pending Referral');
+          messageEl.text(`This patient has a pending referral (ID: #${latestActive.referral_id}) waiting for approval.`);
+        } else if (latestActive.status === 'in-progress') {
+          badgeEl.removeClass('bg-warning bg-info bg-success bg-secondary')
+                  .addClass('bg-info')
+                  .text('In Progress');
+          messageEl.text(`This patient has an active referral (ID: #${latestActive.referral_id}) being processed.`);
+        }
+      } else {
+        // All referrals are completed
+        const completedCount = actualReferrals.filter(r => r.status === 'completed').length;
+        badgeEl.removeClass('bg-warning bg-info bg-success bg-secondary')
+                .addClass('bg-success')
+                .text('All Referrals Completed');
+        messageEl.text(`This patient has ${completedCount} completed referral(s).`);
+      }
+    }
 
     // View button logic - get data from the row (like doctor's page)
     // Use document-level delegation to ensure it works after DataTables redraws
     $(document).on('click', '#patientTable .view-button', function (e) {
       e.preventDefault(); 
       e.stopPropagation();
+      e.stopImmediatePropagation();
       
       // Close dropdown if it's open
       const dropdown = $(this).closest('.btn-group');
@@ -806,6 +932,9 @@
       $('#viewReferralCount').val(referralCount);
       $('#viewLastReferred').val(lastReferred);
       
+      // Update referral status badge
+      updateReferralStatusBadge(parseInt(referralCount) || 0, patientId);
+      
       // Load referral history
       const historyContainer = $('#viewReferralHistory');
       if (historyContainer.length && patientId) {
@@ -816,6 +945,9 @@
           headers: { 'X-Requested-With': 'XMLHttpRequest' },
           success: function(data) {
             const items = (data.referrals || []);
+            
+            // Update referral status based on all referrals
+            updateReferralStatusFromHistory(items, parseInt(referralCount) || 0);
             
             // Filter to only show completed referrals (exclude follow-ups and non-completed referrals)
             const completedReferrals = items.filter(r => {
@@ -1059,6 +1191,7 @@
     $(document).on('click', '#patientTable .edit-button', function (e) {
       e.preventDefault();
       e.stopPropagation();
+      e.stopImmediatePropagation();
       
       // Close dropdown if it's open
       const dropdown = $(this).closest('.btn-group');
@@ -1195,6 +1328,7 @@
     $(document).on('click', '#patientTable .delete-button', function (e) {
         e.preventDefault();
         e.stopPropagation();
+        e.stopImmediatePropagation();
         
         // Close dropdown if it's open
         const dropdown = $(this).closest('.btn-group');
@@ -1229,6 +1363,75 @@
           }
         }
       });
+      
+      // Consultation button handler (moved inside ready function)
+      $(document).on('click', '#patientTable .consultation-button', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        
+        // Close dropdown if it's open
+        const dropdown = $(this).closest('.btn-group');
+        if (dropdown.length) {
+          const dropdownToggle = dropdown.find('.dropdown-toggle');
+          if (dropdownToggle.length) {
+            const bsDropdown = bootstrap.Dropdown.getInstance(dropdownToggle[0]);
+            if (bsDropdown) {
+              bsDropdown.hide();
+            }
+          }
+        }
+        
+        console.log('Consultation button clicked'); // Debug
+        
+        // Get data from button attributes
+        const patientId = $(this).attr('data-patient-id') || '';
+        const firstName = $(this).attr('data-first-name') || '';
+        const middleName = $(this).attr('data-middle-name') || '';
+        const lastName = $(this).attr('data-last-name') || '';
+        const fullName = `${firstName} ${middleName} ${lastName}`.trim();
+        const sex = $(this).attr('data-sex') || '';
+        
+        if (!patientId) {
+          console.error('No patient ID found');
+          return;
+        }
+        
+        // Open consultation modal
+        const consultationModalEl = document.getElementById('consultationModal');
+        if (consultationModalEl) {
+          const consultationModal = bootstrap.Modal.getOrCreateInstance(consultationModalEl);
+          
+          // Initialize form when modal is shown
+          consultationModalEl.addEventListener('shown.bs.modal', function onModalShown() {
+            // Remove listener after first use
+            consultationModalEl.removeEventListener('shown.bs.modal', onModalShown);
+            
+            // Initialize consultation form
+            initConsultationForm(patientId, fullName, sex);
+          }, { once: true });
+          
+          // Cleanup when modal is hidden
+          consultationModalEl.addEventListener('hidden.bs.modal', function onModalHidden() {
+            // Clean up Select2 if it exists
+            if (typeof $ !== 'undefined' && $('#modalPatientSelect').length && $('#modalPatientSelect').data('select2')) {
+              $('#modalPatientSelect').select2('destroy');
+            }
+            
+            // Reset form
+            const form = document.getElementById('modalReferralForm');
+            if (form) {
+              form.reset();
+            }
+            
+            // Clear all fields
+            clearModalReferralFields();
+          }, { once: false });
+          
+          consultationModal.show();
+        }
+      });
+      
       }); // End of $(document).ready
     } // End of initPatientList function
     
@@ -1372,131 +1575,8 @@
   // CONSULTATION MODAL FUNCTIONALITY
   // ============================================
   
-  // Handle table row clicks to open consultation modal (excluding action buttons)
-  $(document).on('click', '#patientTable tbody tr.patient-row td:not(:last-child)', function(e) {
-    // Don't open if clicking on a link or button
-    if ($(e.target).is('a, button, .dropdown-toggle, .dropdown-menu, .dropdown-item') || 
-        $(e.target).closest('a, button, .dropdown').length) {
-      return;
-    }
-    
-    e.preventDefault();
-    e.stopPropagation();
-    
-    const row = $(this).closest('tr.patient-row');
-    const patientId = row.attr('data-patient-id') || row.attr('data-id') || '';
-    const firstName = row.attr('data-first-name') || '';
-    const middleName = row.attr('data-middle-name') || '';
-    const lastName = row.attr('data-last-name') || '';
-    const fullName = `${firstName} ${middleName} ${lastName}`.trim();
-    const sex = row.attr('data-sex') || '';
-    
-    if (!patientId) {
-      console.error('No patient ID found');
-      return;
-    }
-    
-      // Open consultation modal
-      const consultationModalEl = document.getElementById('consultationModal');
-      if (consultationModalEl) {
-        const consultationModal = bootstrap.Modal.getOrCreateInstance(consultationModalEl);
-        
-        // Initialize form when modal is shown
-        consultationModalEl.addEventListener('shown.bs.modal', function onModalShown() {
-          // Remove listener after first use
-          consultationModalEl.removeEventListener('shown.bs.modal', onModalShown);
-          
-          // Initialize consultation form
-          initConsultationForm(patientId, fullName, sex);
-        }, { once: true });
-        
-        // Cleanup when modal is hidden
-        consultationModalEl.addEventListener('hidden.bs.modal', function onModalHidden() {
-          // Clean up Select2 if it exists
-          if (typeof $ !== 'undefined' && $('#modalPatientSelect').length && $('#modalPatientSelect').data('select2')) {
-            $('#modalPatientSelect').select2('destroy');
-          }
-          
-          // Reset form
-          const form = document.getElementById('modalReferralForm');
-          if (form) {
-            form.reset();
-          }
-          
-          // Clear all fields
-          clearModalReferralFields();
-        }, { once: false });
-        
-        consultationModal.show();
-      }
-  });
-
-  // Consultation button handler (from dropdown)
-$(document).on('click', '#patientTable .consultation-button', function (e) {
-  e.preventDefault();
-  e.stopPropagation();
-  
-  // Close dropdown if it's open
-  const dropdown = $(this).closest('.btn-group');
-  if (dropdown.length) {
-    const dropdownToggle = dropdown.find('.dropdown-toggle');
-    if (dropdownToggle.length) {
-      const bsDropdown = bootstrap.Dropdown.getInstance(dropdownToggle[0]);
-      if (bsDropdown) {
-        bsDropdown.hide();
-      }
-    }
-  }
-  
-  console.log('Consultation button clicked'); // Debug
-  
-  // Get data from button attributes
-  const patientId = $(this).attr('data-patient-id') || '';
-  const firstName = $(this).attr('data-first-name') || '';
-  const middleName = $(this).attr('data-middle-name') || '';
-  const lastName = $(this).attr('data-last-name') || '';
-  const fullName = `${firstName} ${middleName} ${lastName}`.trim();
-  const sex = $(this).attr('data-sex') || '';
-  
-  if (!patientId) {
-    console.error('No patient ID found');
-    return;
-  }
-  
-  // Open consultation modal
-  const consultationModalEl = document.getElementById('consultationModal');
-  if (consultationModalEl) {
-    const consultationModal = bootstrap.Modal.getOrCreateInstance(consultationModalEl);
-    
-    // Initialize form when modal is shown
-    consultationModalEl.addEventListener('shown.bs.modal', function onModalShown() {
-      // Remove listener after first use
-      consultationModalEl.removeEventListener('shown.bs.modal', onModalShown);
-      
-      // Initialize consultation form
-      initConsultationForm(patientId, fullName, sex);
-    }, { once: true });
-    
-    // Cleanup when modal is hidden
-    consultationModalEl.addEventListener('hidden.bs.modal', function onModalHidden() {
-      // Clean up Select2 if it exists
-      if (typeof $ !== 'undefined' && $('#modalPatientSelect').length && $('#modalPatientSelect').data('select2')) {
-        $('#modalPatientSelect').select2('destroy');
-      }
-      
-      // Reset form
-      const form = document.getElementById('modalReferralForm');
-      if (form) {
-        form.reset();
-      }
-      
-      // Clear all fields
-      clearModalReferralFields();
-    }, { once: false });
-    
-    consultationModal.show();
-  }
-});
+  // Table row clicks are disabled - consultation can only be triggered via action button
+  // Removed: Row click handler - users must use the action button dropdown to access consultation
 
   // Initialize consultation form in modal
   function initConsultationForm(patientId, patientName, patientSex) {
@@ -1508,6 +1588,15 @@ $(document).on('click', '#patientTable .consultation-button', function (e) {
       tab.classList.remove('show', 'active');
       if (i === 0) {
         tab.classList.add('show', 'active');
+      }
+    });
+    
+    // Reset navigation buttons to first tab
+    const navLinks = document.querySelectorAll('#consultationModal #dashboardTab .nav-link');
+    navLinks.forEach((link, i) => {
+      link.classList.remove('active');
+      if (i === 0) {
+        link.classList.add('active');
       }
     });
     
@@ -1635,10 +1724,20 @@ $(document).on('click', '#patientTable .consultation-button', function (e) {
     let isSubmitting = false;
     
     function showModalTab(index) {
+      // Update tab panes (content)
       modalTabs.forEach((tab, i) => {
         tab.classList.remove("show", "active");
         if (i === index) {
           tab.classList.add("show", "active");
+        }
+      });
+      
+      // Update navigation buttons (tabs at the top)
+      const navLinks = document.querySelectorAll('#consultationModal #dashboardTab .nav-link');
+      navLinks.forEach((link, i) => {
+        link.classList.remove("active");
+        if (i === index) {
+          link.classList.add("active");
         }
       });
       

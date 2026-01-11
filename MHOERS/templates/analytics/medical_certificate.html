@@ -144,7 +144,20 @@
         <p class="diagnosis">{{ diagnosis|default:"N/A" }}</p>
 
         <p class="remarks">Remarks:</p>
-        <p class="diagnosis">POSSIBLE HEALING PERIOD: 1–3 DAYS</p>
+        <p class="diagnosis">
+            {% if remarks %}
+                {{ remarks|upper }}
+            {% elif treatments %}
+                TREATMENTS PROVIDED: {{ treatments|upper }}
+                {% if followup_date %}
+                    <br>FOLLOW-UP DATE: {{ followup_date|date:"F d, Y"|upper }}
+                {% endif %}
+            {% elif followup_date %}
+                FOLLOW-UP APPOINTMENT: {{ followup_date|date:"F d, Y"|upper }}
+            {% else %}
+                N/A
+            {% endif %}
+        </p>
     </div>
 
     <!-- FOOTER -->
@@ -168,7 +181,7 @@
 </body>
 </html>
 
-<!-- Confirmation div -->
+Confirmation div
 <div style="text-align:center; margin-top:12px; font-weight:600;">
     {% if referral_id %}
         Certificate generated for referral #: {{ referral_id }}

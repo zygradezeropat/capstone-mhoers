@@ -545,11 +545,11 @@
           <button type="button" class="btn btn-success" id="acceptReferralBtn" style="display: none;" data-referral-id="">
             Accept
           </button>
-           {% if view_mode == "patient" %}
-           <button type="button" class="btn btn-primary" id="issueMedicalCertBtn" title="Issue medical certificate">
-          Issue a Medical Certificate
-        </button>
-         {% endif %}
+          {% if view_mode == "patients" %}
+          <button type="button" class="btn btn-primary" id="issueMedicalCertBtn" title="Issue medical certificate">
+            Issue a Medical Certificate
+          </button>
+        {% endif %}
         {% endif %}
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-dismiss="modal">
           Close
@@ -570,11 +570,60 @@
       if (!btn) return;
       e.preventDefault();
 
-      // Prefer referral id, fallback to patient name
-      const referralId = (document.getElementById('viewReferralId') || {}).value || '';
+      // Get referral_id from the viewReferralId hidden field (required)
+      const referralIdField = document.getElementById('viewReferralId');
+      let referralId = referralIdField ? (referralIdField.value || '').trim() : '';
+      
+      // Debug logging
+      console.log('=== Issue Medical Certificate Clicked ===');
+      console.log('referralIdField found:', !!referralIdField);
+      console.log('referralId from field:', referralId);
+      console.log('referralId from modal data:', $('#viewReferralModal').data('referral-id'));
+      console.log('referralId locked value:', referralIdField ? $(referralIdField).data('correct-value') : 'N/A');
+      console.log('openingFromReferralHistory flag:', window.openingFromReferralHistory);
+      
+      // Priority order for getting referral_id:
+      // 1. Locked value (set when opening from referral history)
+      // 2. Modal data attribute (set when opening from referral history)
+      // 3. Field value (may be overwritten by patient button)
+      // 4. Alert if none found
+      
+      let finalReferralId = null;
+      
+      // First priority: Check if field is locked with correct value (from referral history)
+      if (referralIdField && $(referralIdField).data('locked') && $(referralIdField).data('correct-value')) {
+        finalReferralId = $(referralIdField).data('correct-value');
+        console.log('🔒 Using locked referral_id value:', finalReferralId);
+      }
+      
+      // Second priority: Modal data attribute (set by referral history click handler)
+      if (!finalReferralId) {
+        const modalReferralId = $('#viewReferralModal').data('referral-id');
+        if (modalReferralId) {
+          finalReferralId = String(modalReferralId);
+          console.log('✅ Using referral_id from modal data attribute:', finalReferralId);
+        }
+      }
+      
+      // Third priority: Field value (but warn if it might be patient_id)
+      if (!finalReferralId && referralId) {
+        finalReferralId = referralId;
+        console.log('⚠️ Using referral_id from field value:', finalReferralId, '(may be patient_id if opened from patient list)');
+      }
+      
+      // Validate that we have a referral_id
+      if (!finalReferralId) {
+        alert('Error: Referral ID is missing. Please ensure you are viewing a referral from the referral history.');
+        return;
+      }
+      
+      referralId = String(finalReferralId);
+      console.log('🎯 Final referral_id to use:', referralId);
+
       const patientName = (document.getElementById('viewReferralPatientName') || {}).value || '';
 
       // Construct URL using named Django route for medical certificate report
+      // Always use referral_id (not patients_id)
       const url = '{% url "medical_certificate_report" %}' +
         `?referral_id=${encodeURIComponent(referralId)}&patient_name=${encodeURIComponent(patientName)}`;
 
@@ -1235,7 +1284,8 @@
       
       // Try to get status from multiple sources
       let referralStatus = currentReferralStatus || $('#viewReferralStatus').val() || '';
-      let referralId = (currentReferralId && currentReferralId.trim()) || $('#viewReferralId').val() || '';
+      // Convert to string and trim if it exists, otherwise get from hidden field
+      let referralId = (currentReferralId && String(currentReferralId).trim()) || $('#viewReferralId').val() || '';
       
       console.log('Initial values - Status:', referralStatus, 'ID:', referralId);
       console.log('currentReferralStatus:', currentReferralStatus);
@@ -1244,12 +1294,15 @@
       console.log('Hidden field viewReferralId:', $('#viewReferralId').val());
       
       // If we don't have status yet, try to get it from the button that opened the modal
+      const activeButton = $('.view-button.active-view-button');
       if (activeButton.length && (!currentReferralStatus || !currentReferralId)) {
-      currentReferralStatus = activeButton.data('status') || activeButton.attr('data-status') || '';
-      currentReferralId = activeButton.data('id') || activeButton.attr('data-id') || '';
-      $('#viewReferralStatus').val(currentReferralStatus);
-      $('#viewReferralId').val(currentReferralId);
-    }
+        currentReferralStatus = activeButton.data('status') || activeButton.attr('data-status') || '';
+        currentReferralId = activeButton.data('id') || activeButton.attr('data-id') || '';
+        $('#viewReferralStatus').val(currentReferralStatus);
+        $('#viewReferralId').val(currentReferralId);
+        // Update local variables
+        referralStatus = currentReferralStatus || referralStatus;
+        referralId = currentReferralId || referralId;
       }
       
       // Also try modal data attributes
@@ -1301,6 +1354,12 @@
 
     // Mark the button when clicked (before modal opens) and store data
     $(document).on('click', '.view-button', function(e) {
+      // Skip if opening from referral history (will be populated via AJAX)
+      if (window.openingFromReferralHistory) {
+        console.log('Skipping view-button handler - opening from referral history');
+        return;
+      }
+      
       console.log('=== View button clicked ===');
       $('.view-button').removeClass('active-view-button');
       $(this).addClass('active-view-button');
@@ -1350,6 +1409,12 @@
 
     // Listen for when view modal is shown
     $('#viewReferralModal').on('show.bs.modal', function(event) {
+      // Skip if opening from referral history (will be populated via AJAX)
+      if (window.openingFromReferralHistory) {
+        console.log('Skipping show.bs.modal handler - opening from referral history');
+        return;
+      }
+      
       console.log('=== View modal show event ===');
       const button = $(event.relatedTarget); // Button that triggered the modal
       console.log('Event relatedTarget:', button.length > 0);
@@ -1399,13 +1464,29 @@
 
     // Also check after modal is fully shown (in case data is populated after show event)
     $('#viewReferralModal').on('shown.bs.modal', function(event) {
+      // Skip if opening from referral history (will be populated via AJAX)
+      if (window.openingFromReferralHistory) {
+        console.log('Skipping shown.bs.modal handler - opening from referral history');
+        // Still update accept button after a delay to ensure data is loaded
+        setTimeout(function() {
+          updateAcceptButton();
+        }, 500);
+        return;
+      }
+      
       // Small delay to ensure all data is populated
       setTimeout(function() {
         // Try to get status from the active button if not already set
         const activeButton = $('.view-button.active-view-button');
         if (activeButton.length && !currentReferralStatus) {
           currentReferralStatus = activeButton.data('status') || activeButton.attr('data-status');
-          currentReferralId = activeButton.data('id') || activeButton.attr('data-id');
+          // Only update referralId if it's not already set (to avoid overwriting correct value)
+          const existingReferralId = $('#viewReferralId').val();
+          if (!existingReferralId) {
+            currentReferralId = activeButton.data('id') || activeButton.attr('data-id');
+          } else {
+            currentReferralId = existingReferralId;
+          }
           $('#viewReferralStatus').val(currentReferralStatus || '');
           $('#viewReferralId').on('change', function() {
             currentReferralId = $(this).val();

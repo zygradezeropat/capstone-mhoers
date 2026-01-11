@@ -896,6 +896,19 @@
           </div>
         </div>
 
+        <!-- Referral Status Section -->
+        <div class="row mb-4">
+          <div class="col-12">
+            <h6 class="text-primary border-bottom pb-2 mb-3"><i class="bi bi-info-circle me-2"></i>Referral Status</h6>
+            <div id="modalReferralStatusContainer" class="mb-3">
+              <div class="d-flex align-items-center gap-3">
+                <span id="modalReferralStatusBadge" class="badge fs-6 px-3 py-2"></span>
+                <span id="modalReferralStatusMessage" class="text-muted small"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Additional Information -->
         <div class="row mb-4">
           <div class="col-12">
@@ -1060,6 +1073,242 @@ $(document).ready(function() {
     }
   }
 
+  // Function to update referral status badge for patientDetailsModal
+  function updateModalReferralStatusBadge(referralCount, patientId) {
+    const badgeEl = $('#modalReferralStatusBadge');
+    const messageEl = $('#modalReferralStatusMessage');
+    
+    if (!badgeEl.length) return;
+    
+    if (referralCount === 0) {
+      // Patient has not been referred yet
+      badgeEl.removeClass('bg-warning bg-info bg-success bg-secondary')
+              .addClass('bg-secondary')
+              .text('Not Yet Referred');
+      messageEl.text('This patient has not been referred yet.');
+    } else {
+      // Patient has referrals - fetch status
+      badgeEl.removeClass('bg-warning bg-info bg-success bg-secondary')
+              .addClass('bg-info')
+              .text('Loading...');
+      messageEl.text('Checking referral status...');
+      
+      // Fetch referral history to get current status
+      if (patientId) {
+        $.ajax({
+          url: `/referral/patient/${patientId}/history/`,
+          method: 'GET',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+          success: function(data) {
+            updateModalReferralStatusFromHistory(data.referrals || [], referralCount);
+          },
+          error: function() {
+            // Fallback: check for pending referrals
+            $.ajax({
+              url: `/referral/check-pending-referral/${patientId}/`,
+              method: 'GET',
+              headers: { 'X-Requested-With': 'XMLHttpRequest' },
+              success: function(checkData) {
+                if (checkData.has_pending) {
+                  const status = checkData.status;
+                  if (status === 'pending') {
+                    badgeEl.removeClass('bg-warning bg-info bg-success bg-secondary')
+                            .addClass('bg-warning')
+                            .text('Pending Referral');
+                    messageEl.text('This patient has a pending referral waiting for approval.');
+                  } else if (status === 'in-progress') {
+                    badgeEl.removeClass('bg-warning bg-info bg-success bg-secondary')
+                            .addClass('bg-info')
+                            .text('In Progress');
+                    messageEl.text('This patient has an active referral being processed.');
+                  }
+                } else {
+                  badgeEl.removeClass('bg-warning bg-info bg-success bg-secondary')
+                          .addClass('bg-success')
+                          .text('All Referrals Completed');
+                  messageEl.text(`This patient has ${referralCount} completed referral(s).`);
+                }
+              },
+              error: function() {
+                badgeEl.removeClass('bg-warning bg-info bg-success bg-secondary')
+                        .addClass('bg-info')
+                        .text('Has Referrals');
+                messageEl.text(`This patient has ${referralCount} referral(s).`);
+              }
+            });
+          }
+        });
+      }
+    }
+  }
+  
+  // Function to update referral status from history data for patientDetailsModal
+  function updateModalReferralStatusFromHistory(referrals, referralCount) {
+    const badgeEl = $('#modalReferralStatusBadge');
+    const messageEl = $('#modalReferralStatusMessage');
+    
+    if (!badgeEl.length) return;
+    
+    // Filter out follow-up visits
+    const actualReferrals = referrals.filter(r => !r.type || r.type !== 'followup_visit');
+    
+    if (actualReferrals.length === 0) {
+      badgeEl.removeClass('bg-warning bg-info bg-success bg-secondary')
+              .addClass('bg-secondary')
+              .text('Not Yet Referred');
+      messageEl.text('This patient has not been referred yet.');
+      return;
+    }
+    
+    // Find active referrals (pending or in-progress)
+    const activeReferrals = actualReferrals.filter(r => 
+      r.status === 'pending' || r.status === 'in-progress'
+    );
+    
+    if (activeReferrals.length > 0) {
+      // Sort by date to get most recent
+      activeReferrals.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      const latestActive = activeReferrals[0];
+      
+      if (latestActive.status === 'pending') {
+        badgeEl.removeClass('bg-warning bg-info bg-success bg-secondary')
+                .addClass('bg-warning')
+                .text('Pending Referral');
+        messageEl.text(`This patient has a pending referral (ID: #${latestActive.referral_id}) waiting for approval.`);
+      } else if (latestActive.status === 'in-progress') {
+        badgeEl.removeClass('bg-warning bg-info bg-success bg-secondary')
+                .addClass('bg-info')
+                .text('In Progress');
+        messageEl.text(`This patient has an active referral (ID: #${latestActive.referral_id}) being processed.`);
+      }
+    } else {
+      // All referrals are completed
+      const completedCount = actualReferrals.filter(r => r.status === 'completed').length;
+      badgeEl.removeClass('bg-warning bg-info bg-success bg-secondary')
+              .addClass('bg-success')
+              .text('All Referrals Completed');
+      messageEl.text(`This patient has ${completedCount} completed referral(s).`);
+    }
+  }
+
+  // Function to update referral status badge for viewPatients modal
+  function updateReferralStatusBadge(referralCount, patientId) {
+    const badgeEl = $('#referralStatusBadge');
+    const messageEl = $('#referralStatusMessage');
+    
+    if (!badgeEl.length) return;
+    
+    if (referralCount === 0) {
+      // Patient has not been referred yet
+      badgeEl.removeClass('bg-warning bg-info bg-success bg-secondary')
+              .addClass('bg-secondary')
+              .text('Not Yet Referred');
+      messageEl.text('This patient has not been referred yet.');
+    } else {
+      // Patient has referrals - fetch status
+      badgeEl.removeClass('bg-warning bg-info bg-success bg-secondary')
+              .addClass('bg-info')
+              .text('Loading...');
+      messageEl.text('Checking referral status...');
+      
+      // Fetch referral history to get current status
+      if (patientId) {
+        $.ajax({
+          url: `/referral/patient/${patientId}/history/`,
+          method: 'GET',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+          success: function(data) {
+            updateReferralStatusFromHistory(data.referrals || [], referralCount);
+          },
+          error: function() {
+            // Fallback: check for pending referrals
+            $.ajax({
+              url: `/referral/check-pending-referral/${patientId}/`,
+              method: 'GET',
+              headers: { 'X-Requested-With': 'XMLHttpRequest' },
+              success: function(checkData) {
+                if (checkData.has_pending) {
+                  const status = checkData.status;
+                  if (status === 'pending') {
+                    badgeEl.removeClass('bg-warning bg-info bg-success bg-secondary')
+                            .addClass('bg-warning')
+                            .text('Pending Referral');
+                    messageEl.text('This patient has a pending referral waiting for approval.');
+                  } else if (status === 'in-progress') {
+                    badgeEl.removeClass('bg-warning bg-info bg-success bg-secondary')
+                            .addClass('bg-info')
+                            .text('In Progress');
+                    messageEl.text('This patient has an active referral being processed.');
+                  }
+                } else {
+                  badgeEl.removeClass('bg-warning bg-info bg-success bg-secondary')
+                          .addClass('bg-success')
+                          .text('All Referrals Completed');
+                  messageEl.text(`This patient has ${referralCount} completed referral(s).`);
+                }
+              },
+              error: function() {
+                badgeEl.removeClass('bg-warning bg-info bg-success bg-secondary')
+                        .addClass('bg-info')
+                        .text('Has Referrals');
+                messageEl.text(`This patient has ${referralCount} referral(s).`);
+              }
+            });
+          }
+        });
+      }
+    }
+  }
+  
+  // Function to update referral status from history data for viewPatients modal
+  function updateReferralStatusFromHistory(referrals, referralCount) {
+    const badgeEl = $('#referralStatusBadge');
+    const messageEl = $('#referralStatusMessage');
+    
+    if (!badgeEl.length) return;
+    
+    // Filter out follow-up visits
+    const actualReferrals = referrals.filter(r => !r.type || r.type !== 'followup_visit');
+    
+    if (actualReferrals.length === 0) {
+      badgeEl.removeClass('bg-warning bg-info bg-success bg-secondary')
+              .addClass('bg-secondary')
+              .text('Not Yet Referred');
+      messageEl.text('This patient has not been referred yet.');
+      return;
+    }
+    
+    // Find active referrals (pending or in-progress)
+    const activeReferrals = actualReferrals.filter(r => 
+      r.status === 'pending' || r.status === 'in-progress'
+    );
+    
+    if (activeReferrals.length > 0) {
+      // Sort by date to get most recent
+      activeReferrals.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      const latestActive = activeReferrals[0];
+      
+      if (latestActive.status === 'pending') {
+        badgeEl.removeClass('bg-warning bg-info bg-success bg-secondary')
+                .addClass('bg-warning')
+                .text('Pending Referral');
+        messageEl.text(`This patient has a pending referral (ID: #${latestActive.referral_id}) waiting for approval.`);
+      } else if (latestActive.status === 'in-progress') {
+        badgeEl.removeClass('bg-warning bg-info bg-success bg-secondary')
+                .addClass('bg-info')
+                .text('In Progress');
+        messageEl.text(`This patient has an active referral (ID: #${latestActive.referral_id}) being processed.`);
+      }
+    } else {
+      // All referrals are completed
+      const completedCount = actualReferrals.filter(r => r.status === 'completed').length;
+      badgeEl.removeClass('bg-warning bg-info bg-success bg-secondary')
+              .addClass('bg-success')
+              .text('All Referrals Completed');
+      messageEl.text(`This patient has ${completedCount} completed referral(s).`);
+    }
+  }
+
   // Handle patient row click - open modal with patient details
   // Only target patient rows in the All Patients tab (#allTable), not medical history tab
   $(document).on('click', '#allTable .patient-row', function(e) {
@@ -1117,6 +1366,11 @@ $(document).ready(function() {
     $('#modalFamilyTuberculosis').val(row.data('family-history-tuberculosis') || 'N/A');
     $('#modalFamilyOthers').val(row.data('family-history-others') || 'N/A');
 
+    // Update referral status badge for patientDetailsModal
+    const patientIdForModal = row.data('patient-id') || row.attr('data-id') || '';
+    const referralCountForModal = parseInt(row.data('referral-count') || '0');
+    updateModalReferralStatusBadge(referralCountForModal, patientIdForModal);
+
     // Show the modal
     const modalEl = document.getElementById('patientDetailsModal');
     if (modalEl) {
@@ -1148,6 +1402,10 @@ $(document).ready(function() {
     $('#viewReferralCount').val(button.data('vreferralcount') || '0');
     $('#viewLastReferred').val(button.data('vlastreferred') || 'Not yet referred');
     
+    // Update referral status badge
+    const referralCount = parseInt(button.data('vreferralcount') || '0');
+    updateReferralStatusBadge(referralCount, patientId);
+    
     // Load referral history (already filtered by current user in the backend)
     const historyContainer = $('#viewReferralHistory');
     if (historyContainer.length && patientId) {
@@ -1158,6 +1416,9 @@ $(document).ready(function() {
         headers: { 'X-Requested-With': 'XMLHttpRequest' },
         success: function(data) {
           const items = (data.referrals || []);
+          
+          // Update referral status based on all referrals
+          updateReferralStatusFromHistory(items, referralCount);
           
           // Filter to only show completed referrals (exclude follow-ups and non-completed referrals)
           const completedReferrals = items.filter(r => {
@@ -1339,12 +1600,18 @@ $(document).ready(function() {
               return;
             }
             
-            // Clear previous data
-            $('#viewReferralModal input, #viewReferralModal textarea').val('');
-            $('#viewReferralModal input[type="checkbox"]').prop('checked', false);
-            
             // Set flag to prevent populateViewModal from running
             window.openingFromReferralHistory = true;
+            
+            // IMPORTANT: Set the referral_id IMMEDIATELY before clearing or opening modal
+            // This ensures it's available even if other handlers try to overwrite it
+            $('#viewReferralId').val(referralId);
+            $('#viewReferralModal').data('referral-id', referralId);
+            console.log('Set viewReferralId to:', referralId);
+            
+            // Clear previous data (but preserve viewReferralId)
+            $('#viewReferralModal input:not(#viewReferralId), #viewReferralModal textarea').val('');
+            $('#viewReferralModal input[type="checkbox"]').prop('checked', false);
             
             // Show modal with loading state
             if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
@@ -1370,6 +1637,17 @@ $(document).ready(function() {
                 if (response.success && response.referral) {
                   if (typeof window.populateReferralModalFromData === 'function') {
                     window.populateReferralModalFromData(response.referral);
+                    
+                    // CRITICAL: After populating, ensure viewReferralId is set correctly and lock it
+                    const correctReferralId = String(response.referral.referral_id || referralId);
+                    $('#viewReferralId').val(correctReferralId);
+                    $('#viewReferralModal').data('referral-id', correctReferralId);
+                    console.log('🔒 Locked viewReferralId to:', correctReferralId);
+                    
+                    // Set a flag to prevent any further overwrites
+                    $('#viewReferralId').data('locked', true);
+                    $('#viewReferralId').data('correct-value', correctReferralId);
+                    
                     window.openingFromReferralHistory = false;
                   } else {
                     console.error('populateReferralModalFromData function not found!');
@@ -1977,9 +2255,34 @@ $(document).ready(function() {
     setFieldValue('#viewExaminedBy', referralData.examined_by || '');
     setFieldValue('#viewFollowup', referralData.followup_date ? formatDate(referralData.followup_date) : '');
     
-    // Store referral ID and status
-    setFieldValue('#viewReferralId', referralData.referral_id || '');
-    setFieldValue('#viewReferralStatus', referralData.status || '');
+    // Store referral ID and status - CRITICAL: This must be set correctly
+    const referralIdToSet = String(referralData.referral_id || '');
+    const $referralIdField = $('#viewReferralModal').find('#viewReferralId');
+    
+    if ($referralIdField.length) {
+      // Force set it directly to ensure it's correct
+      $referralIdField.val(referralIdToSet);
+      console.log('✅ Referral ID set in modal:', referralIdToSet);
+      
+      // Also set it as a data attribute on the modal for extra safety
+      $('#viewReferralModal').data('referral-id', referralIdToSet);
+      
+      // Double-check it was set correctly
+      if ($referralIdField.val() !== referralIdToSet) {
+        console.error('❌ ERROR: viewReferralId field was not set correctly! Expected:', referralIdToSet, 'Got:', $referralIdField.val());
+        // Try one more time with direct DOM manipulation
+        document.getElementById('viewReferralId').value = referralIdToSet;
+        console.log('Retry: Set via direct DOM, new value:', document.getElementById('viewReferralId').value);
+      }
+    } else {
+      console.error('❌ ERROR: viewReferralId field not found!');
+    }
+    
+    const statusSet = setFieldValue('#viewReferralStatus', referralData.status || '');
+    
+    if (!referralData.referral_id) {
+      console.warn('⚠️ Warning: referralData.referral_id is missing or empty');
+    }
     
     // Lifestyle & Social History - Checkboxes and text fields
     const setCheckbox = (selector, value) => {
